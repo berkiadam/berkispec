@@ -457,7 +457,7 @@ Várható tartalom:
 Meglévő CLI fájl:
 
 ```text
-tools/berkispec/index.mjs
+src/index.mjs
 ```
 
 Az új tisztázási szabályok, a `Qxxx` markerkezelés, és a `plan` előtti `READY_FOR_PLAN` gate még nincs implementálva.

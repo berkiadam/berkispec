@@ -10,16 +10,16 @@ Ebben a körben nincs kódimplementáció, csak a következő fejlesztési kör 
 
 Közvetlenül módosítandó implementációs körben:
 
-* `tools/berkispec/index.mjs`
-* `tools/berkispec/prompts/HU/01-write-spec.md`
-* `tools/berkispec/prompts/EN/01-write-spec.md`
-* `tools/berkispec/prompts/HU/01-modify-spec.md`
-* `tools/berkispec/prompts/EN/01-modify-spec.md`
+* `src/index.mjs`
+* `prompts/HU/01-write-spec.md`
+* `prompts/EN/01-write-spec.md`
+* `prompts/HU/01-modify-spec.md`
+* `prompts/EN/01-modify-spec.md`
 
 Már frissített dokumentáció:
 
-* `tools/berkispec/specification.md`
-* `tools/plans/01-plan.md`
+* `specification.md`
+* `plans/01-plan.md`
 
 ## specification.md-ben átvezetett új követelmények
 

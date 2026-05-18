@@ -8,6 +8,7 @@ import { stdin as input, stdout as output } from "node:process";
 import { fileURLToPath } from "node:url";
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.resolve(toolDir, "..");
 const workDir = process.cwd();
 const specsDir = path.join(workDir, "specs");
 const stateDir = path.join(workDir, ".berkispec");
@@ -31,7 +32,7 @@ const phases = [
 const interactiveOptions = [...phases, { id: "exit", label: "exit" }];
 const supportedProjectLanguages = ["HU", "EN"];
 const defaultProjectLanguage = "EN";
-const toolPromptsDir = path.join(toolDir, "prompts");
+const toolPromptsDir = path.join(rootDir, "prompts");
 const promptFileNames = [...new Set([...phases.map((phase) => phase.promptName), "01-modify-spec.md"])];
 
 const defaultProjectDesc = `# Project Description
@@ -77,7 +78,9 @@ function getCodexConfig() {
   return {
     enabled: codexConfig.enabled ?? true,
     command: codexConfig.command ?? "codex",
-    mode: codexConfig.mode ?? "exec"
+    mode: codexConfig.mode ?? "exec",
+    sandbox: codexConfig.sandbox ?? "workspace-write",
+    approval: codexConfig.approval ?? "never"
   };
 }
 
@@ -102,6 +105,26 @@ function getProjectLanguage() {
 
 function projectPromptReference(promptName) {
   return `.berkispec/prompts/${promptName}`;
+}
+
+function resolvePromptPath(language, promptName) {
+  const projectPromptPath = path.join(projectPromptsDir, promptName);
+
+  if (fs.existsSync(projectPromptPath) && fs.statSync(projectPromptPath).isFile()) {
+    return projectPromptPath;
+  }
+
+  return path.join(toolPromptsDir, language, promptName);
+}
+
+function readPromptTemplate(language, promptName) {
+  const promptPath = resolvePromptPath(language, promptName);
+
+  if (!fs.existsSync(promptPath) || !fs.statSync(promptPath).isFile()) {
+    throw new Error(`Missing prompt template: ${path.relative(workDir, promptPath)}`);
+  }
+
+  return fs.readFileSync(promptPath, "utf8").trim();
 }
 
 function ensurePromptSource(language) {
@@ -173,11 +196,21 @@ function printPrompt(prompt) {
   output.write(`Prompt file: ${path.relative(workDir, latestPromptPath)}\n`);
 }
 
-function runCodex(prompt, { command, mode = "exec", cwd = workDir } = {}) {
+function runCodex(prompt, { command, mode = "exec", cwd = workDir, sandbox = "workspace-write", approval = "never" } = {}) {
   writePrompt(prompt);
 
   return new Promise((resolve, reject) => {
-    const child = spawn(command, [mode, prompt], {
+    const args = ["--cd", cwd, mode];
+
+    if (mode === "exec") {
+      args.unshift("--ask-for-approval", approval);
+      args.unshift("--sandbox", sandbox);
+      args.push("--skip-git-repo-check");
+    }
+
+    args.push(prompt);
+
+    const child = spawn(command, args, {
       cwd,
       stdio: ["ignore", "pipe", "pipe"]
     });
@@ -482,13 +515,13 @@ function buildSpecPrompt({ name, goal, language }) {
   const number = nextCycleNumber();
   const cycle = `cycle-${number}-${slugify(name)}`;
   const specPath = `specs/${cycle}/spec.md`;
-  const promptFile = projectPromptReference("01-write-spec.md");
+  const promptTemplate = readPromptTemplate(language, "01-write-spec.md");
 
   if (language === "EN") {
     return {
       cycle,
       targetPath: specPath,
-      prompt: `Use the ${promptFile} prompt.
+      prompt: `${promptTemplate}
 
 Project base description:
 .berkispec/project-desc.md
@@ -507,7 +540,7 @@ ${specPath}`
   return {
     cycle,
     targetPath: specPath,
-    prompt: `Használd a ${promptFile} promptot.
+    prompt: `${promptTemplate}
 
 Projekt alapleírás:
 .berkispec/project-desc.md
@@ -532,10 +565,10 @@ function createSpecTarget({ targetPath }) {
 }
 
 function buildSpecModifyPrompt({ specPath, lastCodexResponse, userInput, language }) {
-  const promptFile = projectPromptReference("01-modify-spec.md");
+  const promptTemplate = readPromptTemplate(language, "01-modify-spec.md");
 
   if (language === "EN") {
-    return `Use the ${promptFile} prompt.
+    return `${promptTemplate}
 
 Existing spec:
 ${specPath}
@@ -549,7 +582,7 @@ ${userInput}
 Update only the existing spec file in place.`;
   }
 
-  return `Használd a ${promptFile} promptot.
+  return `${promptTemplate}
 
 Meglévő spec:
 ${specPath}
@@ -767,9 +800,7 @@ function printNextStep(phase, cycle = "") {
   output.write(`Next step: ${nextByPhase[phase]}\n`);
 }
 
-function printProjectDesc() {
-  const { summary, files } = readProjectDesc();
-
+function printProjectDesc({ summary, files }) {
   output.write("\nCurrent project description:\n\n");
   output.write(summary.length > 0 ? `${summary}\n\n` : "(No summary yet)\n\n");
   output.write("Reference files:\n");
@@ -923,7 +954,7 @@ async function runProject(rl) {
     }
 
     if (action === "show-current") {
-      printProjectDesc();
+      printProjectDesc(state);
       continue;
     }
 
@@ -936,6 +967,7 @@ async function runProject(rl) {
       }
 
       state.summary = state.summary.length > 0 ? `${state.summary}\n\n${description}` : description;
+      writeProjectDesc(state);
       output.write("Description updated.\n");
       continue;
     }
@@ -949,6 +981,7 @@ async function runProject(rl) {
       }
 
       state.files = [...new Set([...state.files, ...files])];
+      writeProjectDesc(state);
       output.write(`Added ${files.length} file(s).\n`);
     }
   }
@@ -975,15 +1008,16 @@ async function runSpec(rl, language) {
   const firstResult = await runCodex(result.prompt, {
     command: codexConfig.command,
     mode: codexConfig.mode,
-    cwd: workDir
+    cwd: workDir,
+    sandbox: codexConfig.sandbox,
+    approval: codexConfig.approval
   });
 
-  if (!fs.existsSync(target.path)) {
-    throw new Error(`Validation error: expected spec file was not created: ${relativeToWorkDir(target.path)}`);
-  }
-
-  if (ensureSpecStatusField(target.path, language)) {
+  if (fs.existsSync(target.path) && ensureSpecStatusField(target.path, language)) {
     output.write("Megjegyzés: a spec fájlból hiányzott a státusz mező, ezért automatikusan hozzáadtam: DRAFT.\n");
+  } else if (!fs.existsSync(target.path)) {
+    output.write(`Megjegyzés: a spec fájl még nem jött létre: ${relativeToWorkDir(target.path)}\n`);
+    output.write("A spec fázis interaktív módban marad, így válaszolhatsz a modell kérdéseire.\n");
   }
 
   let lastCodexResponse = firstResult.stdout.trim() || firstResult.stderr.trim();
@@ -992,6 +1026,12 @@ async function runSpec(rl, language) {
     const inputResult = await askSpecIterationInput(rl, language);
 
     if (inputResult.type === "finish") {
+      if (!fs.existsSync(target.path)) {
+        output.write(`Figyelem: a spec fájl nem jött létre: ${relativeToWorkDir(target.path)}\n`);
+        output.write("A spec fázis lezárult, de a plan fázis nem indítható, amíg nincs spec.md.\n");
+        return;
+      }
+
       const ready = isSpecReadyForPlan(target.path);
       output.write(`Spec file: ${relativeToWorkDir(target.path)}\n`);
       if (!ready) {
@@ -1017,12 +1057,16 @@ async function runSpec(rl, language) {
     const modifyResult = await runCodex(modifyPrompt, {
       command: codexConfig.command,
       mode: codexConfig.mode,
-      cwd: workDir
+      cwd: workDir,
+      sandbox: codexConfig.sandbox,
+      approval: codexConfig.approval
     });
     lastCodexResponse = modifyResult.stdout.trim() || modifyResult.stderr.trim();
 
-    if (ensureSpecStatusField(target.path, language)) {
+    if (fs.existsSync(target.path) && ensureSpecStatusField(target.path, language)) {
       output.write("Megjegyzés: a spec módosítás után hiányzott a státusz mező, ezért automatikusan hozzáadtam: DRAFT.\n");
+    } else if (!fs.existsSync(target.path)) {
+      output.write(`Megjegyzés: a spec fájl még nem jött létre: ${relativeToWorkDir(target.path)}\n`);
     }
   }
 }
