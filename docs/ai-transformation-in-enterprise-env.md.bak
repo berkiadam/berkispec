@@ -1,0 +1,236 @@
+# Az Agentic AI Fejlesztés Kihívásai és Illúziói a Hagyományos Nagyvállalati Környezetben
+
+## Bevezető: A Ferrari motor a lovaskocsiban
+A modern nagyvállalati (különösen banki) szektorban az Agentic AI bevezetése gyakran egy alapvető félreértésen alapul: a vezetőség abban a hitben él, hogy az AI eszközök puszta integrálásával a fejlesztési ciklusok azonnal, radikálisan lerövidülnek. A valóságban azonban egy transzformálatlan, bürokratikus szervezetre ráhúzni az autonóm AI fejlesztést kontraproduktív. Hiába képes egy ágens megírni a kódot másodpercek alatt, ha a technikai adósság, a silósított szervezeti felépítés és az "emberi sebességre" (human speed) optimalizált folyamatok hónapokra megakasztják a tényleges szállítást. 
+
+Az alábbi dokumentum összefoglalja azokat a kritikus infrastrukturális, architekturális, szabályozási és szervezeti szűk keresztmetszeteket, amelyek megakadályozzák az Agentic AI sikeres enterprise skálázását a szigorúan szabályozott pénzintézeti szektorban.
+
+---
+
+## 1. Infrastrukturális béklyók és a Fragmentált Architektúra
+
+
+### Fejlesztői környezetek és eszköztámogatás (A Linux és Python/TypeScript előny)
+Az Agentic AI ökoszisztéma agilitást és specifikus technológiai alapot követel. Az ágens-eszközök és -keretrendszerek *de facto* standardja a **Linux/POSIX környezet**, a **Python**, valamint a **TypeScript**.
+* **Miért Linux/POSIX?** Az ágensek autonóm futtatásához és izolált végrehajtásához biztonságos, konténerizált (Docker/Sandbox) környezetekre van szükség, az ágens-eszközök pedig jellemzően POSIX-alapú parancssori láncra (shell, csomagkezelők, fájlrendszer-konvenciók) építenek. A bankokban megszokott, szigorúan zárolt Windows munkaállomásokon (adminjog hiánya, csomagtelepítés tiltása, korlátozott shell) ezek az eszközök gyakran csak komoly kompromisszumokkal (pl. WSL2) használhatók – itt nem maga a Windows a probléma, hanem a lezárt vállalati image.
+* **Miért Python vagy TypeScript?** A modern ágens-keretrendszerek (pl. LangChain, Vercel AI SDK, AutoGen) szinte kizárólag ezen a két nyelven kapnak azonnali ("day-zero") támogatást. A Python a szkriptelés és az ágens-orkesztráció iparági standardja, míg a TypeScript a webes felületekkel és böngészős eszközökkel integrált ágensek alapja.
+
+Ezzel szemben az enterprise banki architektúra gyakran nehézkes, monolitikus **Java backendekre** és zárt Windows rendszerekre épül. A modern ágensek önmagában a Java kódot is megbízhatóan írják – a súrlódás tehát nem a nyelv képességeiből fakad, hanem abból, hogy az ágens-keretrendszerek és a community-eszközök támogatása Python/TypeScript-first, a Java-ökoszisztémában pedig késve és szűkebb körben érhető el. Ehhez társul a lezárt vállalati munkaállomás-környezet, ahol az AI-eszközök telepítése és futtatása (pl. a WSL2 virtualizációs réteg kényszerű használata) felemészti az ágensek adta sebességelőnyt.
+
+
+---
+
+## 2. A Fejlesztői Szerepkörök és az "AI Vibe Coding" Válsága
+A nagyvállalatoknál a fejlesztői csapatok jellemzően szét vannak tagolva: az üzleti elemzők és architektek látják át a rendszert és a komponensek egymásra hatását, míg a programozók pusztán implementálják a specifikációt. 
+
+Az AI licenceket jelenleg jellemzően az utóbbi rétegnek adják, aminek az eredménye egyfajta tágan értelmezett "vibe coding" (az eredeti, Karpathy-féle fogalom a kimenet kritikátlan elfogadását jelenti; itt tágabb értelemben használjuk): az AI-t a rendszer egészét nem látó fejlesztők használják, és a hagyományos emberi kódolást próbálják beleerőszakolni az agentic módszertanba. A paradigmaváltás ott kezdődik, ha az AI-t a tervezői/architekti réteg kapja meg, akik a szakmai tudásukkal végig tudják vinni az agentic fejlesztést, és az AI segítségével képesek a rutinszerű, mechanikus implementációért felelős operatív kódolási réteg munkáját kiváltani vagy jelentősen felgyorsítani.
+
+---
+
+## 3. A Hagyományos Csapatstruktúra Felbomlása és az Új Együttműködési Modell
+Jelenleg egy tipikus banki projektcsapat (squad) 10-15 főből áll: üzleti elemző (ITBA), architektek, több dedikált frontend és backend fejlesztő, manuális tesztelők és tesztautomatizálók. Agentic AI módban ez a nehézkes, többszereplős modell fenntarthatatlanná válik.
+
+### A "Magányos Farkasok" kora, vagy inkább "Szuper-csapatok"?
+Az új paradigmában eljön a "magányos farkasok" (pontosabban: az egy személyben teljes rendszereket átlátó mérnökök) kora. Egyetlen szenior Architect vagy ITBA képes egy teljes microservice végponttól-végpontig (frontendtől az adatbázisig) történő lefejlesztését végigvinni egy ágens segítségével. Nem a kódolók száma számít, hanem a rendszer absztrakciós megértése. A korábbi 10-15 fős csapat helyett egy 4-5 fős, magasan kvalifikált "SWAT csapat" is elegendő:
+
+```mermaid
+graph TD
+    subgraph Hagyományos_Csapat [Hagyományos Squad 10-15 fő]
+        PM[Project Manager] --> ITBA[Üzleti Elemző]
+        ITBA --> Arch[Architekt]
+        Arch --> Backend[3-4 Backend Fejlesztő]
+        Arch --> Frontend[2-3 Frontend Fejlesztő]
+        Backend --> QA[2-3 Tesztelő]
+        Frontend --> QA
+    end
+
+    subgraph AI_SWAT_Team [Agentic SWAT Team 4-5 fő]
+        ITBA2[Specifikációs Mérnök / ITBA]
+        SME[Üzleti Szakértő / SME]
+        Auditor[AI Auditor / Reviewer]
+        QA2[QA / Prompt Eval Engineer]
+        UX[Frontend / UX Engineer]
+        
+        ITBA2 --> AgentNetwork{AI Ágens Hálózat}
+        SME --> AgentNetwork
+        Auditor --> AgentNetwork
+        QA2 --> AgentNetwork
+        AgentNetwork -.-> Code(Backend Kód & Automata Tesztek)
+    end
+```
+
+1. **Specifikációs Mérnök / ITBA (System Architect):** Ő felel az üzleti igények strukturált leírásáért. Az interaktív specifikáció-menedzsment eszközben (mint a `berkispec`) ő tisztázza az ágens által feltett kérdéseket.
+2. **AI Auditor / Reviewer:** Mivel a kódot az ágens írja másodpercek alatt, a klasszikus kód-review átalakul. Az Auditor nem szintaktikai hibákat keres (ezt a Linter és az AI megoldja), hanem azt ellenőrzi, hogy a legenerált architektúra, a biztonsági elemek és a teljesítmény megfelelnek-e a banki elvárásoknak.
+3. **Domain Szakértő (SME):** Ő validálja az üzleti logikát és a banki compliance-t.
+4. **QA / Prompt Evaluation Engineer (Test Architect):** Nem manuális teszteket futtat, és nem hagyományos tesztkódokat ír. Fő feladata az ágens által generált teszt-szcenáriók és kiértékelési metrikák (Evals) minőségének ellenőrzése, valamint annak biztosítása, hogy a kritikus edge-case forgatókönyvek teljeskörűen le legyenek fedve.
+5. **Frontend / UX Mérnök:** Bár az ágensek kiválóan írnak backend logikát, a "pixel-perfect" felületek (pl. egy komplex Figma terv leképezése) megalkotása továbbra is az AI relatíve gyengébb, emberi felügyeletet igénylő területe. A multimodális modellek és a vizuális diff-eszközök sokat fejlődtek, de a vizuális finomhangolás és a felhasználói élmény (UX) tökéletesítése továbbra is intenzív humán jelenlétet igényel.
+
+### A Frontend gyenge pontja: A vizuális visszatesztelés nehézségei
+Az AI ágensek jelenlegi képességeivel a vizuális frontend tesztelés továbbra is törékeny. Míg egy REST API viselkedése determinisztikus, addig egy felület vizuális regressziós tesztelése (pl. CSS árnyékok, reszponzív töréspontok mobilon) AI alapon nagyon nehézkes. Az ágensek hajlamosak a DOM struktúrát apróságokban megváltoztatni (pl. egy extra `div` betoldása), ami azonnal "eltöri" a hagyományos vizuális teszteket, függetlenül attól, hogy a felület emberi szemmel tökéletes-e. Emiatt a frontend réteg kódolása és tesztelése sokkal ellenállóbb az Agentic AI teljes automatizációjával szemben, mint a backend.
+
+### Interakció és Cross-Review az SDD (Spec-Driven Development) ciklusban
+Az SDD módszertanban a hangsúly a megvalósítás előtti tisztázásra helyeződik:
+* A `spec.md` dokumentum a ciklus legfontosabb eleme. Még mielőtt egyetlen sor kód megszületne, a 4-5 fős csapat ezt a dokumentumot **cross-review-zza** (üzleti, biztonsági, architekturális, tesztelhetőségi és vizuális UX szempontból).
+* Az ágens folyamatosan iterál a csapattal, amíg minden nyitott kérdés ("NEEDS CLARIFICATION") le nem zárul és a státusz `READY_FOR_PLAN` nem lesz.
+* Miután a specifikáció végleges, az ágens önállóan megtervezi a feladatokat (`plan.md`, `tasks.md`) és elvégzi az implementációt. A humán szereplők csak a kész rendszert és az automatizált E2E tesztek eredményeit hagyják jóvá.
+
+---
+
+## 4. A Strukturált Szoftverfejlesztési Életciklus (SDLC) és a CI/CD Folyamatok Anakronizmusa
+A banki szektorban a hagyományos szoftverfejlesztési életciklus (SDLC) és a kiadási (release) folyamatok egy olyan korszakban alakultak ki, amikor a kód megírása volt a leglassabb és legdrágább elem. Az Agentic AI korában ez a rendszer teljesen fenntarthatatlanná válik, mivel a szűk keresztmetszet áttevődik a bürokratikus jóváhagyási és tesztelési körökre.
+
+### A hagyományos "Tervezünk-Kódolunk-Review-zunk" láncolat lassúsága
+Egy tipikus nagyvállalati folyamatban a fejlesztő megírja a kódot, majd napokat (néha heteket) vár arra, hogy egy másik fejlesztő felülvizsgálja azt (code review/merge). Mire a kód átmegy a review-n, az AI ágens már több tucat iterációt hajthatott volna végre. Az autonóm fejlesztés nem képes szinkronizálódni a lassú emberi felülvizsgálati ciklusokkal.
+
+### A manuális tesztelés megdöbbentő túlélése
+Bár a bankok papíron modernizációról és automatizációról beszélnek, a valóságban a telepítések után a tesztelés jelentős része még mindig **manuálisan** történik (pl. dedikált tesztelők manuálisan kattintgatják végig a felületeket Excel táblázatok alapján). Ez a fajta manuális tesztelés teljesen összeegyeztethetetlen az Agentic AI-jal, amely percenként képes lenne új verziókat és javításokat szállítani.
+
+### A teszt-automatizáció félreértése
+Ha történik is teszt-automatizáció, az gyakran utólagos és nem megfelelő mélységű:
+* **Késleltetett tesztírás:** Gyakran napokkal a kód elkészülte után kezd el valaki teszteket írni a már meglévő funkciókhoz, ami megtöri az azonnali visszacsatolás lehetőségét. Ezáltal sem a humán fejlesztő, sem az AI ágens nem képes valós időben validálni az elvégzett módosításokat, és azonnal korrigálni a hibákat.
+* **Felületes tesztek:** Az automatizált tesztek többsége megreked az alacsony szintű API/REST végpontok ellenőrzésénél (unit/integrációs szinten). Hiányoznak a felülről indított, valós felhasználói folyamatokat szimuláló end-to-end (E2E) tesztek. Az ágensek viselkedése azonban emergens, így a hibák sokszor nem az egyedi API-szinteken, hanem a komplex felhasználói interakciók és munkafolyamatok szintjén jelentkeznek.
+
+### Környezeteken való ugrálás (Environment Jumping)
+A kód útja az éles környezetig egy rendkívül lassú folyamat: a fejlesztői (Dev) környezetből a teszt (Test), majd a felhasználói elfogadó (UAT), a pre-prod és végül az éles (Prod) környezetre való átlépés heteket, esetenként hónapokat vesz igénybe. Minden egyes lépcsőnél manuális jóváhagyások (Change Advisory Board - CAB döntések) és kapuk lassítják a folyamatot. Ha az ágens 1 perc alatt kijavít egy hibát, de az élesítés 6 hetet vesz igénybe, az Agentic AI hatékonysága gyakorlatilag nullára csökken.
+
+### Az Új AI-vezérelt CI/CD Pipeline és a Környezetek Sűrítése
+Hogyan néz ki mindez Agentic AI környezetben? Az 5-6 lépcsős "Environment Jumping" értelmét veszti, helyét a **"Környezetek Sűrítése" (Environment Compression)** és az automatizált élesítés veszi át:
+
+```mermaid
+graph LR
+    subgraph Hagyományos_SDLC [Lassú, Hagyományos CI/CD]
+        A[Kódolás] --> B[Cross Review]
+        B --> C[CI Build]
+        C --> D[DEV Környezet]
+        D --> E[Manuális QA Teszt]
+        E --> F[UAT Környezet]
+    end
+
+    subgraph Agentic_SDLC [AI-vezérelt CI/CD Sűrített Környezet]
+        1[spec.md] --> 2[Ágens Kódol]
+        2 --> 3[Eldobható Sandbox Végrehajtás]
+        3 --> 4[AI CAB Automata Audit]
+        4 --> 5[PROD Élesítés Feature Flag-gel]
+    end
+```
+
+1. **Eldobható (Ephemeral) Sandbox Környezetek:** Az ágens nem egy közös Dev környezetbe dolgozik be, amely mások kódjával ütközhet. Minden egyes `spec.md` (feature) alapján az ágens automatikusan felhúz egy eldobható, izolált konténeres Sandbox környezetet. Ebben a környezetben futtatja le a QA Architekt által validált komplex E2E teszteket és az automatizált Evals metrikákat. Ha a kód eléri a statisztikai konfidencia-küszöböt, a Sandbox környezet megsemmisül.
+2. **AI-Assisted Governance (Automatizált CAB):** A heteket igénybe vevő CAB (Change Advisory Board) köröket leváltja egy független "Governance Ágens". Ez a másodlagos ágens beolvassa a `spec.md`-t, a futtatott E2E Evals eredményeit, valamint a statikus biztonsági ellenőrzéseket (SAST/DAST), és ezekből döntés-előkészítő összefoglalót készít. Az alacsony kockázatú változásokat előminősíti és automatikusan átengedheti, a kritikus (pénzügyi, tranzakciós) változásoknál azonban megmarad egy – akár könnyített, aszinkron – felelős emberi jóváhagyási pont, összhangban a 9. és 13. pontban leírt fokozatos autonómiával és jogi felelősséggel.
+3. **Folyamatos Élesítés (Feature Flag Release):** A hagyományos Test/UAT/Pre-prod fázisok összeolvadnak. A kód egyből az éles (Prod) környezetbe kerül telepítésre, de **Feature Flag** (funkció-kapcsoló) mögé rejtve. Az élesítés tehát automatikus, de a funkció bekapcsolása (Release) már üzleti döntés marad.
+4. **Shift-Left Specifikáció:** Ahhoz, hogy az új pipeline működjön, elengedhetetlen a specifikáció strukturált formátumba öntése (például egy olyan dedikált, interaktív CLI specifikáció-menedzsment eszközzel, mint a `berkispec`), ami egyértelmű inputot ad a Pipeline-ba bekötött Eval rendszereknek.
+
+---
+
+## 5. Adatvédelem, Adatbiztonság és Szabályozási Megfelelőség (Compliance)
+A banki szektorban az ügyféladatok és a banktitok védelme abszolút prioritás. Külső, nyilvános LLM API-k (pl. OpenAI, Anthropic) használata közvetlen adatkiáramlási (data egress) kockázatot jelent, ami azonnali szabályozói szankciókat von maga után.
+
+### Szigorú előírások (DORA, GDPR és MNB)
+* **Private Cloud és On-premise LLM-ek:** Pénzintézeti környezetben elengedhetetlen a modellek saját, izolált infrastruktúrán (on-prem vagy dedikált private cloud) történő futtatása (pl. nyílt súlyú Llama vagy Mistral modellek bevezetése).
+* **Adatmaszkolás (PII/Banktitok szűrés):** Olyan biztonsági gateway rétegek alkalmazása kötelező, amelyek az ágens elé kerülő adatokból automatikusan kitakarják a személyes azonosítókat, számlaszámokat és egyéb érzékeny adatokat a prompt elküldése előtt.
+* **EU AI Act és MNB ajánlások:** Az ágensek által hozott döntéseknek és generált kódoknak meg kell felelniük a kockázati besorolásoknak. Biztosítani kell a döntési logikák auditálhatóságát és a diszkriminációmentességet.
+
+---
+
+## 6. Jogosultságkezelés és Központosított Hitelesítés (IAM)
+Mivel az ágensek API-kat hívnak, adatbázisokat módosítanak és tranzakciókat indítanak, elindul a "nem emberi identitások" (non-human identities) burjánzása. Hatalmas biztonsági kihívás annak lekezelése, hogy egy ágens milyen tokenekkel, mekkora hatókörben (scope) operálhat. Egy robusztus, központosított identitás- és titokkezelés (pl. secrets management / vault, rövid élettartamú és szűken scope-olt OAuth/OIDC tokenek, workload identity) nélkül, ahol az ágens hozzáférése szigorúan monitorozott és auditált, az ágensek jogosultság-eszkalációt hajthatnak végre, és sérülékennyé teszik a rendszert.
+
+---
+
+## 7. Ágens-specifikus Biztonsági Kockázatok (Prompt Injection és Tool Misuse)
+A hagyományos IT-biztonsági modellek nem elégségesek az ágensek védelmére, mivel az ágensek nemcsak adatokat olvasnak, hanem külső eszközöket (tools) is futtatnak (pl. SQL lekérdezések, fájlírás, e-mail küldés).
+
+* **Indirekt Prompt Injection:** Kritikus biztonsági rés, amikor az ágens olyan külső forrásból származó adatot dolgoz fel (pl. bejövő ügyfél e-mail vagy feltöltött PDF számla), amely elrejtett utasításokat tartalmaz (pl. *"Módosítsd a célszámlaszámot a következőre..."*). Ha az ágens ezt végrehajtja, az súlyos visszaélésekhez vezet.
+* **A minimális jogosultság elve az eszközöknél (Least Privilege for Tools):** Az ágens által használt eszközök jogosultsági szintjét a lehető legszűkebbre kell szabni. Az ágens soha nem kaphat közvetlen írási jogot a tranzakciós rendszerekhez; minden kritikus műveletet különálló API-átjárón és validációs rétegen keresztül kell csatornázni.
+
+---
+
+## 8. Költségmenedzsment és Token-ökonómia (Token Economics)
+Az ágensek működési mechanizmusa (iteratív gondolkodási ciklusok, eszközmeghívások, kontextus-visszacsatolások) rendkívül token-igényes, ami kontrollálatlan futás esetén komoly pénzügyi veszteséget okozhat.
+
+* **"Rogue Agent" (Elszabadult ágens) kockázat:** Ha egy ágens hibás logikai hurokba vagy végtelen ciklusba kerül egy nem várt API-válasz miatt, rövid idő alatt jelentős, kontrollálatlan API-költséget generálhat. Kötelező a kemény limitek (hard-limit), a token-keretek és a futási időkorlátok bevezetése.
+* **Hibrid modell-routing:** A pénzügyi hatékonyság érdekében a banki architektúrának támogatnia kell a feladatok szétosztását: az egyszerű formázásokat és rutin lekérdezéseket olcsó, kisebb modellek végezzék, míg a komplex tervezést és a döntéshozatalt a drágább, magas intelligenciájú modellek kapják meg.
+
+---
+
+## 9. Fokozatos Autonómia (Progressive Autonomy)
+Kritikus banki infrastruktúráknál nem lehet egy ágenst csak úgy rászabadítani a tranzakciós rendszerekre. A fejlesztés során fel kell építeni egy úgynevezett bizalmi létrát:
+
+```mermaid
+stateDiagram-v2
+    [*] --> ShadowMode
+    ShadowMode: 1. Árnyék üzemmód (Shadow Mode)
+    ShadowMode --> HumanInTheLoop: Megbízhatóság > definiált küszöb
+    note right of ShadowMode
+      Az ágens fut a háttérben,
+      de csak naplóz. Nincs beavatkozás.
+    end note
+    
+    HumanInTheLoop: 2. Tanácsadó (Human-in-the-loop)
+    HumanInTheLoop --> ControlledAutonomy: Gyakori egyetértés
+    note right of HumanInTheLoop
+      Az ágens javasol és előkészít,
+      de a végrehajtáshoz emberi jóváhagyás kell.
+    end note
+    
+    ControlledAutonomy: 3. Szabályozott Autonómia
+    ControlledAutonomy --> [*]
+    note right of ControlledAutonomy
+      Szigorúan limitált scope-ban és
+      költségkerettel önállóan cselekszik.
+    end note
+```
+* **Shadow mode:** Az ágens a háttérben fut, naplózza a tervezett lépéseit, de nem hajtja végre őket. A fejlesztők ezeket a döntéseket vetik össze az emberi lépésekkel.
+* **Advisory mode:** Az ágens interaktív módon javaslatot tesz, de egy „human-in-the-loop” mechanizmus révén a műveletet mindig ember hagyja jóvá.
+* **Controlled autonomy:** Az ágens önállóan cselekszik, de beépített "kill switch" mechanizmusokkal, szűkített hozzáférésekkel és tranzakciós értékhatárokkal.
+
+---
+
+## 10. Observability (Megfigyelhetőség), Telemetria és AgentOps
+A hagyományos naplózás nem ad elég információt egy ágens működéséről. Nem elég látni a logban, hogy az ágens lefuttatott egy folyamatot; a telemetriában látni kell az úgynevezett "reasoning path"-t, vagyis azt, hogy miért hozta meg az adott döntést, milyen adatokból dolgozott, és miért hívott meg egy adott eszközt.
+
+* **AgentOps és Prompt Versioning:** A promptok verziókezelése kulcsfontosságú. Ha a háttérben futó LLM modell verziója változik, az ágens viselkedése destabilizálódhat. Szükség van automatizált regressziós tesztekre (Evals) és prompt rollback képességre.
+* **Hálózati terhelés:** A folyamatos kontextus-mozgatás (inference) miatt egy ágens lényegesen több, a modell-gateway felé irányuló forgalmat generálhat a hagyományos szoftverekhez képest, ami a hálózati kapacitás- és sávszélesség-tervezésnél (különösen a kimenő, gateway felé tartó szakaszon) is fontos tényező.
+
+---
+
+## 11. Az Üzleti Döntéshozatal Bürokratikus Szűk Keresztmetszete és Szervezeti Változáskezelés
+Egy prototípus legyártása AI-val percekben mérhető, és a validáció nagyon kis költségű. De az enterprise vállalatok nagyon lassú és hosszú tervezési üzemmódban vannak, rengeteg emberi réteggel, mert a korábbi paradigmában az emberi fejlesztés volt a legdrágább. Hiába hiszik a vezetők, hogy gyorsulás lesz: ha az üzleti igények a régi módon állnak elő, és a finanszírozási, illetve engedélyezési ciklus továbbra is hónapokat vesz igénybe, az AI okozta sebességnövekedés statisztikai hibahatárrá zsugorodik.
+
+### Szigorú AI Workflow-k és a "Harness Engineering"
+Az egyik legnagyobb vezetői illúzió, hogy az AI eszközöket (pl. Copilot, Codex CLI) "csak oda kell adni" a fejlesztőknek, és a hatékonyság magától megnő. A valóságban a szabályozatlan AI-használat (ad-hoc promptolás) rövid úton káoszhoz, inkonzisztens kódhoz és biztonsági résekhez vezet. 
+A szervezet átalakítása nem merülhet ki egy egynapos tréningben. Mindenkinek, aki az AI pipeline-ban részt vesz, el kell sajátítania az úgynevezett **Harness Engineering**-et (az ágensek "befogásának" és irányításának mérnöki tudományát):
+* **Strukturált iteráció:** Hogyan írjunk olyan determinisztikus promptokat és utasításokat, amelyek nem hagyják "elszállni" vagy felesleges köröket futni az ágenst.
+* **Kényszerített keretek (Guardrails):** A szakembereket meg kell tanítani arra, hogyan kényszerítsék az ágenst a banki belső keretrendszerek (design patternek, belső komponensek) használatára ahelyett, hogy az ágens mindig újból "feltalálná a kereket" a webről tanult általános megoldásaival.
+* **Szigorú folyamati fegyelem:** Az AI pipeline csak akkor működik, ha minden szereplő (a Specifikációs mérnöktől az AI Auditorig) fegyelmezetten betartja a specifikáció-vezérelt (SDD) folyamatokat (pl. nincs implementáció a nyitott "NEEDS CLARIFICATION" kérdések formális lezárása előtt).
+
+### Dedikált idő a projekt-specifikus finomhangolásra (Improvement Loops)
+Az egyik leggyakoribb projektmenedzsment-hiba, hogy a vezető az "első napi" (Day 1) ágens-eredményeket várja el azonnal véglegesként. Az ágensek azonban sosem tökéletesek a legelső indításkor, mivel minden projektnek egyedi kontextusa van. Kiemelten fontos, hogy a menedzsment a tervezés során **dedikált időt (buffer) hagyjon a csapatoknak a "javító hurkokra" (Improvement Loops)**. A fejlesztőknek és ITBA-knak rendszeresen elemezniük kell a sikertelen ágens-futásokat, és időre van szükségük ahhoz, hogy az általános promptokat, egyedi skilleket és szabályrendszereket célzottan az adott projektre szabják (Prompt Tuning Sprints). Ez a befektetett idő a projekt későbbi fázisaiban exponenciálisan megtérül a drasztikusan lecsökkenő hibaszámban.
+
+### Belső AI Center of Excellence (CoE)
+A folyamatos képzés és a Harness Engineering betanításának koordinálására egy központi banki kompetenciaközpont (CoE) létrehozása kötelező. A CoE felel a hivatalosan validált AI workflow-k megalkotásáért, a prompt-sablonok és vállalati guardrail-ek karbantartásáért, a best practice-ek oktatásáért, valamint az engedélyezett ágensek belső minőségbiztosításáért.
+
+---
+
+## 12. A Vállalati Tudásbázis Állapota (A "Garbage In, Garbage Out" probléma)
+Az ágensek csak abból a kontextusból tudnak dolgozni, amit "látnak". A bankok belső dokumentációja (elavult Confluence oldalak, szétesett API specifikációk, szájhagyomány útján terjedő legacy szabályok) jellemzően siralmas állapotban van. Mielőtt az ágenseket rászabadítják a kódra, le kell folytatni egy masszív tudásbázis-tisztítást, és fel kell építeni egy belső RAG (Retrieval-Augmented Generation) architektúrát. Enélkül az ágens nem fogja érteni a bank egyedi, belső keretrendszereit, és a hiányzó információkat "hallucinációval" próbálja meg kitölteni.
+
+---
+
+## 13. Jogi Felelősség (Accountability & Liability)
+Ha a teljesen automatizált folyamat (a `spec.md` -> Ágens -> Governance Ágens -> Élesítés) egy olyan kódot juttat éles környezetbe, ami leállítja a netbankot vagy konkrét pénzügyi veszteséget okoz, tisztázni kell a jogi felelősség kérdését. Ki a felelős? A specifikációt író ITBA? Az AI Auditor? A foundation modellt fejlesztő szolgáltató? A nagyvállalati előkészítés legelső lépése egy új felelősségi mátrix (RACI) felállítása az AI által vezérelt kódgenerálásra és élesítésre, hogy az Audit és a Kockázatkezelési osztályok számára is védhető legyen a folyamat.
+
+---
+
+## 14. Beszállítói Kitettség (Vendor Lock-in) és Modell-Agnosztikusság
+Az AI modellek piaca (OpenAI, Anthropic, Google, stb.) gyorsan változik mind képességekben, mind árazásban, mind pedig szabályozói (pl. EU AI Act) megfelelőségben. A bankok nem köthetik magukat egyetlen gyártó (pl. OpenAI) API-jához, mert ha a szolgáltató árat emel, vagy a régiót korlátozzák, az egész banki CI/CD pipeline megáll. Kiemelten fontos egy **AI Gateway / Absztrakciós réteg** (pl. LiteLLM) bevezetése az első naptól kezdve, hogy az ágensek "motorja" (a háttérben futó foundation modell) bármikor, kódmódosítás és leállás nélkül cserélhető legyen.
+
+```mermaid
+graph TD
+    Internal[Banki Belső AI Ágensek] --> Gateway{AI Gateway <br/> Pl. LiteLLM}
+    
+    Gateway -->|Routing / Fallback| OpenAI[OpenAI GPT]
+    Gateway -->|Rate limit / Költségkeret| Anthropic[Anthropic Claude]
+    Gateway -->|PII Masking| Local[Privát On-Premise LLM]
+    
+    style Gateway fill:#f9f,stroke:#333,stroke-width:2px
+```
