@@ -53,7 +53,9 @@ Tömör, strukturált válasz a hívó skillnek (ne írj fájlt):
 ## Frissítendő dokumentumok
 | Dokumentum | Mit kell frissíteni |
 |---|---|
-| docs/architecture.md | ... |
+| apps/<komponens>/README.md | ... |
 ```
+
+> **Megjegyzés:** a `docs-generated/` mappa (`architecture.md`, `system-overview.md`, `CHANGELOG.md`, `design-drift.md`) **nem** ide tartozik — azt a `08-doc-sync` fázis tartja karban (DS4), ne sorold a plan/implementáció frissítendő doksijai közé.
 
 **Soha ne add vissza a teljes fájltartalmat** — csak a path-okat, helyeket és egysoros összefoglalókat.

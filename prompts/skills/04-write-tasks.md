@@ -5,6 +5,7 @@ prerequisites:
   - "specs/cycle-NN-<name>/plan.md státusz: Task írásra kész"
 output:
   - "specs/cycle-NN-<name>/tasks.md státusz: Implementálásra kész"
+  - "specs/cycle-NN-<name>/tasks-questions.md (ha merül fel kérdés)"
 prev: 03-write-plan
 next: 05-analyze
 subagents: []
@@ -14,7 +15,7 @@ subagents: []
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
 
-Ez a fejlesztési folyamat **4-es fázisa (a 0–8 fázisokból)**:
+Ez a fejlesztési folyamat **4-es fázisa (a 0–9 fázisokból)**:
 0. projekt inicializálás (setup)
 1. ciklusok kezelése (setup)
 2. spec
@@ -23,7 +24,8 @@ Ez a fejlesztési folyamat **4-es fázisa (a 0–8 fázisokból)**:
 5. analyze
 6. implement
 7. validate
-8. review & merge
+8. doc-sync
+9. review & merge
 
 ---
 
@@ -102,7 +104,7 @@ Soha nem kerül bele:
 - **Sorszámozási konvenciók — `T`, `TREG`, `TLAST`:**
   - **`Tnnn`** — normál, szekvenciálisan számozott implementációs task (`T001`, `T002`, …) a logikai csoportokban.
   - **`TREGn`** — regressziós felülvizsgálati task (`TREG1`, `TREG2`, …) a kötelező „Regressziós tesztek felülvizsgálata" záró csoportban. Sorrendben, `[CHECK]` nélkül. Csak olyan fájlra, amely a plan `Regressziós érintettség` táblázatában van, de a `Tervezett módosítások`-ban nincs.
-  - **`TLASTn`** — a kötelező „Dokumentáció" záró csoport taskjai (`TLAST1`, `TLAST2`, …), a lista legvégén. Ezek futnak utoljára.
+  - **`TLASTn`** — a „Dokumentáció" záró csoport taskjai (`TLAST1`, `TLAST2`, …), a lista legvégén, ha vannak. Ezek futnak utoljára. **FONTOS (DS4):** a `docs-generated/` minden fájlja — köztük az `architecture.md` és a komponens README-k — a `08-doc-sync` fázis **kizárólagos** gazdája; a 04 ezekhez **nem** generál `TLAST` taskot. `TLAST` csak akkor kerül a listába, ha a plan **explicit** kér egy olyan dokumentáció-frissítést, ami **nem** a `docs-generated/`-ben él (pl. egy kódbeli `README` vagy egy projekt-specifikus kézi doksi).
   - A számozás minden prefixen belül 1-től indul és növekvő.
 
 ---
@@ -178,16 +180,15 @@ Ha a plan azt mondja, hogy nincs regressziós érintettség, ez a csoport kihagy
 - [ ] TREG2 Ellenőrizd / frissítsd: `test/integration/cycle-XX-foo.sh` — érintett, mert [indok a plan-ből]
 ```
 
-**2. Dokumentáció** — önálló, utolsó csoport. Ha a ciklus új architektúrális elemet (komponens, interfész, adatfolyam) vezet be, az utolsó task a `docs/architecture.md` frissítése. Tisztán átnevezési vagy refaktorálási ciklusnál ez elhagyható, ha a plan nem tartalmazza.
+**2. Dokumentáció** — önálló, utolsó csoport, **csak ha szükséges**. **A `docs-generated/` egyetlen fájljához sem (architecture.md, system-overview.md, CHANGELOG.md, design-drift.md, komponens README-k) generálsz `TLAST` taskot** — ezeket a `08-doc-sync` fázis írja és tartja konzisztensen, a teljes ciklus rálátásával (DS4). Ez a csoport **csak akkor** kerül a listába, ha a plan **explicit** kér egy olyan dokumentáció-frissítést, amely **nem** a `docs-generated/` gazdája alá tartozik. Tisztán átnevezési/refaktorálási ciklusnál, vagy ha a plan nem nevez meg ilyen doksit, ez a csoport **elhagyható**.
 
 ```md
 ## Dokumentáció
 
-- [ ] TLAST1 Frissítsd a `docs/architecture.md`-t az új modulok, komponensek, adatfolyamok leírásával — `docs/architecture.md`
-- [ ] TLAST2 ...egyéb dokumentáció a plan alapján...
+- [ ] TLAST1 ...a plan által explicit kért, NEM docs-generated/ alá tartozó dokumentáció-frissítés...
 ```
 
-_Megjegyzés a `TLAST` és a 08-as frissítés különbségéről: A `TLAST` task az implementáció részeként frissíti az `architecture.md`-t — az éppen elkészült új elemeket (komponensek, interfészek, adatfolyamok) rögzíti. A 08-as review & merge fázis ezután elvégzi a **konzisztencia-ellenőrzést**: átjárja a teljes dokumentumot, javítja az elavult részeket, és a ciklus végső állapotát egységessé teszi. A két lépés nem duplikálja egymást: a `TLAST` ír, a 08 ellenőriz és finomít._
+_Megjegyzés a doksi-felelősségről (DS4): az `architecture.md` és a teljes `docs-generated/` mappa **kizárólag a `08-doc-sync` fázis** gazdája — a korábbi `TLAST1 → docs/architecture.md` záró task **nyugdíjazva**. Az implementáció (06) a kódra koncentrál; a megvalósult rendszer „as-built" dokumentációját (működésleírás, architektúra, changelog, drift) a doc-sync komponálja és validálja a saját konzisztencia-kapujával. Így nincs kettős író és nincs sorrend-probléma._
 
 ---
 
@@ -237,8 +238,9 @@ Menj végig a következő csoportokon sorban. Minden csoportot önállóan pipá
 ### E) Dokumentáció és TypeScript
 
 - **Meglévő komponens README:** Ha a ciklus meglévő komponens konfigurációját (env var-ok, indítási paraméterek, külső kapcsolatok) változtatta meg, a komponens `README.md` frissítése szerepel-e taskként a Dokumentáció csoportban?
-- **Architecture dokumentáció:** Ha a ciklus új komponenst, interfészt, adatfolyamot vagy architektúrális elemet vezet be, az utolsó task a `docs/architecture.md` frissítése. Tisztán átnevezési, refaktorálási vagy törlési ciklusnál ez elhagyható, ha a plan nem tartalmazza.
+- **Architecture / generált dokumentáció (DS4):** **NE** generálj taskot a `docs-generated/architecture.md` (vagy a `docs-generated/` bármely fájlja) frissítésére, még új komponens/interfész/adatfolyam bevezetésekor sem — ezek **kizárólag a `08-doc-sync` fázis** gazdái, amely a teljes ciklus rálátásával komponálja és validálja őket. Az implementáció (06) a kódra koncentrál; az „as-built" dokumentáció a doc-syncben készül.
 - **TypeScript rename ellenőrzés:** Ha a ciklus TypeScript interfész-, típus- vagy metódusnevet nevez át, ellenőrizd, hogy a plan `Ellenőrzési stratégia` szekciója tartalmaz-e `typecheck` parancsot minden érintett npm package-hez. Ha igen, vedd fel [CHECK] taskként. Ha nem szerepel a planban, **ne találd ki magad** — a parancs csak akkor kerülhet taskba, ha a plan explicit felsorolja (a plan agent ellenőrzi a package.json-ban, hogy a script létezik-e).
+- **Rename teljességi `[CHECK]`:** Ha a ciklus egy nevet (végpont, szimbólum, env-változó, fájlnév) **az egész projektben** cserél le, a Dokumentáció csoport záró taskja legyen egy `[CHECK]`, amely a teljes repóban grep-eli a **régi nevet** annak minden alakváltozatában (pl. `init-cache`, `initCache`, `init_cache`, `InitCache`), kizárva a spec **Out of scope**-jában történetinek jelölt utakat (lezárt ciklusok `test-report`-jai, régi `spec.md`-k, `roadmap.md` múltbeli bejegyzései) és a `node_modules`/`.git` mappákat. A task akkor zöld, ha az élő forráson, dokumentáción (gyökér + app `README.md`, `docs/`, `.agent/`) és a verziókövetett build-kimeneten (`dist/`) **nulla** találat marad. Ha a `dist/` verziókövetett, ezt egy tiszta újrabuild (`dist` törlés + `npm run build`) előzze meg, mert a `tsc`/vite nem törli az átnevezett forrás orphan kimenetét.
 - **Fájl elérési utak formátuma:** Minden fájl elérési útja és linkje a fájl aktuális könyvtárához képest relatív útvonal legyen (a mappa mélységének megfelelő számú visszalépéssel a projekt gyökeréig, pl. `../../apps/legacy-login/config/users.json`)? Abszolút útvonalak vagy `file://` sémájú linkek sehol nem szerepelhetnek a dokumentációban.
 
 ---
@@ -279,5 +281,61 @@ Ha a státusz `Implementálásra kész`, állj meg. Ne kezdj implementálni vagy
 > Input: `specs/cycle-NN-<cycle-name>`
 > ```"*
 > **A válasz végén helyezd el a `tasks.md` közvetlen, kattintható linkjét.**
+
+---
+
+## Nyitott kérdések kezelése (tasks-questions.md)
+
+A `tasks-questions.md` a tasks fázis kérdés-nyilvántartója, a `spec-questions.md` / `plan-questions.md` mintájára. **Scope:** elsősorban a Fix-mód (lásd lent) használja, amikor task-szintű döntés merül fel; a normál 04 flow is hivatkozhat rá, ha kérdés keletkezik a megszokott „STOP és jelezd" helyett (pl. új sessionban folytatott, megszakítás-biztos rögzítés).
+
+**Struktúra** (ha még nem létezik, hozd létre a `specs/cycle-NN-<cycle-name>/` mappában):
+
+```md
+# Cycle NN: <cím> — Tasks kérdések
+
+- [ ] K01 — [kérdés szövege]
+- [x] K02 — [kérdés szövege] → [döntés / válasz röviden]
+- [ ] K03 — [kérdés szövege] _(K02-ből merült fel)_
+```
+
+**Szabályok** (azonosak a spec/plan kérdés-nyilvántartóval):
+- Egyszerre **egy** kérdés kerül a felhasználó elé — várd meg a választ.
+- A listából **soha nem törlünk** — lezárt kérdést `[x]`-szel jelölünk, a döntés megmarad.
+- Új kérdés a lista végére kerül a következő szekvenciális `Knn` számmal.
+- **`tasks.md` státusz-kölcsönhatás:** ha van legalább egy nyitott `[ ]` kérdés a `tasks-questions.md`-ben, a `tasks.md` **nem lehet** `Implementálásra kész`. A státusz `Piszkozat` marad, amíg minden kérdés `[x]`. (Fix-módban a `[analyze-loop]` markeres megfelelők szerint — lásd lent.)
+
+---
+
+## Fix-mód (analyze-hurok belépő)
+
+> **Mikor aktív:** ezt a szekciót az `05-analyze` önjavító hurka indítja az `agents/tasks-fixer.md` wrapperen keresztül — **nem** a normál tasks-írás. A bemenet egy konkrét `Must Fix` lista, nem teljes újrafutás.
+
+A fix-mód egy **szűkített belépő:** a megadott `Must Fix` megállapításokat javítod célzottan (jellemzően lefedettségi rés vagy task-szintű duplikáció), **nem írod újra az egész listát**. (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A normál flow minőségellenőrzése a javított részekre továbbra is érvényes.
+
+### Két belépési alak
+1. **Közvetlen javítás:** a `Must Fix` a tasks listát érinti (lefedettségi rés, redundáns task — a célfázis 04).
+2. **Downstream re-deriválás (reconciliation):** a hurok feljebb (02/03) javított, és a tasks listát a megváltozott planhez kell **összehangolni**. Célzott reconciliation, nem teljes újraírás: csak a megváltozott plan-szakaszokhoz tartozó taskokat igazítod.
+
+### Bemenet
+- A tasks-re szűrt `Must Fix` lista (kategória + leírás + `fájl:hely`), vagy reconciliation esetén a megváltozott upstream (plan) összefoglalója.
+- A `tasks.md` és a `tasks-questions.md` aktuális állapota.
+
+### Auto-javítható vs kérdezni kell (a határvonal)
+
+| Magától javítsd (auto) | Kérdésbe tedd (`tasks-questions.md` új `Knn`) |
+|---|---|
+| Lefedettségi rés pótlása (hiányzó task felvétele a planből), task-duplikáció összevonása, naming-egységesítés, plan-változás átvezetése a tasks listába | Olyan task, amely a planből nem vezethető le egyértelműen (a plan hiányos), körkörös task-függőség, feltételes/külső függőségtől függő task |
+
+A `Must Fix`-et, amihez **valódi döntés** kell (jellemzően ha a plan hiányosságát jelzi), **ne találd ki** — vedd fel új `Knn`-ként a `tasks-questions.md` végére, és **ne kérdezd közvetlenül a felhasználót** (fix-módban nincs interaktív csatornád). A kérdezést az orchestrátor (`05-analyze`) végzi, a user-felé `TASKS/Knn` prefixszel. (Ez a fix-mód megfelelője a fenti „Megállási szabályok"-nak: normál módban STOP + jelzés, fix-módban kérdés-gyűjtés a `tasks-questions.md`-be.)
+
+### Státusz (auto, `[analyze-loop]` marker)
+A hurok a `tasks.md` státuszát `[analyze-loop]` markerrel nyitotta vissza (pl. `Piszkozat [analyze-loop]`). Amíg a marker jelen van, **automatikusan** lépteted a státuszt, megerősítés-kérés nélkül:
+- van nyitott `[ ]` kérdés a `tasks-questions.md`-ben → marad `Piszkozat [analyze-loop]`;
+- minden kérdés `[x]` és a célzott javítás kész (a minőségellenőrzés átment) → `Implementálásra kész [analyze-loop]`.
+
+A marker fel- és levételét az orchestrátor kezeli; te csak a státusz-értéket lépteted.
+
+### Visszatérési összefoglaló (az orchestrátornak)
+Adj vissza tömör összefoglalót: (a) mely `Must Fix`-eket / plan-változásokat vezettél át és hogyan, (b) milyen új `Knn` kérdéseket vettél fel a `tasks-questions.md`-be (azonosítóval). A `tasks.md`-t és a `tasks-questions.md`-t te írod; az `analyze-report.md`-t **nem** — az az orchestrátoré.
 
 

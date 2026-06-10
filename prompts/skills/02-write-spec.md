@@ -15,7 +15,7 @@ subagents: []
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
 
-Ez a fejlesztési folyamat **2-es fázisa (a 0–8 fázisokból)**:
+Ez a fejlesztési folyamat **2-es fázisa (a 0–9 fázisokból)**:
 0. projekt inicializálás (setup)
 1. ciklusok kezelése (setup)
 2. **spec** ← most itt vagyunk
@@ -24,7 +24,8 @@ Ez a fejlesztési folyamat **2-es fázisa (a 0–8 fázisokból)**:
 5. analyze
 6. implement
 7. validate
-8. review & merge
+8. doc-sync
+9. review & merge
 
 ---
 
@@ -33,6 +34,8 @@ Ez a fejlesztési folyamat **2-es fázisa (a 0–8 fázisokból)**:
 0. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` fázishoz. **Munkafa:** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e most vagy folytassam — várj a válaszra. (A 02 branchet hoz létre; commitálatlan változások átkerülhetnek az új branch-re.)
 
 1. **Roadmap ellenőrzés:** Olvasd be a `specs/roadmap.md`-t. **Ha a státusz nem `Kész`, ne kezdj el spec-et írni.** Jelezd a felhasználónak, hogy a roadmap még nem zárult le, és térjenek vissza a `01` ciklusok kezelése fázishoz. Ha a státusz `Kész`, keresd meg a megadott ciklus (`cycle-NN-<cycle-name>`) bejegyzését a roadmap-ben, és használd azt a spec kiindulópontjaként — a viselkedés, az érintett komponensek, az előfeltételek és a teszt kritérium mind alapot adnak a spec részletes kidolgozásához.
+
+1.b **Current-truth kiindulás (DS5):** ha létezik a `docs-generated/system-overview.md`, olvasd be — ez a megvalósult (as-built) rendszer konszolidált, naprakész működésleírása, amit a `08-doc-sync` fázis tart karban. A spec a **jelenlegi valóságból** induljon: nézd meg, milyen flow-k/állapot/endpointok léteznek már, hogy az új spec ezekre épüljön, ne ütközzön velük. **Guard:** ha a fájl még nem létezik (korai ciklus / a bootstrap előtt), **ne állj meg** — jelezd egy mondatban, hogy a current-truth doksi még nincs, és folytasd a spec írását a roadmap alapján.
 
 2. **Branch létrehozás:** Ellenőrizd, hogy a cycle branch létezik-e. Ha nem, hozd létre a cycle neve alapján (a `specs/roadmap.md`-ből deriválva):
    ```bash
@@ -266,3 +269,41 @@ A `Tervezésre kész`-re váltás után készíts git commitot (`cycle-NN: 02-sp
   - Meglévő interfész új funkcióval vagy elágazással bővül (pl. új paraméter, új kód ág, flow detection bevezetése) — a meglévő hívási út nem törhetett el
   - Közös komponens módosul (route handler, middleware, shared service) — minden fogyasztóját ellenőrizni kell
   - Meglévő viselkedés mellé új viselkedés kerül ugyanarra a végpontra vagy belépési pontra — a két ág egymástól függetlenül kell működjön
+
+- **Rename / projekt-szintű csere — teljes lefedettség a DoD-ban?** — Ha a ciklus célja egy név (végpont, szimbólum, env-változó, fájlnév) **lecserélése az egész projektben** (a célkitűzés ilyenkor jellemzően „a teljes projektben" / „mindenhol" fordulatot tartalmaz), akkor a DoD nem elég, ha csak a *forráskódot* sorolja fel. A spec íráskor menj végig az alábbi artefaktum-osztályokon, és minden olyanra, ahol a régi név **ténylegesen előfordulhat**, vagy legyen explicit DoD-pont, vagy kerüljön az **Out of scope**-ba (indokkal). Ne maradjon szürke zóna:
+  - **Forráskód** (`src/`, `apps/*/src/`) és a hozzá tartozó tesztek
+  - **Élő, nem-forrás dokumentáció:** gyökér `README.md`, app-szintű README-k, `docs/` (architektúra, diagramok pl. `.drawio`), **az `.agent/` alatti skill/agent leírások** — ezek a rendszer *aktuális* viselkedését írják le, ezért átírandók
+  - **Build-kimenet / generált artefaktum:** ha a `dist/` (vagy más generált mappa) verziókövetett, a DoD-ban szerepeljen egy **tiszta újrabuild** (a régi, átnevezett forrás orphan kimenete nem törlődik magától — pl. a `tsc` nem takarítja); vagy mondd ki Out of scope-ként, hogy a `dist/` nem követett
+  - **Konfiguráció és env:** `.env*` minták, compose/CI fájlok, env-változó nevek
+  - **Történeti artefaktumok** (lezárt ciklusok `spec.md`/`test-report`-jai, dátumozott logok, `roadmap.md` múltbeli bejegyzései): ezek **szándékosan érintetlenek** — tedd explicit Out of scope-ba, hogy az analyze/review ne jelezze hibaként, és hogy ne is írja át őket senki visszamenőleg.
+  Megkülönböztető szabály: az **endpoint/szimbólum neve** (átírandó) ≠ az azonos szót használó **fogalom** (pl. „token cache", „Redis Cache" — marad). A DoD fogalmazzon elég pontosan ahhoz, hogy ez ne mosódjon össze.
+
+---
+
+## Fix-mód (analyze-hurok belépő)
+
+> **Mikor aktív:** ezt a szekciót az `05-analyze` önjavító hurka indítja az `agents/spec-fixer.md` wrapperen keresztül — **nem** a normál spec-írás. A bemenet egy konkrét `Must Fix` lista, nem teljes újrafutás.
+
+A fix-mód egy **szűkített belépő:** a megadott `Must Fix` megállapításokat javítod célzottan, **nem írod újra az egész specet**. (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A normál flow minőségi kapui (a fenti minőségellenőrzés) a javított részekre továbbra is érvényesek.
+
+### Bemenet
+- A spec-re szűrt `Must Fix` lista (kategória + leírás + `fájl:hely`).
+- A `spec.md` és a `spec-questions.md` aktuális állapota.
+
+### Auto-javítható vs kérdezni kell (a határvonal)
+
+| Magától javítsd (auto) | Kérdésbe tedd (`spec-questions.md` új `Knn`) |
+|---|---|
+| Lefedettségi rés szöveges pótlása, naming-egységesítés, megfogalmazás-pontosítás, duplikált követelmény összevonása | Spec-szintű ambiguitás, hiányzó vagy nem eldönthető elfogadási feltétel, meghatározatlan viselkedés, üzleti döntés |
+
+A `Must Fix`-et, amihez **valódi döntés** kell, **ne találd ki** — vedd fel új `Knn`-ként a `spec-questions.md` végére (a normál flow szerint), és **ne kérdezd közvetlenül a felhasználót** (fix-módban nincs interaktív csatornád). A kérdezést az orchestrátor (`05-analyze`) végzi, fázis-fejléccel.
+
+### Státusz (auto, `[analyze-loop]` marker)
+A hurok a `spec.md` státuszát `[analyze-loop]` markerrel nyitotta vissza (pl. `Piszkozat [analyze-loop]`). Amíg a marker jelen van, **automatikusan** lépteted a státuszt, megerősítés-kérés nélkül (eltérően a normál flow „megerősítés a státuszváltás előtt" szabályától):
+- van nyitott `[ ]` kérdés a `spec-questions.md`-ben → `Nyitott kérdések vannak [analyze-loop]`;
+- minden kérdés `[x]` és a célzott javítás kész → `Tervezésre kész [analyze-loop]`.
+
+A marker fel- és levételét az orchestrátor kezeli; te csak a státusz-értéket lépteted, a markert változatlanul hagyod.
+
+### Visszatérési összefoglaló (az orchestrátornak)
+Adj vissza tömör összefoglalót: (a) mely `Must Fix`-eket javítottad és hogyan, (b) milyen új `Knn` kérdéseket vettél fel a `spec-questions.md`-be (azonosítóval). A `spec.md`-t és a `spec-questions.md`-t te írod; az `analyze-report.md`-t **nem** — az az orchestrátoré.

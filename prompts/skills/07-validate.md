@@ -7,15 +7,16 @@ output:
   - "specs/cycle-NN-<name>/test-report/validate-decision.md"
   - "PASS esetén: spec.md / plan.md / tasks.md státusz: Kész"
 prev: 06-implement
-next: 08-review-and-merge
-subagents: []
+next: 08-doc-sync
+subagents:
+  - "agents/implement-fixer.md"
 ---
 
 # 07 — Validálás
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
 
-Ez a fejlesztési folyamat **7-es fázisa (a 0–8 fázisokból)**:
+Ez a fejlesztési folyamat **7-es fázisa (a 0–9 fázisokból)**:
 0. projekt inicializálás (setup)
 1. ciklusok kezelése (setup)
 2. spec
@@ -24,7 +25,8 @@ Ez a fejlesztési folyamat **7-es fázisa (a 0–8 fázisokból)**:
 5. analyze
 6. implement
 7. **validate** ← most itt vagyunk
-8. review & merge
+8. doc-sync
+9. review & merge
 
 ---
 
@@ -44,7 +46,7 @@ A prompt bemenete a ciklus mappája (pl. `specs/cycle-NN-<cycle-name>`). A valid
 - **Ellenőrzőpont:** a `plan.md` és `spec.md` státusza elfogadható értékek:
   - `plan.md`: `Task írásra kész` vagy `Kész`
   - `spec.md`: `Tervezésre kész` vagy `Kész`
-  - `Kész` mindkettőnél normális, ha a 08-as review után tértünk vissza ide.
+  - `Kész` mindkettőnél normális, ha a 09-es review (vagy a 09 merge előtti doc-sync újrafuttatása) után tértünk vissza ide.
   - Ha valamelyik `Piszkozat`-ra van visszaállítva, jelezd a felhasználónak — valamelyik korábbi fázisban döntés született, amely szinkront igényel.
 
 ---
@@ -63,6 +65,8 @@ Ellenőrizd, hogy a ciklus implementációja teljes és helyes. A validálás h�
 2. **`plan.md` — Tesztelési stratégia**: minden előírt teszt lefut-e és átmegy-e?
 3. **`tasks.md`**: minden task `[x]` státuszban van-e?
 
+**Szereped PASS-ig determinisztikus ellenőrző, FAIL esetén orchestrátor.** Ha a validálás FAIL-t talál, **nem** adod vissza egyszerűen a vezérlést a felhasználónak („futtasd újra a 06-ot"), hanem **levezényelsz egy önjavító hurkot** (`implement-fixer` subagent → újra-validálás), amíg PASS nem lesz — a meglévő **3-próba szabály** korlátjával és tervezési hiba esetén **felfelé eszkalálva**. A javítást nem te végzed: azt az `agents/implement-fixer.md` subagent (= a 06 Fix-módja) csinálja. Lásd „Az önjavító hurok (orchestrátor-hurok)".
+
 ---
 
 ## Megszakított futás kezelése
@@ -71,6 +75,13 @@ A validáció bármikor megszakadhat. Újraindítás (ismételt futtatás) eset�
 1. **Idempotens futás**: Kezdd elölről a validálási lépéseket. Ha a korábbi futás naplózott már valamit a `test-report/validate-decision.md`-be, az az előző (félbeszakadt) futásnak tekintendő.
 2. **Beragadt erőforrások**: Ha a korábbi megszakított futásból beragadt teszt konténerek vagy folyamatok miatt portütközést tapasztalsz, lődd ki azokat, vagy keress új szabad portot a korábban leírt módon.
 3. **Duplikált taskok elkerülése**: Ha a futás FAIL-lel zárul, és javító feladatokat kell felvenned a `tasks.md` `## Validációs javítások` szekciójába, mindig ellenőrizd, hogy a konkrét teszthiba vagy Sonar javítás nem szerepel-e már elvégzetlen taskként (egy korábbi félbeszakadt validáció okán). Ha már ott van, ne vedd fel duplán.
+
+4. **Megszakadt önjavító hurok felismerése (`[validate-loop]` marker + Validation History):** ha a `tasks.md` státusza `Implementálásra kész [validate-loop]` markert visel, egy korábbi validate-hurok szakadt meg — **ne** kezdj tiszta lapról. Derítsd ki a hurok állapotát:
+   - Olvasd be a `# Validation History`-t: melyik volt az utolsó FAIL, melyik a megrekedt item, és hány a `Consecutive Failures for this item` (hányadik próbánál tartott).
+   - Olvasd be a `tasks.md` `## Validációs javítások` szekcióját: vannak-e még elvégzetlen `[ ]` javító-taskok?
+     - **Ha igen** (a fixer nem futott le vagy félbeszakadt): folytasd a hurkot a fixer újraindításával ezekre a taskokra, majd újra-validálj.
+     - **Ha nincs** (a fixer befejezte, de az újra-validálás maradt el): futtasd újra a validálási lépéseket, és értékeld az eredményt a hurok szerint.
+   - A `Consecutive Failures` számláló a 3-próba korlát alapja — a folytatáskor onnan számolj tovább, ne nullázd.
 
 ---
 
@@ -186,6 +197,86 @@ A validálás végén adj egy tömör összefoglalót:
 
 ---
 
+## Az önjavító hurok (orchestrátor-hurok)
+
+FAIL esetén **nem** adod vissza egyszerűen a vezérlést a felhasználónak. Levezényelsz egy iteratív javító hurkot — `implement-fixer` subagent → újra-validálás — amíg PASS nem lesz, vagy amíg a **3-próba szabály (VD4)** / a **felfelé menekülő ág (VD5)** meg nem állítja.
+
+A meglévő FAIL-gépezet megmarad (a `validate-decision.md` `# Validation History`, a `tasks.md` `## Validációs javítások`, a státusz-visszafordítás) — csak a korábbi „kézi visszaadás a felhasználónak (futtasd újra a 06-ot)" lesz orchesztrált hurok. A javítást nem te végzed: azt az `implement-fixer` subagent (= a 06 Fix-módja) csinálja; te validálsz, naplózol, döntesz és státuszt fordítasz.
+
+### ⚠ Anti-„teszt-csalás" garde (VD3 — a hurok legfontosabb szabálya)
+
+**A hurok a KÓDOT igazítja a teszthez / Sonarhoz / DoD-hoz — SOHA nem fordítva.** A teszt és a Definition of done a **szerződés**; a hurok ezt a zöld eredmény érdekében **nem módosíthatja**.
+
+**STOP — tilos** bármelyik:
+- teszt assertion gyengítése/lazítása, vagy az elvárt érték a kódból visszamásolása;
+- teszt `skip`/`xfail`/kikommentezése/törlése a zöldért;
+- hardcode-olt „elvárt" érték, amely a tesztet zöldíti, de a valós viselkedést nem valósítja meg;
+- a `spec.md` DoD-pont leszállítása/átfogalmazása, hogy könnyebben teljesüljön.
+
+Ezt a szabályt az `implement-fixer` is megkapja (a 06 Fix-mód garde-ja) — egy olcsóbb LLM se sodródjon teszt-csalásba. **Ha egy hiba csak a teszt/DoD megváltoztatásával lenne zöld** → az nem kód-fix, hanem **tervezési hiba** → VD5 (felfelé menekülő ág), nem a teszt lazítása.
+
+### A hurok egy iterációja
+
+1. **FAIL naplózása.** Írd a `# Validation History`-ba a futás eredményét: a hibás item(ek) pontos neve + a `Consecutive Failures for this item` számláló (előző egymás utáni hibák + 1).
+2. **3-próba ellenőrzés (VD4 — kilépés).** Ha bármely itemnél a `Consecutive Failures` eléri a **3**-at (a mostani futást is beleszámítva) → a hurok megáll (lásd „3-próba szabály mint hurok-korlát"). A megállás típusát a VD5 heurisztika dönti el: tervezési hiba → eszkaláció; egyébként → STOP + humán.
+3. **Korai eszkaláció-ellenőrzés (VD5).** Ha az előző iteráció `implement-fixer` subagentje **eszkalációs jelzést** adott vissza (a hibát csak a teszt/DoD módosításával lehetne zöldre vinni), ne körözz tovább a 06-ban → **azonnal eszkalálj** (lásd „Felfelé menekülő ág"), nem kell megvárni a 3. próbát.
+4. **Javító-taskok felvétele.** A FAIL-gépezet szerint (lásd „FAIL — javító-taskok felvétele"): `## Validációs javítások` szekció a `tasks.md` végén, prerequisite hivatkozásokkal, `[GREEN]`/`[CHECK]` taskként a konkrét teszt-/Sonar-hibák. Duplikátum-kerülés: ne vedd fel kétszer ugyanazt.
+5. **Marker felvétele (VD6).** A `tasks.md` státuszát fordítsd `Implementálásra kész [validate-loop]`-ra. A marker jelzi: fix-mód aktív → a fixer automatikusan lépteti a státuszt, megerősítés nélkül.
+6. **`implement-fixer` subagent indítása (VD2).** A konkrét teszt-/Sonar-hibalistával + a prerequisite riportokkal (lásd „A fixer-subagent indítása"). Ha a fixer **eszkalációs jelzést** ad vissza → ugorj a 3. pontra.
+7. **Újra-validálás.** Kezdd elölről a „Validálási lépéseket" (gyors tesztek → Sonar → nehéz tesztek → DoD/README).
+   - **PASS** (minden teszt + Sonar + DoD zöld) → a hurok konvergált, ugrás a „Státusz kezelés → PASS"-ra (itt kerül le a marker, és történik az egyetlen lezáró commit).
+   - **FAIL** → új iteráció az 1. ponttól.
+
+### A fixer-subagent indítása (VD2)
+
+- A subagent **rendszerpromptja** az `agents/implement-fixer.md` wrapper, amely a `06-implement.md` „Fix-mód (validate-hurok belépő)" szekciójára delegál — nincs duplikált javító logika, a 06 minőségi szabályai automatikusan érvényesülnek.
+- **Bemenet:** a `tasks.md` `## Validációs javítások` elvégzetlen taskjai (a konkrét teszt-/Sonar-/DoD-hibák) + a prerequisite riportok (`validate-decision.md`, és ha Sonar bukott, `sonar-report.md`).
+- **Kimenet:** (a) az elvégzett javítások összefoglalója (mely taskot mivel zárt le), és (b) **eszkalációs jelzés**, ha valamelyik hibát csak a teszt/DoD módosításával lehetne zöldre vinni (VD3). A subagent **nem** módosíthatja a tesztet/DoD-ot, és **nem** írja a `validate-decision.md`-t — azt te (az orchestrátor).
+
+### Felfelé menekülő ág (VD5 — escape hatch)
+
+Nem minden FAIL kód-bug: néha **tervezési hiba** (a teszt/DoD a kóddal ellentmondó, vagy a terv hibás alapra épül). Ilyenkor a hurok ne 06-ban körözzön — a 06 sosem fogja zöldre vinni, mert csak a tesztet/DoD-ot lazítva lehetne, azt pedig VD3 tiltja.
+
+**Detektálási heurisztika** — tervezési hiba jele, ha:
+- **(a)** az `implement-fixer` eszkalációs jelzést adott vissza (a hibát csak a teszt/DoD megváltoztatásával lehetne zöldre vinni), **vagy**
+- **(b)** a 3-próba elérésekor a megrekedt itemet az addigi javítási kísérletek alapján csak a teszt/DoD megváltoztatásával lehetne zöldre vinni.
+
+**Teendő (STOP + eszkaláció), sorban:**
+1. Naplózd a `# Validation History`-ba a megrekedt itemet, és hogy **tervezési hiba** miatt eszkalálsz (nem kód-bug).
+2. **Státusz-visszafordítás 03/02-re:** fordítsd vissza az érintett tervezési dokumentum státuszát a megfelelő nem-kész értékre — `plan.md` → `Piszkozat` (ha a terv hibás), vagy `spec.md` → `Piszkozat` (ha maga a DoD a hibás/ellentmondásos). A `tasks.md` a `[validate-loop]` markerrel marad (a megrekedt állapot jelzése).
+3. **Egyetlen lezáró commit** (VD8).
+4. **Jelezd a felhasználónak az átadást** — ez tervezési kérdés, nem automatikus javítás (a list2 analyze-szellemű tervezési hurokra tartozik), lásd a jelzés szövegét lent. A folyamat a tervezés rendezése után a `05→06→07` úton tér vissza ide.
+
+### 3-próba szabály mint hurok-korlát (VD4)
+
+A hurok korlátja a **meglévő 3-próba szabály** — **nincs külön globális számláló**. Ha a `# Validation History` alapján bármely tesztnél vagy a SonarQube minőségellenőrzésnél a `Consecutive Failures for this item` eléri a **3**-at (a mostani futást is beleszámítva): a hurok megáll a **beragadt elemnél**. Ez okosabb, mint egy globális `max X`, mert pont a megrekedt itemet fogja meg.
+
+- Ha a megállás **tervezési hiba** jele (VD5 heurisztika) → **eszkaláció** (felfelé menekülő ág).
+- Egyébként → **STOP + humán** (megrekedt kód-bug): *„A(z) [Failed Item] egymás után harmadszor is elbukott. Humán beavatkozás szükséges — hogyan tovább?"* Ne folytasd a javítást a felhasználó válasza nélkül. Commit a végén (VD8); a `## Validációs javítások` és a `[validate-loop]` marker megmarad (megrekedt állapot).
+
+### Commit-stratégia a hurokban (VD8)
+
+- **A hurokban nincs iterációnkénti commit** — a korábbi FAIL-enkénti commit megszűnik.
+- **Egyetlen lezáró commit** a hurok végén (PASS / 3-próba STOP / eszkaláció):
+  ```bash
+  git add specs/cycle-NN-<cycle-name>/
+  git commit -m "cycle-NN: 07-validate"
+  ```
+- **Megszakítás-biztos:** a köztes commit hiányát a `# Validation History` + a `[validate-loop]` státusz-marker pótolja — ezekből a folytatás rekonstruálható (lásd „Megszakított futás kezelése").
+
+### „Hol járunk" a megállási üzenetekben (LC2)
+
+A user-felé tett megállási üzeneteknél (3-próba STOP, eszkaláció — ez a hurok **egyetlen** user-érintkezése, lásd VD7) jelezd, hol tart a hurok: a megrekedt elemet és a próbaszámot, a `# Validation History`-ra hivatkozva:
+
+```
+[VALIDATE · <Failed Item> · próba 3/3]
+<üzenet szövege>
+```
+
+A válaszod végén kötelezően helyezz el egy közvetlen, kattintható linket a `validate-decision.md`-re.
+
+---
+
 ## Státusz kezelés
 
 > **A PASS automatikus, mert determinisztikus ellenőrzéseken alapul (tesztek + Sonar + DoD). Felhasználói megerősítés NEM szükséges — ne kérj megerősítést a `Kész` státuszra váltás előtt. Az eredmény bármikor ellenőrizhető a `validate-decision.md`-ben.**
@@ -195,43 +286,58 @@ A validálás végén adj egy tömör összefoglalót:
 Minden teszt átment, a DoD teljesül, minden task `[x]`, és a Sonar Quality Gate PASS (vagy N/A).
 
 Teendők:
-1. Frissítsd a `tasks.md`, `plan.md` és `spec.md` státuszát `Kész`-re.
-2. Commitáld a fázis lezárását:
+1. **Vedd le a `[validate-loop]` markert** (ha a hurok futott): a `tasks.md` státusza `Kész`-re vált — marker nélkül. Frissítsd a `plan.md` és `spec.md` státuszát is `Kész`-re.
+2. **Egyetlen lezáró commit** (a hurok alatt nem volt köztes commit — VD8):
    ```bash
    git add specs/cycle-NN-<cycle-name>/
    git commit -m "cycle-NN: 07-validate"
    ```
-3. Jelezd: *"Validálás sikeres. Folytathatjuk a 8. lépéssel: review & merge (08). Használd ezt a promptot:*
+3. Jelezd: *"Validálás sikeres. Folytathatjuk a 8. lépéssel: dokumentáció szinkron (08-doc-sync). Használd ezt a promptot:*
    > ```
-   > Kövesd a `prompts/skills/08-review-and-merge.md` utasításait.
+   > Kövesd a `prompts/skills/08-doc-sync.md` utasításait.
    > Input: `specs/cycle-NN-<cycle-name>`
    > ```"*
    > **A válasz végén helyezd el a `validate-decision.md` közvetlen, kattintható linkjét.**
 
-### FAIL
+### FAIL — javító-taskok felvétele (a hurok 4–6. lépése)
 
-Ha bármely teszt, a Sonar, vagy a DoD ellenőrzés hibázik, végezd el az alábbi lépéseket **sorban**:
+Ha bármely teszt, a Sonar, vagy a DoD ellenőrzés hibázik, **nem** adod vissza a vezérlést a felhasználónak — a hurok következő iterációját készíted elő és indítod (lásd „Az önjavító hurok"). Lépések **sorban**:
 
 ```
-[ ] 1. validate-decision.md frissítve a hibával (# Validation History szekció)
-[ ] 2. tasks.md → ## Validációs javítások fejezet létrehozva vagy folytatva
-[ ] 3. A fejezet elejére prerequisite hivatkozásként berakva:
+[ ] 1. validate-decision.md frissítve a hibával (# Validation History szekció),
+        a Consecutive Failures for this item számláló léptetve
+[ ] 2. 3-próba ellenőrzés: ha bármely item Consecutive Failures = 3 → STOP
+        (eszkaláció vagy humán, lásd lent) — NE indíts újabb fixert
+[ ] 3. tasks.md → ## Validációs javítások fejezet létrehozva vagy folytatva
+[ ] 4. A fejezet elejére prerequisite hivatkozásként berakva:
         - specs/cycle-NN-<cycle-name>/test-report/validate-decision.md
         - (ha Sonar hibázott) specs/cycle-NN-<cycle-name>/test-report/sonar-report.md
-[ ] 4. Konkrét javítandó tesztek / Sonar hibák felvéve [GREEN] taskokként,
-        a csoport végén egy [CHECK] ellenőrző taskkal
-[ ] 5. tasks.md státusz → Implementálásra kész
-[ ] 6. A FAIL ág változásai commitolva (a visszalépés állapota így rögzített):
-        git add specs/cycle-NN-<cycle-name>/
-        git commit -m "cycle-NN: 07-validate"
-[ ] 7. Felhasználónak jelezve a visszalépést
+[ ] 5. Konkrét javítandó tesztek / Sonar hibák felvéve [GREEN] taskokként,
+        a csoport végén egy [CHECK] ellenőrző taskkal (duplikátum-kerülés!)
+[ ] 6. tasks.md státusz → Implementálásra kész [validate-loop]   (marker, VD6)
+[ ] 7. implement-fixer subagent indítva a konkrét hibalistával (VD2)
+[ ] 8. A fixer visszatérése után: ha eszkalációs jelzés jött → felfelé menekülő ág (VD5);
+        egyébként újra-validálás (a hurok 7. lépése)
 ```
 
-Jelzés szövege:
-> *"A validáció során hibák léptek fel. A hibákat és a riportokat rögzítettem a `tasks.md` végén új feladatokként, a státuszt pedig visszaállítottam `Implementálásra kész` állapotra. Folytasd az implementáció javításával:*
-> ```
-> Kövesd a `prompts/skills/06-implement.md` utasításait.
-> Input: `specs/cycle-NN-<cycle-name>/tasks.md`
-> ```"*
+**A FAIL ág itt NEM commitol és NEM ad vissza vezérlést a felhasználónak** — a commit a hurok végén egyetlen alkalommal történik (VD8), a felhasználói érintkezés pedig csak a 3-próba STOP / eszkaláció esetén (VD7).
 
-**3-próba szabály (Validációs leállás):** Ha a `# Validation History` alapján bármelyik tesztnél vagy a SonarQube minőségellenőrzésnél a `Consecutive Failures for this item` értéke eléri a **3**-at (a mostani futást is beleszámítva) — állj meg, és jelezd a felhasználónak: *„A(z) [Failed Item] egymás után harmadszor is elbukott. Humán beavatkozás szükséges — hogyan tovább?"* Ne folytasd a javítást a felhasználó válasza nélkül.
+#### Eszkaláció jelzése a felhasználónak (VD5 — felfelé menekülő ág)
+
+A „Hol járunk" fejléccel (LC2):
+> **[VALIDATE · <Failed Item> · próba N/3]**
+> *"A validáció során a(z) [Failed Item] tervezési hibának bizonyult: a kód csak a teszt vagy a Definition of done megváltoztatásával lenne zöld, amit a hurok nem tehet meg (anti-„teszt-csalás"). Ezért nem a 06-implementbe léptem vissza, hanem a tervezési fázishoz eszkalálok. A(z) [plan.md / spec.md] státuszát visszaállítottam, hogy a tervezési döntést rendezni lehessen. Folytasd a tervezés felülvizsgálatával:*
+> ```
+> Kövesd a `prompts/skills/03-write-plan.md` (DoD-hiba esetén: `02-write-spec.md`) utasításait.
+> Input: `specs/cycle-NN-<cycle-name>/plan.md` (vagy `spec.md`)
+> ```
+> *A folyamat a tervezés rendezése után a 05→06→07 úton tér vissza ide."*
+> **A válasz végén: kattintható link a `validate-decision.md`-re.**
+
+#### 3-próba szabály (Validációs leállás — VD4)
+
+Ha a `# Validation History` alapján bármelyik tesztnél vagy a SonarQube minőségellenőrzésnél a `Consecutive Failures for this item` értéke eléri a **3**-at (a mostani futást is beleszámítva) — **állj meg** (ez a hurok korlátja, nincs külön számláló). Döntsd el a megállás típusát a VD5 heurisztika szerint:
+- **tervezési hiba** (csak a teszt/DoD módosításával lenne zöld) → **eszkaláció** (fenti üzenet);
+- **megrekedt kód-bug** → a „Hol járunk" fejléccel: *„A(z) [Failed Item] egymás után harmadszor is elbukott. Humán beavatkozás szükséges — hogyan tovább?"* Ne folytasd a javítást a felhasználó válasza nélkül.
+
+Mindkét esetben: **egyetlen lezáró commit** (VD8), a `[validate-loop]` marker és a `## Validációs javítások` a megrekedt állapot jelzésére a `tasks.md`-n marad.

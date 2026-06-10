@@ -14,7 +14,7 @@ A rendszer célja: egy-két fejlesztő és egy AI-agent együtt, következetes m
 
 ## A workflow felépítése
 
-A teljes fejlesztési folyamat 9 lépésből áll (0–8):
+A teljes fejlesztési folyamat 10 lépésből áll (0–9):
 
 **Projekt szintű setup (egyszer fut le):**
 - `00` — Projekt inicializálás: `conventions.md` létrehozása (konvenciók, tech stack, portok, merge stratégia)
@@ -24,10 +24,11 @@ A teljes fejlesztési folyamat 9 lépésből áll (0–8):
 - `02` — Spec írás: `specs/cycle-NN-<cycle-name>/spec.md` — státusz: `Tervezésre kész`
 - `03` — Plan írás: `specs/cycle-NN-<cycle-name>/plan.md` — státusz: `Task írásra kész`
 - `04` — Tasks írás: `specs/cycle-NN-<cycle-name>/tasks.md` — státusz: `Implementálásra kész`
-- `05` — Analyze: kereszt-fázisos konzisztencia ellenőrzés (read-only) — `analyze-report.md` PASS/FAIL
+- `05` — Analyze: kereszt-fázisos konzisztencia ellenőrzés (read-only orchestrátor) — `analyze-report.md` PASS/FAIL; FAIL esetén önjavító hurok (fixer-subagentek, `max X=3`)
 - `06` — Implementálás: kód + `tasks.md` — státusz: `Validálásra kész`
-- `07` — Validálás: tesztek + DoD ellenőrzés — eredmény: PASS / FAIL (riport a `test-report/` mappában)
-- `08` — Review & Merge: code review + merge (a `conventions.md` Merge stratégiája szerint)
+- `07` — Validálás: tesztek + Sonar + DoD ellenőrzés (orchestrátor) — PASS / FAIL; FAIL esetén önjavító hurok (`implement-fixer` = 06 fix-mód, per-item 3-próba korlát, VD5 eszkaláció 03/02-re)
+- `08` — Doc-sync: a `docs-generated/` mappa (system-overview, architecture, CHANGELOG, design-drift, mappa-index + komponens README-k) naprakészen tartása az as-built rendszerhez — terv (`doc-sync-planner` subagent → `doc-sync-plan.md`) → mechanikus végrehajtás → objektív konzisztencia-kapu (DS22); kapu-bukásnál ember-vezérelt javítás (`doc-sync-questions.md`). **Nem** önjavító subagent-hurok.
+- `09` — Review & Merge: code review + merge (orchestrátor) — FAIL esetén kétfázisú önjavító hurok (`review-fixer` = 06 fix-mód → re-validate → re-review, per-item 3-próba + `max 5`, RD6 eszkaláció); a merge kézi megerősítéssel (RD8)
 
 Minden ciklus mappája: `specs/cycle-NN-<cycle-name>/`
 
@@ -42,12 +43,13 @@ Minden ciklus mappája: `specs/cycle-NN-<cycle-name>/`
 | `prompts/skills/02-write-spec.md` | Spec | Roadmap + ciklus neve | `spec.md` (`Tervezésre kész`) |
 | `prompts/skills/03-write-plan.md` | Plan | `spec.md` | `plan.md` (`Task írásra kész`) |
 | `prompts/skills/04-write-tasks.md` | Tasks | `plan.md` | `tasks.md` (`Implementálásra kész`) |
-| `prompts/skills/05-analyze.md` | Analyze | ciklus mappa | `analyze-report.md` (PASS/FAIL) |
+| `prompts/skills/05-analyze.md` | Analyze | ciklus mappa | `analyze-report.md` (PASS/FAIL) — FAIL → önjavító hurok (fixer-subagentek, `max X=3`) |
 | `prompts/skills/06-implement.md` | Implementálás | `tasks.md` | Kód + `tasks.md` (`Validálásra kész`) |
-| `prompts/skills/07-validate.md` | Validálás | `spec.md`, `plan.md`, `tasks.md` | PASS/FAIL riport a `test-report/` mappában |
-| `prompts/skills/08-review-and-merge.md` | Review & Merge | Cycle branch, `plan.md`, `spec.md` | `code-review.md` + merged branch |
+| `prompts/skills/07-validate.md` | Validálás | `spec.md`, `plan.md`, `tasks.md` | PASS/FAIL riport a `test-report/` mappában — FAIL → önjavító hurok (`implement-fixer`, 3-próba korlát, VD5 eszkaláció) |
+| `prompts/skills/08-doc-sync.md` | Doc-sync | ciklus mappa + `docs-generated/` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README) + `doc-sync-plan.md` — terv (`doc-sync-planner`) → végrehajtás → objektív kapu (DS22); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
+| `prompts/skills/09-review-and-merge.md` | Review & Merge | Cycle branch, `plan.md`, `spec.md` | `code-review.md` (+ `# Review History`) + merged branch — FAIL → kétfázisú önjavító hurok (`review-fixer`, re-validate → re-review, 3-próba + `max 5`, RD6) |
 
-A specialista subagentek a `prompts/agents/` alatt: `reviewer.md` (08), `analyzer.md` (05), `researcher.md` (03).
+A specialista subagentek a `prompts/agents/` alatt: `reviewer.md` (09), `analyzer.md` (05 — read-only diagnózis), `researcher.md` (03), `doc-sync-planner.md` (08 — read-only doc-sync tervkészítő), az 05 önjavító hurok fix-mód belépői: `spec-fixer.md`, `plan-fixer.md`, `tasks-fixer.md` (vékony wrapperek a 02/03/04 skill Fix-mód szekciójára), az 07 validate-hurok fix-mód belépője: `implement-fixer.md` és a 09 review-hurok fix-mód belépője: `review-fixer.md` (mindkettő vékony wrapper a 06 skill Fix-mód szekciójára, `## Validációs javítások` ill. `## Review javítások` bemenettel).
 
 A `prompts/README.md` minden fázishoz tartalmazza a felhasználónak szánt copy-paste prompt blokkot.
 
@@ -88,8 +90,14 @@ Nem minden task TDD: konfigurációs fájlok, docker, README, infrastruktúra-v�
 **8. Megállási szabályok**
 A 04-es (tasks) és 06-os (implement) prompt explicit felsorolja azokat az eseteket, amikor az agent megáll és visszakérdez — ne folytassa bizonytalan vagy ellentmondásos helyzetben.
 
-**9. Kereszt-fázisos konzisztencia ellenőrzés (05 — analyze)**
-A 04 (tasks) után, az implementáció előtt egy read-only analyze fázis fut: a `spec.md` ↔ `plan.md` ↔ `tasks.md` ↔ `conventions.md` négyest 5 kategóriában ellenőrzi (duplikáció, ambiguitás, alulspecifikáció, konvenció-ütközés, lefedettségi hiány). FAIL esetén státusz-visszafordítással visszalép a legkorábbi érintett tervezési fázisra.
+**9. Kereszt-fázisos konzisztencia ellenőrzés + önjavító hurok (05 — analyze)**
+A 04 (tasks) után, az implementáció előtt egy analyze fázis fut: a `analyzer` subagent (read-only diagnózis) a `spec.md` ↔ `plan.md` ↔ `tasks.md` ↔ `conventions.md` négyest 5 kategóriában ellenőrzi (duplikáció, ambiguitás, alulspecifikáció, konvenció-ütközés, lefedettségi hiány). FAIL esetén az 05 **orchestrátorként önjavító hurkot vezényel**: a legkorábbi érintett célfázishoz indít egy fixer-subagentet (a 02/03/04 fix-módja), downstream re-deriválás (`02→03→04`, célzott reconciliation) után újra-analyze fut — amíg PASS, vagy `max X=3` iterációig. A döntést igénylő kérdéseket a fixerek a `*-questions.md`-be gyűjtik (nem kérdeznek közvetlenül), és az orchestrátor teszi fel a felhasználónak (`FÁZIS/Knn` fejléccel); nyitott kérdésnél a hurok megáll, válasz után folytatódik. A hurok alatt a dokumentumok `[analyze-loop]` státusz-markert viselnek (auto-státusz + megszakítás-biztos folytatás), és csak a hurok végén készül egyetlen commit.
+
+**10. Önjavító hurok a kód-fázisokban (07 — validate, 09 — review)**
+A 05-analyze mintáját két további fázis is átveszi. **07-validate:** tesztek/Sonar/DoD FAIL esetén az 07 orchestrátorként az `implement-fixer` subagentet (= 06 fix-mód) indítja a `## Validációs javítások` hibalistára, majd újra-validál — a per-item 3-próba korlátig (`[validate-loop]` marker, VD3 anti-„teszt-csalás", VD5 eszkaláció 03/02-re). **09-review:** `Must Fix` esetén a 09 orchestrátorként a `review-fixer` subagentet (= 06 fix-mód) indítja a `## Review javítások` findingokra, és **kétfázisú** hurkot vezényel — `fix → re-validate (07 teljes ellenőrzései) → re-review` —, amíg a review tiszta és a validálás zöld; korlát a per-item 3-próba + `max 5` backstop (`[review-loop]` marker, RD4 anti-„csalás", RD6 jel-vezérelt eszkaláció 03/02-re). A merge **kézi megerősítéssel** zárul (RD8), szemben a 07 auto-PASS-ával. A három hurok közös konvencióit (marker, napló, fixer-wrapper, commit-at-end) a `README.md` „Önjavító hurkok (analyze + validate + review)" szekciója rögzíti.
+
+**11. Élő működési dokumentáció (08 — doc-sync)**
+A 07-validate és a 09-review közé egy dedikált **doc-sync** fázis ékelődik, amely ciklusról ciklusra naprakészen tartja a generált projekt-dokumentációt egy `docs-generated/` mappában (`system-overview.md` as-built működésleírás, `architecture.md`, részletes `CHANGELOG.md`, `design-drift.md`, mappa-index README + komponens README-k). Ez **nem** a négy önjavító hurok mintáját követi: a működése **„terv előbb, aztán mechanikus végrehajtás"** (a `doc-sync-planner` read-only subagent → `doc-sync-plan.md` pipálható terv → a fő ágens mechanikusan végrehajtja), majd egy **objektív, projektfüggetlen konzisztencia-kapu** (DS22: megszűnt/átnevezett azonosító `grep`, ábra-átkerülés, mappa-index halmaz-egyezés, coverage-marker) zár. Kapu-bukásnál **ember-vezérelt** javítás indul a `doc-sync-questions.md`-n keresztül (nem subagent-önjavító hurok). A `02-write-spec` „pull"-ként beolvassa a `system-overview.md`-t current-truth kiindulásként; a doc-sync „push"-ként írja — a kettő tartja őszintén a doksit. A 08-doc-sync és a 09-review **független minőségi kapuk**: a reviewer csak kódra ad findingot, a generált doksik helyességét a doc-sync saját kapuja garantálja.
 
 ---
 

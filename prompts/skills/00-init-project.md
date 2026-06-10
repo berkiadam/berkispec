@@ -11,7 +11,7 @@ subagents: []
 
 # 00 — Projekt inicializálás
 
-Ez a prompt egyszer fut le, új projekt indulásakor. Célja a projekt konvencióinak rögzítése, amelyekre az összes fejlesztési ciklus (02–08) hivatkozni fog.
+Ez a prompt egyszer fut le, új projekt indulásakor. Célja a projekt konvencióinak rögzítése, amelyekre az összes fejlesztési ciklus (02–09) hivatkozni fog.
 
 ---
 
@@ -65,12 +65,13 @@ _A projekt célja egy-két mondatban. Mi a rendszer feladata?_
 
 ## Projekt referenciák
 
-A fejlesztés során az alábbi globális tervezési és API specifikációs dokumentumok az irányadóak. Az ágens köteles ezeket figyelembe venni a ciklusok tervezésekor:
+A fejlesztés és a doc-sync (08) során az alábbi globális tervezési, API és külső referencia-dokumentumok az irányadóak. Az ágens köteles ezeket figyelembe venni a ciklusok tervezésekor és a generált dokumentáció drift-összevetésekor:
 
 - **HLD (High Level Design):** _(pl. docs/design/hld.md vagy hagyd üresen)_
 - **LLD (Low Level Design):** _(pl. docs/design/lld.md vagy hagyd üresen)_
-- **API Specifikáció:** _(pl. docs/api/openapi.yaml vagy hagyd üresen)_
+- **API Specifikáció / API-leírók:** _(pl. docs/api/openapi.yaml vagy hagyd üresen; ha ki van töltve, a 08-doc-sync DS22 Réteg 2 ellenőrzése összeveti vele a generált interfész/endpoint-leltárt)_
 - **Adatbázis Séma:** _(pl. docs/db/schema.sql vagy hagyd üresen)_
+- **Külső / üzleti referencia-doksik:** _(pl. docs/poc.md, vendor dokumentáció, üzleti folyamatleírások vagy hagyd üresen)_
 
 ## Projekt struktúra
 
@@ -84,7 +85,7 @@ _A gyökér szintű mappák és szerepük. Például:_
 
 ## Fejlesztési módszertan
 
-Spec-driven development. A fejlesztés ciklusokra van bontva. A workflow két egyszeri setup lépésből és egy 5 lépéses per-ciklus loop-ból áll:
+Spec-driven development. A fejlesztés ciklusokra van bontva. A workflow két egyszeri setup lépésből és egy 8 lépéses per-ciklus loop-ból áll:
 
 **Setup (egyszer):**
 - `00` — projekt inicializálás
@@ -97,7 +98,8 @@ Spec-driven development. A fejlesztés ciklusokra van bontva. A workflow két eg
 - `05` — analyze (kereszt-fázisos konzisztencia ellenőrzés)
 - `06` — implement (kód + `tasks.md` frissítése)
 - `07` — validate (tesztek futtatása és DoD ellenőrzés)
-- `08` — review & merge (review + merge a conventions.md Merge stratégiája szerint)
+- `08` — doc-sync (`docs-generated/` frissítése és konzisztencia-kapu)
+- `09` — review & merge (review + merge a conventions.md Merge stratégiája szerint)
 
 Minden ciklus mappája: `specs/cycle-NN-<cycle-name>/`
 
@@ -106,12 +108,12 @@ Minden ciklus mappája: `specs/cycle-NN-<cycle-name>/`
 - **Fő branch:** `master`
 - **Cycle branch:** `feature/cycle-<cycle-name>` — minden fejlesztési ciklus saját branch-en él
 - **Branch nyitás:** a spec fázis (02) legelején, a branch tartalmazza a `specs/`, `docs/` és `src/` változásokat egyaránt
-- **Merge:** a `## Merge stratégia` szekció szerint, a review & merge fázis (08) sikeres lefutása után
+- **Merge:** a `## Merge stratégia` szekció szerint, a review & merge fázis (09) sikeres lefutása után
 - **Commit granularitás:** taskonként egy commit
 
 ## Merge stratégia
 
-_A ciklus lezárásakor (08 fázis) ezt használja az ágens. A 00 fázisban tisztázandó, és az access-t **ki kell próbálni** — a `conventions.md` nem zárható le, amíg a választott szolgáltatóhoz sikeresen hozzá nem férünk (vagy a felhasználó alternatívát/lokális merge-et választ)._
+_A ciklus lezárásakor (09 fázis) ezt használja az ágens. A 00 fázisban tisztázandó, és az access-t **ki kell próbálni** — a `conventions.md` nem zárható le, amíg a választott szolgáltatóhoz sikeresen hozzá nem férünk (vagy a felhasználó alternatívát/lokális merge-et választ)._
 
 - **Szolgáltató:** GitHub | Bitbucket Cloud | Bitbucket Server | GitLab | Lokális (nincs PR)
 - **Repository URL:** _(Bitbucket on-prem esetén az API endpoint is)_

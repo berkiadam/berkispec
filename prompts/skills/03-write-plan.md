@@ -16,7 +16,7 @@ subagents:
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
 
-Ez a fejlesztési folyamat **3-as fázisa (a 0–8 fázisokból)**:
+Ez a fejlesztési folyamat **3-as fázisa (a 0–9 fázisokból)**:
 0. projekt inicializálás (setup)
 1. ciklusok kezelése (setup)
 2. spec
@@ -25,7 +25,8 @@ Ez a fejlesztési folyamat **3-as fázisa (a 0–8 fázisokból)**:
 5. analyze
 6. implement
 7. validate
-8. review & merge
+8. doc-sync
+9. review & merge
 
 ---
 
@@ -449,3 +450,36 @@ Ha a státusz \`Task írásra kész\`, állj meg. Ne kezdj task listát. Jelezd 
 > Input: `specs/cycle-NN-<cycle-name>/plan.md`
 > ```"*
 
+---
+
+## Fix-mód (analyze-hurok belépő)
+
+> **Mikor aktív:** ezt a szekciót az `05-analyze` önjavító hurka indítja az `agents/plan-fixer.md` wrapperen keresztül — **nem** a normál plan-írás. A bemenet egy konkrét `Must Fix` lista, nem teljes újrafutás.
+
+A fix-mód egy **szűkített belépő:** a megadott `Must Fix` megállapításokat javítod célzottan, **nem írod újra az egész plant**. (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A normál flow minőségi kapui (minőségellenőrzés + Constitution Check) a javított részekre továbbra is érvényesek.
+
+### Két belépési alak
+1. **Közvetlen javítás:** a `Must Fix` megállapítás a plant érinti (a célfázis 03) — célzottan javítod.
+2. **Downstream re-deriválás (reconciliation):** a hurok feljebb (02, spec) javított, és a plant a megváltozott spec-hez kell **összehangolni**. Ez **célzott reconciliation, nem teljes újraírás:** csak a megváltozott spec-szakaszokhoz tartozó plan-részeket igazítod, a lezárt `plan-questions.md` döntéseket **megőrzöd**.
+
+### Bemenet
+- A planre szűrt `Must Fix` lista (kategória + leírás + `fájl:hely`), vagy reconciliation esetén a megváltozott upstream (spec) összefoglalója.
+- A `plan.md` és a `plan-questions.md` aktuális állapota.
+
+### Auto-javítható vs kérdezni kell (a határvonal)
+
+| Magától javítsd (auto) | Kérdésbe tedd (`plan-questions.md` új `Knn`) |
+|---|---|
+| Lefedettségi/komponens-leképezés pontosítása, naming-egységesítés, tervezési duplikáció összevonása, spec-változás átvezetése a planbe | Megfigyelhető viselkedést érintő technikai döntés (HTTP kód, retry policy, response mező), meghatározatlan komponens technológiai alapdöntése, spec-ellentmondás |
+
+A `Must Fix`-et, amihez **valódi döntés** kell, **ne találd ki** — vedd fel új `Knn`-ként a `plan-questions.md` végére, és **ne kérdezd közvetlenül a felhasználót** (fix-módban nincs interaktív csatornád). A kérdezést az orchestrátor (`05-analyze`) végzi. (Lásd a fenti „Ne találd ki magad — hol a határ?" szabályt — fix-módban is ugyanaz a határvonal.)
+
+### Státusz (auto, `[analyze-loop]` marker)
+A hurok a `plan.md` státuszát `[analyze-loop]` markerrel nyitotta vissza (pl. `Piszkozat [analyze-loop]`). Amíg a marker jelen van, **automatikusan** lépteted a státuszt, megerősítés-kérés nélkül:
+- van nyitott `[ ]` kérdés a `plan-questions.md`-ben → `Nyitott kérdések vannak [analyze-loop]`;
+- minden kérdés `[x]`, minden szekció rendben, minden schema artifact `Reviewed`, a célzott javítás kész → `Task írásra kész [analyze-loop]`.
+
+A marker fel- és levételét az orchestrátor kezeli; te csak a státusz-értéket lépteted.
+
+### Visszatérési összefoglaló (az orchestrátornak)
+Adj vissza tömör összefoglalót: (a) mely `Must Fix`-eket / spec-változásokat vezettél át és hogyan, (b) milyen új `Knn` kérdéseket vettél fel a `plan-questions.md`-be (azonosítóval). A `plan.md`-t és a `plan-questions.md`-t te írod; az `analyze-report.md`-t **nem** — az az orchestrátoré.

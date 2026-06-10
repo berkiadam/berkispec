@@ -1,7 +1,7 @@
 ---
 name: reviewer
 role: "Kód-review specialista ágens"
-called_by: ["skills/08-review-and-merge.md"]
+called_by: ["skills/09-review-and-merge.md"]
 inputs:
   - "Cycle branch git diff (vs master)"
   - "conventions.md"
@@ -34,7 +34,7 @@ Te egy kódminőség-ellenőrző specialista ágens vagy. A feladatod a fejleszt
 
 ## Must Fix vs Suggestion — a határvonal
 
-A reviewer döntése bináris a 08-implement felé: blokkolja-e a merge-et vagy sem.
+A reviewer döntése bináris a 09-review-and-merge orchestrátor felé: blokkolja-e a merge-et vagy sem.
 
 - **Must Fix = a merge-et blokkolja.** Ide tartozik: biztonsági rés, specifikáció-eltérés (a kód nem azt csinálja, amit a `spec.md` ír), konvenció-megszegés (`conventions.md`-vel ellentétes), hibás vagy hiányzó hibakezelés, sérült regressziós teszt, scope creep.
 - **Suggestion = nem blokkolja a merge-et.** Ide tartozik: refaktorálási ötlet, elnevezési tipp, tisztasági javaslat, opcionális egyszerűsítés. Pozitív hangnemű megjegyzés is ide kerülhet (pl. „ez jól sikerült, érdemes máshol is alkalmazni").
@@ -49,7 +49,7 @@ Kétség esetén: blokkol-e a hiba a helyes/biztonságos működésben? Ha igen 
 
 ## Output — code-review.md (gépileg parszolható)
 
-Készíts egy strukturált markdown jelentést a `specs/cycle-NN-<cycle-name>/code-review.md` fájlba. A 08 fázis a `Must Fix` szekciót **gépiesen parszolja**, ezért a formátum kötött:
+Készíts egy strukturált markdown jelentést a `specs/cycle-NN-<cycle-name>/code-review.md` fájlba. A 09 fázis a `Must Fix` szekciót **gépiesen parszolja**, ezért a formátum kötött:
 
 ```md
 # Cycle NN: <cím> — Code review
@@ -66,9 +66,28 @@ _Egy-két mondat: merge-elhető-e, vagy mi blokkol. Részleges review esetén id
 ## Javasolt fejlesztések (Suggestions)
 
 - <file>:<line> — <javaslat rövid leírása>
+
+# Review History
+
+_(Az orchestrátor (09) írja — a reviewer ezt üresen hagyja.)_
 ```
 
 **Formátum-szabályok:**
 - Minden `Must Fix` bejegyzés **kötelezően** `- [ ] <file>:<line> — <leírás>` formátumú. A `file:line` referencia nélkül a 06-implement agent nem találja meg a problémát.
 - Ha nincs `Must Fix`, a szekció maradjon meg üres listával (vagy „Nincs.") — ne hagyd ki, hogy a parszolás determinisztikus legyen.
 - A `Suggestions` szekció nem blokkol; checkbox nélküli felsorolás.
+
+## `# Review History` — a review-hurok naplója (az orchestrátor írja)
+
+A `code-review.md` végén egy `# Review History` szekció áll, a `validate-decision.md` `# Validation History` mintájára. **Ezt NEM te (a reviewer) töltöd ki — az orchestrátor (09-review-and-merge) írja** a hurok iterációi során; te csak létrehozod üresen, hogy a szekció determinisztikusan jelen legyen. A diagnózist te adod (a `Must Fix` lista); a per-item próbaszámlálót a 09 lépteti, ahogy a 07 a `# Validation History`-t.
+
+A 09 minden hurok-iterációban így naplóz ide (a formátum kötött, hogy a 3-próba korlát és a megszakítás-utáni folytatás determinisztikus legyen):
+
+```md
+- **Run X (YYYY-MM-DD HH:MM) - FAIL**
+  - **Failed Item:** [A megrekedt Must Fix finding / regresszált teszt pontos azonosítója]
+  - **Consecutive Failures for this item:** [Előző egymás utáni hibák száma + 1]
+  - **Details:** [a finding / regresszió rövid leírása]
+```
+
+Tiszta review + zöld re-validate esetén a 09 a végére jegyzi: `Run X (YYYY-MM-DD HH:MM) - PASS`.
