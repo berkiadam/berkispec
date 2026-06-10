@@ -61,6 +61,8 @@ Ez a fejlesztési folyamat **3-as fázisa (a 0–9 fázisokból)**:
 
 **Ha a spec-ből valami hiányzik vagy ellentmondásos, jelezd — de ne egészítsd ki a spec-et magadban. A plan csak a spec alapján dolgozik.**
 
+> **Túl egyszerű a feladat a teljes ciklushoz?** Ha a plan írása közben kiderül, hogy a ciklus valójában triviális — nincs valódi tervezési döntés, lényegében csak egy **konfiguráció összeállítása, egy egyszerűbb script vagy egy kisebb javítás** —, akkor a teljes `plan → tasks → analyze → … → review` flow túlméretezett. Jelezd a Felhasználónak, és **javasold az egyszerűsített flow-t**: *„Ez a ciklus elég egyszerűnek tűnik a teljes folyamathoz; a `prompts/skills/sdd-lightweight-flow.md` (spec → task → implementáció) gyorsabb lehet rá. Váltsunk arra, vagy maradjunk a teljes ciklusnál?"* A döntés a Felhasználóé — ne válts önkényesen, és ne hagyd ki a fázisokat a teljes flow-n belül.
+
 ---
 
 ## Előfeltétel

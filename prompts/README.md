@@ -2,6 +2,28 @@
 
 Ez a mappa a spec-driven fejlesztési ciklus **skilljeit** (fázis-receptek) és **ágenseit** (specialista végrehajtók) tartalmazza.
 
+## Két fejlesztési út — válassz a feladat mérete szerint
+
+A felhasználónak **két útja** van; a feladat súlya dönti el, melyik a megfelelő:
+
+1. **Teljes berki spec flow (00–09 fázis)** — a nagyobb, összetettebb fejlesztésekhez. Külön `spec.md` → `plan.md` → `tasks.md` dokumentumok, kereszt-fázisos `analyze`, `validate`, `doc-sync` és `review` minőségi kapukkal és önjavító hurkokkal. Üres projektnél a `00-init-project`, új ciklusnál a `01-add-cycles` skillel indul. Ezt írja le a README többi része.
+
+2. **Egyszerűsített (lightweight) flow** — kis, jól körülhatárolt feladatokhoz, amelyek 3-4 lépésben megoldhatók (pl. **konfiguráció összeállítása**, **egyszerűbb script megírása**, kisebb javítás). Egyetlen háromfázisú recept: `spec.md` → `task.md` → implementáció, a [`skills/sdd-lightweight-flow.md`](skills/sdd-lightweight-flow.md) skillben. Nincs külön plan/analyze/validate/doc-sync fázis; az opcionális ágenseket (`researcher`, `analyzer`, `reviewer`) csak akkor hívja, ha tényleg segítenek.
+
+**Hogyan dönts?**
+
+| Jellemző | Egyszerűsített flow | Teljes berki spec flow |
+|---|---|---|
+| Tipikus feladat | konfiguráció, egyszerű script, kisebb javítás | új funkció, több komponens, összetett logika |
+| Méret | 3-4 lépésben megoldható | önálló, vertikálisan vágható ciklus(ok) |
+| Dokumentumok | `spec.md` + `task.md` | `spec.md` + `plan.md` + `tasks.md` |
+| Minőségi kapuk | inline + opcionális ágensek | `analyze` / `validate` / `doc-sync` / `review` hurkok |
+| Belépő | `skills/sdd-lightweight-flow.md` | `00-init-project` / `01-add-cycles` |
+
+**Alapértelmezett flow:** a projekt jellegét a `00-init-project` fázisban tisztázzuk (termékfejlesztés vs. konfiguráció/scriptelés), és ez alapján egy **default flow** kerül a `conventions.md` `## Fejlesztési módszertan` szekciójának **Alapértelmezett flow** mezőjébe. Ez a kiindulópont — feladatonként felülbírálható.
+
+A két út **átjárható**: ha az egyszerűsített flow közben kiderül, hogy a feladat túlnő rajta (nagyobb kódírás, több komponens, összetett tervezés), a skill megállítja a munkát és **átirányít a teljes folyamatra** (`01-add-cycles`). Fordítva is: a `01-add-cycles` és a `03-write-plan` jelzi, ha a feladat túl egyszerű a teljes ciklushoz, és javasolja az egyszerűsített flow-t.
+
 ## Mappastruktúra
 
 ```
@@ -16,7 +38,8 @@ prompts/
 │   ├── 06-implement.md
 │   ├── 07-validate.md
 │   ├── 08-doc-sync.md            # élő dokumentáció-szinkron (docs-generated/)
-│   └── 09-review-and-merge.md
+│   ├── 09-review-and-merge.md
+│   └── sdd-lightweight-flow.md   # egyszerűsített, háromfázisú flow kis feladatokhoz (spec→task→implement)
 ├── agents/                       # Specialista ágensek (Task tool subagent-ként hívva)
 │   ├── reviewer.md               # code review a 09 fázisban
 │   ├── analyzer.md               # kereszt-fázisos elemzés (read-only diagnózis) a 05 fázisban
@@ -551,8 +574,9 @@ Input: `specs/cycle-NN-<cycle-name>`
 | `skills/07-validate.md` | Validálás | ciklus mappa | PASS/FAIL + `test-report/`; PASS → státuszok `Kész` — FAIL esetén orchestrált önjavító hurok (`implement-fixer` subagent, 3-próba korlát, VD5 eszkaláció) |
 | `skills/08-doc-sync.md` | Doc-sync | ciklus mappa + `docs-generated/` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README mappa-index) + komponens README-k + `doc-sync-plan.md` — terv (`doc-sync-planner`) → mechanikus végrehajtás → objektív kapu (DS22); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
 | `skills/09-review-and-merge.md` | Review & Merge | cycle branch, `plan.md`, `spec.md` | `code-review.md` (+ `# Review History`) + merged branch — FAIL esetén orchestrált kétfázisú önjavító hurok (`review-fixer` → re-validate → re-review, per-item 3-próba + `max 5`, RD6 eszkaláció); a merge kézi megerősítéssel (RD8) |
+| `skills/sdd-lightweight-flow.md` | **Egyszerűsített flow** (külön út) | feladat leírása | `spec.md` + `task.md` + implementáció — háromfázisú, kis feladatokhoz; opcionális `researcher`/`analyzer`/`reviewer`; túlnövéskor átirányít a `01-add-cycles`-ra |
 
-Minden skill **frontmattere** rögzíti az előfeltételeket, a kimenetet, a szomszédos fázisokat (`prev`/`next`) és a hívott subagenteket.
+A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a kimenetet, a szomszédos fázisokat (`prev`/`next`) és a hívott subagenteket. Az egyszerűsített flow skill ettől eltérő, `name`/`description` alapú frontmattert használ (külön út, lásd a „Két fejlesztési út" szekciót).
 
 ## Agent-index
 

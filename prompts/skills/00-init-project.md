@@ -19,7 +19,8 @@ Ez a prompt egyszer fut le, új projekt indulásakor. Célja a projekt konvenci�
 
 Hozz létre egy `conventions.md` fájlt a projekt gyökerében az alábbi struktúra szerint. Minden szekciót a felhasználóval közösen töltötök ki — tegyél fel kérdéseket, ahol a döntés nem egyértelmű. A struktúrában szereplő technológiák (pl. Playwright, pytest) és beállítások **ajánlott default-ok**; ezeket a projekt tényleges tech stackje alapján testre kell szabni (pl. Node/Jest, Go/go test stb.).
 
-Két szekciónál **aktívan rá kell kérdezned** (nem elég csak pre-fillelni):
+Három szekciónál **aktívan rá kell kérdezned** (nem elég csak pre-fillelni):
+- **Alapértelmezett flow:** kérdezz rá a feladatok jellegére, és ez alapján rögzíts egy default munkamódot: *„Milyen jellegű feladatok lesznek túlnyomórészt ebben a projektben? (a) Termékfejlesztés / új funkciók, több komponenst érintő, összetett logika → **teljes berki spec flow** (02–09); (b) Konfiguráció, scriptelés, üzemeltetés, kisebb javítások → **egyszerűsített flow** (`prompts/skills/sdd-lightweight-flow.md`). Ez lesz az alapértelmezett munkamód; feladatonként felülbírálható."* A választ a `## Fejlesztési módszertan` szekció **Alapértelmezett flow** mezőjébe írd.
 - **Teszt keretrendszer:** *„A javasolt teszt stack: <default>. Megfelelő, vagy mást szeretnél?"*
 - **Merge stratégia:** kérdezd meg a git szolgáltatót (GitHub / Bitbucket Cloud / Bitbucket Server / GitLab / Lokális), majd **próbáld ki az access-t** a megfelelő paranccsal (lásd a Merge stratégia szekciónál). Ha az access teszt sikertelen, **ne zárd le a `conventions.md`-t** — kérd a token / URL / permissions javítását, vagy alternatív szolgáltató / lokális merge választását.
 
@@ -102,6 +103,17 @@ Spec-driven development. A fejlesztés ciklusokra van bontva. A workflow két eg
 - `09` — review & merge (review + merge a conventions.md Merge stratégiája szerint)
 
 Minden ciklus mappája: `specs/cycle-NN-<cycle-name>/`
+
+### Flow-választás (alapértelmezett munkamód)
+
+A projektben kétféle flow közül lehet választani **feladatonként**:
+
+- **Teljes flow (02–09):** nagyobb, összetett feladatokhoz — külön `spec.md` / `plan.md` / `tasks.md` + analyze/validate/doc-sync/review minőségi kapuk.
+- **Egyszerűsített flow (`prompts/skills/sdd-lightweight-flow.md`):** kis, jól körülhatárolt feladatokhoz (konfiguráció, egyszerűbb script, kisebb javítás) — háromfázisú `spec.md` → `task.md` → implementáció.
+
+**Alapértelmezett flow:** _<teljes | egyszerűsített>_ — _(a projekt jellege alapján kitöltve a 00 fázisban; pl. túlnyomóan konfiguráció/scriptelés/üzemeltetés → egyszerűsített; termékfejlesztés több komponenssel → teljes)_
+
+A default csak a **kiindulópont**, feladatonként felülbírálható. Ha egy adott feladat nem illik a default flow-ba, az ágens jelzi és a másikat javasolja (lásd a `01-add-cycles` és `03-write-plan` flow-méret ellenőrzését, illetve a `sdd-lightweight-flow` túlnövés-jelzését). A flow-váltás döntése mindig a felhasználóé.
 
 ## Git és branching konvenciók
 
@@ -235,6 +247,7 @@ Mielőtt lezárod, ellenőrizd:
 2. A Teszt keretrendszer a fejlesztővel egyeztetett (nem csak a default maradt megerősítés nélkül)?
 3. A Merge stratégia kitöltött, és az access validáció **sikeresen lefutott** (vagy a fejlesztő explicit lokális merge-et választott)?
 4. A portok, env változók és Sonar (ha van) szekciók a projekt valóságát tükrözik?
+5. A `## Fejlesztési módszertan` **Alapértelmezett flow** mezője a fejlesztővel egyeztetett értékre van állítva (`teljes` vagy `egyszerűsített`), nem maradt placeholder?
 
 Ha bármelyikre nem, egészítsd ki, mielőtt lezárod.
 
