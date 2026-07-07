@@ -1,6 +1,7 @@
 ---
 phase: 09
 name: review-and-merge
+description: "Használd a ciklus utolsó lépéseként (Phase 09), ha a kód és a dokumentáció is 'Kész'. Kódreview (reviewer, review-fixer subagentek) a 'code-review.md'-be, majd a branch beolvasztása a 'conventions.md' merge stratégiája szerint (PR nyitás vagy lokális merge)."
 prerequisites:
   - "specs/cycle-NN-<name>/tasks.md státusz: Kész"
   - "specs/cycle-NN-<name>/plan.md státusz: Kész"

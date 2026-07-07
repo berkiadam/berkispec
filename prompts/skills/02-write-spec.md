@@ -1,6 +1,7 @@
 ---
 phase: 02
 name: write-spec
+description: "Használd egy ciklus indításakor (Phase 02) a roadmap alapján, a funkcionális/üzleti követelmények specifikálásához. Megnyitja a ciklus git branch-ét ('feature/cycle-NN-...'), és létrehozza a 'spec.md'-t ('Tervezésre kész') + a 'spec-questions.md'-t. Előfeltétel: 'specs/roadmap.md' státusz 'Kész'."
 prerequisites:
   - "specs/roadmap.md státusz: Kész"
 output:

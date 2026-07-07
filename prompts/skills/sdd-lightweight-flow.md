@@ -1,6 +1,6 @@
 ---
 name: sdd-skill
-description: "Egyszerűsített, háromfázisú SDD flow (spec.md → task.md → implementáció) KIS, JÓL KÖRÜLHATÁROLT feladatokhoz, amelyek 3-4 lépésben megbízhatóan megoldhatók — tipikusan konfiguráció összeállítása, egyszerűbb script megírása, kisebb javítás vagy lokális módosítás. Akkor használd, ha a feladat NEM indokol teljes fejlesztési ciklust. Ha a feladat nagyobb kódírást, több komponenst érintő funkciót vagy összetett tervezést igényel, NE ezt használd: javasold a teljes berki spec folyamatot, amely a 01-add-cycles skill-lel indul."
+description: "Egyszerűsített, háromfázisú SDD flow (spec.md → task.md → implementáció) KIS, jól körülhatárolt feladatokhoz, amelyek 3-4 lépésben megoldhatók — konfiguráció, egyszerűbb script, kisebb javítás, lokális módosítás. Nagyobb kódírást, több komponenst érintő funkciót vagy összetett tervezést igénylő feladathoz NE ezt használd — javasold a teljes berki spec folyamatot (01-add-cycles)."
 ---
 
 # SDD (Spec-Driven Development) — Egyszerűsített (Lightweight) Flow

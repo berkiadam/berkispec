@@ -1,6 +1,7 @@
 ---
 phase: 06
 name: implement
+description: "Használd, ha az analyze-report.md 'PASS' (Phase 06), a tényleges kódfejlesztéshez. Végrehajtja a tervezett kódmódosításokat a feladatlista alapján, és közben vezeti a 'tasks.md'-t, amíg az el nem éri a 'Validálásra kész' állapotot."
 prerequisites:
   - "specs/cycle-NN-<name>/tasks.md státusz: Implementálásra kész"
   - "specs/cycle-NN-<name>/analyze-report.md státusz: PASS"
