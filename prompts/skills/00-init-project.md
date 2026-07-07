@@ -1,7 +1,7 @@
 ---
 phase: 00
 name: init-project
-description: "Használd a projekt legelső indításakor (Phase 00), vagy ha a gyökér 'conventions.md' hiányzik/hiányos. A fejlesztővel közösen rögzíti a globális projektkonvenciókat (tech stack, teszt, fejlesztési flow, git merge stratégia) a 'conventions.md'-ben — ez minden további fázis előfeltétele."
+description: "berkispec - 00. Használd a projekt legelső indításakor (Phase 00), vagy ha a gyökér 'conventions.md' hiányzik/hiányos. A fejlesztővel közösen rögzíti a globális projektkonvenciókat (tech stack, teszt, fejlesztési flow, git merge stratégia) a 'conventions.md'-ben — ez minden további fázis előfeltétele."
 prerequisites: []
 output:
   - "conventions.md (projekt gyökér)"

@@ -1,7 +1,7 @@
 ---
 phase: 08
 name: doc-sync
-description: "Használd a validáció után, merge előtt (Phase 08), ha a tasks.md/plan.md/spec.md mind 'Kész'. A kódváltozásokat a 'docs-generated/' rendszer-dokumentációba és az érintett komponens-README-kbe szinkronizálja (doc-sync-planner subagent, design-drift ellen), és létrehozza a 'doc-sync-plan.md'-t."
+description: "berkispec - 08. Használd a validáció után, merge előtt (Phase 08), ha a tasks.md/plan.md/spec.md mind 'Kész'. A kódváltozásokat a 'docs-generated/' rendszer-dokumentációba és az érintett komponens-README-kbe szinkronizálja (doc-sync-planner subagent, design-drift ellen), és létrehozza a 'doc-sync-plan.md'-t."
 prerequisites:
   - "specs/cycle-NN-<name>/tasks.md státusz: Kész"
   - "specs/cycle-NN-<name>/plan.md státusz: Kész"

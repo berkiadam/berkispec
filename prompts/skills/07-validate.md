@@ -1,7 +1,7 @@
 ---
 phase: 07
 name: validate
-description: "Használd az implementáció után (Phase 07), ha a tasks.md 'Validálásra kész'. Teszt-, lint- és build-ellenőrzés, hiba esetén önjavító kör (implement-fixer subagent). Létrehozza a 'validate-decision.md'-t; PASS esetén a spec.md/plan.md/tasks.md státuszát 'Kész'-re állítja."
+description: "berkispec - 07. Használd az implementáció után (Phase 07), ha a tasks.md 'Validálásra kész'. Teszt-, lint- és build-ellenőrzés, hiba esetén önjavító kör (implement-fixer subagent). Létrehozza a 'validate-decision.md'-t; PASS esetén a spec.md/plan.md/tasks.md státuszát 'Kész'-re állítja."
 prerequisites:
   - "specs/cycle-NN-<name>/tasks.md státusz: Validálásra kész"
 output:

@@ -1,7 +1,7 @@
 ---
 phase: 01
 name: add-cycles
-description: "Használd az inicializálás után (Phase 01) fejlesztési ciklusok (roadmap) tervezéséhez, meglévők átütemezéséhez vagy új ciklus hozzáadásához — a feladatok logikai, önállóan tesztelhető egységekre bontása. Bemenet: 'conventions.md'. A 'specs/roadmap.md'-t hozza létre vagy frissíti 'Kész' státusszal."
+description: "berkispec - 01. Használd az inicializálás után (Phase 01) fejlesztési ciklusok (roadmap) tervezéséhez, meglévők átütemezéséhez vagy új ciklus hozzáadásához — a feladatok logikai, önállóan tesztelhető egységekre bontása. Bemenet: 'conventions.md'. A 'specs/roadmap.md'-t hozza létre vagy frissíti 'Kész' státusszal."
 prerequisites:
   - "conventions.md létezik"
 output:
