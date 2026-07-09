@@ -1,6 +1,6 @@
 ---
 phase: 09
-name: review-and-merge
+name: bs-review-and-merge
 description: "berkispec - 09. Használd a ciklus utolsó lépéseként (Phase 09), ha a kód és a dokumentáció is 'Kész'. Kódreview (reviewer, review-fixer subagentek) a 'code-review.md'-be, majd a branch beolvasztása a 'conventions.md' merge stratégiája szerint (PR nyitás vagy lokális merge)."
 prerequisites:
   - "specs/cycle-NN-<name>/tasks.md státusz: Kész"
@@ -9,13 +9,12 @@ prerequisites:
 output:
   - "specs/cycle-NN-<name>/code-review.md"
   - "Merged cycle branch (lokális vagy PR, a conventions.md Merge stratégiája szerint)"
-prev: 08-doc-sync
-next: 02-write-spec
+prev: bs-doc-sync
+next: bs-write-spec
 subagents:
   - "agents/reviewer.md"
   - "agents/review-fixer.md"
 ---
-
 # 09 — Review és Merge
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
@@ -178,8 +177,7 @@ Mivel a review-hurok a doc-sync után is módosíthat kódot, a merge előtt ell
    - Ha **nem**, nincs teendő: a normál `07 → 08 → 09` sorrend már konzisztens doksit adott.
    - Ha **igen**, indítsd újra a `08-doc-sync`-et a végső kódra:
      ```text
-     Kövesd a `prompts/skills/08-doc-sync.md` utasításait.
-     Input: `specs/cycle-NN-<cycle-name>`
+     /bs-doc-sync input: @specs/cycle-NN-<cycle-name>
      ```
 2. Várd meg, amíg a `08-doc-sync` DS22 kapuja zöld, nincs nyitott `doc-sync-questions.md` kérdés, és a `doc-sync-plan.md` minden tétele pipált.
 3. A doc-sync lefutása után térj vissza ide, és csak ezután kérj merge-megerősítést.
@@ -250,10 +248,9 @@ Ha a merge (vagy PR létrehozás) sikeresen megtörtént, jelezd a felhasználó
 >
 > *Megkezdhető a következő ciklus. Új ciklus hozzáadásához:*
 > ```
-> Kövesd a `prompts/skills/01-add-cycles.md` utasításait.
+> /bs-add-cycles
 > ```
 > *Vagy ha a következő ciklus már a roadmap-en van, közvetlenül a spec fázissal:*
 > ```
-> Kövesd a `prompts/skills/02-write-spec.md` utasításait.
-> Input: `specs/roadmap.md` (ciklus kontextus), ciklus: cycle-NN-<cycle-name>
+> /bs-write-spec input: @specs/roadmap.md, ciklus: cycle-NN-<cycle-name>
 > ```"*

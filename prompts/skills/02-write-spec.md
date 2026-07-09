@@ -1,17 +1,16 @@
 ---
 phase: 02
-name: write-spec
+name: bs-write-spec
 description: "berkispec - 02. Használd egy ciklus indításakor (Phase 02) a roadmap alapján, a funkcionális/üzleti követelmények specifikálásához. Megnyitja a ciklus git branch-ét ('feature/cycle-NN-...'), és létrehozza a 'spec.md'-t ('Tervezésre kész') + a 'spec-questions.md'-t. Előfeltétel: 'specs/roadmap.md' státusz 'Kész'."
 prerequisites:
   - "specs/roadmap.md státusz: Kész"
 output:
   - "specs/cycle-NN-<name>/spec.md státusz: Tervezésre kész"
   - "specs/cycle-NN-<name>/spec-questions.md"
-prev: 01-add-cycles
-next: 03-write-plan
+prev: bs-add-cycles
+next: bs-write-plan
 subagents: []
 ---
-
 # 02 — Spec írás
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
@@ -222,11 +221,10 @@ Ha az alábbiak bármelyike teljesül, **STOP — állj meg és ne lépj tovább
 - **A minőségellenőrzés hibát talált** — javítsd a hibát, majd futtasd újra. Ne állítsd `Tervezésre kész`-re a státuszt, amíg nem ment át.
 - **A felhasználó megerősítése hiányzik** — a státusz `Tervezésre kész`-re csak explicit megerősítés után állítható. Ne állítsd át kérdezés nélkül.
 - **A spec plan-tartalmú elemet tartalmaz** (pl. technológiaválasztás, implementációs részlet, konkrét fájlterv) — töröld, nem spec-be való.
-- **A státusz már `Tervezésre kész`** — állj meg. Ne kezdj plan-t vagy task listát. Jelezd a felhasználónak a következő lépést és a fázis indító promptját, például:
-> *"A spec kész. Folytathatjuk a 3. lépéssel (plan). Használd ezt a promptot:
+- **A státusz már `Tervezésre kész`** — állj meg. Ne kezdj plan-t vagy task listát. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
+> *"A spec kész. Folytathatjuk a 3. lépéssel (plan). Használd ezt a parancsot:
 > ```
-> Kövesd a `prompts/skills/03-write-plan.md` utasításait.
-> Input: `specs/cycle-NN-<cycle-name>/spec.md` (spec kontextus), ciklus: cycle-NN-<cycle-name>
+> /bs-write-plan input: @specs/cycle-NN-<cycle-name>/spec.md, ciklus: cycle-NN-<cycle-name>
 > ```"*
 > **A válasz végén helyezd el a `spec.md` közvetlen, kattintható linkjét.**
 

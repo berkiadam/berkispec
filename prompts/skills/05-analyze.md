@@ -1,20 +1,19 @@
 ---
 phase: 05
-name: analyze
+name: bs-analyze
 description: "berkispec - 05. Használd az implementáció előtt (Phase 05), ha a tasks.md 'Implementálásra kész'. Kereszt-fázisos konzisztencia-kapu a spec.md/plan.md/tasks.md között: subagentekkel (analyzer, *-fixer) azonosítja és automatikusan javítja az ellentmondásokat. Létrehozza az 'analyze-report.md'-t (PASS/FAIL)."
 prerequisites:
   - "specs/cycle-NN-<name>/tasks.md státusz: Implementálásra kész"
 output:
   - "specs/cycle-NN-<name>/analyze-report.md (PASS / FAIL)"
-prev: 04-write-tasks
-next: 06-implement
+prev: bs-write-tasks
+next: bs-implement
 subagents:
   - "agents/analyzer.md"
   - "agents/spec-fixer.md"
   - "agents/plan-fixer.md"
   - "agents/tasks-fixer.md"
 ---
-
 # 05 — Analyze (kereszt-fázisos konzisztencia ellenőrzés + önjavító hurok)
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
@@ -297,11 +296,10 @@ Teendők **sorban**:
    git add specs/cycle-NN-<cycle-name>/
    git commit -m "cycle-NN: 05-analyze"
    ```
-4. Jelezd a felhasználónak a következő lépést és a fázis indító promptját:
-   > *"Az analízis konzisztensnek találta a tervezési dokumentumokat. Folytathatjuk a 6. lépéssel (implement). Használd ezt a promptot:*
+4. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát:
+   > *"Az analízis konzisztensnek találta a tervezési dokumentumokat. Folytathatjuk a 6. lépéssel (implement). Használd ezt a parancsot:*
    > ```
-   > Kövesd a `prompts/skills/06-implement.md` utasításait.
-   > Input: `specs/cycle-NN-<cycle-name>/tasks.md`
+   > /bs-implement input: @specs/cycle-NN-<cycle-name>/tasks.md
    > ```"*
    > **A válasz végén helyezd el az `analyze-report.md` közvetlen, kattintható linkjét.**
 

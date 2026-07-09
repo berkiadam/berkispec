@@ -1,6 +1,6 @@
 ---
 phase: 08
-name: doc-sync
+name: bs-doc-sync
 description: "berkispec - 08. Használd a validáció után, merge előtt (Phase 08), ha a tasks.md/plan.md/spec.md mind 'Kész'. A kódváltozásokat a 'docs-generated/' rendszer-dokumentációba és az érintett komponens-README-kbe szinkronizálja (doc-sync-planner subagent, design-drift ellen), és létrehozza a 'doc-sync-plan.md'-t."
 prerequisites:
   - "specs/cycle-NN-<name>/tasks.md státusz: Kész"
@@ -11,12 +11,11 @@ output:
   - "Érintett komponens README-k frissítve"
   - "specs/cycle-NN-<name>/doc-sync-plan.md (a végrehajtás és a folytatás horgonya)"
   - "specs/cycle-NN-<name>/doc-sync-questions.md (ha merül fel döntési pont / kapu-bukás)"
-prev: 07-validate
-next: 09-review-and-merge
+prev: bs-validate
+next: bs-review-and-merge
 subagents:
   - "agents/doc-sync-planner.md"
 ---
-
 # 08 — Dokumentáció szinkron (doc-sync)
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
@@ -446,10 +445,9 @@ A kapu zöldre futása után:
    _(Bootstrapnél a `docs-generated/` + az áthelyezett fájlok + a hivatkozás-átírások; a gyökér `temp/` munkafájlok sorsát a 8. munkaterv dönti el.)_
 
 2. **Jelezd a felhasználónak a következő lépést:**
-   > *"A dokumentáció szinkronban van a megvalósult rendszerrel, a konzisztencia-kapu zöld. Folytathatjuk a 9. lépéssel: review & merge (09). Használd ezt a promptot:*
+   > *"A dokumentáció szinkronban van a megvalósult rendszerrel, a konzisztencia-kapu zöld. Folytathatjuk a 9. lépéssel: review & merge (09). Használd ezt a parancsot:*
    > ```
-   > Kövesd a `prompts/skills/09-review-and-merge.md` utasításait.
-   > Input: `specs/cycle-NN-<cycle-name>`
+   > /bs-review-and-merge input: @specs/cycle-NN-<cycle-name>
    > ```"*
    > **A válasz végén helyezd el a `docs-generated/system-overview.md` (és a `doc-sync-plan.md`) közvetlen, kattintható linkjét.**
 

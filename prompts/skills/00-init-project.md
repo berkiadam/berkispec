@@ -1,15 +1,14 @@
 ---
 phase: 00
-name: init-project
+name: bs-init-project
 description: "berkispec - 00. Használd a projekt legelső indításakor (Phase 00), vagy ha a gyökér 'conventions.md' hiányzik/hiányos. A fejlesztővel közösen rögzíti a globális projektkonvenciókat (tech stack, teszt, fejlesztési flow, git merge stratégia) a 'conventions.md'-ben — ez minden további fázis előfeltétele."
 prerequisites: []
 output:
   - "conventions.md (projekt gyökér)"
 prev: null
-next: 01-add-cycles
+next: bs-add-cycles
 subagents: []
 ---
-
 # 00 — Projekt inicializálás
 
 Ez a prompt egyszer fut le, új projekt indulásakor. Célja a projekt konvencióinak rögzítése, amelyekre az összes fejlesztési ciklus (02–09) hivatkozni fog.

@@ -1,17 +1,16 @@
 ---
 phase: 04
-name: write-tasks
+name: bs-write-tasks
 description: "berkispec - 04. Használd, ha a plan.md 'Task írásra kész' (Phase 04), a technikai terv jól strukturált, egyenként végrehajtható és mérhető feladatokra (DoD) bontásához. Létrehozza a 'tasks.md'-t ('Implementálásra kész') + szükség esetén a 'tasks-questions.md'-t."
 prerequisites:
   - "specs/cycle-NN-<name>/plan.md státusz: Task írásra kész"
 output:
   - "specs/cycle-NN-<name>/tasks.md státusz: Implementálásra kész"
   - "specs/cycle-NN-<name>/tasks-questions.md (ha merül fel kérdés)"
-prev: 03-write-plan
-next: 05-analyze
+prev: bs-write-plan
+next: bs-analyze
 subagents: []
 ---
-
 # 04 — Tasks írás
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
@@ -275,11 +274,10 @@ Ha a felhasználó megerősíti:
 
 > **Kész lifecycle:** a `tasks.md` az `Implementálásra kész` → (implementáció során `Validálásra kész`) → a validate (07) PASS után `Kész` státuszra lép. A 08 fázis már `Kész`-t vár.
 
-Ha a státusz `Implementálásra kész`, állj meg. Ne kezdj implementálni vagy analízist. Jelezd a felhasználónak a következő lépést és a fázis indító promptját, például:
-> *"A task lista kész. Folytathatjuk az 5. lépéssel (analyze — kereszt-fázisos konzisztencia ellenőrzés). Használd ezt a promptot:
+Ha a státusz `Implementálásra kész`, állj meg. Ne kezdj implementálni vagy analízist. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
+> *"A task lista kész. Folytathatjuk az 5. lépéssel (analyze — kereszt-fázisos konzisztencia ellenőrzés). Használd ezt a parancsot:
 > ```
-> Kövesd a `prompts/skills/05-analyze.md` utasításait.
-> Input: `specs/cycle-NN-<cycle-name>`
+> /bs-analyze input: @specs/cycle-NN-<cycle-name>
 > ```"*
 > **A válasz végén helyezd el a `tasks.md` közvetlen, kattintható linkjét.**
 

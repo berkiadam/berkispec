@@ -1,0 +1,17 @@
+{
+  "antigravity": {
+    "analyze_phase": "opus 4.8",
+    "validate_phase": "opus 4.8",
+    "default": "gemini flash 3.5"
+  },
+  "copilot": {
+    "analyze_phase": "Claude Opus 4.6",
+    "validate_phase": "Claude Opus 4.6",
+    "default": "Claude Sonnet 4.6"
+  },
+  "claude": {
+    "analyze_phase": "claude-opus-4-8",
+    "validate_phase": "claude-opus-4-8",
+    "default": "claude-sonnet-5"
+  }
+}

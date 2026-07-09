@@ -1,16 +1,15 @@
 ---
 phase: 01
-name: add-cycles
+name: bs-add-cycles
 description: "berkispec - 01. Használd az inicializálás után (Phase 01) fejlesztési ciklusok (roadmap) tervezéséhez, meglévők átütemezéséhez vagy új ciklus hozzáadásához — a feladatok logikai, önállóan tesztelhető egységekre bontása. Bemenet: 'conventions.md'. A 'specs/roadmap.md'-t hozza létre vagy frissíti 'Kész' státusszal."
 prerequisites:
   - "conventions.md létezik"
 output:
   - "specs/roadmap.md státusz: Kész"
-prev: 00-init-project
-next: 02-write-spec
+prev: bs-init-project
+next: bs-write-spec
 subagents: []
 ---
-
 # 01 — Ciklusok kezelése
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
@@ -283,11 +282,10 @@ Ha bármelyikre "nem": javítsd vagy kérdezz rá, mielőtt hozzáfűzöd.
 
      > *"Cycle NN — [cím] hozzáadva. Könyvtár létrehozva: `specs/cycle-NN-<cycle-name>/`*
      >
-     > *Következő lépés — spec írás. Használd ezt a promptot:*
+     > *Következő lépés — spec írás. Használd ezt a parancsot:*
      > ```
-      > Kövesd a `prompts/skills/02-write-spec.md` utasításait.
-      > Input: `specs/roadmap.md` (ciklus kontextus), ciklus: cycle-NN-<cycle-name>
-      > ```"*
+     > /bs-write-spec input: @specs/roadmap.md, ciklus: cycle-NN-<cycle-name>
+     > ```"*
 
 ---
 

@@ -1,18 +1,17 @@
 ---
 phase: 03
-name: write-plan
+name: bs-write-plan
 description: "berkispec - 03. Használd, ha a ciklus spec.md-je 'Tervezésre kész' (Phase 03), a részletes technikai megvalósítási terv kidolgozásához (kódbázis-elemzés, szükség esetén researcher subagent). Létrehozza a 'plan.md'-t ('Task írásra kész') + a 'plan-questions.md'-t."
 prerequisites:
   - "specs/cycle-NN-<name>/spec.md státusz: Tervezésre kész"
 output:
   - "specs/cycle-NN-<name>/plan.md státusz: Task írásra kész"
   - "specs/cycle-NN-<name>/plan-questions.md"
-prev: 02-write-spec
-next: 04-write-tasks
+prev: bs-write-spec
+next: bs-write-tasks
 subagents:
   - "agents/researcher.md"
 ---
-
 # 03 — Plan írás
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
@@ -446,11 +445,10 @@ Ha a felhasználó megerősíti:
   git commit -m "cycle-NN: 03-plan"
   ```
 
-Ha a státusz \`Task írásra kész\`, állj meg. Ne kezdj task listát. Jelezd a felhasználónak a következő lépést és a fázis indító promptját, például:
-> *"A plan kész. Folytathatjuk a 4. lépéssel (tasks). Használd ezt a promptot:*
+Ha a státusz \`Task írásra kész\`, állj meg. Ne kezdj task listát. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
+> *"A plan kész. Folytathatjuk a 4. lépéssel (tasks). Használd ezt a parancsot:*
 > ```
-> Kövesd a `prompts/skills/04-write-tasks.md` utasításait.
-> Input: `specs/cycle-NN-<cycle-name>/plan.md`
+> /bs-write-tasks input: @specs/cycle-NN-<cycle-name>/plan.md
 > ```"*
 
 ---

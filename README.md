@@ -19,36 +19,41 @@
     - [Telepítés lépései:](#telepítés-lépései)
     - [Támogatott platformok és ágensek:](#támogatott-platformok-és-ágensek)
     - [Hogyan lehet használni?](#hogyan-lehet-használni)
-  - [3. Mappastruktúra](#3-mappastruktúra)
-  - [4. Teljes berki spec flow (00–09)](#4-teljes-berki-spec-flow-0009)
-    - [4.1 Magas szintű összefoglalás](#41-magas-szintű-összefoglalás)
-    - [4.2 Részletes folyamat](#42-részletes-folyamat)
-    - [4.3 Az 05-analyze önjavító hurok (részletes)](#43-az-05-analyze-önjavító-hurok-részletes)
-    - [4.4 Az 07-validate önjavító hurok (részletes)](#44-az-07-validate-önjavító-hurok-részletes)
-    - [4.5 Az 09-review önjavító hurok (részletes)](#45-az-09-review-önjavító-hurok-részletes)
-    - [4.6 Önjavító hurkok (analyze + validate + review) — közös konvenciók](#46-önjavító-hurkok-analyze--validate--review--közös-konvenciók)
-    - [4.7 Példa prompt-folyam (egy ciklus végigvezetése)](#47-példa-prompt-folyam-egy-ciklus-végigvezetése)
-  - [5. Egyszerűsített (lightweight) flow](#5-egyszerűsített-lightweight-flow)
-    - [5.1 Folyamatábra](#51-folyamatábra)
-    - [5.2 A három fázis röviden](#52-a-három-fázis-röviden)
-    - [5.3 Két beépített kör-megszakító](#53-két-beépített-kör-megszakító)
-    - [5.4 Opcionális ágensek (mind read-only, egyik sem kötelező)](#54-opcionális-ágensek-mind-read-only-egyik-sem-kötelező)
-    - [5.5 Indító prompt (copy-paste)](#55-indító-prompt-copy-paste)
-    - [5.6 Példa prompt](#56-példa-prompt)
-  - [6. Skill-index](#6-skill-index)
-  - [7. Agent-index](#7-agent-index)
-  - [8. Frontmatter séma](#8-frontmatter-séma)
-  - [9. conventions.md — Projekt konvenciók](#9-conventionsmd--projekt-konvenciók)
-  - [10. Egy ciklus artifact fájljai](#10-egy-ciklus-artifact-fájljai)
-  - [11. docs-generated/ — élő dokumentáció (a 08-doc-sync gazdája)](#11-docs-generated--élő-dokumentáció-a-08-doc-sync-gazdája)
-  - [12. Kérdéskezelés (spec-questions.md / plan-questions.md / tasks-questions.md / doc-sync-questions.md)](#12-kérdéskezelés-spec-questionsmd--plan-questionsmd--tasks-questionsmd--doc-sync-questionsmd)
-  - [13. Egységes `Kész` státusz-lifecycle](#13-egységes-kész-státusz-lifecycle)
-  - [14. Sonar minőségellenőrzés](#14-sonar-minőségellenőrzés)
-  - [15. Döntési napló (imp-decision.md)](#15-döntési-napló-imp-decisionmd)
-  - [16. Validációs napló (validate-decision.md)](#16-validációs-napló-validate-decisionmd)
-  - [17. Reviewer agent (agents/reviewer.md)](#17-reviewer-agent-agentsreviewermd)
-  - [18. Ágens-specifikus integráció](#18-ágens-specifikus-integráció)
-    - [18.1 Antigravity CLI (Google DeepMind)](#181-antigravity-cli-google-deepmind)
+  - [3. Quick start](#3-quick-start)
+    - [A keretrendszer működési elve:](#a-keretrendszer-működési-elve)
+    - [Két fejlesztési út:](#két-fejlesztési-út)
+    - [Alapvető parancsok (Slash Commands):](#alapvető-parancsok-slash-commands)
+  - [4. Mappastruktúra](#4-mappastruktúra)
+  - [5. Teljes berki spec flow (00–09)](#5-teljes-berki-spec-flow-0009)
+    - [5.1 Magas szintű összefoglalás](#51-magas-szintű-összefoglalás)
+    - [5.2 Részletes folyamat](#52-részletes-folyamat)
+    - [5.3 Automatikus modell választás](#53-automatikus-modell-választás)
+    - [5.4 Az 05-analyze önjavító hurok (részletes)](#54-az-05-analyze-önjavító-hurok-részletes)
+    - [5.5 Az 07-validate önjavító hurok (részletes)](#55-az-07-validate-önjavító-hurok-részletes)
+    - [5.6 Az 09-review önjavító hurok (részletes)](#56-az-09-review-önjavító-hurok-részletes)
+    - [5.7 Önjavító hurkok (analyze + validate + review) — közös konvenciók](#57-önjavító-hurkok-analyze--validate--review--közös-konvenciók)
+    - [5.8 Példa prompt-folyam (egy ciklus végigvezetése)](#58-példa-prompt-folyam-egy-ciklus-végigvezetése)
+  - [6. Egyszerűsített (lightweight) flow](#6-egyszerűsített-lightweight-flow)
+    - [6.1 Folyamatábra](#61-folyamatábra)
+    - [6.2 A három fázis röviden](#62-a-három-fázis-röviden)
+    - [6.3 Két beépített kör-megszakító](#63-két-beépített-kör-megszakító)
+    - [6.4 Opcionális ágensek (mind read-only, egyik sem kötelező)](#64-opcionális-ágensek-mind-read-only-egyik-sem-kötelező)
+    - [6.5 Indító prompt (copy-paste)](#65-indító-prompt-copy-paste)
+    - [6.6 Példa prompt](#66-példa-prompt)
+  - [7. Skill-index](#7-skill-index)
+  - [8. Agent-index](#8-agent-index)
+  - [9. Frontmatter séma](#9-frontmatter-séma)
+  - [10. conventions.md — Projekt konvenciók](#10-conventionsmd--projekt-konvenciók)
+  - [11. Egy ciklus artifact fájljai](#11-egy-ciklus-artifact-fájljai)
+  - [12. docs-generated/ — élő dokumentáció (a 08-doc-sync gazdája)](#12-docs-generated--élő-dokumentáció-a-08-doc-sync-gazdája)
+  - [13. Kérdéskezelés (spec-questions.md / plan-questions.md / tasks-questions.md / doc-sync-questions.md)](#13-kérdéskezelés-spec-questionsmd--plan-questionsmd--tasks-questionsmd--doc-sync-questionsmd)
+  - [14. Egységes `Kész` státusz-lifecycle](#14-egységes-kész-státusz-lifecycle)
+  - [15. Sonar minőségellenőrzés](#15-sonar-minőségellenőrzés)
+  - [16. Döntési napló (imp-decision.md)](#16-döntési-napló-imp-decisionmd)
+  - [17. Validációs napló (validate-decision.md)](#17-validációs-napló-validate-decisionmd)
+  - [18. Reviewer agent (agents/reviewer.md)](#18-reviewer-agent-agentsreviewermd)
+  - [19. Ágens-specifikus integráció](#19-ágens-specifikus-integráció)
+    - [19.1 Antigravity CLI (Google DeepMind)](#191-antigravity-cli-google-deepmind)
       - [17.1.1 Tervezési és naplózási folyamat (Planning Mode)](#1711-tervezési-és-naplózási-folyamat-planning-mode)
       - [17.1.2 Jogosultságok kezelése (Permissions)](#1712-jogosultságok-kezelése-permissions)
       - [17.1.3 Skillek és Ágensek indítása (TUI használat)](#1713-skillek-és-ágensek-indítása-tui-használat)
@@ -79,7 +84,7 @@ A felhasználónak **két útja** van; a feladat súlya dönti el, melyik a megf
 
 1. **Teljes berki spec flow (00–09 fázis)** — a nagyobb, összetettebb fejlesztésekhez. Külön `spec.md` → `plan.md` → `tasks.md` dokumentumok, kereszt-fázisos `analyze`, `validate`, `doc-sync` és `review` minőségi kapukkal és önjavító hurkokkal. Üres projektnél a `00-init-project`, új ciklusnál a `01-add-cycles` skillel indul. Ezt írja le a README többi része.
 
-2. **Egyszerűsített (lightweight) flow** — kis, jól körülhatárolt feladatokhoz, amelyek 3-4 lépésben megoldhatók (pl. **konfiguráció összeállítása**, **egyszerűbb script megírása**, kisebb javítás). Egyetlen háromfázisú recept: `spec.md` → `task.md` → implementáció, a [`skills/sdd-lightweight-flow.md`](prompts/skills/sdd-lightweight-flow.md) skillben. Nincs külön plan/analyze/validate/doc-sync fázis; az opcionális ágenseket (`researcher`, `analyzer`, `reviewer`) csak akkor hívja, ha tényleg segítenek.
+2. **Egyszerűsített (lightweight) flow** — kis, jól körülhatárolt feladatokhoz, amelyek 3-4 lépésben megoldhatók (pl. **konfiguráció összeállítása**, **egyszerűbb script megírása**, kisebb javítás). Egyetlen háromfázisú recept: `spec.md` → `task.md` → implementáció, a `/bs-quick-flow` skillben. Nincs külön plan/bs-analyze/bs-validate/bs-doc-sync fázis; az opcionális ágenseket (`researcher`, `analyzer`, `reviewer`) csak akkor hívja, ha tényleg segítenek.
 
 **Hogyan dönts?**
 
@@ -89,7 +94,7 @@ A felhasználónak **két útja** van; a feladat súlya dönti el, melyik a megf
 | Méret | 3-4 lépésben megoldható | önálló, vertikálisan vágható ciklus(ok) |
 | Dokumentumok | `spec.md` + `task.md` | `spec.md` + `plan.md` + `tasks.md` |
 | Minőségi kapuk | inline + opcionális ágensek | `analyze` / `validate` / `doc-sync` / `review` hurkok |
-| Belépő | `skills/sdd-lightweight-flow.md` | `00-init-project` / `01-add-cycles` |
+| Belépő | `/bs-quick-flow` | `/bs-init-project` / `/bs-add-cycles` |
 
 **Alapértelmezett flow:** a projekt jellegét a `00-init-project` fázisban tisztázzuk (termékfejlesztés vs. konfiguráció/scriptelés), és ez alapján egy **default flow** kerül a `conventions.md` `## Fejlesztési módszertan` szekciójának **Alapértelmezett flow** mezőjébe. Ez a kiindulópont — feladatonként felülbírálható.
 
@@ -114,23 +119,50 @@ A keretrendszer három népszerű fejlesztő platformra képes beállítani a k�
 
 1. **Google Antigravity CLI:**
    * A projekt gyökerében létrehozza a `.agents/` konfigurációs mappát.
-   * Az ágenseket a `.agents/agents/<név>/agent.json` mappaszerkezetbe, a skilleket pedig a `.agents/skills/berkispec-<név>/SKILL.md` könyvtárba linkeli be.
+   * Az ágenseket a `.agents/agents/<név>/agent.json` mappaszerkezetbe, a skilleket pedig a `.agents/skills/bs-<név>/SKILL.md` könyvtárba linkeli be.
 2. **Claude Code:**
    * A projekt gyökerében létrehozza a `.claude/` konfigurációs mappát.
-   * Az ágenseket a `.claude/agents/<név>.md` (Markdown) formátumban linkeli be, a skilleket pedig a `.claude/skills/berkispec-<név>/SKILL.md` alá.
+   * Az ágenseket a `.claude/agents/<név>.md` (Markdown) formátumban linkeli be, a skilleket pedig a `.claude/skills/bs-<név>/SKILL.md` alá.
 3. **GitHub Copilot (CLI & IDE):**
    * A projekt gyökerében létrehozza a `.github/` konfigurációs mappát.
-   * Az ágenseket a `.github/agents/<név>.agent.md` fájlként linkeli be, a skilleket pedig globális utasításokként a `.github/instructions/berkispec-<név>.instructions.md` fájlba rendezi.
+   * Az ágenseket a `.github/agents/<név>.agent.md` fájlként linkeli be, a skilleket pedig globális utasításokként a `.github/instructions/bs-<név>.instructions.md` fájlba rendezi.
 
 ### Hogyan lehet használni?
 A telepítés után az adott platform automatikusan beolvassa a symlinkelt definíciókat:
-* **Google Antigravity CLI / Claude Code:** Indítsd el a CLI-t a célprojekt mappájában. A chat felületen a `/` (per) karakter leütésével előhívhatod a skillek listáját. Mindegyik skill egységesen a `berkispec - <fázis>: <leírás>` névvel fog megjelenni, így azonnal láthatod az SDD lépések sorrendjét és célját. Kezdéshez hívd meg a `berkispec-00-init-project` skillt!
-* **GitHub Copilot:** A Copilot Chat ablakában vagy a Copilot CLI-ben a `@` szimbólummal (pl. `@berkispec-00-init-project`) tudod közvetlenül aktiválni a kívánt fázis utasításait.
+* **Google Antigravity CLI / Claude Code:** Indítsd el a CLI-t a célprojekt mappájában. A chat felületen a `/` (per) karakter leütésével előhívhatod a skillek listáját. Mindegyik skill egységesen a `berkispec - <fázis>: <leírás>` névvel fog megjelenni, így azonnal láthatod az SDD lépések sorrendjét és célját. Kezdéshez hívd meg a `bs-init-project` skillt!
+* **GitHub Copilot:** A Copilot Chat ablakában vagy a Copilot CLI-ben a `@` szimbólummal (pl. `@bs-init-project`) tudod közvetlenül aktiválni a kívánt fázis utasításait.
 
 ---
 
 
-## 3. Mappastruktúra
+## 3. Quick start
+
+A BerkiSpec egy fegyelmezett, spec-driven development (SDD) keretrendszer AI-ágensekkel való páros programozáshoz.
+
+### A keretrendszer működési elve:
+* **Ciklusok (Cycles):** A fejlesztést jól körülhatárolt, egyértelmű céllal leírható, könnyen kézben tartható egységekre (ciklusokra) osztjuk. Minden új ciklus saját Git branch-et kap, és a ciklus összes tervezési és naplózási dokumentuma a projekt gyökerében lévő `specs/cycle-NN-<cycle-name>/` mappába kerül.
+* **Fázisok (Phases):** Minden ciklus szigorú fázisokra van bontva, amelyek végigvezetik a folyamatot a követelményektől a megvalósításig és a merge-ig.
+
+### Két fejlesztési út:
+A feladat összetettségétől függően kétféle flow áll rendelkezésre:
+1. **Teljes SDD Flow:** Részletes specifikációt (`spec.md`), technikai tervet (`plan.md`) és feladatlistát (`tasks.md`) készít, valamint automatikus önjavító minőségi hurkokat (analyze, validate, review) futtat.
+2. **Könnyű (Lightweight) Flow:** Kisebb módosításokhoz, konfigurációkhoz vagy egyszerű scriptekhez. Egy lépésben fut le, nincs külön fázisbontása.
+
+### Alapvető parancsok (Slash Commands):
+A telepítés után a platform chat felületén a `/` karakter leütésével érheted el a skilleket:
+
+* **`/bs-init-project`**: A projekt legelső inicializálása (létrehozza a `conventions.md` fájlt).
+* **`/bs-add-cycles`**: Új fejlesztési ciklus hozzáadása az ütemtervhez (`roadmap.md`).
+* **`/bs-<fázis neve>`**: A teljes flow minden további fázisát a sorszámozott parancsokkal indíthatod el. A leírások fejléce mutatja a fázis célját, pl.:
+  * `/bs-write-spec` — *berkispec - 02. Használd egy ciklus indításakor...*
+  * `/bs-write-plan` — *berkispec - 03. Használd a részletes technikai tervhez...*
+  * és így tovább a merge-ig (`/bs-review-and-merge`).
+* **`/bs-quick-flow`**: A könnyű flow elindítása. Ezen a flown belül nincsenek különválasztott al-fázisok, a teljes egyszerűsített folyamathoz mindig ezt az egy skillt kell használni.
+
+---
+
+
+## 4. Mappastruktúra
 
 ```
 berkispec/                            # repo gyökér
@@ -147,7 +179,7 @@ berkispec/                            # repo gyökér
     │   ├── 07-validate.md
     │   ├── 08-doc-sync.md            # élő dokumentáció-szinkron (docs-generated/)
     │   ├── 09-review-and-merge.md
-    │   └── sdd-lightweight-flow.md   # egyszerűsített, háromfázisú flow kis feladatokhoz (spec→task→implement)
+    │   └── quick-flow.md   # egyszerűsített, háromfázisú flow kis feladatokhoz (spec→task→implement)
     ├── agents/                       # Specialista ágensek (Task tool subagent-ként hívva)
     │   ├── reviewer.md               # code review a 09 fázisban
     │   ├── analyzer.md               # kereszt-fázisos elemzés (read-only diagnózis) a 05 fázisban
@@ -175,13 +207,13 @@ berkispec/                            # repo gyökér
 
 ---
 
-## 4. Teljes berki spec flow (00–09)
+## 5. Teljes berki spec flow (00–09)
 
 Ez a fejezet a **teljes, sokfázisú** fejlesztési utat írja le a folyamatábráival — a projekt-setuptól (00–01) a per-ciklus loopon át (02–09) a merge-ig, az önjavító hurkokkal együtt. A **másik utat**, az egyszerűsített háromfázisú flow-t lentebb, az „Egyszerűsített (lightweight) flow" fejezet részletezi.
 
 > **Kód-jelölések:** a szövegben a `DS`/`VD`/`RD`/`LC`/`SK` + szám alakú kódok (pl. `DS22`, `RD6`, `LC1`) a skill-fájlok belső szabály-azonosítói. A részletes definíciójuk az adott skillben él; itt csak visszakereshető horgonyként szerepelnek, a README megértéséhez nem kell feloldani őket.
 
-### 4.1 Magas szintű összefoglalás
+### 5.1 Magas szintű összefoglalás
 
 Ez a diagram összefoglalja a 00–09 fázisok egymás utáni folyamatát, a kezdőpontokat, az interjú loopokat és a hibajavítási visszacsatolásokat.
 
@@ -278,7 +310,7 @@ flowchart TD
     9 -- "tiszta review + zöld validálás → merge (kézi megerősítés, RD8)" --> End
 ```
 
-### 4.2 Részletes folyamat
+### 5.2 Részletes folyamat
 
 Az alábbi részletes ábra bemutatja az egyes fázisok közötti pontos átmeneteket, a bemeneti/kimeneti fájlokat, a felhasználói interakciós pontokat (User Input), valamint a hibák esetén fellépő visszacsatolási loopokat.
 
@@ -442,7 +474,18 @@ flowchart TD
     Merge --> End([Ciklus befejezve])
 ```
 
-### 4.3 Az 05-analyze önjavító hurok (részletes)
+### 5.3 Automatikus modell választás
+
+A specifikáció-vezérelt fejlesztés során rendkívül fontos a költséghatékonyság, a sebesség és az erőforrások optimális kihasználása. Ennek érdekében a fázisok túlnyomó többségét gyors, költséghatékony, de megbízható modellekkel végezzük. Az analízis és a validáció fázisok (Phase 05 és Phase 07) azonban szigorú kivételek, mivel ezeknél mély következtetési (reasoning) képességre, magas fokú intelligenciára és komplex ellenőrzésre van szükség, amit csak a legerősebb és legokosabb modellek tudnak megbízhatóan elvégezni.
+
+- **Központosított konfiguráció (`prompts/models.json`)**: A projekten belüli modellek fázisok és ágensek szerinti elosztását a [`prompts/models.json`](prompts/models.json) fájl szabályozza. Itt határozhatók meg a célspecifikus modellek a kiemelt fázisokhoz (pl. `analyze_phase`), valamint az általános (`default`) modell a többi lépéshez.
+- **Automatizált platform-specifikus konfiguráció**: A telepítő (`./install.sh`) az ágensek és skillek másolásakor automatikusan beállítja a cél-ágensek saját konfigurációját a `models.json` alapján:
+  - **Antigravity CLI**: Az `agent.json` fájlok gyökerébe bekerül a `"model"` kulcs.
+  - **Claude Code**: Az `.md` ágensek YAML frontmatterébe a megfelelő API modell ID íródik be (pl. `model: claude-opus-4-8` vagy `model: claude-sonnet-5`).
+  - **GitHub Copilot**: Az `.agent.md` ágensek YAML frontmatterébe a Copilot saját modell picker neve íródik be (pl. `model: Claude Opus 4.6` vagy `model: Claude Sonnet 4.6`).
+- **Manuális váltás**: Ha nem a telepítő által konfigurált egyedi ágensekre támaszkodsz, hanem manuálisan váltasz modellt a CLI vagy IDE felületén, akkor is javasolt a fenti felosztást követni a legjobb eredmények érdekében.
+
+### 5.4 Az 05-analyze önjavító hurok (részletes)
 
 Ez az ábra **kizárólag az 05-analyze lépést** mutatja be, a subagentek és a kérdés-folyam feltüntetésével. Az orchestrátor (05-analyze) read-only: a **diagnózist** az `analyzer`, a **javítást** a fixer-subagentek (02/03/04 fix-mód) végzik; a felhasználót mindig az **orchestrátor** kérdezi, fázis-jelzéssel.
 
@@ -493,7 +536,7 @@ flowchart TD
 
 A hurok két, egymástól független módon áll le: **PASS** (nincs több `Must Fix` → marker le, egyetlen commit, tovább a 06-ra), vagy **`max X = 3` elérve PASS nélkül** (a report `FAIL`, a `[analyze-loop]` marker az érintett dokumentumokon marad, az orchestrátor összefoglal és humán döntést kér).
 
-### 4.4 Az 07-validate önjavító hurok (részletes)
+### 5.5 Az 07-validate önjavító hurok (részletes)
 
 Ez az ábra **kizárólag az 07-validate lépést** mutatja be, a subagent feltüntetésével (a fenti analyze-ábra párja). Az orchestrátor (07) PASS-ig **determinisztikus ellenőrző** (tesztek + Sonar + DoD), FAIL esetén **orchestrátor**: a **javítást** az `implement-fixer` subagent (= a 06 fix-módja) végzi, a re-validálást és a döntéseket az orchestrátor.
 
@@ -541,7 +584,7 @@ flowchart TD
 5. **Az orchestrátor újra-validál.** Zöld → PASS (1. pont). FAIL → új iteráció (2. ponttól).
 6. **Két megállás a 3-próbánál (a hurok user-érintkezése, VD7):** megrekedt **kód-bug** → STOP + humán (VD4, „hogyan tovább?"); **tervezési hiba** → eszkaláció 03/02-re (VD5, státusz-visszafordítással), átadva a tervezési huroknak — a 06-ban körözés helyett. A fixer eszkalációs jelzése a 3. próba bevárása nélkül is kiválthatja az eszkalációt.
 
-### 4.5 Az 09-review önjavító hurok (részletes)
+### 5.6 Az 09-review önjavító hurok (részletes)
 
 Ez az ábra **kizárólag az 09-review lépést** mutatja be, a subagentek feltüntetésével (az analyze- és validate-ábra párja). Az orchestrátor (09) a **diagnózist** a `reviewer` (read-only) subagenttel adatja, a **javítást** a `review-fixer` (= 06 fix-mód) végzi; a hurok **kétfázisú** (re-validate → re-review), és a merge-et **kézi megerősítés** zárja (RD8).
 
@@ -594,7 +637,7 @@ flowchart TD
 5. **Kétfázisú továbblépés (RD2):** az orchestrátor előbb **re-validál** (a 07 teljes ellenőrzései — regresszió-fogás; nem indítja a 07 saját hurkát). Zöld → **re-review** (vissza az 1. ponthoz a friss diffen). Regresszió → új iteráció (2. ponttól, a regresszált teszt a megrekedt item).
 6. **Megállás (a hurok user-érintkezése):** **szerződés-ügy** (a fixer jelzése, vagy a 3-próba kimerül és csak a szerződés módosításával/elnémítással lenne tiszta) → eszkaláció 03/02-re (RD6 b); egyébként **3-próba / `max 5` kimerült** → STOP + humán (RD6 c). A merge **soha nem automatikus** (RD8).
 
-### 4.6 Önjavító hurkok (analyze + validate + review) — közös konvenciók
+### 5.7 Önjavító hurkok (analyze + validate + review) — közös konvenciók
 
 Három fázis vezényel önjavító hurkot: az **05-analyze** (a tervezési dokumentumok konzisztenciája), az **07-validate** (a kód helyessége) és az **09-review** (a kód-review). A három hurok ugyanazokra a közös konvenciókra épül, hogy ne csússzanak szét:
 
@@ -605,75 +648,65 @@ Három fázis vezényel önjavító hurkot: az **05-analyze** (a tervezési doku
 
 **A három hurok különbsége:** az analyze korlátja a globális `max X = 3` iteráció; a validate- és a review-hurké a **per-item 3-próba szabály** (a beragadt elemet fogja meg), a review-nál egy **laza `max 5` globális backstop**-pal kiegészítve. A validate- és a review-hurokban a kód a **szerződéshez (teszt/DoD/finding) igazodik — VD3/RD4 anti-„csalás"** —, és ha egy FAIL/finding csak a szerződés módosításával vagy elnémításával lenne zöld/tiszta, az tervezési/szerződés-ügy: a hurok **felfelé eszkalál (VD5/RD6)** a tervezési fázisra (03/02), nem lazítja a tesztet/findinget. **A review-hurok ezen felül (1) kétfázisú** (`fix → re-validate → re-review`, mert egy review-fix tesztet ronthat), **és (2) a végén NEM automatizál: a merge kézi megerősítéssel zárul (RD8)** — szemben a validate auto-PASS-ával.
 
-> **A `08-doc-sync` NEM negyedik önjavító hurok.** Külön kategória: **objektív, projektfüggetlen konzisztencia-kapu (DS22)** + **ember-vezérelt** javítás (`doc-sync-questions.md`, DS10) — nincs LC1–LC4-stílusú subagent-önjavító hurka (a `doc-sync-planner` read-only tervkészítő, nem fixer). A „három fázis vezényel önjavító hurkot" tehát marad **három** (analyze/validate/review). A `08-doc-sync` és a `09-review` ráadásul **független minőségi kapuk** (DS23): a reviewer kizárólag a **kódra** ad findingot (`code-review.md`), a generált doksik helyességét a doc-sync **saját kapuja** garantálja — nincs finding-keveredés a kettő között.
+> **A `08-doc-sync` NEM negyedik önjavító hurok.** Külön kategória: **objektív, projektfüggetlen konzisztencia-kapu (DS22)** + **ember-vezérelt** javítás (`doc-sync-questions.md`, DS10) — nincs LC1–LC4-stílusú subagent-önjavító hurka (a `doc-sync-planner` read-only tervkészítő, nem fixer). A „három fázis vezényel önjavító hurkot" tehát marad **három** (analyze/bs-validate/review). A `08-doc-sync` és a `09-review` ráadásul **független minőségi kapuk** (DS23): a reviewer kizárólag a **kódra** ad findingot (`code-review.md`), a generált doksik helyességét a doc-sync **saját kapuja** garantálja — nincs finding-keveredés a kettő között.
 
-### 4.7 Példa prompt-folyam (egy ciklus végigvezetése)
+### 5.8 Példa prompt-folyam (egy ciklus végigvezetése)
 
 Egy konkrét ciklus, `cycle-02-oidc-login` végigvitele a promptok sorrendjében. A `00`/`01` **egyszeri** setup, a `02`–`09` **ciklusonként** ismétlődik. Minden fázist a saját indító promptjával, **új chat sessionban** indíts; a `<cycle-name>` és egyéb helyőrzőket cseréld ki. Az alábbi blokkban a `→` sorok a fázisban zajló interakciót (interjú, jóváhagyás, hurok) jelölik.
 
 ```
 # ①  00 — Projekt inicializálás  (csak üres projektnél, egyszer)
-Kövesd a `prompts/skills/00-init-project.md` utasításait.
-Input: OIDC-alapú bejelentkezés a mobil-bank frontendhez
+Futtasd a parancsot: `/bs-init-project input: OIDC-alapú bejelentkezés a mobil-bank frontendhez`
    → az ágens végigkérdezi a konvenciókat (tech stack, teszt, merge stratégia) → conventions.md
 
 # ②  01 — Ciklusok kezelése
-Kövesd a `prompts/skills/01-add-cycles.md` utasításait.
-Input: Új ciklus — OIDC login a mobil-bank frontendhez
+Futtasd a parancsot: `/bs-add-cycles input: Új ciklus — OIDC login a mobil-bank frontendhez`
    → névjavaslat: cycle-02-oidc-login → "ok" → specs/roadmap.md (Kész) + ciklusmappa
 
 # ③  02 — Spec írás
-Kövesd a `prompts/skills/02-write-spec.md` utasításait.
-Input: `specs/roadmap.md`, ciklus: cycle-02-oidc-login
+Futtasd a parancsot: `/bs-write-spec input: @specs/roadmap.md`
    → spec-questions.md kérdések egyenként → válaszok → "a spec kész, mehet" → spec.md (Tervezésre kész)
 
 # ④  03 — Plan írás
-Kövesd a `prompts/skills/03-write-plan.md` utasításait.
-Input: `specs/cycle-02-oidc-login/spec.md`
+Futtasd a parancsot: `/bs-write-plan input: @specs/cycle-02-oidc-login/spec.md`
    → kötelező első kérdés: E2E teszt stratégia → válaszok → "jóváhagyom" → plan.md (Task írásra kész)
 
 # ⑤  04 — Tasks írás
-Kövesd a `prompts/skills/04-write-tasks.md` utasításait.
-Input: `specs/cycle-02-oidc-login/plan.md`
+Futtasd a parancsot: `/bs-write-tasks input: @specs/cycle-02-oidc-login/plan.md`
    → "mehet" → tasks.md (Implementálásra kész)
 
 # ⑥  05 — Analyze
-Kövesd a `prompts/skills/05-analyze.md` utasításait.
-Input: `specs/cycle-02-oidc-login`
+Futtasd a parancsot: `/bs-analyze input: @specs/cycle-02-oidc-login`
    → kereszt-fázisos ellenőrzés; FAIL esetén önjavító hurok (kérdésekre válaszolsz) → analyze-report.md (PASS)
 
 # ⑦  06 — Implementálás
-Kövesd a `prompts/skills/06-implement.md` utasításait.
-Input: `specs/cycle-02-oidc-login/tasks.md`
+Futtasd a parancsot: `/bs-implement input: @specs/cycle-02-oidc-login/tasks.md`
    → kód + tasks.md haladás → tasks.md (Validálásra kész)
 
 # ⑧  07 — Validálás
-Kövesd a `prompts/skills/07-validate.md` utasításait.
-Input: `specs/cycle-02-oidc-login`
+Futtasd a parancsot: `/bs-validate input: @specs/cycle-02-oidc-login`
    → tesztek + Sonar; FAIL esetén önjavító hurok → PASS → spec/plan/tasks státusz: Kész
 
 # ⑨  08 — Doc-sync
-Kövesd a `prompts/skills/08-doc-sync.md` utasításait.
-Input: `specs/cycle-02-oidc-login`
+Futtasd a parancsot: `/bs-doc-sync input: @specs/cycle-02-oidc-login`
    → docs-generated/ frissítése + objektív kapu → konzisztens dokumentáció
 
 # ⑩  09 — Review és Merge
-Kövesd a `prompts/skills/09-review-and-merge.md` utasításait.
-Input: `specs/cycle-02-oidc-login`
+Futtasd a parancsot: `/bs-review-and-merge input: @specs/cycle-02-oidc-login`
    → reviewer → Must Fix javítások → tiszta review → merge (kézi megerősítéssel)
 ```
 
 A következő ciklus (`cycle-03-...`) ismét a `02`-vel indul — a `00`/`01` nem ismétlődik.
 
-## 5. Egyszerűsített (lightweight) flow
+## 6. Egyszerűsített (lightweight) flow
 
-A fenti 00–09 ábrák a **teljes berki spec flow-t** írják le. Ez a szekció a **másik utat**, az egyszerűsített, háromfázisú flow-t részletezi — kis, jól körülhatárolt feladatokhoz (konfiguráció, egyszerűbb script, kisebb javítás), amelyek 3-4 lépésben megoldhatók. Kanonikus forrása a [`skills/sdd-lightweight-flow.md`](prompts/skills/sdd-lightweight-flow.md) skill; a flow-választásról lásd fent a „Két fejlesztési út" szekciót.
+A fenti 00–09 ábrák a **teljes berki spec flow-t** írják le. Ez a szekció a **másik utat**, az egyszerűsített, háromfázisú flow-t részletezi — kis, jól körülhatárolt feladatokhoz (konfiguráció, egyszerűbb script, kisebb javítás), amelyek 3-4 lépésben megoldhatók. Kanonikus hívó parancsa a `/bs-quick-flow`; a flow-választásról lásd fent a „Két fejlesztési út" szekciót.
 
 A teljes flow-val szemben itt **nincs** külön `plan.md` (a technikai vázlat a `spec.md`-be kerül), **nincs** `analyze`/`validate`/`doc-sync`/`review` fázis és **nincs** automatizált önjavító hurok — a minőségi kapuk inline futnak, a dokumentáció frissítése pedig a 3. fázis része. A háromfázisú út: `spec.md` → `task.md` → implementáció, minden fázis végén **kötelező konzisztencia-ellenőrzéssel**, a fázisváltások előtt pedig **⛔ explicit felhasználói jóváhagyással**.
 
 **Hogyan indul egy ciklus?** A Felhasználó átad egy feladatot, az ágens előkészíti a git ágat, majd egy rövid **interjúval (grill)** tisztázza a célt — addig kérdez, amíg minden információ megvan a `spec.md`-hez. A **flow-méret döntés ennek az interjúnak az alapján** születik: az ágens folyamatosan mérlegeli, hogy a feladat tényleg belefér-e az egyszerűsített flow-ba (3-4 lépés, egyetlen komponens, nincs összetett előzetes tervezés). Ha a feladat túlnő ezen (nagyobb kódírás, több komponens, integráció, összetett tervezés), az ágens **megáll még a `spec.md` előtt**, és a teljes berki spec folyamatot javasolja (`01-add-cycles`). Csak ha a feladat valóban kicsi, javasol ciklusszámot és nevet, kér jóváhagyást, és hozza létre a ciklusmappát.
 
-### 5.1 Folyamatábra
+### 6.1 Folyamatábra
 
 ```mermaid
 flowchart TD
@@ -724,7 +757,7 @@ flowchart TD
     P3 -. "spec-hiba → vissza az 1. fázisba<br/>+ újra-jóváhagyás" .-> P1
 ```
 
-### 5.2 A három fázis röviden
+### 6.2 A három fázis röviden
 
 | Fázis | Kimenet | Fő szabály | Kapu a fázis végén |
 |---|---|---|---|
@@ -732,12 +765,12 @@ flowchart TD
 | **2. Feladatlista** | `task.md` | A technikai vázlatra épülő, pipálható lépések. A tesztelés a dokumentáció-frissítés **elé** kerül, logikus **teszt-sorrenddel** (erőforrást előbb létrehozni, csak utána ellenőrizni). | Konzisztencia-ellenőrzés (a `spec.md`-vel is) → **⛔ explicit jóváhagyás** |
 | **3. Megvalósítás** | kód + frissített dokumentáció | Kizárólag a `task.md` szerint, valós idejű pipálással. Csere/átnevezés után **leftover-sweep** (`grep` a régi alakra). Bukó teszt → javít + **az összes** teszt újra. | Tesztek zöldek + dokumentáció kész + egyeztetve → **Jira-prefixű záró commit** |
 
-### 5.3 Két beépített kör-megszakító
+### 6.3 Két beépített kör-megszakító
 
 - **Beragadás-felismerés (3. fázis):** ha ugyanaz a hiba 2-3 javítási kör után is bukik, vagy körben jár a megoldás, az ágens **megáll**, összefoglalja mit próbált + a pontos hibaüzenetet + a hipotéziseit, és **célzott, döntésre/adatra lebontott kérdést** tesz fel — nem próbálkozik tovább vakon.
 - **Fázis-visszalépés spec-hibára:** ha implementáció közben derül ki, hogy a `spec.md` hiányos vagy téves, **tilos csendben eltérni** tőle — vissza az 1. fázisba, `spec.md` (és ha kell, `task.md`) frissítés, majd **újra-jóváhagyás**, és csak utána tovább.
 
-### 5.4 Opcionális ágensek (mind read-only, egyik sem kötelező)
+### 6.4 Opcionális ágensek (mind read-only, egyik sem kötelező)
 
 Az egyszerűsített flow szándékosan **kevés** specialistát használ, és mindet **opcionálisan** — kis feladatnál a fő ágens subagent nélkül is elvégzi a munkát. Gyengébb/olcsóbb modellel bátran kihagyható mind a három.
 
@@ -747,24 +780,21 @@ Az egyszerűsített flow szándékosan **kevés** specialistát használ, és mi
 | [`analyzer`](prompts/agents/analyzer.md) | 2. (task.md) | `spec.md` ↔ `task.md` konzisztencia-diagnózis (lefedettségi rés, alulspecifikáció) | Több követelményes, könnyen kicsúszó task-listánál |
 | [`reviewer`](prompts/agents/reviewer.md) | 3. (commit előtt) | Diff code review → `Must Fix` / `Suggestion` | Nem triviális kódváltozásnál, commit előtti kapuként |
 
-> **Amit ez a flow NEM használ:** a fixer-wrappereket (`spec/plan/tasks/implement/review-fixer`) és a `doc-sync-planner`-t — ezek a teljes flow önjavító hurkainak és a `docs-generated/` szinkronjának belépői. Itt nincs automatizált hurok (a hibákat a fő ágens inline javítja), és nincs külön generált doc-réteg (a dokumentáció a 3. fázis része). Ha ezek valóban indokolttá válnának, az annak a jele, hogy **a teljes berki spec flow-ra kell váltani**.
+> **Amit ez a flow NEM használ:** a fixer-wrappereket (`spec/plan/tasks/bs-implement/review-fixer`) és a `doc-sync-planner`-t — ezek a teljes flow önjavító hurkainak és a `docs-generated/` szinkronjának belépői. Itt nincs automatizált hurok (a hibákat a fő ágens inline javítja), és nincs külön generált doc-réteg (a dokumentáció a 3. fázis része). Ha ezek valóban indokolttá válnának, az annak a jele, hogy **a teljes berki spec flow-ra kell váltani**.
 
-### 5.5 Indító prompt (copy-paste)
+### 6.5 Indító prompt (copy-paste)
 
 ```
-# Egyszerűsített (lightweight) flow — kis, jól körülhatárolt feladathoz
-Kövesd a `prompts/skills/sdd-lightweight-flow.md` utasításait.
-Input: <a feladat rövid leírása>
+/bs-quick-flow input: <a feladat rövid leírása>
 ```
 
-### 5.6 Példa prompt
+### 6.6 Példa prompt
 
 Egy kis feladat végigvitele. Itt **egyetlen indító prompt** van; utána a flow **társalgásos** — a fázisváltásokat a te rövid, természetes nyelvű jóváhagyásaid vezérlik a ⛔ kapuknál (nincsenek külön fázis-promptok, mint a teljes flow-ban). Az alábbi blokkban az idézőjeles sorok a te válaszaid:
 
 ```
 # ①  Indítás — a feladat átadása
-Kövesd a `prompts/skills/sdd-lightweight-flow.md` utasításait.
-Input: Adj a legacy-login apphoz egy `/health` végpontot, ami 200 OK-t ad "status: ok" JSON-nal.
+/bs-quick-flow input: Adj a legacy-login apphoz egy `/health` végpontot, ami 200 OK-t ad "status: ok" JSON-nal.
 
 # ②  Interjú + méret + név  (az ágens vezeti; te válaszolsz)
    → git ág előkészítése + grill-interjú → mivel a feladat kicsi, javasol: cycle-03-add-health-check
@@ -786,25 +816,25 @@ Input: Adj a legacy-login apphoz egy `/health` végpontot, ami 200 OK-t ad "stat
 
 ---
 
-## 6. Skill-index
+## 7. Skill-index
 
-| Skill | Fázis | Bemenet | Kimenet (záró státusz) |
+| Parancs | Fázis | Bemenet | Kimenet (záró státusz) |
 |---|---|---|---|
-| `skills/00-init-project.md` | Projekt init | Projekt leírás | `conventions.md` |
-| `skills/01-add-cycles.md` | Ciklusok kezelése | HLD/LLD vagy leírás | `specs/roadmap.md` (`Kész`) |
-| `skills/02-write-spec.md` | Spec | Roadmap + ciklus neve | `spec.md` (`Tervezésre kész`) |
-| `skills/03-write-plan.md` | Plan | `spec.md` | `plan.md` (`Task írásra kész`) |
-| `skills/04-write-tasks.md` | Tasks | `plan.md` | `tasks.md` (`Implementálásra kész`) |
-| `skills/05-analyze.md` | Analyze | ciklus mappa | `analyze-report.md` (PASS/FAIL) — FAIL esetén orchestrált önjavító hurok (fixer-subagentek, `max X=3`) |
-| `skills/06-implement.md` | Implementálás | `tasks.md` | kód + `tasks.md` (`Validálásra kész`) |
-| `skills/07-validate.md` | Validálás | ciklus mappa | PASS/FAIL + `test-report/`; PASS → státuszok `Kész` — FAIL esetén orchestrált önjavító hurok (`implement-fixer` subagent, 3-próba korlát, VD5 eszkaláció) |
-| `skills/08-doc-sync.md` | Doc-sync | ciklus mappa + `docs-generated/` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README mappa-index) + komponens README-k + `doc-sync-plan.md` — terv (`doc-sync-planner`) → mechanikus végrehajtás → objektív kapu (DS22); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
-| `skills/09-review-and-merge.md` | Review & Merge | cycle branch, `plan.md`, `spec.md` | `code-review.md` (+ `# Review History`) + merged branch — FAIL esetén orchestrált kétfázisú önjavító hurok (`review-fixer` → re-validate → re-review, per-item 3-próba + `max 5`, RD6 eszkaláció); a merge kézi megerősítéssel (RD8) |
-| `skills/sdd-lightweight-flow.md` | **Egyszerűsített flow** (külön út) | feladat leírása | `spec.md` + `task.md` + implementáció — háromfázisú, kis feladatokhoz; opcionális `researcher`/`analyzer`/`reviewer`; túlnövéskor átirányít a `01-add-cycles`-ra |
+| `/bs-init-project` | Projekt init | Projekt leírás | `conventions.md` |
+| `/bs-add-cycles` | Ciklusok kezelése | HLD/LLD vagy leírás | `specs/roadmap.md` (`Kész`) |
+| `/bs-write-spec` | Spec | Roadmap + ciklus neve | `spec.md` (`Tervezésre kész`) |
+| `/bs-write-plan` | Plan | `spec.md` | `plan.md` (`Task írásra kész`) |
+| `/bs-write-tasks` | Tasks | `plan.md` | `tasks.md` (`Implementálásra kész`) |
+| `/bs-analyze` | Analyze | ciklus mappa | `analyze-report.md` (PASS/FAIL) — FAIL esetén orchestrált önjavító hurok (fixer-subagentek, `max X=3`) |
+| `/bs-implement` | Implementálás | `tasks.md` | kód + `tasks.md` (`Validálásra kész`) |
+| `/bs-validate` | Validálás | ciklus mappa | PASS/FAIL + `test-report/`; PASS → státuszok `Kész` — FAIL esetén orchestrált önjavító hurok (`implement-fixer` subagent, 3-próba korlát, VD5 eszkaláció) |
+| `/bs-doc-sync` | Doc-sync | ciklus mappa + `docs-generated/` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README mappa-index) + komponens README-k + `doc-sync-plan.md` — terv (`doc-sync-planner`) → mechanikus végrehajtás → objektív kapu (DS22); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
+| `/bs-review-and-merge` | Review & Merge | cycle branch, `plan.md`, `spec.md` | `code-review.md` (+ `# Review History`) + merged branch — FAIL esetén orchestrált kétfázisú önjavító hurok (`review-fixer` → re-validate → re-review, per-item 3-próba + `max 5`, RD6 eszkaláció); a merge kézi megerősítéssel (RD8) |
+| `/bs-quick-flow` | **Egyszerűsített flow** (külön út) | feladat leírása | `spec.md` + `task.md` + implementáció — háromfázisú, kis feladatokhoz; opcionális `researcher`/`analyzer`/`reviewer`; túlnövéskor átirányít a `/bs-add-cycles`-ra |
 
 A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a kimenetet, a szomszédos fázisokat (`prev`/`next`) és a hívott subagenteket. Az egyszerűsített flow skill ettől eltérő, `name`/`description` alapú frontmattert használ (külön út, lásd a „Két fejlesztési út" szekciót).
 
-## 7. Agent-index
+## 8. Agent-index
 
 | Ágens | Hívja | Mit csinál | Kimenet |
 |---|---|---|---|
@@ -812,15 +842,15 @@ A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a 
 | `agents/analyzer.md` | 05 | Kereszt-fázisos konzisztencia **diagnózis** (read-only, 5 kategória); az orchestrált önjavító hurok ezt értékeli | megállapítás-lista → `analyze-report.md` |
 | `agents/researcher.md` | 03 | Forrásfájl-azonosítás + dokumentáció-kutatás | path-listák összefoglalóval |
 | `agents/doc-sync-planner.md` | 08 | A `docs-generated/` mappa + ciklus-diff **read-only** diagnózisa; per-fájl pipálható terv + DS22 kapu-leltár | `doc-sync-plan.md` tervjavaslat + `doc-sync-questions.md` kérdések |
-| `agents/spec-fixer.md` | 05 | Az önjavító hurok 02 fix-mód belépője (vékony wrapper → `skills/02-write-spec.md` Fix-mód) | javított `spec.md` + új `spec-questions.md` `Knn`-ek |
-| `agents/plan-fixer.md` | 05 | Az önjavító hurok 03 fix-mód belépője (vékony wrapper → `skills/03-write-plan.md` Fix-mód) | javított `plan.md` + új `plan-questions.md` `Knn`-ek |
-| `agents/tasks-fixer.md` | 05 | Az önjavító hurok 04 fix-mód belépője (vékony wrapper → `skills/04-write-tasks.md` Fix-mód) | javított `tasks.md` + új `tasks-questions.md` `Knn`-ek |
-| `agents/implement-fixer.md` | 07 | A validate-hurok 06 fix-mód belépője (vékony wrapper → `skills/06-implement.md` Fix-mód) | javított kód + lezárt `## Validációs javítások` taskok (+ esetleges eszkalációs jelzés) |
-| `agents/review-fixer.md` | 09 | A review-hurok 06 fix-mód belépője (vékony wrapper → `skills/06-implement.md` Fix-mód, `## Review javítások` bemenet) | javított kód + lezárt `## Review javítások` taskok (+ esetleges eszkalációs jelzés) |
+| `agents/spec-fixer.md` | 05 | Az önjavító hurok 02 fix-mód belépője (vékony wrapper → `/bs-write-spec` Fix-mód) | javított `spec.md` + új `spec-questions.md` `Knn`-ek |
+| `agents/plan-fixer.md` | 05 | Az önjavító hurok 03 fix-mód belépője (vékony wrapper → `/bs-write-plan` Fix-mód) | javított `plan.md` + új `plan-questions.md` `Knn`-ek |
+| `agents/tasks-fixer.md` | 05 | Az önjavító hurok 04 fix-mód belépője (vékony wrapper → `/bs-write-tasks` Fix-mód) | javított `tasks.md` + új `tasks-questions.md` `Knn`-ek |
+| `agents/implement-fixer.md` | 07 | A validate-hurok 06 fix-mód belépője (vékony wrapper → `/bs-implement` Fix-mód) | javított kód + lezárt `## Validációs javítások` taskok (+ esetleges eszkalációs jelzés) |
+| `agents/review-fixer.md` | 09 | A review-hurok 06 fix-mód belépője (vékony wrapper → `/bs-implement` Fix-mód, `## Review javítások` bemenet) | javított kód + lezárt `## Review javítások` taskok (+ esetleges eszkalációs jelzés) |
 
 ---
 
-## 8. Frontmatter séma
+## 9. Frontmatter séma
 
 **Skill (`skills/*.md`):**
 
@@ -857,11 +887,11 @@ A frontmatter **eszközfüggetlen** (saját séma, nem egy konkrét ágens-eszk�
 
 ---
 
-## 9. conventions.md — Projekt konvenciók
+## 10. conventions.md — Projekt konvenciók
 
 **Fájl:** `conventions.md` (projekt gyökér)
 
-**Mikor jön létre:** A `skills/00-init-project.md` skill hozza létre egyszer, új projekt indulásakor.
+**Mikor jön létre:** A `/bs-init-project` parancs futtatásakor jön létre egyszer, új projekt indulásakor.
 
 **Szerepe:** A projekt központi konvenciós dokumentuma — egy helyen rögzíti a projekt-specifikus technikai megállapodásokat, így az ágensnek nem kell ad-hoc döntéseket hoznia. Minden fázis-skill (01–09) hivatkozik rá és beolvassa. **Puszta léte a „kész" jelölés:** ha létezik, a 01–09 csak létezés-ellenőrzést végez (nincs külön státuszmező). A `08-doc-sync` ezen felül a `## Projekt referenciák` szekciót használja forrás-grounding regiszterként (HLD/LLD/openapi/külső doksik útjai a drift-összevetéshez és a DS22 Réteg 2 kapuhoz).
 
@@ -876,7 +906,7 @@ A frontmatter **eszközfüggetlen** (saját séma, nem egy konkrét ágens-eszk�
 
 ---
 
-## 10. Egy ciklus artifact fájljai
+## 11. Egy ciklus artifact fájljai
 
 Minden ciklus saját mappát kap: `specs/cycle-NN-<cycle-name>/`
 
@@ -890,7 +920,7 @@ Minden ciklus saját mappát kap: `specs/cycle-NN-<cycle-name>/`
 | `tasks-questions.md` | 04 | A tasks szakasz nyitott kérdései (főleg az 05 fix-mód használja). A `tasks.md` csak akkor `Implementálásra kész`, ha itt nincs `- [ ]`. |
 | `analyze-report.md` | 05 | Kereszt-fázisos konzisztencia jelentés (PASS/FAIL), 5 kategória, lefedettségi mátrix, **Hurok-napló** (az önjavító hurok iterációnkénti audit-nyoma). |
 | `imp-decision.md` | 06 | Implementációs döntési napló: nem egyértelmű megoldások és a 3-próba szabály utáni leállások. |
-| `test-report/validate-decision.md` | 07 | Validációs futástörténet, regressziós/Sonar hibák, consecutive failures számlálók — egyben az **07 önjavító hurok naplója** (LC2), a megszakított futás horgonya. |
+| `test-report/bs-validate-decision.md` | 07 | Validációs futástörténet, regressziós/Sonar hibák, consecutive failures számlálók — egyben az **07 önjavító hurok naplója** (LC2), a megszakított futás horgonya. |
 | `test-report/sonar-report.md` | 07 | SonarQube Quality Gate részletes eredmény (MD + HTML). |
 | `doc-sync-plan.md` | 08 | A `doc-sync-planner` per-fájl pipálható terve a `docs-generated/` frissítéséhez (mit kell tenni / nincs teendő + drift-megállapítások). A végrehajtás **és** a megszakítás-utáni folytatás determinisztikus horgonya (a fő ágens pipálja). |
 | `doc-sync-questions.md` | 08 | A doc-sync döntési pontjai és kapu-bukásai (`Knn`). A fő ágens kérdez egyenként; nyitott `[ ]` kérdésnél a fázis megáll. Sosem törlünk, csak `[x]`. |
@@ -898,7 +928,7 @@ Minden ciklus saját mappát kap: `specs/cycle-NN-<cycle-name>/`
 
 ---
 
-## 11. docs-generated/ — élő dokumentáció (a 08-doc-sync gazdája)
+## 12. docs-generated/ — élő dokumentáció (a 08-doc-sync gazdája)
 
 A projekt gyökerében lévő **`docs-generated/`** mappa a `08-doc-sync` fázis által ciklusról ciklusra karbantartott, **generált, „as-built" dokumentáció** otthona. Megkülönböztetendő a kézzel írt `docs/` mappától: **minden, amit az AI/skill gyárt vagy ami projekt-követelmény, ide kerül**, és a doc-sync **garantálja a mappa összes fájljának konzisztenciáját** a megvalósult rendszerrel (DS11). A mappát (és tartalmát) **commitálni kell** — ez a leadandó, nem kerülhet `.gitignore`-ba.
 
@@ -917,7 +947,7 @@ Minden generált doksi **fejléc-blokkot** kap (DS17): `> **Lefedve:** cycle-NN-
 
 ---
 
-## 12. Kérdéskezelés (spec-questions.md / plan-questions.md / tasks-questions.md / doc-sync-questions.md)
+## 13. Kérdéskezelés (spec-questions.md / plan-questions.md / tasks-questions.md / doc-sync-questions.md)
 
 A spec (02), plan (03) és tasks (04) fázisban az ágens nyitott kérdéseit külön fájlban tartja nyilván. A `tasks-questions.md` elsősorban az 05 önjavító hurok fix-módját szolgálja (de a normál 04 flow is hivatkozhat rá). A **08-doc-sync** ugyanezt a mintát követi a `doc-sync-questions.md`-vel: a döntési pontok és a DS22 kapu-bukások `Knn`-ként ide kerülnek, a fő ágens egyenként kérdez, és nyitott `[ ]` kérdésnél a fázis megáll (a subagent — `doc-sync-planner` — sosem kérdez közvetlenül).
 
@@ -956,13 +986,13 @@ A spec (02), plan (03) és tasks (04) fázisban az ágens nyitott kérdéseit k�
 
 ---
 
-## 13. Egységes `Kész` státusz-lifecycle
+## 14. Egységes `Kész` státusz-lifecycle
 
 Minden dokumentum a saját fázis-specifikus záró-státuszát kapja a keletkezésekor (`spec.md` → `Tervezésre kész`, `plan.md` → `Task írásra kész`, `tasks.md` → `Implementálásra kész`), majd **`Kész`-re lép, amint a validate (07) PASS lezárja a ciklust**. Így a 08-doc-sync és a 09-review fázis a `spec.md`/`plan.md`/`tasks.md`-t már egységesen `Kész` státuszban várja.
 
 ---
 
-## 14. Sonar minőségellenőrzés
+## 15. Sonar minőségellenőrzés
 
 A validate fázis (07) — ha a `conventions.md` tartalmaz `## Sonar minőségellenőrzés` szekciót — Podman-alapú SonarQube analízist futtat.
 
@@ -977,7 +1007,7 @@ A validate fázis (07) — ha a `conventions.md` tartalmaz `## Sonar minőségel
 
 ---
 
-## 15. Döntési napló (imp-decision.md)
+## 16. Döntési napló (imp-decision.md)
 
 Az `imp-decision.md` az implement fázis (06) nehéz döntéseinek és zsákutcáinak naplója (`specs/cycle-NN-<cycle-name>/imp-decision.md`). Ha egy task megoldásához legalább 3 sikertelen kísérlet kellett:
 
@@ -991,9 +1021,9 @@ Az `imp-decision.md` az implement fázis (06) nehéz döntéseinek és zsákutc�
 
 ---
 
-## 16. Validációs napló (validate-decision.md)
+## 17. Validációs napló (validate-decision.md)
 
-A `test-report/validate-decision.md` a validate fázis (07) futásait, SonarQube eredményeit és teszthibáit követi. Az ágens számolja az egymást követő bukásokat elemenként:
+A `test-report/bs-validate-decision.md` a validate fázis (07) futásait, SonarQube eredményeit és teszthibáit követi. Az ágens számolja az egymást követő bukásokat elemenként:
 
 ```md
 # Validation History
@@ -1010,7 +1040,7 @@ A `test-report/validate-decision.md` a validate fázis (07) futásait, SonarQube
 
 ---
 
-## 17. Reviewer agent (agents/reviewer.md)
+## 18. Reviewer agent (agents/reviewer.md)
 
 **Mikor hívja meg:** A 09 — Review & Merge fázis automatikusan, a merge előtt.
 
@@ -1029,7 +1059,7 @@ A `reviewer` **read-only diagnoszta** (mint az `analyzer`): csak a jelentést í
 
 ---
 
-## 18. Ágens-specifikus integráció
+## 19. Ágens-specifikus integráció
 
 A `prompts/skills/` és `prompts/agents/` a **single source of truth**. A különböző ágensek más-más helyen keresik a skilleket / subagenteket:
 
@@ -1040,13 +1070,13 @@ A `prompts/skills/` és `prompts/agents/` a **single source of truth**. A külö
 | Antigravity | `.agents/skills/{skill_name}/SKILL.md` | `.agents/agents/{agent_name}/agent.json` |
 | Codex CLI | nincs standard skill-rendszer (manuális másolás) | — |
 
-Az integrációk beállításához futtasd a [`prompts/scripts/init-project.sh`](prompts/scripts/init-project.sh) scriptet:
+Az integrációk beállításához futtasd a [`install.sh`](install.sh) scriptet:
 ```bash
-chmod +x prompts/scripts/init-project.sh
-./prompts/scripts/init-project.sh
+chmod +x install.sh
+./install.sh
 ```
 
-### 18.1 Antigravity CLI (Google DeepMind)
+### 19.1 Antigravity CLI (Google DeepMind)
 
 Ha az **Antigravity** ágenst használod a fejlesztési ciklusok futtatására, a fenti script automatikusan előkészíti a lokális munkakörnyezetet:
 1. Létrehozza a `.agents/skills/` könyvtárat, és mindegyik fázishoz symlinkeli a `SKILL.md`-t.
@@ -1067,7 +1097,7 @@ Az ágens a saját belső alkalmazásmappájában (`~/.gemini/antigravity-cli/br
 Az integrációs script lefutása után az Antigravity felületén kétféleképpen is elindíthatod az egyes fázisok skill-jeit:
 * **Slash parancsok:** Minden betöltött skill automatikusan egyedi slash paranccsá válik a promptban. A parancs neve a `SKILL.md` frontmatterében megadott `name` mezőből származik (sorszám nélkül). Például a 05-ös fázis indításához egyszerűen írd be:
   ```
-  /analyze
+  /bs-analyze
   ```
 * **Interaktív választómenü:** A `/skill` (vagy `/skills`) parancs beírásával egy vizuális menü ugrik fel a terminálban, ahonnan a nyilakkal (`↑/↓`) kiválaszthatod és az `enter` billentyűvel életre hívhatod a kívánt fázist.
 * **Egyedi ágensek listázása:** A `/agens` (vagy `/agent`) paranccsal tekintheted meg a regisztrált, egyedileg konfigurált subagenteket.

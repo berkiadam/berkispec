@@ -1,18 +1,17 @@
 ---
 phase: 07
-name: validate
+name: bs-validate
 description: "berkispec - 07. Használd az implementáció után (Phase 07), ha a tasks.md 'Validálásra kész'. Teszt-, lint- és build-ellenőrzés, hiba esetén önjavító kör (implement-fixer subagent). Létrehozza a 'validate-decision.md'-t; PASS esetén a spec.md/plan.md/tasks.md státuszát 'Kész'-re állítja."
 prerequisites:
   - "specs/cycle-NN-<name>/tasks.md státusz: Validálásra kész"
 output:
   - "specs/cycle-NN-<name>/test-report/validate-decision.md"
   - "PASS esetén: spec.md / plan.md / tasks.md státusz: Kész"
-prev: 06-implement
-next: 08-doc-sync
+prev: bs-implement
+next: bs-doc-sync
 subagents:
   - "agents/implement-fixer.md"
 ---
-
 # 07 — Validálás
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
@@ -293,10 +292,9 @@ Teendők:
    git add specs/cycle-NN-<cycle-name>/
    git commit -m "cycle-NN: 07-validate"
    ```
-3. Jelezd: *"Validálás sikeres. Folytathatjuk a 8. lépéssel: dokumentáció szinkron (08-doc-sync). Használd ezt a promptot:*
+3. Jelezd: *"Validálás sikeres. Folytathatjuk a 8. lépéssel: dokumentáció szinkron (08-doc-sync). Használd ezt a parancsot:*
    > ```
-   > Kövesd a `prompts/skills/08-doc-sync.md` utasításait.
-   > Input: `specs/cycle-NN-<cycle-name>`
+   > /bs-doc-sync input: @specs/cycle-NN-<cycle-name>
    > ```"*
    > **A válasz végén helyezd el a `validate-decision.md` közvetlen, kattintható linkjét.**
 
@@ -329,8 +327,7 @@ A „Hol járunk" fejléccel (LC2):
 > **[VALIDATE · <Failed Item> · próba N/3]**
 > *"A validáció során a(z) [Failed Item] tervezési hibának bizonyult: a kód csak a teszt vagy a Definition of done megváltoztatásával lenne zöld, amit a hurok nem tehet meg (anti-„teszt-csalás"). Ezért nem a 06-implementbe léptem vissza, hanem a tervezési fázishoz eszkalálok. A(z) [plan.md / spec.md] státuszát visszaállítottam, hogy a tervezési döntést rendezni lehessen. Folytasd a tervezés felülvizsgálatával:*
 > ```
-> Kövesd a `prompts/skills/03-write-plan.md` (DoD-hiba esetén: `02-write-spec.md`) utasításait.
-> Input: `specs/cycle-NN-<cycle-name>/plan.md` (vagy `spec.md`)
+> /bs-write-plan (DoD-hiba esetén: /bs-write-spec) input: @specs/cycle-NN-<cycle-name>/plan.md (vagy spec.md)
 > ```
 > *A folyamat a tervezés rendezése után a 05→06→07 úton tér vissza ide."*
 > **A válasz végén: kattintható link a `validate-decision.md`-re.**

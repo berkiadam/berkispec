@@ -1,6 +1,6 @@
 ---
 phase: 06
-name: implement
+name: bs-implement
 description: "berkispec - 06. Használd, ha az analyze-report.md 'PASS' (Phase 06), a tényleges kódfejlesztéshez. Végrehajtja a tervezett kódmódosításokat a feladatlista alapján, és közben vezeti a 'tasks.md'-t, amíg az el nem éri a 'Validálásra kész' állapotot."
 prerequisites:
   - "specs/cycle-NN-<name>/tasks.md státusz: Implementálásra kész"
@@ -8,11 +8,10 @@ prerequisites:
 output:
   - "Implementált kód"
   - "specs/cycle-NN-<name>/tasks.md státusz: Validálásra kész"
-prev: 05-analyze
-next: 07-validate
+prev: bs-analyze
+next: bs-validate
 subagents: []
 ---
-
 # 06 — Implementálás
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
@@ -188,11 +187,10 @@ A README.md az implementáció része — nem utólagos dokumentáció. Akkor ke
   git add specs/cycle-NN-<cycle-name>/tasks.md && git commit -m "cycle-NN: 06-implement - kész, validálásra kész"
   ```
 
-Ha a státusz `Validálásra kész`, állj meg. Jelezd a felhasználónak a következő lépést és a fázis indító promptját, például:
-> *"Az implementáció kész. Folytathatjuk a 7. lépéssel (validate). Használd ezt a promptot:*
+Ha a státusz `Validálásra kész`, állj meg. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
+> *"Az implementáció kész. Folytathatjuk a 7. lépéssel (validate). Használd ezt a parancsot:*
 > ```
-> Kövesd a `prompts/skills/07-validate.md` utasításait.
-> Input: `specs/cycle-NN-<cycle-name>`
+> /bs-validate input: @specs/cycle-NN-<cycle-name>
 > ```"*
 
 ---

@@ -221,7 +221,7 @@ handle_conflict() {
   esac
 }
 
-# ── Symlink-ek létrehozása: Google Antigravity ──────────────────────────────
+# ── Google Antigravity Telepítés ──────────────────────────────
 install_antigravity() {
   local agents_dest="${PROJECT_PATH}/.agents/agents"
   local skills_dest="${PROJECT_PATH}/.agents/skills"
@@ -232,113 +232,21 @@ install_antigravity() {
     success ".agents/ mappa létrehozva"
   fi
 
-  # ── Agents ──
+  # ── Agents & Skills ──
   echo ""
-  echo -e "  ${BLUE}📦 Antigravity Agent-ek telepítése${RESET}"
+  echo -e "  ${BLUE}📦 Antigravity Agent-ek és Skill-ek telepítése${RESET}"
   separator
 
-  if [[ ! -d "${agents_dest}" ]]; then
-    mkdir -p "${agents_dest}"
-  fi
-
-  local agent_count=0
-  local agent_skip=0
-
-  for agent_dir in "${AGENTS_GEMINI_SRC}"/*/; do
-    [[ -d "${agent_dir}" ]] || continue
-    local agent_name
-    agent_name="$(basename "${agent_dir}")"
-    local link_target="${agents_dest}/${agent_name}"
-
-    if [[ -e "${link_target}" || -L "${link_target}" ]]; then
-      local existing_type="mappa"
-      if [[ -L "${link_target}" ]]; then
-        existing_type="symlink"
-      fi
-
-      local result=0
-      handle_conflict "${link_target}" "${existing_type}" || result=$?
-
-      if [[ ${result} -eq 2 ]]; then
-        echo ""
-        error "Telepítés megszakítva."
-        exit 1
-      elif [[ ${result} -eq 1 ]]; then
-        info "Kihagyva: ${agent_name}"
-        agent_skip=$((agent_skip + 1))
-        continue
-      else
-        rm -rf "${link_target}"
-      fi
-    fi
-
-    ln -s "${agent_dir%/}" "${link_target}"
-    success "${GREEN}${agent_name}${RESET} → ${DIM}${agent_dir%/}${RESET}"
-    agent_count=$((agent_count + 1))
-  done
-
-  echo ""
-  info "Agent-ek: ${GREEN}${agent_count} telepítve${RESET}"
-  if [[ ${agent_skip} -gt 0 ]]; then
-    info "         ${YELLOW}${agent_skip} kihagyva${RESET}"
-  fi
-
-  # ── Skills ──
-  echo ""
-  echo -e "  ${BLUE}🛠  Antigravity Skill-ek telepítése${RESET}"
-  separator
-
-  if [[ ! -d "${skills_dest}" ]]; then
-    mkdir -p "${skills_dest}"
-  fi
-
-  local skill_count=0
-  local skill_skip=0
-
-  for skill_file in "${SKILLS_SRC}"/*.md; do
-    [[ -f "${skill_file}" ]] || continue
-    local skill_basename
-    skill_basename="$(basename "${skill_file}" .md)"
-    local skill_dir_name="berkispec-${skill_basename}"
-    local skill_dest_dir="${skills_dest}/${skill_dir_name}"
-    local skill_link="${skill_dest_dir}/SKILL.md"
-
-    if [[ -e "${skill_dest_dir}" || -L "${skill_dest_dir}" ]]; then
-      local existing_type="mappa"
-      if [[ -L "${skill_dest_dir}" ]]; then
-        existing_type="symlink"
-      fi
-
-      local result=0
-      handle_conflict "${skill_dest_dir}" "${existing_type}" || result=$?
-
-      if [[ ${result} -eq 2 ]]; then
-        echo ""
-        error "Telepítés megszakítva."
-        exit 1
-      elif [[ ${result} -eq 1 ]]; then
-        info "Kihagyva: ${skill_dir_name}"
-        skill_skip=$((skill_skip + 1))
-        continue
-      else
-        rm -rf "${skill_dest_dir}"
-      fi
-    fi
-
-    mkdir -p "${skill_dest_dir}"
-    ln -s "${skill_file}" "${skill_link}"
-    success "${GREEN}${skill_dir_name}${RESET}/SKILL.md → ${DIM}${skill_file}${RESET}"
-    skill_count=$((skill_count + 1))
-  done
-
-  echo ""
-  info "Skill-ek: ${GREEN}${skill_count} telepítve${RESET}"
-  if [[ ${skill_skip} -gt 0 ]]; then
-    info "          ${YELLOW}${skill_skip} kihagyva${RESET}"
+  info "Fájlok másolása és modellek konfigurálása..."
+  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "antigravity" "${SCRIPT_DIR}" "${PROJECT_PATH}"; then
+    success "Antigravity ágensek és skillek sikeresen konfigurálva és másolva!"
+  else
+    error "Hiba történt a fájlok másolása során!"
+    exit 1
   fi
 }
 
-# ── Symlink-ek létrehozása: Claude Code ─────────────────────────────────────
+# ── Claude Code Telepítés ─────────────────────────────────────
 install_claude() {
   local agents_dest="${PROJECT_PATH}/.claude/agents"
   local skills_dest="${PROJECT_PATH}/.claude/skills"
@@ -349,113 +257,21 @@ install_claude() {
     success ".claude/ mappa létrehozva"
   fi
 
-  # ── Agents ──
+  # ── Agents & Skills ──
   echo ""
-  echo -e "  ${BLUE}📦 Claude Agent-ek telepítése (.claude/agents/)${RESET}"
+  echo -e "  ${BLUE}📦 Claude Agent-ek és Skill-ek telepítése (.claude/)${RESET}"
   separator
 
-  if [[ ! -d "${agents_dest}" ]]; then
-    mkdir -p "${agents_dest}"
-  fi
-
-  local agent_count=0
-  local agent_skip=0
-
-  for agent_file in "${AGENTS_SRC_DIR}"/*.md; do
-    [[ -f "${agent_file}" ]] || continue
-    local agent_basename
-    agent_basename="$(basename "${agent_file}" .md)"
-    local link_target="${agents_dest}/${agent_basename}.md"
-
-    if [[ -e "${link_target}" || -L "${link_target}" ]]; then
-      local existing_type="fájl"
-      if [[ -L "${link_target}" ]]; then
-        existing_type="symlink"
-      fi
-
-      local result=0
-      handle_conflict "${link_target}" "${existing_type}" || result=$?
-
-      if [[ ${result} -eq 2 ]]; then
-        echo ""
-        error "Telepítés megszakítva."
-        exit 1
-      elif [[ ${result} -eq 1 ]]; then
-        info "Kihagyva: ${agent_basename}"
-        agent_skip=$((agent_skip + 1))
-        continue
-      else
-        rm -f "${link_target}"
-      fi
-    fi
-
-    ln -s "${agent_file}" "${link_target}"
-    success "${GREEN}${agent_basename}.md${RESET} → ${DIM}${agent_file}${RESET}"
-    agent_count=$((agent_count + 1))
-  done
-
-  echo ""
-  info "Agent-ek: ${GREEN}${agent_count} telepítve${RESET}"
-  if [[ ${agent_skip} -gt 0 ]]; then
-    info "         ${YELLOW}${agent_skip} kihagyva${RESET}"
-  fi
-
-  # ── Skills ──
-  echo ""
-  echo -e "  ${BLUE}🛠  Claude Skill-ek telepítése (.claude/skills/)${RESET}"
-  separator
-
-  if [[ ! -d "${skills_dest}" ]]; then
-    mkdir -p "${skills_dest}"
-  fi
-
-  local skill_count=0
-  local skill_skip=0
-
-  for skill_file in "${SKILLS_SRC}"/*.md; do
-    [[ -f "${skill_file}" ]] || continue
-    local skill_basename
-    skill_basename="$(basename "${skill_file}" .md)"
-    local skill_dir_name="berkispec-${skill_basename}"
-    local skill_dest_dir="${skills_dest}/${skill_dir_name}"
-    local skill_link="${skill_dest_dir}/SKILL.md"
-
-    if [[ -e "${skill_dest_dir}" || -L "${skill_dest_dir}" ]]; then
-      local existing_type="mappa"
-      if [[ -L "${skill_dest_dir}" ]]; then
-        existing_type="symlink"
-      fi
-
-      local result=0
-      handle_conflict "${skill_dest_dir}" "${existing_type}" || result=$?
-
-      if [[ ${result} -eq 2 ]]; then
-        echo ""
-        error "Telepítés megszakítva."
-        exit 1
-      elif [[ ${result} -eq 1 ]]; then
-        info "Kihagyva: ${skill_dir_name}"
-        skill_skip=$((skill_skip + 1))
-        continue
-      else
-        rm -rf "${skill_dest_dir}"
-      fi
-    fi
-
-    mkdir -p "${skill_dest_dir}"
-    ln -s "${skill_file}" "${skill_link}"
-    success "${GREEN}${skill_dir_name}${RESET}/SKILL.md → ${DIM}${skill_file}${RESET}"
-    skill_count=$((skill_count + 1))
-  done
-
-  echo ""
-  info "Skill-ek: ${GREEN}${skill_count} telepítve${RESET}"
-  if [[ ${skill_skip} -gt 0 ]]; then
-    info "          ${YELLOW}${skill_skip} kihagyva${RESET}"
+  info "Fájlok másolása és modellek konfigurálása..."
+  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "claude" "${SCRIPT_DIR}" "${PROJECT_PATH}"; then
+    success "Claude ágensek és skillek sikeresen konfigurálva és másolva!"
+  else
+    error "Hiba történt a fájlok másolása során!"
+    exit 1
   fi
 }
 
-# ── Symlink-ek létrehozása: GitHub Copilot ──────────────────────────────────
+# ── GitHub Copilot Telepítés ──────────────────────────────────
 install_copilot() {
   local agents_dest="${PROJECT_PATH}/.github/agents"
   local instructions_dest="${PROJECT_PATH}/.github/instructions"
@@ -466,110 +282,21 @@ install_copilot() {
     success ".github/ mappa létrehozva"
   fi
 
-  # ── Agents ──
+  # ── Agents & Skills ──
   echo ""
-  echo -e "  ${BLUE}📦 Copilot Agent-ek telepítése (.github/agents/)${RESET}"
+  echo -e "  ${BLUE}📦 Copilot Agent-ek és Utasítások telepítése (.github/)${RESET}"
   separator
 
-  if [[ ! -d "${agents_dest}" ]]; then
-    mkdir -p "${agents_dest}"
-  fi
-
-  local agent_count=0
-  local agent_skip=0
-
-  for agent_file in "${AGENTS_SRC_DIR}"/*.md; do
-    [[ -f "${agent_file}" ]] || continue
-    local agent_basename
-    agent_basename="$(basename "${agent_file}" .md)"
-    local link_target="${agents_dest}/${agent_basename}.agent.md"
-
-    if [[ -e "${link_target}" || -L "${link_target}" ]]; then
-      local existing_type="fájl"
-      if [[ -L "${link_target}" ]]; then
-        existing_type="symlink"
-      fi
-
-      local result=0
-      handle_conflict "${link_target}" "${existing_type}" || result=$?
-
-      if [[ ${result} -eq 2 ]]; then
-        echo ""
-        error "Telepítés megszakítva."
-        exit 1
-      elif [[ ${result} -eq 1 ]]; then
-        info "Kihagyva: ${agent_basename}"
-        agent_skip=$((agent_skip + 1))
-        continue
-      else
-        rm -f "${link_target}"
-      fi
-    fi
-
-    ln -s "${agent_file}" "${link_target}"
-    success "${GREEN}${agent_basename}.agent.md${RESET} → ${DIM}${agent_file}${RESET}"
-    agent_count=$((agent_count + 1))
-  done
-
-  echo ""
-  info "Agent-ek: ${GREEN}${agent_count} telepítve${RESET}"
-  if [[ ${agent_skip} -gt 0 ]]; then
-    info "         ${YELLOW}${agent_skip} kihagyva${RESET}"
-  fi
-
-  # ── Instructions (Skills) ──
-  echo ""
-  echo -e "  ${BLUE}🛠  Copilot Utasítások telepítése (.github/instructions/)${RESET}"
-  separator
-
-  if [[ ! -d "${instructions_dest}" ]]; then
-    mkdir -p "${instructions_dest}"
-  fi
-
-  local skill_count=0
-  local skill_skip=0
-
-  for skill_file in "${SKILLS_SRC}"/*.md; do
-    [[ -f "${skill_file}" ]] || continue
-    local skill_basename
-    skill_basename="$(basename "${skill_file}" .md)"
-    local link_target="${instructions_dest}/berkispec-${skill_basename}.instructions.md"
-
-    if [[ -e "${link_target}" || -L "${link_target}" ]]; then
-      local existing_type="fájl"
-      if [[ -L "${link_target}" ]]; then
-        existing_type="symlink"
-      fi
-
-      local result=0
-      handle_conflict "${link_target}" "${existing_type}" || result=$?
-
-      if [[ ${result} -eq 2 ]]; then
-        echo ""
-        error "Telepítés megszakítva."
-        exit 1
-      elif [[ ${result} -eq 1 ]]; then
-        info "Kihagyva: berkispec-${skill_basename}"
-        skill_skip=$((skill_skip + 1))
-        continue
-      else
-        rm -f "${link_target}"
-      fi
-    fi
-
-    ln -s "${skill_file}" "${link_target}"
-    success "${GREEN}berkispec-${skill_basename}.instructions.md${RESET} → ${DIM}${skill_file}${RESET}"
-    skill_count=$((skill_count + 1))
-  done
-
-  echo ""
-  info "Utasítások: ${GREEN}${skill_count} telepítve${RESET}"
-  if [[ ${skill_skip} -gt 0 ]]; then
-    info "            ${YELLOW}${skill_skip} kihagyva${RESET}"
+  info "Fájlok másolása és modellek konfigurálása..."
+  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "copilot" "${SCRIPT_DIR}" "${PROJECT_PATH}"; then
+    success "Copilot ágensek és skillek sikeresen konfigurálva és másolva!"
+  else
+    error "Hiba történt a fájlok másolása során!"
+    exit 1
   fi
 }
 
-# ── 3. lépés: Symlink-ek létrehozása (Orchestrator) ─────────────────────────
+# ── 3. lépés: Másolás és Konfigurálás (Orchestrator) ─────────────────────────
 create_symlinks() {
   step "3. lépés: Telepítés"
   echo ""
@@ -597,37 +324,37 @@ show_summary() {
     echo ""
     echo -e "  ${GRAY}A telepített struktúra:${RESET}"
     echo -e "  ${DIM}${PROJECT_PATH}/.agents/"
-    echo -e "  ├── agents/        ${CYAN}(agent JSON symlink-ek)${RESET}${DIM}"
-    echo -e "  └── skills/        ${CYAN}(skill SKILL.md symlink-ek)${RESET}"
+    echo -e "  ├── agents/        ${CYAN}(agent JSON fájlok modell-konfigurációval)${RESET}${DIM}"
+    echo -e "  └── skills/        ${CYAN}(skill SKILL.md fájlok modell-konfigurációval)${RESET}"
     echo ""
     separator
     echo ""
     echo -e "  ${GRAY}Kezdéshez indítsd el az Antigravity CLI-t a projektedben,"
-    echo -e "  és kérd a ${CYAN}berkispec-00-init-project${GRAY} skill futtatását.${RESET}"
+    echo -e "  és kérd a ${CYAN}bs-init-project${GRAY} skill futtatását.${RESET}"
   elif [[ "${PLATFORM_CHOICE}" == "claude" ]]; then
     echo -e "  ${WHITE}Platform:${RESET} ${BOLD}Claude Code${RESET}"
     echo ""
     echo -e "  ${GRAY}A telepített struktúra:${RESET}"
     echo -e "  ${DIM}${PROJECT_PATH}/.claude/"
-    echo -e "  ├── agents/        ${CYAN}(agent MD symlink-ek)${RESET}${DIM}"
-    echo -e "  └── skills/        ${CYAN}(skill SKILL.md symlink-ek)${RESET}"
+    echo -e "  ├── agents/        ${CYAN}(agent MD fájlok modell-konfigurációval)${RESET}${DIM}"
+    echo -e "  └── skills/        ${CYAN}(skill SKILL.md fájlok modell-konfigurációval)${RESET}"
     echo ""
     separator
     echo ""
     echo -e "  ${GRAY}Kezdéshez indítsd el a Claude Code-ot a projektedben,"
-    echo -e "  és futtasd a ${CYAN}berkispec-00-init-project${GRAY} skillt.${RESET}"
+    echo -e "  és futtasd a ${CYAN}bs-init-project${GRAY} skillt.${RESET}"
   else
     echo -e "  ${WHITE}Platform:${RESET} ${BOLD}GitHub Copilot (CLI & IDE)${RESET}"
     echo ""
     echo -e "  ${GRAY}A telepített struktúra:${RESET}"
     echo -e "  ${DIM}${PROJECT_PATH}/.github/"
-    echo -e "  ├── agents/        ${CYAN}(*.agent.md symlink-ek)${RESET}${DIM}"
-    echo -e "  └── instructions/  ${CYAN}(*.instructions.md symlink-ek)${RESET}"
+    echo -e "  ├── agents/        ${CYAN}(*.agent.md fájlok modell-konfigurációval)${RESET}${DIM}"
+    echo -e "  └── instructions/  ${CYAN}(*.instructions.md fájlok modell-konfigurációval)${RESET}"
     echo ""
     separator
     echo ""
     echo -e "  ${GRAY}Kezdéshez a Copilot Chat ablakban vagy a Copilot CLI-ben"
-    echo -e "  használd a ${CYAN}@berkispec-00-init-project${GRAY} utasítást a kezdéshez!${RESET}"
+    echo -e "  használd a ${CYAN}@bs-init-project${GRAY} utasítást a kezdéshez!${RESET}"
   fi
   echo ""
 }
