@@ -16,27 +16,43 @@ def _agent_stem(filename):
         name = name[:-3]
     return name
 
-def is_analyze_phase(filename):
-    stem = _agent_stem(filename)
-    return "analyze" in stem or stem in ["analyzer", "spec-fixer", "plan-fixer", "tasks-fixer"]
-
-def is_validate_phase(filename):
-    stem = _agent_stem(filename)
-    return "validate" in stem or stem in ["implement-fixer"]
-
-# Konkrét agent-ekhez/skillekhez rendelt models.json kulcs — a fázis-alapú
-# besorolás (analyze/validate/default) helyett/előtt ezt használjuk, ha a
-# platform configja definiálja. Így egy adott agent modellje a fázistól
-# függetlenül, célzottan felülírható. A "research_agent" kulcs a legolcsóbb,
-# tisztán mechanikus (nincs benne tervezési/architekturális ítélet) munkára
-# szánt tier — nem csak a researcher agentre, több stem is rámutathat rá:
+# Konkrét agent-ekhez/skillekhez rendelt models.json kulcs — csak azt kapja
+# meg egy stem, amit itt EXPLICIT felsorolunk; minden más a "default" tier-re
+# esik. Ez egyetlen, egységes tábla — nincs külön "fázis"-alapú besorolás:
+# egy skill (pl. 05-analyze.md, 07-validate.md orchestrátor) önmagában NEM
+# kap drága modellt csak azért, mert egy drága subagentet hív.
+#
+# A "legdrágább" (`deep_reasoning_agent`, jellemzően Opus) tier KIZÁRÓLAG az
+# `analyzer` agenst illeti: ez a kereszt-fázisos (spec/plan/tasks/conventions)
+# konzisztencia-diagnózis — a legmélyebb, leghosszabb-dokumentumos szintézist
+# és ellentmondás-/kétértelműség-keresést igénylő pont a teljes folyamatban,
+# és egy itt elkövetett hiba a legdrágább downstream-ben (rossz kód épül rossz
+# diagnózisra). Minden más — beleértve a fixer-wrappereket (`spec-fixer`,
+# `plan-fixer`, `tasks-fixer`, `implement-fixer`), amik már egy PONTOS,
+# előre azonosított hibalistát kapnak (nem nekik kell felfedezni a problémát,
+# csak megoldani/eszkalálni azt), és magukat az orchestrátor-skilleket
+# (05-analyze, 07-validate) — a `default` tier-en fut. Az `implement-fixer`
+# saját anti-"teszt-csalás" garde-ja (06-implement) kifejezetten számol azzal,
+# hogy egy olcsóbb LLM futtatja.
+#
+# A "research_agent" kulcs a legolcsóbb, tisztán mechanikus (nincs benne
+# tervezési/architekturális ítélet, sem megbízhatatlanság-érzékeny
+# szabadformátumú kimenet-értelmezés) munkára szánt tier:
 #   - researcher:     kódbázis-/dokumentum-keresés, fan-out + összefoglalás
 #   - 10-cycle-status: csak egy Python scriptet futtat és megjeleníti (0 LLM-ítélet)
-#   - test-runner:     tesztek/Sonar/E2E lefuttatása + tényszerű összegzés (nem dönt)
+#
+# A test-runner (tesztek/Sonar/E2E futtatása + eredmény-összegzés) SZÁNDÉKOSAN
+# NINCS ezen a legolcsóbb tier-en (`default`-ra esik): több lépéses
+# Bash-orchesztrációt végez (portütközés-kezelés, ideiglenes config
+# visszaállítása) és projektenként eltérő formátumú teszt-/Sonar-kimenetet
+# kell megbízhatóan összegeznie. Egy elgépelt tesztnév vagy félreolvasott
+# Sonar-eredmény csendben elronthatja a 07-validate hurok per-item 3-próba
+# számlálóját — ez nagyobb kockázat, mint amit a legolcsóbb tier-nél vállalni
+# érdemes.
 AGENT_MODEL_KEYS = {
     "researcher": "research_agent",
     "10-cycle-status": "research_agent",
-    "test-runner": "research_agent",
+    "analyzer": "deep_reasoning_agent",
 }
 
 def get_model(models, platform, filename):
@@ -47,13 +63,7 @@ def get_model(models, platform, filename):
     if agent_key and agent_key in platform_models:
         return platform_models[agent_key]
 
-    if is_analyze_phase(filename):
-        phase_key = "analyze_phase"
-    elif is_validate_phase(filename):
-        phase_key = "validate_phase"
-    else:
-        phase_key = "default"
-    return platform_models.get(phase_key, "")
+    return platform_models.get("default", "")
 
 # Minden helper scriptet (prompts/scripts/*.py) átmásol a cél scripts_dest
 # mappába, kivéve saját magát (install-helper.py, ami csak a telepítő gépén

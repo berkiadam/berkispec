@@ -20,17 +20,7 @@ subagents:
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
 
-Ez a fejlesztési folyamat **8-as fázisa (a 0–9 fázisokból)**:
-0. projekt inicializálás (setup)
-1. ciklusok kezelése (setup)
-2. spec
-3. plan
-4. tasks
-5. analyze
-6. implement
-7. validate
-8. **doc-sync** ← most itt vagyunk
-9. review & merge
+Ez a folyamat **8. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan · 4-tasks · 5-analyze · 6-implement · 7-validate · **8-doc-sync ←** · 9-review.
 
 ---
 
@@ -58,11 +48,7 @@ A munkafájljaid:
 
 ## Előfeltétel
 
-0. **Ciklus-beazonosítás (Automata detekció):** Ha a felhasználó explicit megadta a ciklust vagy a bemeneti fájlt a parancs indításakor, használd azt. Ha nem adott meg semmit, keresd meg a projekt gyökér `specs/` mappájában a legnagyobb sorszámú (legfrissebb) ciklusmappát (pl. `specs/cycle-NN-<name>`). Kérdezz rá a felhasználónál pontosan az alábbi formában:
-   *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni?*
-   - *Igen*
-   - *Nem, megadom a ciklust (kérd be tőle a mappa vagy a fájl nevét)*"
-   Várd meg a felhasználói választ vagy megadást, mielőtt továbblépsz!
+0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni? Igen / Nem (megadom a ciklust)"* — és várj a válaszra, mielőtt továbblépsz.
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t (különösen a `## Projekt referenciák` szekciót — ez a forrás-grounding regisztere, DS19). Ha nem létezik, STOP — térjenek vissza a `00` fázishoz.
 
@@ -161,7 +147,7 @@ A nehéz munkát (forrásgyűjtés, per-fájl diagnózis, drift-megállapításo
 1. Olvasd be a `prompts/agents/doc-sync-planner.md` rendszerpromptot.
 2. Definiálj egy `doc-sync-planner` subagentet ezzel a rendszerprompttal.
 3. Indítsd el, átadva neki: a ciklus mappáját (`spec.md`/`plan.md`/`tasks.md`), a ciklus `git diff`-jét a `master`-höz, a `conventions.md`-t (a `## Projekt referenciák`-kal), és a `docs-generated/` mappa aktuális tartalmát.
-4. A subagent visszaadja a **per-fájl pipálható tervet** (a mappa minden fájljára + a szükséges új fájlokra: „mit kell tenni" vagy „nincs teendő" + a drift-megállapítások). Ezt **a fő ágens írja** a `doc-sync-plan.md`-be (inkrementálisan: `specs/cycle-NN-<cycle-name>/doc-sync-plan.md`; bootstrapnél: `temp/doc-sync-plan.md`).
+4. A subagent visszaadja a **per-fájl pipálható tervet** (a mappa minden fájljára + a szükséges új fájlokra: „mit kell tenni" vagy „nincs teendő" + a drift-megállapítások) **és minden `reconciliation`/`új` tételhez a kész `Csereszöveg`et** (lecserélendő jelenlegi részlet + megírt új szöveg). **A fő ágens a tervet ÉS a csereszövegeket a `doc-sync-plan.md`-be írja** (inkrementálisan: `specs/cycle-NN-<cycle-name>/doc-sync-plan.md`; bootstrapnél: `temp/doc-sync-plan.md`) — így a csereszöveg perzisztens, egy megszakadt futás resume-ja a fájlból folytat (DS10). Mivel a subagent **már beolvasta** a teljes `docs-generated/` tartalmat és megírta a csereszöveget, a fő ágensnek a fájlokat **nem kell újraolvasnia és újrakomponálnia** — csak alkalmaz.
 
 > **Ha a subagent nem fut le, vagy nem ad tervet:** ne kezdj el „fejből" doksit írni — STOP, jelezd a felhasználónak, és kérdezd, hogy próbáljam-e újra a subagentet, vagy állítsam-e össze a tervet közvetlenül a `doc-sync-planner.md` szempontjai szerint a fő ágensben.
 
@@ -179,11 +165,16 @@ Egy `docs-generated/` fájl **érintett**, ha a ciklus diffje olyan komponenst/f
 - **érintett fájl →** reconciliation (csak az érintett szekciók átírása, az elavult lecserélve);
 - **érintetlen fájl →** könnyű check: a fejléc-scope alapján igazold, hogy tényleg nem érinti a ciklus → a `doc-sync-plan.md` „nincs teendő" tétele rögzíti (a coverage-marker maradhat a régi cycle-NN-en).
 
-### 3.2 A végrehajtás (mechanikus, a terv alapján)
+### 3.2 A végrehajtás (mechanikus: a subagent csereszövegeinek alkalmazása)
 
-A `doc-sync-plan.md` `[ ]` tételeit hajtod végre, fájlonként. A tipikus tételek:
-- **`system-overview.md`** — az érintett flow-k/szekvenciák/állapot frissítése; a ciklus mermaid blokkjait a megfelelő képesség-szekcióba illeszted, az **elavultat lecserélve** (DS7); a fejléc `Lefedve`/`Utolsó frissítés` bumpolása.
-- **`architecture.md` reconciliation** (a mai 09-ből áthozva, DS3): a teljes dokumentum átjárása, az elavult részek javítása, a ciklus végső állapotának egységesítése (lásd „Az `architecture.md` reconciliation").
+A `doc-sync-plan.md` `[ ]` tételeit hajtod végre, fájlonként — de **nem komponálsz és nem olvasol újra**: a `doc-sync-planner` minden `reconciliation`/`új` tételhez **kész `Csereszöveg`et adott** (lecserélendő jelenlegi részlet + új szöveg). A dolgod ezt **mechanikusan alkalmazni**:
+1. Nyisd meg a cél fájlt, és cseréld a `Csereszöveg` „lecserélendő" részletét az „új szöveg"-re (`új` fájlnál: hozd létre a fájlt a megadott tartalommal).
+2. Mentés **után** pipáld a terv-tételt (DS10 pipa-szabály).
+3. **Fallback:** ha a megadott „lecserélendő" részlet nem illeszkedik egyértelműen (pl. időközbeni eltérés), akkor — és csak akkor — olvasd be a fájl érintett szekcióját, és a subagent „új szöveg"-e alapján végezd el a cserét kézzel. Ez a kivétel, nem a főszabály.
+
+A tipikus tételek (mind a subagent csereszövegével érkezik):
+- **`system-overview.md`** — az érintett flow-k/szekvenciák/állapot frissítése; a ciklus mermaid blokkjai a megfelelő képesség-szekcióba, az **elavultat lecserélve** (DS7); a fejléc `Lefedve`/`Utolsó frissítés` bumpolása.
+- **`architecture.md` reconciliation** (a mai 09-ből áthozva, DS3): a subagent a ciklusban **változott** részekre adott sebészi csereszöveget (lásd „Az `architecture.md` reconciliation" a hatókör-szabályokért).
 - **Komponens README-k** — az ebben a ciklusban **érintett** komponensek `README.md`-jének ellenőrzése/frissítése (lásd „Komponens README-k").
 - **`CHANGELOG.md`** — új, részletes, inkrementális ciklus-bejegyzés (DS15, lásd a sablont). A `system-overview.md` csak coverage-markert + linket tart rá, nem duplikál.
 - **`design-drift.md`** — az adott ciklus által bevezetett **új** eltérések felvétele; a megszűnt eltérés áthelyezése a „Lezárt eltérések" szekcióba (**nem törlés**) — lásd „Drift-összevetés".
@@ -201,9 +192,9 @@ A ciklus mermaid blokkjait a megfelelő képesség-szekcióba illeszted, az **el
 
 ## 4. Bootstrap-ág (DS6, DS8, DS13, DS18) — a mechanika
 
-Akkor fut, ha a `system-overview.md` **nem létezik**. Ez **egyszeri nagy munka** → **külön, megerősítéshez kötött munkaterv** (lásd a `prompts/inprove-list5.md` 8. szakaszát, ill. a projekt bootstrap-munkafájlját). **A start előtt explicit felhasználói megerősítés kell.** A munkafájlok (`doc-sync-plan.md`, `doc-sync-questions.md`) a gyökér `temp/` mappába kerülnek (nincs aktív ciklus).
+Akkor fut, ha a `system-overview.md` **nem létezik**. Ez **egyszeri nagy munka** → a start előtt **explicit felhasználói megerősítés kell**. A munkafájlok (`doc-sync-plan.md`, `doc-sync-questions.md`) a gyökér `temp/` mappába kerülnek (nincs aktív ciklus).
 
-A bootstrap mechanikája (a részletes, darabolt lépéseket a 8. munkaterv tartalmazza):
+A bootstrap mechanikája:
 
 - **2.1 — Forrás-prioritás (DS6):** a gerinc a `specs/roadmap.md` (ciklusonkénti „Viselkedés" + „Teszt kritérium", már konszolidálva) **+** az `architecture.md` §0; a ciklus `spec.md`-ket **főleg a mermaid ábrákért és a részletekért** olvasod. **Forrás vs. áthelyezés:** a forrás-fájlok (roadmap, HLD README, POC-leírás, openapi, SKILL) a bootstrap **forrásai** (olvasandók), **nem** költöznek a `docs-generated/`-be.
 - **2.2 — „Későbbi ciklus nyer":** csak az **aktuális állapot** kerül be; ütközésnél a roadmap ciklus-sorrendje szerint a **későbbi ciklus felülír** (pl. `init-hash`, nem `init-cache`). **Megszűnt viselkedés nem kerülhet be.**
@@ -219,7 +210,7 @@ A bootstrap mechanikája (a részletes, darabolt lépéseket a 8. munkaterv tart
 
 ## Az `architecture.md` reconciliation (a 09-ből áthozva, DS3)
 
-A `docs-generated/architecture.md` a rendszer élő, kumulatív „hogyan épül/fut" dokumentációja. **A doc-sync a kizárólagos gazdája** (a korábbi 06 `TLAST` architecture-író task NYUGDÍJAZVA — DS4). Ez a lépés a teljes ciklus rálátásával komponál a spec/plan/diff + a kód alapján.
+A `docs-generated/architecture.md` a rendszer élő, kumulatív „hogyan épül/fut" dokumentációja. **A doc-sync a kizárólagos gazdája** (a korábbi 06 `TLAST` architecture-író task NYUGDÍJAZVA — DS4). A csereszöveget a `doc-sync-planner` komponálja a teljes ciklus rálátásával (spec/plan/diff + kód); az alábbi szabályok azok a **kritériumok, amelyekre a planner a sebészi patchet készíti**, a fő ágens pedig alkalmazza.
 
 ### Mi kerüljön bele
 - **Bevezető** — minden frissítésnél felülírjuk: a rendszer aktuális célja, komponensei, az utolsó ciklus változásai.
@@ -362,9 +353,12 @@ Az alábbi literál sablonokat **kitöltöd**, nem nulláról komponálod. A **b
 
 ### `doc-sync-plan.md` tétel
 
+Minden tétel egy sor + (a `reconciliation`/`új` tételeknél) a subagent kész **csereszöveg-blokkja** ugyanoda beírva. **A csereszöveget is a fájlba írod** (nem csak a memóriádban tartod) — így egy megszakadt futás resume-ja (DS10) a fájlból újra tudja alkalmazni, a plannert nem kell újrafuttatni.
+
 **Váz:**
 ```md
-- [ ] <fájl> — <művelet: reconciliation | új | nincs teendő> — <mit pontosan> (scope: <melyik flow/komponens>)
+- [ ] <fájl> — <művelet: reconciliation | új | nincs teendő> — <mit pontosan> (scope: <flow/komponens>)
+  <reconciliation/új esetén a subagent Csereszöveg-blokkja: lecserélendő jelenlegi részlet → megírt új szöveg>
 ```
 **Kész példa:**
 ```md
@@ -469,14 +463,3 @@ A kapu zöldre futása után:
    > /bs-review-and-merge input: @specs/cycle-NN-<cycle-name>
    > ```"*
    > **A válasz végén helyezd el a `docs-generated/system-overview.md` (és a `doc-sync-plan.md`) közvetlen, kattintható linkjét.**
-
----
-
-## Megszakított futás kezelése (külön szekció — a 07 mintájára)
-
-A fázis bármikor megszakadhat. Újraindításkor **ne** kezdj tiszta lapról — a fenti „Megszakított futás kezelése + idempotencia" szekció horgonyai szerint folytass:
-- Olvasd be a `doc-sync-questions.md`-t: van-e nyitott `[ ]` kérdés? → ha igen, arra vársz (kérdezz, ne lépj tovább).
-- Olvasd be a `doc-sync-plan.md`-t: melyek a `[ ]` (elvégzetlen) tételek? → onnan folytass, sorban.
-- A coverage-markerek (`Lefedve cycle-NN-ig`) megmutatják, mely fájlok frissültek már.
-- Minden terv-tétel **újrafuttatás-biztos** (reconciliation, ugyanoda konvergál) — egy félbeszakadt, már elvégzett tétel ártalmatlanul újrafut.
-- Ne készíts új tervet a nulláról, ha a meglévő `doc-sync-plan.md` használható; csak ha hiányos.

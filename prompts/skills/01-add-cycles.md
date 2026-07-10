@@ -15,17 +15,7 @@ subagents:
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
 
-Ez a fejlesztési folyamat **1-es fázisa (a 0–9 fázisokból)**:
-0. projekt inicializálás (setup)
-1. **ciklusok kezelése** ← most itt vagyunk
-2. spec
-3. plan
-4. tasks
-5. analyze
-6. implement
-7. validate
-8. doc-sync
-9. review & merge
+Ez a folyamat **1. fázisa (0–9)**: 0-init · **1-ciklusok ←** · 2-spec · 3-plan · 4-tasks · 5-analyze · 6-implement · 7-validate · 8-doc-sync · 9-review.
 
 ---
 

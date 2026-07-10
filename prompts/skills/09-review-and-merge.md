@@ -20,27 +20,13 @@ subagents:
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
 
-Ez a fejlesztési folyamat **9-es fázisa (a 0–9 fázisokból)**:
-0. projekt inicializálás (setup)
-1. ciklusok kezelése (setup)
-2. spec
-3. plan
-4. tasks
-5. analyze
-6. implement
-7. validate
-8. doc-sync
-9. **review & merge** ← most itt vagyunk
+Ez a folyamat **9. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan · 4-tasks · 5-analyze · 6-implement · 7-validate · 8-doc-sync · **9-review ←**.
 
 ---
 
 ## Előfeltétel
 
-0. **Ciklus-beazonosítás (Automata detekció):** Ha a felhasználó explicit megadta a ciklust vagy a bemeneti fájlt a parancs indításakor, használd azt. Ha nem adott meg semmit, keresd meg a projekt gyökér `specs/` mappájában a legnagyobb sorszámú (legfrissebb) ciklusmappát (pl. `specs/cycle-NN-<name>`). Kérdezz rá a felhasználónál pontosan az alábbi formában:
-   *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni?*
-   - *Igen*
-   - *Nem, megadom a ciklust (kérd be tőle a mappa vagy a fájl nevét)*"
-   Várd meg a felhasználói választ vagy megadást, mielőtt továbblépsz!
+0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni? Igen / Nem (megadom a ciklust)"* — és várj a válaszra, mielőtt továbblépsz.
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t (különösen a `## Merge stratégia` szekciót). Ha nem létezik, STOP — térjenek vissza a `00` fázishoz.
 
@@ -111,8 +97,14 @@ Ezt a szabályt a `review-fixer` is megkapja (a 06 Fix-mód garde-ja). **Ha egy 
 
 ### A hurok egy iterációja
 
-1. **FAIL naplózása.** Írd a `code-review.md` `# Review History`-jába a futás eredményét: a megrekedt item(ek) pontos neve + a `Consecutive Failures for this item` számláló (előző egymás utáni hibák + 1).
-2. **3-próba ellenőrzés (kilépés).** Ha bármely itemnél a `Consecutive Failures` eléri a **3**-at (a mostani iterációt is beleszámítva) → a hurok megáll (lásd „3-próba + globális backstop"). A megállás típusát az RD6 dönti el.
+1. **FAIL naplózása + per-item számláló — a `failure-counter.py` szkripttel (determinisztikusan, ne kézzel).** Ugyanaz a szkript, mint a 07-ben, de a `# Review History`-t frissíti — add át a `--header "Review History"`-t és a megrekedt item(ek) pontos nevét:
+   ```bash
+   python3 <platform-scripts-mappa>/failure-counter.py \
+     specs/cycle-NN-<cycle-name>/code-review.md \
+     --result FAIL --header "Review History" --timestamp "$(date '+%Y-%m-%d %H:%M')" \
+     --failed-item "<pontos Must Fix / teszt azonosító>" [--failed-item "<másik>" ...]
+   ```
+2. **3-próba döntés a szkript kilépő kódjából.** `exit 3` → legalább egy item elérte a 3-at → a hurok megáll (lásd „3-próba + globális backstop"); a megállás típusát az RD6 dönti el. `exit 0` → folytatható.
 3. **Globális backstop ellenőrzés.** Ha az összes iteráció száma elérte a **`max 5`**-öt → STOP + humán (a `# Review History`-ra hivatkozva), akkor is, ha egyetlen item sem ért el 3 próbát.
 4. **Korai eszkaláció-ellenőrzés (RD6).** Ha az előző iteráció `review-fixer`-e **eszkalációs jelzést** adott (a findinget csak a szerződés módosításával vagy elnémítással lehetne kezelni) → ne körözz tovább, azonnal a felfelé/humán menekülő ág.
 5. **Javító-taskok felvétele.** A `tasks.md` végén `## Review javítások` szekció, a `code-review.md` prerequisite-tel; a konkrét `Must Fix`-ek `[GREEN]` taskként, a csoport végén `[CHECK]` ellenőrző taskkal. *(Review-javításnál `[RED]` pár nem kell — direkt javítás.)* Duplikátum-kerülés: ne vedd fel kétszer ugyanazt.
@@ -121,7 +113,7 @@ Ezt a szabályt a `review-fixer` is megkapja (a 06 Fix-mód garde-ja). **Ha egy 
 8. **Re-validate (a 07 teljes ellenőrzései).** Futtasd a `07-validate` „Validálási lépéseit" (gyors tesztek → Sonar → nehéz tesztek → DoD). **Nem** indítod a 07 saját hurkát.
    - **FAIL** (regresszió) → ez is a hurok FAIL-je: új iteráció az 1. ponttól (a regresszált teszt lesz a megrekedt item).
 9. **Re-review (reviewer subagent).** Ha a re-validate zöld, futtasd újra a `reviewer` subagentet a friss diffre, és olvasd be az új `code-review.md`-t.
-   - **Tiszta** (nincs lezáratlan `Must Fix`) → a hurok konvergált: vedd le a `[review-loop]` markert (a `tasks.md` `Kész`), írd a `# Review History`-ba a `PASS`-t, egyetlen lezáró commit (RD9), majd lépj a merge előtti doc-sync ellenőrzésre (§2) és a merge-megerősítésre (§3).
+   - **Tiszta** (nincs lezáratlan `Must Fix`) → a hurok konvergált: vedd le a `[review-loop]` markert (a `tasks.md` `Kész`), naplózd a `PASS`-t (`failure-counter.py ... --result PASS --header "Review History"`), egyetlen lezáró commit (RD9), majd lépj a merge előtti doc-sync ellenőrzésre (§2) és a merge-megerősítésre (§3).
    - **Még van `Must Fix`** → új iteráció az 1. ponttól.
 
 ### A fixer-subagent indítása

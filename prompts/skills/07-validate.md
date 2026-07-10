@@ -17,17 +17,7 @@ subagents:
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
 
-Ez a fejlesztési folyamat **7-es fázisa (a 0–9 fázisokból)**:
-0. projekt inicializálás (setup)
-1. ciklusok kezelése (setup)
-2. spec
-3. plan
-4. tasks
-5. analyze
-6. implement
-7. **validate** ← most itt vagyunk
-8. doc-sync
-9. review & merge
+Ez a folyamat **7. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan · 4-tasks · 5-analyze · 6-implement · **7-validate ←** · 8-doc-sync · 9-review.
 
 ---
 
@@ -37,11 +27,7 @@ A prompt bemenete a ciklus mappája (pl. `specs/cycle-NN-<cycle-name>`). A valid
 
 ## Előfeltétel
 
-0. **Ciklus-beazonosítás (Automata detekció):** Ha a felhasználó explicit megadta a ciklust vagy a bemeneti fájlt a parancs indításakor, használd azt. Ha nem adott meg semmit, keresd meg a projekt gyökér `specs/` mappájában a legnagyobb sorszámú (legfrissebb) ciklusmappát (pl. `specs/cycle-NN-<name>`). Kérdezz rá a felhasználónál pontosan az alábbi formában:
-   *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni?*
-   - *Igen*
-   - *Nem, megadom a ciklust (kérd be tőle a mappa vagy a fájl nevét)*"
-   Várd meg a felhasználói választ vagy megadást, mielőtt továbblépsz!
+0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni? Igen / Nem (megadom a ciklust)"* — és várj a válaszra, mielőtt továbblépsz.
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` fázishoz.
 
@@ -121,15 +107,22 @@ Csak akkor hívd, ha az 1. lépés PASS volt. Hívd újra a `test-runner` subage
 
 > **⚠ Átmeneti port-módosítás:** ha a subagent jelentése ideiglenes config-/port-csere kell, ellenőrizd, hogy a jelentés szerint sikeresen visszaállt-e az eredeti állapot; ha nem, állítsd vissza te (`git checkout -- <fájl>`), mielőtt a validate fázis véget ér — ez nem kerülhet be a ciklus diffjébe.
 
-**Ismételt hibák naplózása:** mindkét lépés (1. és 2.) eredményét naplóznod kell a `specs/cycle-NN-<cycle-name>/test-report/validate-decision.md` fájl végén található `# Validation History` szekcióba (ha a fájl nem létezik, a `test-report/` mappával együtt hozd létre).
-Minden futásnál rögzítsd a hibás teszt nevét és számold ki, hogy ez hanyadik egymást követő bukása annak a konkrét tesztnek/elemnek:
-```md
-- **Run X (YYYY-MM-DD HH:MM) - FAIL**
-  - **Failed Item:** [A hibás teszt pontos neve / azonosítója]
-  - **Consecutive Failures for this item:** [Előző egymás utáni hibák száma + 1]
-  - **Details:** [Hiba leírása és oka]
+**Ismételt hibák naplózása (szkripttel, determinisztikusan):** mindkét lépés (1. és 2.) eredményét naplóznod kell a `specs/cycle-NN-<cycle-name>/test-report/validate-decision.md` `# Validation History` szekciójába. **A futás-bejegyzést és a per-item egymást-követő-bukás számlálót NE kézzel írd/számold** — a `failure-counter.py` szkript végzi (a telepítő a platform scripts-mappájába másolja: `.claude/scripts/` / `.agents/scripts/` / `.github/scripts/`). A `test-runner` által **szó szerint** visszaadott bukott-item neveket add át neki:
+
+```bash
+# FAIL — minden bukott itemet külön --failed-item-ként (a test-runner nevein):
+python3 <platform-scripts-mappa>/failure-counter.py \
+  specs/cycle-NN-<cycle-name>/test-report/validate-decision.md \
+  --result FAIL --timestamp "$(date '+%Y-%m-%d %H:%M')" \
+  --failed-item "<pontos tesztnév/azonosító>" [--failed-item "<másik>" ...] \
+  --details "<rövid ok>"
+# PASS (minden zöld):
+python3 <platform-scripts-mappa>/failure-counter.py \
+  specs/cycle-NN-<cycle-name>/test-report/validate-decision.md \
+  --result PASS --timestamp "$(date '+%Y-%m-%d %H:%M')"
 ```
-Ha a teljes validálás sikeres volt (minden gyors és nehéz teszt, regresszió, és Sonar átment), a történet végére jegyezd fel: `Run X (YYYY-MM-DD HH:MM) - PASS`.
+
+A szkript hozzáfűzi a `Run X` bejegyzést a dokumentált formátumban, kiszámolja itemenként az egymást követő bukások számát, és a **kilépő kódjával jelzi a 3-próba szabályt (VD4): `0` = folytatható, `3` = legalább egy item elérte a 3-at → a hurok MEGÁLL** (a szkript kiírja, melyik item). Ha a `test-report/` mappa nem létezik, előbb hozd létre.
 
 **Egy funkció csak akkor kész, ha minden teszt és a Sonar is átment.** Részleges PASS nem elfogadható: ha bármelyik teszt vagy a Sonar hibázik, az egész validate FAIL.
 
@@ -203,8 +196,8 @@ Ezt a szabályt az `implement-fixer` is megkapja (a 06 Fix-mód garde-ja) — eg
 
 ### A hurok egy iterációja
 
-1. **FAIL naplózása.** Írd a `# Validation History`-ba a futás eredményét: a hibás item(ek) pontos neve + a `Consecutive Failures for this item` számláló (előző egymás utáni hibák + 1).
-2. **3-próba ellenőrzés (VD4 — kilépés).** Ha bármely itemnél a `Consecutive Failures` eléri a **3**-at (a mostani futást is beleszámítva) → a hurok megáll (lásd „3-próba szabály mint hurok-korlát"). A megállás típusát a VD5 heurisztika dönti el: tervezési hiba → eszkaláció; egyébként → STOP + humán.
+1. **FAIL naplózása + 3-próba (VD4) egy lépésben — a `failure-counter.py` szkripttel.** Futtasd a szkriptet a `--result FAIL` + a bukott item-nevekkel (lásd „Ismételt hibák naplózása"). Ez naplózza a futást ÉS kiszámolja a per-item számlálót — **ne kézzel**.
+2. **3-próba döntés a szkript kilépő kódjából (VD4).** `exit 3` → legalább egy item elérte a 3-at → a hurok megáll (lásd „3-próba szabály mint hurok-korlát"); a megállás típusát a VD5 heurisztika dönti el (tervezési hiba → eszkaláció; egyébként → STOP + humán). `exit 0` → folytatható a hurok.
 3. **Korai eszkaláció-ellenőrzés (VD5).** Ha az előző iteráció `implement-fixer` subagentje **eszkalációs jelzést** adott vissza (a hibát csak a teszt/DoD módosításával lehetne zöldre vinni), ne körözz tovább a 06-ban → **azonnal eszkalálj** (lásd „Felfelé menekülő ág"), nem kell megvárni a 3. próbát.
 4. **Javító-taskok felvétele.** A FAIL-gépezet szerint (lásd „FAIL — javító-taskok felvétele"): `## Validációs javítások` szekció a `tasks.md` végén, prerequisite hivatkozásokkal, `[GREEN]`/`[CHECK]` taskként a konkrét teszt-/Sonar-hibák. Duplikátum-kerülés: ne vedd fel kétszer ugyanazt.
 5. **Marker felvétele (VD6).** A `tasks.md` státuszát fordítsd `Implementálásra kész [validate-loop]`-ra. A marker jelzi: fix-mód aktív → a fixer automatikusan lépteti a státuszt, megerősítés nélkül.
@@ -289,10 +282,10 @@ Teendők:
 Ha bármely teszt, a Sonar, vagy a DoD ellenőrzés hibázik, **nem** adod vissza a vezérlést a felhasználónak — a hurok következő iterációját készíted elő és indítod (lásd „Az önjavító hurok"). Lépések **sorban**:
 
 ```
-[ ] 1. validate-decision.md frissítve a hibával (# Validation History szekció),
-        a Consecutive Failures for this item számláló léptetve
-[ ] 2. 3-próba ellenőrzés: ha bármely item Consecutive Failures = 3 → STOP
-        (eszkaláció vagy humán, lásd lent) — NE indíts újabb fixert
+[ ] 1. failure-counter.py lefuttatva (--result FAIL + bukott itemek) →
+        # Validation History frissítve, a számláló determinisztikusan léptetve
+[ ] 2. 3-próba a szkript kilépő kódjából: exit 3 → STOP
+        (eszkaláció vagy humán, lásd lent) — NE indíts újabb fixert; exit 0 → tovább
 [ ] 3. tasks.md → ## Validációs javítások fejezet létrehozva vagy folytatva
 [ ] 4. A fejezet elejére prerequisite hivatkozásként berakva:
         - specs/cycle-NN-<cycle-name>/test-report/validate-decision.md

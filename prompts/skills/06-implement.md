@@ -17,27 +17,13 @@ subagents:
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
 
-Ez a fejlesztési folyamat **6-os fázisa (a 0–9 fázisokból)**:
-0. projekt inicializálás (setup)
-1. ciklusok kezelése (setup)
-2. spec
-3. plan
-4. tasks
-5. analyze
-6. **implement** ← most itt vagyunk
-7. validate
-8. doc-sync
-9. review & merge
+Ez a folyamat **6. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan · 4-tasks · 5-analyze · **6-implement ←** · 7-validate · 8-doc-sync · 9-review.
 
 ---
 
 ## Előfeltétel
 
-0. **Ciklus-beazonosítás (Automata detekció):** Ha a felhasználó explicit megadta a ciklust vagy a bemeneti fájlt a parancs indításakor, használd azt. Ha nem adott meg semmit, keresd meg a projekt gyökér `specs/` mappájában a legnagyobb sorszámú (legfrissebb) ciklusmappát (pl. `specs/cycle-NN-<name>`). Kérdezz rá a felhasználónál pontosan az alábbi formában:
-   *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni?*
-   - *Igen*
-   - *Nem, megadom a ciklust (kérd be tőle a mappa vagy a fájl nevét)*"
-   Várd meg a felhasználói választ vagy megadást, mielőtt továbblépsz!
+0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni? Igen / Nem (megadom a ciklust)"* — és várj a válaszra, mielőtt továbblépsz.
 
 1. Olvasd be a `tasks.md` státuszát. **Ha a státusz nem `Implementálásra kész`, ne kezdj implementálni.** Jelezd a felhasználónak, hogy a tasks lista még nem zárult le.
 
