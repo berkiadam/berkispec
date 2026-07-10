@@ -67,6 +67,12 @@ Ez a fejlesztési folyamat **3-as fázisa (a 0–9 fázisokból)**:
 
 ## Előfeltétel
 
+0. **Ciklus-beazonosítás (Automata detekció):** Ha a felhasználó explicit megadta a ciklust vagy a bemeneti fájlt a parancs indításakor, használd azt. Ha nem adott meg semmit, keresd meg a projekt gyökér `specs/` mappájában a legnagyobb sorszámú (legfrissebb) ciklusmappát (pl. `specs/cycle-NN-<name>`). Kérdezz rá a felhasználónál pontosan az alábbi formában:
+   *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni?*
+   - *Igen*
+   - *Nem, megadom a ciklust (kérd be tőle a mappa vagy a fájl nevét)*"
+   Várd meg a felhasználói választ vagy megadást, mielőtt továbblépsz!
+
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` fázishoz.
 2. **Munkafa:** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e vagy folytassam.
 3. Olvasd be a \`spec.md\` státuszát. **Ha a státusz nem \`Tervezésre kész\`, ne kezdj el plan-t írni.** Jelezd a felhasználónak, hogy a spec még nem zárult le, és térjenek vissza a `02` spec fázishoz.
@@ -142,7 +148,7 @@ Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Kn
 - **Forrásfájl-azonosítás (a plan dolga, nem a spec-é):** a spec `Hivatkozott fájlok` szekciója **csak dokumentációs/specifikációs anyagot** tartalmaz (README, OpenAPI, séma, példa payload) — forrásfájlokat (`.ts`, `.tsx`, `.js`, `package.json`, stb.) **nem**. A módosítandó/érintett forrásfájlokat a **03 fázis azonosítja önállóan**, a spec `Komponensek és viselkedés` szekciója alapján. Ehhez indítsd el a `researcher` subagentet (`agents/researcher.md`), amely visszaadja az érintett forrásfájlok listáját (path + hely + jelleg) — a nyers fájltartalom nem terheli a fő kontextust. Csak az így azonosított, valóban releváns forrásfájl-részeket olvasd be közvetlenül.
 - **Spec-ben hivatkozott dokumentációs/specifikációs fájlok:** ha a `spec.md` a `Hivatkozott fájlok`-ban külső leírókra hivatkozik (JSON séma, OpenAPI leíró, példa payload), ezeket is olvasd be a terv elkészítése előtt.
 - **Külső függőségek dokumentációja:** Ha a ciklus külső függőséget vezet be vagy igénybe vesz (pl. Keycloak, külső API, messaging broker), kérd be a vonatkozó dokumentációt vagy MCP szervereket a felhasználótól még a plan megkezdése előtt. Nézd át, és döntsd el, hogy elegendő és releváns információ áll-e rendelkezésre. Ha nem, vedd fel nyitott kérdésként a `plan-questions.md`-be.
-- Ha egy nagy vagy bonyolult fájlt kell megértened, indíts egy **subagent**et a kutatáshoz. A subagent csak az összefoglalót adja vissza — a nyers fájltartalom nem kerül be a fő kontextusba.
+- Ha egy nagy vagy bonyolult fájlt kell megértened, hívd ugyanazt a `researcher` subagentet (`agents/researcher.md`, Mód B) a kutatáshoz. A subagent csak az összefoglalót adja vissza — a nyers fájltartalom nem kerül be a fő kontextusba.
 - **Dokumentáció felkutatása (Documentation Reconnaissance):** Az ágens köteles a tervezés megkezdése előtt felkutatni a teljes projektben lévő összes olyan leírást (pl. `docs/` mappa, README.md fájlok, diagramok), amely érintett lehet a változások által (pl. hivatkozik a módosítandó végpontra, változóra vagy folyamatra). Mivel ez a keresés sok fájl beolvasásával járhat, **a `researcher` subagent (`agents/researcher.md`) végzi** — ugyanaz az ágens, amelyik a forrásfájlokat azonosítja. A subagent elvégzi a kereséseket, elemzi a találatokat, és kizárólag a módosítandó dokumentumok listáját és a cserélendő részek rövid összefoglalóját adja vissza, megóvva ezzel a fő kontextus tisztaságát. Elsődleges cél, hogy a projektben lévő összes leírás és diagram naprakész legyen.
 - Ne olvasd be az előző ciklusok plan.md fájljait, kivéve ha a spec explicit függőséget jelöl egy korábbi ciklusra.
 

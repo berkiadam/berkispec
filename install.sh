@@ -39,6 +39,7 @@ readonly SKILLS_SRC="${SCRIPT_DIR}/prompts/skills"
 # Globális állapot változók
 PROJECT_PATH=""
 PLATFORM_CHOICE="" # "antigravity" vagy "claude" vagy "copilot"
+INSTALL_STATUS=""  # "done" vagy "skipped" (ütközés esetén kihagyva)
 
 # ── Segédfüggvények ─────────────────────────────────────────────────────────
 info()    { echo -e "  ${CYAN}ℹ${RESET}  $*"; }
@@ -221,6 +222,27 @@ handle_conflict() {
   esac
 }
 
+# Igaz, ha a megadott mappák közül legalább egy már létezik és nem üres.
+has_existing_content() {
+  local dir=""
+  for dir in "$@"; do
+    if [[ -d "${dir}" ]] && [[ -n "$(ls -A "${dir}" 2>/dev/null)" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Ütközés esetén rákérdez, és beállítja $CONFLICT_ANSWER-t (0=felülír, 1=kihagy, 2=megszakít).
+# A hívó felelőssége az exit / return / folytatás a válasz alapján.
+ask_conflict() {
+  local target="$1"
+  local type="$2"
+
+  CONFLICT_ANSWER=0
+  handle_conflict "${target}" "${type}" || CONFLICT_ANSWER=$?
+}
+
 # ── Google Antigravity Telepítés ──────────────────────────────
 install_antigravity() {
   local agents_dest="${PROJECT_PATH}/.agents/agents"
@@ -232,6 +254,22 @@ install_antigravity() {
     success ".agents/ mappa létrehozva"
   fi
 
+  # ── Ütközés ellenőrzés ──
+  if has_existing_content "${agents_dest}" "${skills_dest}"; then
+    ask_conflict ".agents/agents és .agents/skills" "mappa"
+    case "${CONFLICT_ANSWER}" in
+      1)
+        warn "Antigravity telepítés kihagyva, a meglévő fájlok érintetlenek."
+        INSTALL_STATUS="skipped"
+        return 0
+        ;;
+      2)
+        error "Telepítés megszakítva."
+        exit 1
+        ;;
+    esac
+  fi
+
   # ── Agents & Skills ──
   echo ""
   echo -e "  ${BLUE}📦 Antigravity Agent-ek és Skill-ek telepítése${RESET}"
@@ -240,6 +278,7 @@ install_antigravity() {
   info "Fájlok másolása és modellek konfigurálása..."
   if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "antigravity" "${SCRIPT_DIR}" "${PROJECT_PATH}"; then
     success "Antigravity ágensek és skillek sikeresen konfigurálva és másolva!"
+    INSTALL_STATUS="done"
   else
     error "Hiba történt a fájlok másolása során!"
     exit 1
@@ -257,6 +296,22 @@ install_claude() {
     success ".claude/ mappa létrehozva"
   fi
 
+  # ── Ütközés ellenőrzés ──
+  if has_existing_content "${agents_dest}" "${skills_dest}"; then
+    ask_conflict ".claude/agents és .claude/skills" "mappa"
+    case "${CONFLICT_ANSWER}" in
+      1)
+        warn "Claude telepítés kihagyva, a meglévő fájlok érintetlenek."
+        INSTALL_STATUS="skipped"
+        return 0
+        ;;
+      2)
+        error "Telepítés megszakítva."
+        exit 1
+        ;;
+    esac
+  fi
+
   # ── Agents & Skills ──
   echo ""
   echo -e "  ${BLUE}📦 Claude Agent-ek és Skill-ek telepítése (.claude/)${RESET}"
@@ -265,6 +320,7 @@ install_claude() {
   info "Fájlok másolása és modellek konfigurálása..."
   if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "claude" "${SCRIPT_DIR}" "${PROJECT_PATH}"; then
     success "Claude ágensek és skillek sikeresen konfigurálva és másolva!"
+    INSTALL_STATUS="done"
   else
     error "Hiba történt a fájlok másolása során!"
     exit 1
@@ -282,6 +338,22 @@ install_copilot() {
     success ".github/ mappa létrehozva"
   fi
 
+  # ── Ütközés ellenőrzés ──
+  if has_existing_content "${agents_dest}" "${instructions_dest}"; then
+    ask_conflict ".github/agents és .github/instructions" "mappa"
+    case "${CONFLICT_ANSWER}" in
+      1)
+        warn "Copilot telepítés kihagyva, a meglévő fájlok érintetlenek."
+        INSTALL_STATUS="skipped"
+        return 0
+        ;;
+      2)
+        error "Telepítés megszakítva."
+        exit 1
+        ;;
+    esac
+  fi
+
   # ── Agents & Skills ──
   echo ""
   echo -e "  ${BLUE}📦 Copilot Agent-ek és Utasítások telepítése (.github/)${RESET}"
@@ -290,6 +362,7 @@ install_copilot() {
   info "Fájlok másolása és modellek konfigurálása..."
   if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "copilot" "${SCRIPT_DIR}" "${PROJECT_PATH}"; then
     success "Copilot ágensek és skillek sikeresen konfigurálva és másolva!"
+    INSTALL_STATUS="done"
   else
     error "Hiba történt a fájlok másolása során!"
     exit 1
@@ -315,10 +388,20 @@ show_summary() {
   echo ""
   separator
   echo ""
+
+  if [[ "${INSTALL_STATUS}" == "skipped" ]]; then
+    echo -e "  ${YELLOW}${BOLD}⚠ Telepítés kihagyva${RESET}"
+    echo ""
+    echo -e "  ${GRAY}A meglévő fájlokat nem módosítottam. Futtasd újra a scriptet"
+    echo -e "  és válaszd a ${BOLD}felülírás${GRAY} opciót, ha frissíteni szeretnéd őket.${RESET}"
+    echo ""
+    return 0
+  fi
+
   echo -e "  ${GREEN}${BOLD}🎉 Telepítés kész!${RESET}"
   echo ""
   echo -e "  ${WHITE}Projekt:${RESET}  ${BOLD}${PROJECT_PATH}${RESET}"
-  
+
   if [[ "${PLATFORM_CHOICE}" == "antigravity" ]]; then
     echo -e "  ${WHITE}Platform:${RESET} ${BOLD}Google Antigravity CLI${RESET}"
     echo ""

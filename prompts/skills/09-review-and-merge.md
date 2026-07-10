@@ -14,6 +14,7 @@ next: bs-write-spec
 subagents:
   - "agents/reviewer.md"
   - "agents/review-fixer.md"
+  - "agents/test-runner.md"
 ---
 # 09 — Review és Merge
 
@@ -34,6 +35,12 @@ Ez a fejlesztési folyamat **9-es fázisa (a 0–9 fázisokból)**:
 ---
 
 ## Előfeltétel
+
+0. **Ciklus-beazonosítás (Automata detekció):** Ha a felhasználó explicit megadta a ciklust vagy a bemeneti fájlt a parancs indításakor, használd azt. Ha nem adott meg semmit, keresd meg a projekt gyökér `specs/` mappájában a legnagyobb sorszámú (legfrissebb) ciklusmappát (pl. `specs/cycle-NN-<name>`). Kérdezz rá a felhasználónál pontosan az alábbi formában:
+   *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni?*
+   - *Igen*
+   - *Nem, megadom a ciklust (kérd be tőle a mappa vagy a fájl nevét)*"
+   Várd meg a felhasználói választ vagy megadást, mielőtt továbblépsz!
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t (különösen a `## Merge stratégia` szekciót). Ha nem létezik, STOP — térjenek vissza a `00` fázishoz.
 

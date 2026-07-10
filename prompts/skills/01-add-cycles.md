@@ -8,7 +8,8 @@ output:
   - "specs/roadmap.md státusz: Kész"
 prev: bs-init-project
 next: bs-write-spec
-subagents: []
+subagents:
+  - "agents/researcher.md"
 ---
 # 01 — Ciklusok kezelése
 
@@ -299,10 +300,7 @@ A `specs/` mappában található ciklus mappák alapján hozd létre (vagy írd 
 
 1. **Ciklusok azonosítása:** Listázd ki a ciklus mappákat (`ls -d specs/cycle-*/`), és rendezd őket szám szerint növekvő sorrendbe.
 
-2. **Spec fájlok beolvasása:** Minden ciklushoz:
-   - Olvasd be a `specs/cycle-NN-<name>/spec.md` fájlt (ha létezik).
-   - Extract: a címet (`Cycle NN: cím`), a `Célkitűzés` szekció első mondatát, az érintett komponenseket (a `Komponensek és viselkedés` szekcióból), a `Teszt specifikáció` és `Definition of done` kulcspontjait.
-   - Ha a `spec.md` nem létezik, csak a mappanév alapján próbáld rekonstruálni a minimum adatokat (viselkedés: mappanévből következtetve, komponensek: ismeretlen, teszt kritérium: nincs specifikálva).
+2. **Spec fájlok beolvasása:** ha sok ciklus van, ne olvasd be egyenként a saját kontextusodba — hívd a `researcher` subagentet (`agents/researcher.md`, Mód B) egy összesített kéréssel: minden `specs/cycle-NN-<name>/spec.md`-hez add vissza a címet (`Cycle NN: cím`), a `Célkitűzés` szekció első mondatát, az érintett komponenseket (a `Komponensek és viselkedés` szekcióból), valamint a `Teszt specifikáció` és `Definition of done` kulcspontjait, táblázatos formában. Ha a `spec.md` nem létezik egy ciklushoz, jelezze ezt is a mappanév alapján (viselkedés: mappanévből következtetve, komponensek: ismeretlen, teszt kritérium: nincs specifikálva). Néhány (2-3) ciklusnál egyszerűbb, ha közvetlenül olvasod be őket.
 
 3. **Roadmap felépítése (piszkozatként):** Építsd fel a `specs/roadmap.md`-t a standard struktúra szerint (`# Fejlesztési Roadmap`, **`Státusz: Piszkozat`**, majd minden ciklus `## Cycle NN — cím` blokkja). **Ne állítsd `Kész`-re automatikusan** — a rekonstrukció felülírhat fontos tervezési állapotot, ezért emberi jóváhagyás kell.
 

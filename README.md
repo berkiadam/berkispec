@@ -179,19 +179,26 @@ berkispec/                            # repo gyökér
     │   ├── 07-validate.md
     │   ├── 08-doc-sync.md            # élő dokumentáció-szinkron (docs-generated/)
     │   ├── 09-review-and-merge.md
+    │   ├── 10-cycle-status.md        # ciklusok státuszának ellenőrzése (interaktív TUI vagy közvetlen)
     │   └── quick-flow.md   # egyszerűsített, háromfázisú flow kis feladatokhoz (spec→task→implement)
     ├── agents/                       # Specialista ágensek (Task tool subagent-ként hívva)
     │   ├── reviewer.md               # code review a 09 fázisban
     │   ├── analyzer.md               # kereszt-fázisos elemzés (read-only diagnózis) a 05 fázisban
-    │   ├── researcher.md             # forrásfájl- és dokumentáció-kutatás a 03 fázisban
+    │   ├── researcher.md             # kódbázis-/dokumentum-kutatás (00/01/02/03/06) — legolcsóbb tier
+    │   ├── test-runner.md            # tesztek/Sonar/E2E mechanikus futtatása a 07 (+ 09 re-validate) fázisban — legolcsóbb tier
     │   ├── doc-sync-planner.md       # 08 doc-sync: read-only tervkészítő diagnoszta (doc-sync-plan.md)
     │   ├── spec-fixer.md             # 05 önjavító hurok: 02 fix-mód belépő (vékony wrapper)
     │   ├── plan-fixer.md             # 05 önjavító hurok: 03 fix-mód belépő (vékony wrapper)
     │   ├── tasks-fixer.md            # 05 önjavító hurok: 04 fix-mód belépő (vékony wrapper)
     │   ├── implement-fixer.md        # 07 önjavító hurok: 06 fix-mód belépő (vékony wrapper)
-    │   └── review-fixer.md           # 09 önjavító hurok: 06 fix-mód belépő (vékony wrapper)
+    │   ├── review-fixer.md           # 09 önjavító hurok: 06 fix-mód belépő (vékony wrapper)
+    │   └── gemini-agent/             # Antigravity-specifikus agent.json másolatok (per-agent almappa)
     ├── templates/                    # jövőbeli sablonok
-    ├── scripts/                      # automatizációs scriptek (ágens-integráció)
+    ├── scripts/                      # automatizációs scriptek (a telepítő minden *.py-t átmásol a célprojektbe)
+    │   ├── install-helper.py         # a telepítő motorja (modell-tier hozzárendelés, fájlmásolás) — NEM kerül a célprojektbe
+    │   ├── cycle-status.py           # a 10-cycle-status skill futtató scriptje
+    │   └── ds22-gate-check.py        # a 08-doc-sync DS22 Réteg 1 magkapuja (determinisztikus, LLM nélkül)
+    ├── models.json                   # modell-tier konfiguráció platformonként (lásd 5.3)
     ├── meta-improve-prompts.md       # prompt-fejlesztési meta-sablon
     ├── inprove-list.md               # prompt-fejlesztési lista
     └── inprove-list2.md              # prompt-fejlesztési lista (folytatás)
@@ -362,14 +369,14 @@ flowchart TD
         In06(["User Input: Ciklus implementációs indítása"]):::userInput
 
         P07["07 — Validálás"]:::dev
-        P07_Run{"Tesztek & SonarQube futtatása"}:::decision
+        P07_Run{"Tesztek & SonarQube futtatása<br/>(test-runner subagent)"}:::decision
         DocReport["specs/cycle-NN-*/test-report/ (validate-decision.md / sonar-report.md / integration / playwright)"]:::doc
         P07_Check{"Sikeres? (PASS)"}:::decision
 
         P08["08 — Doc-sync"]:::dev
         P08_Plan["doc-sync-planner subagent<br/>→ doc-sync-plan.md (per-fájl terv)"]:::doc
         DocGen["docs-generated/ (system-overview, architecture, CHANGELOG, design-drift, README)"]:::doc
-        P08_Gate{"Objektív konzisztencia-kapu zöld? (DS22)"}:::decision
+        P08_Gate{"Objektív konzisztencia-kapu zöld?<br/>(DS22 — ds22-gate-check.py)"}:::decision
 
         P09["09 — Review és Merge"]:::dev
         P09_Review{"Automatikus code review (reviewer subagent)"}:::decision
@@ -459,7 +466,7 @@ flowchart TD
 
     %% Review önjavító hurok (09) — kétfázisú: fix → re-validate → re-review
     P09_Check -- "Igen (Must Fix)" --> P09_Fixer["review-fixer subagent<br/>(06 fix-mód, [review-loop])<br/>## Review javítások"]:::dev
-    P09_Fixer -- "javítás kész → re-validate (07 teljes ellenőrzései)" --> P07_Run2["07 Validálási lépések<br/>(nem indítja a 07 saját hurkát)"]:::dev
+    P09_Fixer -- "javítás kész → re-validate (07 teljes ellenőrzései)" --> P07_Run2["07 Validálási lépések<br/>(test-runner subagent;<br/>nem indítja a 07 saját hurkát)"]:::dev
     P07_Run2 -- "zöld → re-review" --> P09_Review
     P07_Run2 -. "regresszió → új iteráció" .-> P09_Fixer
     P09_Fixer -. "eszkalációs jelzés (RD6)" .-> P09_Esc
@@ -476,9 +483,9 @@ flowchart TD
 
 ### 5.3 Automatikus modell választás
 
-A specifikáció-vezérelt fejlesztés során rendkívül fontos a költséghatékonyság, a sebesség és az erőforrások optimális kihasználása. Ennek érdekében a fázisok túlnyomó többségét gyors, költséghatékony, de megbízható modellekkel végezzük. Az analízis és a validáció fázisok (Phase 05 és Phase 07) azonban szigorú kivételek, mivel ezeknél mély következtetési (reasoning) képességre, magas fokú intelligenciára és komplex ellenőrzésre van szükség, amit csak a legerősebb és legokosabb modellek tudnak megbízhatóan elvégezni.
+A specifikáció-vezérelt fejlesztés során rendkívül fontos a költséghatékonyság, a sebesség és az erőforrások optimális kihasználása. Ennek érdekében a fázisok túlnyomó többségét gyors, költséghatékony, de megbízható modellekkel végezzük. Az analízis és a validáció fázisok (Phase 05 és Phase 07) azonban szigorú kivételek, mivel ezeknél mély következtetési (reasoning) képességre, magas fokú intelligenciára és komplex ellenőrzésre van szükség, amit csak a legerősebb és legokosabb modellek tudnak megbízhatóan elvégezni. Ezzel szemben a `researcher` ágens (kódbázis-/dokumentum-keresés a 00/01/02/03/06 fázisokban) és a `test-runner` ágens (tesztek/Sonar/E2E mechanikus futtatása a 07 fázisban, közvetve a 09 re-validate lépésében is) tisztán mechanikus fan-out/végrehajtás — ehhez szándékosan a **legolcsóbb** elérhető modell van beállítva (`research_agent` kulcs), mert a minőséget itt a szigorú "csak összefoglaló, soha nyers fájltartalom/döntés" kontraktus garantálja, nem a modell ereje. Ugyanez a kulcs adja a `10-cycle-status` skill modelljét is — az a fázis egy determinisztikus scriptet futtat, nulla LLM-ítélettel.
 
-- **Központosított konfiguráció (`prompts/models.json`)**: A projekten belüli modellek fázisok és ágensek szerinti elosztását a [`prompts/models.json`](prompts/models.json) fájl szabályozza. Itt határozhatók meg a célspecifikus modellek a kiemelt fázisokhoz (pl. `analyze_phase`), valamint az általános (`default`) modell a többi lépéshez.
+- **Központosított konfiguráció (`prompts/models.json`)**: A projekten belüli modellek fázisok és ágensek szerinti elosztását a [`prompts/models.json`](prompts/models.json) fájl szabályozza. Itt határozhatók meg a célspecifikus modellek a kiemelt fázisokhoz (pl. `analyze_phase`, `validate_phase`), egy konkrét ágenshez/skillhez rendelt felülírás (pl. a `research_agent` kulcs — ezt a `researcher`, a `test-runner` agent **és** a `10-cycle-status` skill is megkapja, fázistól függetlenül, mert mindhárom tisztán mechanikus munkát végez), valamint az általános (`default`) modell a többi lépéshez. Az `install-helper.py` `AGENT_MODEL_KEYS` szótára mondja meg, mely agent/skill stem melyik felülírás-kulcsot kapja.
 - **Automatizált platform-specifikus konfiguráció**: A telepítő (`./install.sh`) az ágensek és skillek másolásakor automatikusan beállítja a cél-ágensek saját konfigurációját a `models.json` alapján:
   - **Antigravity CLI**: Az `agent.json` fájlok gyökerébe bekerül a `"model"` kulcs.
   - **Claude Code**: Az `.md` ágensek YAML frontmatterébe a megfelelő API modell ID íródik be (pl. `model: claude-opus-4-8` vagy `model: claude-sonnet-5`).
@@ -538,7 +545,7 @@ A hurok két, egymástól független módon áll le: **PASS** (nincs több `Must
 
 ### 5.5 Az 07-validate önjavító hurok (részletes)
 
-Ez az ábra **kizárólag az 07-validate lépést** mutatja be, a subagent feltüntetésével (a fenti analyze-ábra párja). Az orchestrátor (07) PASS-ig **determinisztikus ellenőrző** (tesztek + Sonar + DoD), FAIL esetén **orchestrátor**: a **javítást** az `implement-fixer` subagent (= a 06 fix-módja) végzi, a re-validálást és a döntéseket az orchestrátor.
+Ez az ábra **kizárólag az 07-validate lépést** mutatja be, a subagentek feltüntetésével (a fenti analyze-ábra párja). Az orchestrátor (07) PASS-ig **determinisztikus ellenőrző** — a tesztek/Sonar/E2E tényleges futtatását a **`test-runner` subagent** végzi (olcsó tier — mechanikus végrehajtás, nem dönt), a DoD-ot és a PASS/FAIL döntést az orchestrátor hozza —, FAIL esetén **orchestrátor**: a **javítást** az `implement-fixer` subagent (= a 06 fix-módja) végzi, a re-validálást és a döntéseket az orchestrátor.
 
 ```mermaid
 flowchart TD
@@ -548,7 +555,8 @@ flowchart TD
     classDef decision fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1e293b;
     classDef userInput fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
 
-    O["<b>07-validate orchestrátor</b><br/>(tesztek + Sonar + DoD futtatása,<br/>validate-decision.md-t ír,<br/>státusz-markert kezel)"]:::orch
+    O["<b>07-validate orchestrátor</b><br/>(DoD-ot maga értékeli,<br/>validate-decision.md-t ír,<br/>státusz-markert kezel)"]:::orch
+    TR["<b>test-runner</b> subagent<br/>(unit/integration/Sonar/E2E<br/>futtatása, tényszerű összegzés<br/>— nem dönt)"]:::agent
     FIX["<b>implement-fixer</b> subagent<br/>(06 fix-mód: kódjavítás<br/>a hibalistára)"]:::agent
     TASKS["tasks.md<br/>## Validációs javítások<br/>([validate-loop] marker)"]:::doc
     HIST["validate-decision.md<br/>(# Validation History,<br/>Consecutive Failures)"]:::doc
@@ -557,7 +565,9 @@ flowchart TD
     ThreeStrike{"Consecutive<br/>Failures = 3?"}:::decision
     Design{"Tervezési hiba?<br/>(csak teszt/DoD-<br/>módosítással lenne zöld)"}:::decision
 
-    O -- "① validál" --> Run
+    O -- "indítja" --> TR
+    TR -- "strukturált riport" --> O
+    O -- "① validál (+ DoD)" --> Run
     Run -- "Igen → PASS<br/>(marker le, 1 commit)" --> Done(["Tovább: 08-doc-sync"]):::orch
 
     Run -- "Nem → FAIL<br/>② naplóz" --> HIST
@@ -577,7 +587,7 @@ flowchart TD
 
 **A működés lépésről lépésre:**
 
-1. **Az orchestrátor (07) futtatja a determinisztikus ellenőrzéseket** (tesztek + Sonar + DoD). PASS → **automatikus** (VD7, nincs megerősítés): a `[validate-loop]` marker lekerül, egyetlen lezáró commit, tovább a 08-ra.
+1. **Az orchestrátor (07) elindítja a `test-runner` subagentet** (tesztek + Sonar + E2E futtatása, olcsó tier — csak tényszerű összegzést ad vissza, nem dönt), majd a riport alapján maga értékeli a DoD-ot és dönt PASS/FAIL-ről. PASS → **automatikus** (VD7, nincs megerősítés): a `[validate-loop]` marker lekerül, egyetlen lezáró commit, tovább a 08-ra.
 2. **FAIL esetén naplóz** a `# Validation History`-ba (itemenkénti `Consecutive Failures`), majd a **3-próba korlát (VD4)** és a **tervezési-hiba heurisztika (VD5)** szerint dönt — nincs külön globális számláló, a beragadt elemet a per-item 3-próba fogja meg.
 3. **Ha folytatható:** felveszi a javító-taskokat (`## Validációs javítások`), `[validate-loop]` markert tesz a `tasks.md`-re, és elindítja az `implement-fixer` subagentet (= 06 fix-mód) a konkrét hibalistával.
 4. **A fixer a KÓDOT igazítja a teszthez/DoD-hoz (VD3 anti-„teszt-csalás") — SOHA fordítva.** Tilos a teszt gyengítése/skip/törlése, hardcode, DoD-leszállítás. A fixer visszaad: javítás-összefoglaló + (ha van) **eszkalációs jelzés**.
@@ -827,10 +837,11 @@ Egy kis feladat végigvitele. Itt **egyetlen indító prompt** van; utána a flo
 | `/bs-write-tasks` | Tasks | `plan.md` | `tasks.md` (`Implementálásra kész`) |
 | `/bs-analyze` | Analyze | ciklus mappa | `analyze-report.md` (PASS/FAIL) — FAIL esetén orchestrált önjavító hurok (fixer-subagentek, `max X=3`) |
 | `/bs-implement` | Implementálás | `tasks.md` | kód + `tasks.md` (`Validálásra kész`) |
-| `/bs-validate` | Validálás | ciklus mappa | PASS/FAIL + `test-report/`; PASS → státuszok `Kész` — FAIL esetén orchestrált önjavító hurok (`implement-fixer` subagent, 3-próba korlát, VD5 eszkaláció) |
-| `/bs-doc-sync` | Doc-sync | ciklus mappa + `docs-generated/` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README mappa-index) + komponens README-k + `doc-sync-plan.md` — terv (`doc-sync-planner`) → mechanikus végrehajtás → objektív kapu (DS22); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
+| `/bs-validate` | Validálás | ciklus mappa | PASS/FAIL + `test-report/`; PASS → státuszok `Kész` — a tesztek/Sonar/E2E tényleges futtatását a `test-runner` subagent végzi (olcsó tier), a PASS/FAIL döntést és a DoD-ot az orchestrátor; FAIL esetén orchestrált önjavító hurok (`implement-fixer` subagent, 3-próba korlát, VD5 eszkaláció) |
+| `/bs-doc-sync` | Doc-sync | ciklus mappa + `docs-generated/` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README mappa-index) + komponens README-k + `doc-sync-plan.md` — terv (`doc-sync-planner`) → mechanikus végrehajtás → objektív kapu (DS22, 3/4 pont a `ds22-gate-check.py` scripttel, LLM nélkül); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
 | `/bs-review-and-merge` | Review & Merge | cycle branch, `plan.md`, `spec.md` | `code-review.md` (+ `# Review History`) + merged branch — FAIL esetén orchestrált kétfázisú önjavító hurok (`review-fixer` → re-validate → re-review, per-item 3-próba + `max 5`, RD6 eszkaláció); a merge kézi megerősítéssel (RD8) |
 | `/bs-quick-flow` | **Egyszerűsített flow** (külön út) | feladat leírása | `spec.md` + `task.md` + implementáció — háromfázisú, kis feladatokhoz; opcionális `researcher`/`analyzer`/`reviewer`; túlnövéskor átirányít a `/bs-add-cycles`-ra |
+| `/bs-cycle-status` | **Státusz ellenőrző** | ciklus neve vagy elérési útja (opcionális) | Kimutatja a ciklusok státuszát (Kész/Folyamatban), és interaktív TUI vagy közvetlen módon részletesen listázza a fázisok előrehaladását (KÉSZ, FOLYAMATBAN, MÉG NEM FUTOTT) felismerve a flow típusát. |
 
 A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a kimenetet, a szomszédos fázisokat (`prev`/`next`) és a hívott subagenteket. Az egyszerűsített flow skill ettől eltérő, `name`/`description` alapú frontmattert használ (külön út, lásd a „Két fejlesztési út" szekciót).
 
@@ -840,7 +851,8 @@ A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a 
 |---|---|---|---|
 | `agents/reviewer.md` | 09 | Git diff code review a merge előtt | `code-review.md` (Must Fix + Suggestions) |
 | `agents/analyzer.md` | 05 | Kereszt-fázisos konzisztencia **diagnózis** (read-only, 5 kategória); az orchestrált önjavító hurok ezt értékeli | megállapítás-lista → `analyze-report.md` |
-| `agents/researcher.md` | 03 | Forrásfájl-azonosítás + dokumentáció-kutatás | path-listák összefoglalóval |
+| `agents/researcher.md` | 00, 01, 02, 03, 06 | **Mód A** (03): forrásfájl-azonosítás + dokumentáció-kutatás a spec alapján. **Mód B** (00/01/02/06): ad-hoc kódbázis-kutatás (modul/szimbólum/nagy fájl megértése egy konkrét kérdésre). Legolcsóbb (`research_agent`) tier — tiszta grep/glob/read fan-out, nincs benne tervezési ítélet | path-listák / tömör összefoglaló, soha nyers fájltartalom |
+| `agents/test-runner.md` | 07 (közvetve 09 re-validate is) | Unit/integration/Sonar/E2E/regressziós tesztek lefuttatása, portütközés-elhárítás, ideiglenes erőforrás-takarítás — **tényszerű összegzést ad, nem dönt** PASS/FAIL-ről. Legolcsóbb (`research_agent`) tier — mechanikus tool-futtatás/log-parszolás | strukturált PASS/FAIL riport kategóriánként |
 | `agents/doc-sync-planner.md` | 08 | A `docs-generated/` mappa + ciklus-diff **read-only** diagnózisa; per-fájl pipálható terv + DS22 kapu-leltár | `doc-sync-plan.md` tervjavaslat + `doc-sync-questions.md` kérdések |
 | `agents/spec-fixer.md` | 05 | Az önjavító hurok 02 fix-mód belépője (vékony wrapper → `/bs-write-spec` Fix-mód) | javított `spec.md` + új `spec-questions.md` `Knn`-ek |
 | `agents/plan-fixer.md` | 05 | Az önjavító hurok 03 fix-mód belépője (vékony wrapper → `/bs-write-plan` Fix-mód) | javított `plan.md` + új `plan-questions.md` `Knn`-ek |
@@ -883,7 +895,7 @@ tools: ["Read", "Bash", "Grep"]
 
 A frontmatter **eszközfüggetlen** (saját séma, nem egy konkrét ágens-eszközhöz kötött). Ha később natív skill-integrációra megyünk (pl. Claude Code), a konvertálás mechanikus.
 
-**A `05-analyze` `subagents:` mezője** az `analyzer` (read-only diagnózis) mellett a három fixer-wrappert is felsorolja: `agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`. **A `07-validate` `subagents:` mezője** az `agents/implement-fixer.md` wrappert tartalmazza (a validate-hurok javítója). **A `08-doc-sync` `subagents:` mezője** az `agents/doc-sync-planner.md` read-only tervkészítő diagnosztát tartalmazza (a per-fájl `doc-sync-plan.md` szerzője; a doksik tényleges írása a fő ágensé — nincs fixer-wrapper, mert ez nem önjavító hurok). **A `09-review-and-merge` `subagents:` mezője** az `agents/reviewer.md` (read-only diagnózis) mellett az `agents/review-fixer.md` wrappert tartalmazza (a review-hurok javítója). Fontos a skill/agent szétválasztás megőrzése: **a fix-mód viselkedése a skillben él** (a 02/03/04 „Fix-mód (analyze-hurok belépő)" és a 06 „Fix-mód (validate- és review-hurok belépő)" szekciói), a wrapper-agent csak **belépő, amely a megfelelő skill Fix-mód szekciójára delegál** — nincs logika-duplikáció. A `review-fixer` és az `implement-fixer` **ugyanarra a 06 Fix-módra** delegál, csak más bemeneti szekcióval (`## Review javítások`, illetve `## Validációs javítások`).
+**A `05-analyze` `subagents:` mezője** az `analyzer` (read-only diagnózis) mellett a három fixer-wrappert is felsorolja: `agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`. **A `07-validate` `subagents:` mezője** az `agents/test-runner.md`-t (tesztek/Sonar/E2E mechanikus futtatása, olcsó tier) és az `agents/implement-fixer.md` wrappert tartalmazza (a validate-hurok javítója). **A `08-doc-sync` `subagents:` mezője** az `agents/doc-sync-planner.md` read-only tervkészítő diagnosztát tartalmazza (a per-fájl `doc-sync-plan.md` szerzője; a doksik tényleges írása a fő ágensé — nincs fixer-wrapper, mert ez nem önjavító hurok). **A `09-review-and-merge` `subagents:` mezője** az `agents/reviewer.md` (read-only diagnózis) és az `agents/review-fixer.md` wrapper (a review-hurok javítója) mellett az `agents/test-runner.md`-t is felsorolja — a re-validate lépés a `07-validate` „Validálási lépésein" keresztül közvetve hívja. **A `00-init-project`, `01-add-cycles`, `02-write-spec` és `06-implement` `subagents:` mezője** az `agents/researcher.md`-t tartalmazza ad-hoc kódbázis-kutatáshoz (Mód B) — ugyanaz az ágens, amit a `03-write-plan` a rendszerezett forrásfájl-azonosításhoz (Mód A) használ. Fontos a skill/agent szétválasztás megőrzése: **a fix-mód viselkedése a skillben él** (a 02/03/04 „Fix-mód (analyze-hurok belépő)" és a 06 „Fix-mód (validate- és review-hurok belépő)" szekciói), a wrapper-agent csak **belépő, amely a megfelelő skill Fix-mód szekciójára delegál** — nincs logika-duplikáció. A `review-fixer` és az `implement-fixer` **ugyanarra a 06 Fix-módra** delegál, csak más bemeneti szekcióval (`## Review javítások`, illetve `## Validációs javítások`).
 
 ---
 
@@ -943,7 +955,7 @@ Minden generált doksi **fejléc-blokkot** kap (DS17): `> **Lefedve:** cycle-NN-
 | `design-drift.md` | A megvalósult rendszer **eltérései a HLD/LLD szándéktól** (DS20) — pl. RFC 8693 token exchange vs. legacy Keycloak. A megoldott eltérés nem törlődik, hanem a „Lezárt eltérések" szekcióba kerül. A `system-overview.md` tiszta as-built marad (a drift nem keveredik bele). | A 08-doc-sync tölti fel inkrementálisan; csak **explicit** (spec által megnevezett) vagy checklist-alapú drift kerül be, bizonytalan eset → `doc-sync-questions.md` (DS24d). | `docs-generated/design-drift.md` |
 | _(projekt-specifikus extra doksik)_ | Bármely további generált doksi (a skill **nem** hardcode-olja, pl. külső rendszer konfiguráció-leírás). | A mappa-bejárás találja meg, a `doc-sync-plan.md` veszi fel; a fejléc-scope dönti el az érintettséget. | `docs-generated/<fájl>` |
 
-**Konzisztencia-kapu (DS22):** a doc-sync minden futás végén lefuttat egy objektív, projektfüggetlen magkaput: (1) nincs megszűnt/átnevezett azonosító a doksikban (`grep`, a ciklus **deklarált** átnevezéseire), (2) minden forrásbeli ábra átkerült, (3) mappa-index halmaz-egyezés, (4) coverage-marker bump. Feltételesen (ha a `conventions.md` `## Projekt referenciák` API-leírót deklarál) egy endpoint/interfész kereszt-ellenőrzés is fut. Bukáskor a konkrét eltérés a `doc-sync-questions.md`-be kerül, és **ember-vezérelt** javítás indul, míg a kapu zöld nem lesz.
+**Konzisztencia-kapu (DS22):** a doc-sync minden futás végén lefuttat egy objektív, projektfüggetlen magkaput. Három pontja (nincs megszűnt/átnevezett azonosító a doksikban, mappa-index halmaz-egyezés, coverage-marker bump) **teljesen szkriptelt** — a `prompts/scripts/ds22-gate-check.py` végzi, nincs bennük LLM-ítélet, ezért a telepítő minden platform scripts-mappájába (`.claude/scripts/`, `.agents/scripts/`, `.github/scripts/`) automatikusan bemásolja. A 4. pontot (minden forrásbeli ábra átkerült-e) a script csak informatív mermaid-blokk-számlálással segíti, a tényleges pairing-döntés az ágensé. Feltételesen (ha a `conventions.md` `## Projekt referenciák` API-leírót deklarál) egy endpoint/interfész kereszt-ellenőrzés is fut. Bukáskor a konkrét eltérés a `doc-sync-questions.md`-be kerül, és **ember-vezérelt** javítás indul, míg a kapu zöld nem lesz.
 
 ---
 

@@ -7,7 +7,8 @@ output:
   - "conventions.md (projekt gyökér)"
 prev: null
 next: bs-add-cycles
-subagents: []
+subagents:
+  - "agents/researcher.md"
 ---
 # 00 — Projekt inicializálás
 
@@ -31,7 +32,7 @@ Ne kezdj spec-et, plan-t vagy implementációt. Ez a lépés kizárólag a proje
 ## Kontextus betöltési szabályok
 
 - Csak annyi információt gyűjts be a projektről, amennyi a `conventions.md` kitöltéséhez szükséges.
-- Ha a projekt már létező kódot tartalmaz és egy komponens mélyebb megértése kell, indíts subagent-et a kutatáshoz.
+- Ha a projekt már létező kódot tartalmaz és egy komponens mélyebb megértése kell, hívd a `researcher` subagentet (`agents/researcher.md`, Mód B) — csak összefoglalót ad vissza, a nyers fájltartalom nem kerül be a fő kontextusba.
 
 ## Kérdezési szabályok
 

@@ -9,7 +9,8 @@ output:
   - "specs/cycle-NN-<name>/spec-questions.md"
 prev: bs-add-cycles
 next: bs-write-plan
-subagents: []
+subagents:
+  - "agents/researcher.md"
 ---
 # 02 — Spec írás
 
@@ -31,9 +32,15 @@ Ez a fejlesztési folyamat **2-es fázisa (a 0–9 fázisokból)**:
 
 ## Előfeltétel
 
-0. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` fázishoz. **Munkafa:** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e most vagy folytassam — várj a válaszra. (A 02 branchet hoz létre; commitálatlan változások átkerülhetnek az új branch-re.)
+0. **Ciklus-beazonosítás (Automata detekció):** Ha a felhasználó explicit megadta a ciklust vagy a bemeneti fájlt a parancs indításakor, használd azt. Ha nem adott meg semmit, keresd meg a projekt gyökér `specs/` mappájában a legnagyobb sorszámú (legfrissebb) ciklusmappát (pl. `specs/cycle-NN-<name>`). Kérdezz rá a felhasználónál pontosan az alábbi formában:
+   *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni?*
+   - *Igen*
+   - *Nem, megadom a ciklust (kérd be tőle a mappa vagy a fájl nevét)*"
+   Várd meg a felhasználói választ vagy megadást, mielőtt továbblépsz!
 
-1. **Roadmap ellenőrzés:** Olvasd be a `specs/roadmap.md`-t. **Ha a státusz nem `Kész`, ne kezdj el spec-et írni.** Jelezd a felhasználónak, hogy a roadmap még nem zárult le, és térjenek vissza a `01` ciklusok kezelése fázishoz. Ha a státusz `Kész`, keresd meg a megadott ciklus (`cycle-NN-<cycle-name>`) bejegyzését a roadmap-ben, és használd azt a spec kiindulópontjaként — a viselkedés, az érintett komponensek, az előfeltételek és a teszt kritérium mind alapot adnak a spec részletes kidolgozásához.
+1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` fázishoz. **Munkafa:** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e most vagy folytassam — várj a válaszra. (A 02 branchet hoz létre; commitálatlan változások átkerülhetnek az új branch-re.)
+
+2. **Roadmap ellenőrzés:** Olvasd be a `specs/roadmap.md`-t. **Ha a státusz nem `Kész`, ne kezdj el spec-et írni.** Jelezd a felhasználónak, hogy a roadmap még nem zárult le, és térjenek vissza a `01` ciklusok kezelése fázishoz. Ha a státusz `Kész`, keresd meg a megadott ciklus (`cycle-NN-<cycle-name>`) bejegyzését a roadmap-ben, és használd azt a spec kiindulópontjaként — a viselkedés, az érintett komponensek, az előfeltételek és a teszt kritérium mind alapot adnak a spec részletes kidolgozásához.
 
 1.b **Current-truth kiindulás (DS5):** ha létezik a `docs-generated/system-overview.md`, olvasd be — ez a megvalósult (as-built) rendszer konszolidált, naprakész működésleírása, amit a `08-doc-sync` fázis tart karban. A spec a **jelenlegi valóságból** induljon: nézd meg, milyen flow-k/állapot/endpointok léteznek már, hogy az új spec ezekre épüljön, ne ütközzön velük. **Guard:** ha a fájl még nem létezik (korai ciklus / a bootstrap előtt), **ne állj meg** — jelezd egy mondatban, hogy a current-truth doksi még nincs, és folytasd a spec írását a roadmap alapján.
 
@@ -125,7 +132,7 @@ _Ellenőrizhető, pipálható feltételek. Minden pont legyen konkrét és egyé
 ## Kontextus betöltési szabályok
 
 - Csak azt olvasd be, ami a spec megírásához feltétlenül szükséges.
-- Ha egy bonyolult meglévő modult vagy logikát kell megértened, indíts egy **subagent**et a kutatáshoz. A subagent csak az összefoglalót adja vissza — a nyers fájltartalom nem kerül be a fő kontextusba.
+- Ha egy bonyolult meglévő modult vagy logikát kell megértened, hívd a `researcher` subagentet (`agents/researcher.md`, Mód B) a kutatáshoz. A subagent csak az összefoglalót adja vissza — a nyers fájltartalom nem kerül be a fő kontextusba.
 - Ha az előző ciklusok architektúrájára van szükség, kérdezz rá egy mondatban — ne olvasd be az összes korábbi spec-et.
 - Ha konkrét meglévő kódot kell érteni, csak az érintett fájlt vagy részt olvasd be.
 

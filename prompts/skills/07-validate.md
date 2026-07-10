@@ -10,6 +10,7 @@ output:
 prev: bs-implement
 next: bs-doc-sync
 subagents:
+  - "agents/test-runner.md"
   - "agents/implement-fixer.md"
 ---
 # 07 — Validálás
@@ -35,6 +36,12 @@ Ez a fejlesztési folyamat **7-es fázisa (a 0–9 fázisokból)**:
 A prompt bemenete a ciklus mappája (pl. `specs/cycle-NN-<cycle-name>`). A validációhoz szükséges fájlokat (`spec.md`, `plan.md`, `tasks.md`) ebben a mappában találod.
 
 ## Előfeltétel
+
+0. **Ciklus-beazonosítás (Automata detekció):** Ha a felhasználó explicit megadta a ciklust vagy a bemeneti fájlt a parancs indításakor, használd azt. Ha nem adott meg semmit, keresd meg a projekt gyökér `specs/` mappájában a legnagyobb sorszámú (legfrissebb) ciklusmappát (pl. `specs/cycle-NN-<name>`). Kérdezz rá a felhasználónál pontosan az alábbi formában:
+   *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni?*
+   - *Igen*
+   - *Nem, megadom a ciklust (kérd be tőle a mappa vagy a fájl nevét)*"
+   Várd meg a felhasználói választ vagy megadást, mielőtt továbblépsz!
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` fázishoz.
 
@@ -100,42 +107,21 @@ A validáció bármikor megszakadhat. Újraindítás (ismételt futtatás) eset�
 
 Mielőtt bármit futtatnál, győződj meg róla, hogy létezik a `specs/cycle-NN-<cycle-name>/test-report/` mappa. Ha nem létezik, hozd létre — ide kerül a `validate-decision.md`, a `sonar-report.md` és minden teszt-artefakt.
 
-### 1. Gyors tesztek és kódminőség ellenőrzése
- 
-#### A. Helyi Unit és Integrációs tesztek
-Futtasd le a plan Tesztelési stratégiájában meghatározott gyors helyi teszteket, a `conventions.md` Teszt keretrendszer / Teszt struktúra szekciója által megadott eszközzel és mappastruktúrával (a konkrét tool-nevet ne ismételd meg — a `conventions.md` a forrás):
-- **Unit tesztek:** minden új és meglévő unit teszt átmegy-e?
-- **Integration tesztek:** minden új és meglévő integration teszt átmegy-e?
- 
-#### B. SonarQube minőségellenőrzés (Podman & Riport Generálás)
+### 1. Gyors tesztek és kódminőség ellenőrzése (`test-runner` subagent)
 
-**Ha a `conventions.md` NEM tartalmaz `## Sonar minőségellenőrzés` szekciót → skip: ugorj a 2. lépésre.**
+Hívd a `test-runner` subagentet (`agents/test-runner.md`) a gyors (unit/integration) tesztek és — ha a `conventions.md` tartalmaz `## Sonar minőségellenőrzés` szekciót — a SonarQube-elemzés lefuttatására. A subagent maga dönti el a konkrét parancsokat a `conventions.md`/`plan.md` alapján, elindítja a szükséges Podman-konténert, és **strukturált összefoglalót** ad vissza (lásd az agent kontraktusát) — a nyers teszt-/Sonar-logot nem kéred vissza.
 
-Ha tartalmaz:
-1. Indítsd el a SonarQube szervert (ha még nem fut): a `conventions.md`-ben megadott Podman-paranccsal.
-2. Futtasd le a SonarQube analízist és a riportgenerálást a `conventions.md` `## Sonar minőségellenőrzés` szekciójában megadott scanner-/riport-paranccsal, a ciklusmappát (`specs/cycle-NN-<cycle-name>`) átadva.
-   *A riportgenerálás kiértékeli a Quality Gate-et, és létrehozza a `sonar-report.md` és a látványos `sonar-report.html` fájlokat a megadott ciklusmappa `test-report/` almappájában.*
-3. **Quality Gate PASS:** A szkript sikeresen lefut (exit code: 0). Ellenőrizd a létrehozott `test-report/sonar-report.html` és `test-report/sonar-report.md` riportokat. A riportokban szereplő `MINOR` és `INFO` szintű kódszagok csak tájékoztató jellegűek, nem akadályozzák a sikeres validációt, és nem szükséges javítani őket.
-4. **Quality Gate FAIL:** A szkript sikertelen állapotkóddal tér vissza (exit code: 2).
-   - A hibákat részletesen a generált `test-report/sonar-report.md` és `test-report/sonar-report.html` riportokban láthatod.
-   - Rögzítsd a hibát a `specs/cycle-NN-<cycle-name>/test-report/validate-decision.md` fájl végén található `# Validation History` szekcióba.
-   - A javító feladatok (`tasks.md`) felvételekor csak a `BLOCKER`, `CRITICAL` és `MAJOR` szintű hibákat tekintsd kötelezően javítandó akadálynak.
-   - **Mielőtt továbbmennél a lassú regressziós/E2E tesztekre, a SonarQube Quality Gate-nek zöldnek (PASS) kell lennie!**
+A subagent jelentése alapján:
+- **Quality Gate PASS / N/A:** a `test-report/sonar-report.html` és `.md` riportok tájékoztató jellegű `MINOR`/`INFO` találatai nem akadályozzák a validálást.
+- **Quality Gate FAIL vagy bármelyik gyors teszt FAIL:** rögzítsd a hibát a `# Validation History` szekcióba (lásd lent), és **ne indítsd el a 2. lépést (nehéz tesztek)** — lépj egyenesen a hurok FAIL ágára. A javító feladatok (`tasks.md`) felvételekor csak a `BLOCKER`, `CRITICAL` és `MAJOR` szintű Sonar-találatokat tekintsd kötelezően javítandó akadálynak (a subagent az összeset jelenti, a szűrés itt, nálad történik).
 
-### 2. Nehéz tesztek és regressziós ellenőrzések
+### 2. Nehéz tesztek és regressziós ellenőrzések (`test-runner` subagent)
 
-**E2E és regressziós tesztek futtatása előtt (vagy a teszt keretrendszer global setupjában) mindig ellenőrizd és indítsd el a szükséges backend szolgáltatásokat és konténereket. Erre a célra a `conventions.md` / `plan.md` által megadott, platformfüggetlen env-indító scriptet használd. Sose forduljon elő, hogy a teszt azért bukik vagy nem fut le, mert a környezet nem volt elindítva!**
+Csak akkor hívd, ha az 1. lépés PASS volt. Hívd újra a `test-runner` subagentet, most a nehéz tesztek (E2E + regresszió) lefuttatására — a `tasks.md` `TREG` jelölésű taskjai és a `plan.md` `Regressziós érintettség` táblázata alapján. A subagent felelőssége a szükséges backend szolgáltatások/konténerek elindítása, a portütközés-elhárítás és az ideiglenes erőforrások takarítása (lásd az agent kontraktusát).
 
-**Portütközés kezelése:** Ha egy service indítása portütközéssel (address already in use) meghiúsul, ne állj meg. Keresd meg a következő szabad portot (`ss -tlnp | grep :<port>` vagy `lsof -i :<port>`), frissítsd átmenetileg az érintett konfigurációban (`docker-compose`, env fájl), és futtasd újra. Jelezd a felhasználónak melyik portot használtad helyette.
+> **⚠ Átmeneti port-módosítás:** ha a subagent jelentése ideiglenes config-/port-csere kell, ellenőrizd, hogy a jelentés szerint sikeresen visszaállt-e az eredeti állapot; ha nem, állítsd vissza te (`git checkout -- <fájl>`), mielőtt a validate fázis véget ér — ez nem kerülhet be a ciklus diffjébe.
 
-> **⚠ ÁTMENETI MÓDOSÍTÁS — NE COMMITOLD:** A portütközés miatt végzett config-/port-módosítás **ideiglenes**. A validáció végén ÁLLÍTSD VISSZA az eredeti állapotot, vagy győződj meg róla, hogy ezek a változtatások NEM kerülnek be a commitba (`git checkout -- <fájl>` a kérdéses configra). A validate fázis nem rögzíthet véletlen port-módosítást a ciklus diffjébe.
-
-Futtasd le a plan Tesztelési stratégiájában meghatározott nehéz teszteket, majd a teljes regressziós suitot. **Ideiglenes erőforrások takarítása**: ha a tesztek futtatásához ideiglenes fájlokat hoztál létre vagy konténereket indítottál el, a futtatás befejezése után töröld ki a fájlokat és állítsd le / töröld a konténereket.
-
-- **E2E tesztek** (`test/e2e/`): az e2e scriptek `PASS` eredménnyel zárnak-e?
-- **Regressziós tesztek**: a `tasks.md` `TREG` jelölésű taskjai és a `plan.md` `Regressziós érintettség` szekciójának táblázata alapján futtasd le a megadott összes meglévő tesztfájlt és E2E scriptet.
-
-**Ismételt hibák naplózása:** Minden egyes validációs vagy tesztfutás hibát naplóznod kell a `specs/cycle-NN-<cycle-name>/test-report/validate-decision.md` fájl végén található `# Validation History` szekcióba (ha a fájl nem létezik, a `test-report/` mappával együtt hozd létre).
+**Ismételt hibák naplózása:** mindkét lépés (1. és 2.) eredményét naplóznod kell a `specs/cycle-NN-<cycle-name>/test-report/validate-decision.md` fájl végén található `# Validation History` szekcióba (ha a fájl nem létezik, a `test-report/` mappával együtt hozd létre).
 Minden futásnál rögzítsd a hibás teszt nevét és számold ki, hogy ez hanyadik egymást követő bukása annak a konkrét tesztnek/elemnek:
 ```md
 - **Run X (YYYY-MM-DD HH:MM) - FAIL**

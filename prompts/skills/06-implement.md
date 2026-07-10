@@ -10,7 +10,8 @@ output:
   - "specs/cycle-NN-<name>/tasks.md státusz: Validálásra kész"
 prev: bs-analyze
 next: bs-validate
-subagents: []
+subagents:
+  - "agents/researcher.md"
 ---
 # 06 — Implementálás
 
@@ -32,12 +33,18 @@ Ez a fejlesztési folyamat **6-os fázisa (a 0–9 fázisokból)**:
 
 ## Előfeltétel
 
-Olvasd be a `tasks.md` státuszát. **Ha a státusz nem `Implementálásra kész`, ne kezdj implementálni.** Jelezd a felhasználónak, hogy a tasks lista még nem zárult le.
+0. **Ciklus-beazonosítás (Automata detekció):** Ha a felhasználó explicit megadta a ciklust vagy a bemeneti fájlt a parancs indításakor, használd azt. Ha nem adott meg semmit, keresd meg a projekt gyökér `specs/` mappájában a legnagyobb sorszámú (legfrissebb) ciklusmappát (pl. `specs/cycle-NN-<name>`). Kérdezz rá a felhasználónál pontosan az alábbi formában:
+   *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni?*
+   - *Igen*
+   - *Nem, megadom a ciklust (kérd be tőle a mappa vagy a fájl nevét)*"
+   Várd meg a felhasználói választ vagy megadást, mielőtt továbblépsz!
 
-Futtasd: `git status --short`. Ha van commitálatlan változtatás:
-- Listázd ki az érintett fájlokat.
-- Jelezd: *"Az implementáció előtt érdemes ezeket commitálni — ha félremegy az implementáció, egy `git reset --hard` visszaállítja a kiindulóállapotot."*
-- Kérdezd meg: *"Commitáljam ezeket most?"* — Ha igen: commitáld a változtatásokat, majd folytasd. Ha nem: folytasd commit nélkül.
+1. Olvasd be a `tasks.md` státuszát. **Ha a státusz nem `Implementálásra kész`, ne kezdj implementálni.** Jelezd a felhasználónak, hogy a tasks lista még nem zárult le.
+
+2. Futtasd: `git status --short`. Ha van commitálatlan változtatás:
+   - Listázd ki az érintett fájlokat.
+   - Jelezd: *"Az implementáció előtt érdemes ezeket commitálni — ha félremegy az implementáció, egy `git reset --hard` visszaállítja a kiindulóállapotot."*
+   - Kérdezd meg: *"Commitáljam ezeket most?"* — Ha igen: commitáld a változtatásokat, majd folytasd. Ha nem: folytasd commit nélkül.
 
 ---
 
@@ -75,8 +82,8 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
 - **Review visszacsatolás:** Ha a `tasks.md` tartalmaz review-ból származó javítási feladatokat (vagy a folyamat a 09-es review & merge fázisból lépett vissza ide), olvasd be a `specs/cycle-NN-<cycle-name>/code-review.md` fájlt is, hogy megértsd a javítások kontextusát és elvárásait.
 - Minden tasknál **csak az adott taskban megnevezett forrásfájlokat** olvasd be — és csak a releváns részeiket. A task logikai kontextusa a Prerequisite dokumentumokban van.
 - Ne olvasd be a spec-et.
-- **Forrás lokalizálás**: ha a task komponenst vagy függvényt nevez meg, de a pontos fájl/sor nem ismert — indíts subagent-et a kereséshez. A subagent visszaadja a path-t és a releváns sorokat, nem a teljes fájlt.
-- **Nagy fájl**: ha az érintett fájl nagy és csak egy szekció releváns — indíts subagent-et a kinyeréshez. Ne töltsd be a teljes fájlt a fő kontextusba.
+- **Forrás lokalizálás**: ha a task komponenst vagy függvényt nevez meg, de a pontos fájl/sor nem ismert — hívd a `researcher` subagentet (`agents/researcher.md`, Mód B) a kereséshez. A subagent visszaadja a path-t és a releváns sorokat, nem a teljes fájlt.
+- **Nagy fájl**: ha az érintett fájl nagy és csak egy szekció releváns — hívd a `researcher` subagentet (`agents/researcher.md`, Mód B) a kinyeréshez. Ne töltsd be a teljes fájlt a fő kontextusba.
 - Kis, ismert fájloknál: direkt read.
 
 ---

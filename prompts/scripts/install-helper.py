@@ -3,24 +3,72 @@ import sys
 import os
 import json
 import re
+import shutil
 from pathlib import Path
 
-def is_analyze_phase(filename):
+# Az agent azonosítója: Claude/Copilot esetén a fájlnév ("researcher.md"),
+# Antigravity esetén az agent.json-t tartalmazó mappa neve ("researcher",
+# .md kiterjesztés nélkül) kerül ide. A ".md" levágásával mindkét eset
+# ugyanarra a stem-re fut, így a lenti egyezés-listák platformfüggetlenek.
+def _agent_stem(filename):
     name = Path(filename).name.lower()
-    return "analyze" in name or name in ["analyzer.md", "spec-fixer.md", "plan-fixer.md", "tasks-fixer.md"]
+    if name.endswith(".md"):
+        name = name[:-3]
+    return name
+
+def is_analyze_phase(filename):
+    stem = _agent_stem(filename)
+    return "analyze" in stem or stem in ["analyzer", "spec-fixer", "plan-fixer", "tasks-fixer"]
 
 def is_validate_phase(filename):
-    name = Path(filename).name.lower()
-    return "validate" in name or name in ["implement-fixer.md"]
+    stem = _agent_stem(filename)
+    return "validate" in stem or stem in ["implement-fixer"]
+
+# Konkrét agent-ekhez/skillekhez rendelt models.json kulcs — a fázis-alapú
+# besorolás (analyze/validate/default) helyett/előtt ezt használjuk, ha a
+# platform configja definiálja. Így egy adott agent modellje a fázistól
+# függetlenül, célzottan felülírható. A "research_agent" kulcs a legolcsóbb,
+# tisztán mechanikus (nincs benne tervezési/architekturális ítélet) munkára
+# szánt tier — nem csak a researcher agentre, több stem is rámutathat rá:
+#   - researcher:     kódbázis-/dokumentum-keresés, fan-out + összefoglalás
+#   - 10-cycle-status: csak egy Python scriptet futtat és megjeleníti (0 LLM-ítélet)
+#   - test-runner:     tesztek/Sonar/E2E lefuttatása + tényszerű összegzés (nem dönt)
+AGENT_MODEL_KEYS = {
+    "researcher": "research_agent",
+    "10-cycle-status": "research_agent",
+    "test-runner": "research_agent",
+}
 
 def get_model(models, platform, filename):
+    platform_models = models.get(platform, {})
+    stem = _agent_stem(filename)
+
+    agent_key = AGENT_MODEL_KEYS.get(stem)
+    if agent_key and agent_key in platform_models:
+        return platform_models[agent_key]
+
     if is_analyze_phase(filename):
         phase_key = "analyze_phase"
     elif is_validate_phase(filename):
         phase_key = "validate_phase"
     else:
         phase_key = "default"
-    return models.get(platform, {}).get(phase_key, "")
+    return platform_models.get(phase_key, "")
+
+# Minden helper scriptet (prompts/scripts/*.py) átmásol a cél scripts_dest
+# mappába, kivéve saját magát (install-helper.py, ami csak a telepítő gépén
+# fut, a célprojektben nincs rá szükség). Így új helper script (pl.
+# ds22-gate-check.py) hozzáadásakor nem kell mindhárom process_* függvényt
+# külön bővíteni.
+def copy_helper_scripts(src_dir, scripts_dest):
+    scripts_dest.mkdir(parents=True, exist_ok=True)
+    scripts_src_dir = Path(src_dir) / "prompts/scripts"
+    for script_src in sorted(scripts_src_dir.glob("*.py")):
+        if script_src.name == "install-helper.py":
+            continue
+        script_dest = scripts_dest / script_src.name
+        shutil.copy(script_src, script_dest)
+        os.chmod(script_dest, 0o755)
 
 def inject_markdown_model(content, model, platform_name):
     parts = content.split('---')
@@ -108,6 +156,10 @@ def process_antigravity(src_dir, dest_path, models):
         with open(skill_dest_dir / "SKILL.md", 'w', encoding='utf-8') as f:
             f.write(new_content)
 
+    # 3. Process helper scripts
+    scripts_dest = dest_path / ".agents/scripts"
+    copy_helper_scripts(src_dir, scripts_dest)
+
 def process_claude(src_dir, dest_path, models):
     dest_path = Path(dest_path)
     agents_src = Path(src_dir) / "prompts/agents"
@@ -146,6 +198,10 @@ def process_claude(src_dir, dest_path, models):
         with open(skill_dest_dir / "SKILL.md", 'w', encoding='utf-8') as f:
             f.write(new_content)
 
+    # 3. Process helper scripts
+    scripts_dest = dest_path / ".claude/scripts"
+    copy_helper_scripts(src_dir, scripts_dest)
+
 def process_copilot(src_dir, dest_path, models):
     dest_path = Path(dest_path)
     agents_src = Path(src_dir) / "prompts/agents"
@@ -183,6 +239,10 @@ def process_copilot(src_dir, dest_path, models):
         
         with open(instructions_dest / f"bs-{clean_name}.instructions.md", 'w', encoding='utf-8') as f:
             f.write(new_content)
+
+    # 3. Process helper scripts
+    scripts_dest = dest_path / ".github/scripts"
+    copy_helper_scripts(src_dir, scripts_dest)
 
 def main():
     if len(sys.argv) < 4:

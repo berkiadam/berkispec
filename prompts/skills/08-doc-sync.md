@@ -58,6 +58,12 @@ A munkafájljaid:
 
 ## Előfeltétel
 
+0. **Ciklus-beazonosítás (Automata detekció):** Ha a felhasználó explicit megadta a ciklust vagy a bemeneti fájlt a parancs indításakor, használd azt. Ha nem adott meg semmit, keresd meg a projekt gyökér `specs/` mappájában a legnagyobb sorszámú (legfrissebb) ciklusmappát (pl. `specs/cycle-NN-<name>`). Kérdezz rá a felhasználónál pontosan az alábbi formában:
+   *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni?*
+   - *Igen*
+   - *Nem, megadom a ciklust (kérd be tőle a mappa vagy a fájl nevét)*"
+   Várd meg a felhasználói választ vagy megadást, mielőtt továbblépsz!
+
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t (különösen a `## Projekt referenciák` szekciót — ez a forrás-grounding regisztere, DS19). Ha nem létezik, STOP — térjenek vissza a `00` fázishoz.
 
 2. **Munkafa ellenőrzés:** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e most vagy folytassam — várj a válaszra. (A doc-sync a ciklus diffjét nézi a `master`-höz; tiszta munkafa nélkül a diff félrevezető.)
@@ -271,18 +277,31 @@ A mappa **létrehozásakor** (bootstrap) az index is létrejön. Ez a `docs-gene
 
 ## Objektív konzisztencia-kapu (DS22) + kapu-bukás kezelése (DS10)
 
-A végrehajtás után **kötelező** lefuttatni a kétrétegű, projektfüggetlen kaput. A magkapu **objektív/determinisztikus** (grep, halmaz-összevetés, leltár-párosítás, marker-olvasás) — nincs benne „ítéld meg, jó-e a szöveg".
+A végrehajtás után **kötelező** lefuttatni a kétrétegű, projektfüggetlen kaput. A magkapu **objektív/determinisztikus** (grep, halmaz-összevetés, leltár-párosítás, marker-olvasás) — nincs benne „ítéld meg, jó-e a szöveg", ezért a Réteg 1-et **szkript végzi, nem te grepelsz kézzel**.
 
-### Réteg 1 — mindig futó, generikus magkapu
+### Réteg 1 — mindig futó, generikus magkapu (`ds22-gate-check.py`)
 
-1. **Nincs megszűnt/átnevezett azonosító a doksikban.** A régi→új névpárok a ciklus **DEKLARÁLT** átnevezéseiből jönnek (roadmap/`spec.md`; pl. a cycle-16 neve literálisan `rename-init-cache-to-init-hash` → `init-cache` → `init-hash`) — **NEM diff-találgatásból** (DS24b). Futtass szöveges keresést a `docs-generated/`-ben:
-   ```bash
-   grep -rn "<régi-név>" docs-generated/
-   ```
-   A **történeti szekciókon** kívül (`CHANGELOG.md`, `design-drift.md` „Lezárt eltérések") régi név **nem maradhat**. Ha egy átnevezés nincs deklarálva, **nincs auto-következtetés** — nem találgatsz.
-2. **Minden forrásbeli ábra átkerült (DS7).** Leltár → cél-párosítás: minden forrás-ábrának van párja a kimenetben (bináris/`.drawio` → link + PNG). Egy sem maradhat le.
-3. **Mappa-index halmaz-egyezés (DS21).** A `docs-generated/` tényleges fájllistája **==** a `README.md` bejegyzései (nincs hiányzó, nincs elavult).
-4. **Coverage-marker bump (DS17).** Minden **ténylegesen módosított** fájl fejléce az aktuális `cycle-NN`-t mutatja; az érintetlenek maradhatnak, **ha** a `doc-sync-plan.md` „nincs teendő" tétele ezt igazolja.
+Futtasd a `ds22-gate-check.py`-t a `docs-generated/` mappára. A telepítő a platform-specifikus scripts-mappába másolja (a 10-cycle-status mintájára): Antigravity-nél `.agents/scripts/`, Claude Code-nál `.claude/scripts/`, Copilotnál `.github/scripts/`.
+
+```bash
+python3 <platform-scripts-mappa>/ds22-gate-check.py docs-generated/ \
+  --rename <régi-név>=<új-név> \
+  --marker cycle-NN \
+  --changed-file <a ténylegesen módosított fájl neve, ismételhető>
+```
+
+- **`--rename`**: a régi→új névpárok a ciklus **DEKLARÁLT** átnevezéseiből jönnek (roadmap/`spec.md`; pl. a cycle-16 neve literálisan `rename-init-cache-to-init-hash` → `init-cache=init-hash`) — **NEM diff-találgatásból** (DS24b). Ha egy átnevezés nincs deklarálva, **nincs auto-következtetés** — nem adsz meg `--rename`-t rá. A szkript automatikusan kihagyja a történeti szekciókat (`CHANGELOG.md` teljes egészében, `design-drift.md` „Lezárt eltérések" szekciója).
+- **`--marker` / `--changed-file`**: a `doc-sync-plan.md` alapján ténylegesen módosított fájlokat add meg — a szkript ellenőrzi, hogy a fejléc-blokkjuk az aktuális `cycle-NN`-t mutatja-e (DS17). Az érintetlen fájlokat **ne** add meg (azok maradhatnak korábbi markerrel, ha a plan „nincs teendő" tétele ezt igazolja).
+- A szkript emellett **informatív** (nem blokkoló) összegzést ad a `docs-generated/`-ben talált mermaid-blokkok számáról — ez segít neked eldönteni a 2. pontot (lásd lent), de a tényleges pairing-döntést te hozod.
+
+A szkript a 4 originális checkből 3-at teljesen lefed (kemény PASS/FAIL):
+1. Rename-maradvány (a fenti `--rename` alapján).
+3. Mappa-index halmaz-egyezés (DS21) — a `docs-generated/` tényleges fájllistája **==** a `README.md` bejegyzései.
+4. Coverage-marker bump (DS17) — a fenti `--changed-file` alapján.
+
+A **2. pontot** (minden forrásbeli ábra átkerült-e — DS7) a szkript csak informatív blokk-számlálással segíti; a tényleges leltár → cél-párosítást (van-e minden forrás-ábrának párja a kimenetben, bináris/`.drawio` → link + PNG) **neked kell eldöntened** — ez a Réteg 1 egyetlen olyan pontja, ami valódi (bár egyszerű) egyeztetési ítéletet igényel, nem tiszta halmaz-művelet. (A számozás szándékosan követi a fenti eredeti 1–4-es listát, a 2. pont kimarad a szkriptből.)
+
+A szkript kilépő kódja (`0` = mindhárom kemény check PASS, `1` = legalább egy FAIL) + a 2. pont saját ellenőrzésed alapján dől el, hogy a kapu összességében PASS-e.
 
 ### Réteg 2 — feltételes, deklaráció-vezérelt kereszt-ellenőrzés
 
