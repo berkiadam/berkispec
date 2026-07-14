@@ -3,6 +3,13 @@ name: bs-quick-flow
 description: "berkispec - quick-flow. Egyszerűsített, háromfázisú SDD flow (spec.md → task.md → implementáció) KIS, jól körülhatárolt feladatokhoz, amelyek 3-4 lépésben megoldhatók — konfiguráció, egyszerűbb script, kisebb javítás, lokális módosítás. Nagyobb kódírást, több komponenst érintő funkciót vagy összetett tervezést igénylő feladathoz NE ezt használd — javasold a teljes berki spec folyamatot (01-add-cycles)."
 ---
 # SDD (Spec-Driven Development) — Egyszerűsített (Lightweight) Flow
+## Kontextus ellenőrzés
+
+Ha azt detektálod, hogy ennek a fázisnak a futtatása most indul (ez az első prompt a fázisban), de a kontextus nem „friss” (azaz a beszélgetési előzmények tartalmaznak korábbi fázisokból vagy futásokból származó üzeneteket), akkor kérdezz rá a felhasználónál:
+> *„Úgy tűnik, hogy a fázis indításakor a kontextus nem teljesen friss. Szándékosan nem futtattál `/clear`-t az új fázis megkezdése előtt (a tokenekkel való spórolás érdekében)?”*
+Várd meg a felhasználó válaszát, mielőtt folytatnád a fázis futtatását.
+
+---
 
 Ez a dokumentum a projekt **egyszerűsített, háromfázisú** SDD (Spec-Driven Development) flow-ját írja le, kis és jól körülhatárolt feladatokhoz. Ezt a mintát kövesse az AI asszisztens (Agent) akkor, amikor a feladat mérete nem indokolja a teljes (00–09 fázisú) berki spec ciklust.
 
@@ -199,4 +206,3 @@ Ha a feladat olyan nagy, hogy ezek a hurkok és ágensek valóban indokoltak len
 5.  **Takarítási biztonság:** A tesztelés során (különösen a tesztek végén végzett takarítás/cleanup folyamatban) szigorúan tilos olyan állományok, könyvtárak vagy külső szerverkomponensek törlése, amelyeket nem maga az aktuális tesztfutás hozott létre. Mindig ügyelni kell arra, hogy a takarítási logika pontosan célzott legyen, és ne érintsen létező projektelemeket vagy megosztott erőforrásokat.
 6.  **Infrastruktúra-specifikus defaultok ellenőrzése:** Ha egy script vagy konfiguráció dinamikusan (pl. környezet- vagy névtér-változók összefűzésével) generál hálózati elérési utakat, hostneveket vagy URL-eket, a specifikáció során kötelező ellenőrizni, hogy a generált alapértelmezett értékek működőképesek-e a célkörnyezet tényleges routing- és DNS-struktúrájában. Sose feltételezzük, hogy a legegyszerűbb névadási kombináció automatikusan helyes; ha a hálózati infrastruktúra megköveteli, a generálási logikának támogatnia kell a név-specifikus eltéréseket (pl. prefixelés, központi gyűjtődomainek használata).
 7.  **Teljes körű csere / minden előfordulás:** Ha egy visszatérő elem (változó, függvény, parancs, érték, minta) előállítását vagy alakját módosítod, a változás scope-ja **minden** előfordulása, nem csak az, amire a feladat fókuszál. Csere ELŐTT vedd számba az összeset (`grep -rn`), csere UTÁN ellenőrizd, hogy a régi alakból **nem maradt elárvult példány**. A tesztek zöld státusza önmagában **nem bizonyítja a teljességet**, ha egyes kódágak nincsenek lefedve — a grep-sweep a determinisztikus biztosíték.
-

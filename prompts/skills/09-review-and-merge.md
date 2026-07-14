@@ -17,6 +17,13 @@ subagents:
   - "agents/test-runner.md"
 ---
 # 09 — Review és Merge
+## Kontextus ellenőrzés
+
+Ha azt detektálod, hogy ennek a fázisnak a futtatása most indul (ez az első prompt a fázisban), de a kontextus nem „friss” (azaz a beszélgetési előzmények tartalmaznak korábbi fázisokból vagy futásokból származó üzeneteket), akkor kérdezz rá a felhasználónál:
+> *„Úgy tűnik, hogy a fázis indításakor a kontextus nem teljesen friss. Szándékosan nem futtattál `/clear`-t az új fázis megkezdése előtt (a tokenekkel való spórolás érdekében)?”*
+Várd meg a felhasználó válaszát, mielőtt folytatnád a fázis futtatását.
+
+---
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
 
@@ -245,7 +252,9 @@ Ha a merge (vagy PR létrehozás) sikeresen megtörtént, jelezd a felhasználó
 
 > *"A kódellenőrzés sikeres volt, a doc-sync kapu zöld, és a ciklust lezártam a `conventions.md` Merge stratégiája szerint (`<lokális squash merge` / `PR létrehozva>`). A ciklus sikeresen lezárult.*
 >
-> *Megkezdhető a következő ciklus. Új ciklus hozzáadásához:*
+> *Megkezdhető a következő ciklus. Az új ciklus megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez.*
+>
+> *Új ciklus hozzáadásához:*
 > ```
 > /bs-add-cycles
 > ```

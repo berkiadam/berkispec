@@ -12,6 +12,13 @@ next: bs-analyze
 subagents: []
 ---
 # 04 — Tasks írás
+## Kontextus ellenőrzés
+
+Ha azt detektálod, hogy ennek a fázisnak a futtatása most indul (ez az első prompt a fázisban), de a kontextus nem „friss” (azaz a beszélgetési előzmények tartalmaznak korábbi fázisokból vagy futásokból származó üzeneteket), akkor kérdezz rá a felhasználónál:
+> *„Úgy tűnik, hogy a fázis indításakor a kontextus nem teljesen friss. Szándékosan nem futtattál `/clear`-t az új fázis megkezdése előtt (a tokenekkel való spórolás érdekében)?”*
+Várd meg a felhasználó válaszát, mielőtt folytatnád a fázis futtatását.
+
+---
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
 
@@ -267,7 +274,7 @@ Ha a felhasználó megerősíti:
 > **Kész lifecycle:** a `tasks.md` az `Implementálásra kész` → (implementáció során `Validálásra kész`) → a validate (07) PASS után `Kész` státuszra lép. A 08 fázis már `Kész`-t vár.
 
 Ha a státusz `Implementálásra kész`, állj meg. Ne kezdj implementálni vagy analízist. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
-> *"A task lista kész. Folytathatjuk az 5. lépéssel (analyze — kereszt-fázisos konzisztencia ellenőrzés). Használd ezt a parancsot:
+> *"A task lista kész. Folytathatjuk az 5. lépéssel (analyze — kereszt-fázisos konzisztencia ellenőrzés). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:
 > ```
 > /bs-analyze input: @specs/cycle-NN-<cycle-name>
 > ```"*
@@ -328,5 +335,4 @@ A marker fel- és levételét az orchestrátor kezeli; te csak a státusz-érté
 
 ### Visszatérési összefoglaló (az orchestrátornak)
 Adj vissza tömör összefoglalót: (a) mely `Must Fix`-eket / plan-változásokat vezettél át és hogyan, (b) milyen új `Knn` kérdéseket vettél fel a `tasks-questions.md`-be (azonosítóval). A `tasks.md`-t és a `tasks-questions.md`-t te írod; az `analyze-report.md`-t **nem** — az az orchestrátoré.
-
 

@@ -11,6 +11,13 @@ subagents:
   - "agents/researcher.md"
 ---
 # 00 — Projekt inicializálás
+## Kontextus ellenőrzés
+
+Ha azt detektálod, hogy ennek a fázisnak a futtatása most indul (ez az első prompt a fázisban), de a kontextus nem „friss” (azaz a beszélgetési előzmények tartalmaznak korábbi fázisokból vagy futásokból származó üzeneteket), akkor kérdezz rá a felhasználónál:
+> *„Úgy tűnik, hogy a fázis indításakor a kontextus nem teljesen friss. Szándékosan nem futtattál `/clear`-t az új fázis megkezdése előtt (a tokenekkel való spórolás érdekében)?”*
+Várd meg a felhasználó válaszát, mielőtt folytatnád a fázis futtatását.
+
+---
 
 Ez a prompt egyszer fut le, új projekt indulásakor. Célja a projekt konvencióinak rögzítése, amelyekre az összes fejlesztési ciklus (02–09) hivatkozni fog.
 
@@ -262,4 +269,4 @@ Ha a minőségellenőrzés átment:
    _(A 00 fázis nem ciklusspecifikus; a `cycle-NN:` prefix az első ciklusra utal — pl. `cycle-01: 00-init`.)_
 2. Jelezd a felhasználónak:
 
-   *"A projekt konvenciók rögzítve. Megkezdhető a ciklusok kezelése: `prompts/skills/01-add-cycles.md`."*
+   *"A projekt konvenciók rögzítve. A következő fázis indítása előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd megkezdhető a ciklusok kezelése: `prompts/skills/01-add-cycles.md`."*

@@ -15,6 +15,13 @@ subagents:
   - "agents/tasks-fixer.md"
 ---
 # 05 — Analyze (kereszt-fázisos konzisztencia ellenőrzés + önjavító hurok)
+## Kontextus ellenőrzés
+
+Ha azt detektálod, hogy ennek a fázisnak a futtatása most indul (ez az első prompt a fázisban), de a kontextus nem „friss” (azaz a beszélgetési előzmények tartalmaznak korábbi fázisokból vagy futásokból származó üzeneteket), akkor kérdezz rá a felhasználónál:
+> *„Úgy tűnik, hogy a fázis indításakor a kontextus nem teljesen friss. Szándékosan nem futtattál `/clear`-t az új fázis megkezdése előtt (a tokenekkel való spórolás érdekében)?”*
+Várd meg a felhasználó válaszát, mielőtt folytatnád a fázis futtatását.
+
+---
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
 
@@ -289,7 +296,7 @@ Teendők **sorban**:
    git commit -m "cycle-NN: 05-analyze"
    ```
 4. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát:
-   > *"Az analízis konzisztensnek találta a tervezési dokumentumokat. Folytathatjuk a 6. lépéssel (implement). Használd ezt a parancsot:*
+   > *"Az analízis konzisztensnek találta a tervezési dokumentumokat. Folytathatjuk a 6. lépéssel (implement). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:*
    > ```
    > /bs-implement input: @specs/cycle-NN-<cycle-name>/tasks.md
    > ```"*

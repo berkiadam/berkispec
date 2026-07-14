@@ -13,6 +13,13 @@ subagents:
   - "agents/researcher.md"
 ---
 # 03 — Plan írás
+## Kontextus ellenőrzés
+
+Ha azt detektálod, hogy ennek a fázisnak a futtatása most indul (ez az első prompt a fázisban), de a kontextus nem „friss” (azaz a beszélgetési előzmények tartalmaznak korábbi fázisokból vagy futásokból származó üzeneteket), akkor kérdezz rá a felhasználónál:
+> *„Úgy tűnik, hogy a fázis indításakor a kontextus nem teljesen friss. Szándékosan nem futtattál `/clear`-t az új fázis megkezdése előtt (a tokenekkel való spórolás érdekében)?”*
+Várd meg a felhasználó válaszát, mielőtt folytatnád a fázis futtatását.
+
+---
 
 Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van bontva. Minden ciklus egy önállóan lefejleszthető, önállóan tesztelhető részegysége a teljes implementációnak.
 
@@ -438,7 +445,7 @@ Ha a felhasználó megerősíti:
   ```
 
 Ha a státusz \`Task írásra kész\`, állj meg. Ne kezdj task listát. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
-> *"A plan kész. Folytathatjuk a 4. lépéssel (tasks). Használd ezt a parancsot:*
+> *"A plan kész. Folytathatjuk a 4. lépéssel (tasks). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:*
 > ```
 > /bs-write-tasks input: @specs/cycle-NN-<cycle-name>/plan.md
 > ```"*
