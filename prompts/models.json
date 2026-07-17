@@ -1,17 +1,154 @@
 {
   "antigravity": {
-    "deep_reasoning_agent": "opus 4.8",
-    "default": "gemini flash 3.5",
-    "research_agent": "haiku 4.5"
+    "deep_reasoning_agent": {
+      "model": "Claude Opus 4.6",
+      "effort": "high"
+    },
+    "default": {
+      "model": "Gemini 3.5 Flash",
+      "effort": "high"
+    },
+    "research_agent": {
+      "model": "Gemini 3.5 Flash",
+      "effort": "low"
+    },
+    "reviewer": {
+      "effort": "medium"
+    },
+    "doc-sync-planner": {
+      "effort": "medium"
+    },
+    "spec-fixer": {
+      "effort": "low"
+    },
+    "plan-fixer": {
+      "effort": "low"
+    },
+    "tasks-fixer": {
+      "effort": "low"
+    },
+    "implement-fixer": {
+      "effort": "low"
+    },
+    "review-fixer": {
+      "effort": "low"
+    },
+    "test-runner": {
+      "effort": "low"
+    }
   },
   "copilot": {
-    "deep_reasoning_agent": "Claude Opus 4.6",
-    "default": "Claude Sonnet 5",
-    "research_agent": "Claude Haiku 4.5"
+    "deep_reasoning_agent": {
+      "model": "Claude Opus 4.8",
+      "effort": "high"
+    },
+    "default": {
+      "model": "Claude Sonnet 5",
+      "effort": "high"
+    },
+    "research_agent": {
+      "model": "Claude Haiku 4.5",
+      "effort": "low"
+    },
+    "reviewer": {
+      "effort": "medium"
+    },
+    "doc-sync-planner": {
+      "effort": "medium"
+    },
+    "spec-fixer": {
+      "effort": "low"
+    },
+    "plan-fixer": {
+      "effort": "low"
+    },
+    "tasks-fixer": {
+      "effort": "low"
+    },
+    "implement-fixer": {
+      "effort": "low"
+    },
+    "review-fixer": {
+      "effort": "low"
+    },
+    "test-runner": {
+      "effort": "low"
+    }
   },
   "claude": {
-    "deep_reasoning_agent": "claude-opus-4-8",
-    "default": "claude-sonnet-5",
-    "research_agent": "claude-haiku-4-5-20251001"
+    "deep_reasoning_agent": {
+      "model": "claude-opus-4-8",
+      "effort": "high"
+    },
+    "default": {
+      "model": "claude-sonnet-5",
+      "effort": "high"
+    },
+    "research_agent": {
+      "model": "claude-haiku-4-5-20251001",
+      "effort": "low"
+    },
+    "reviewer": {
+      "effort": "medium"
+    },
+    "doc-sync-planner": {
+      "effort": "medium"
+    },
+    "spec-fixer": {
+      "effort": "low"
+    },
+    "plan-fixer": {
+      "effort": "low"
+    },
+    "tasks-fixer": {
+      "effort": "low"
+    },
+    "implement-fixer": {
+      "effort": "low"
+    },
+    "review-fixer": {
+      "effort": "low"
+    },
+    "test-runner": {
+      "effort": "low"
+    }
+  },
+  "cursor": {
+    "deep_reasoning_agent": {
+      "model": "Opus 4.8",
+      "effort": "high"
+    },
+    "default": {
+      "model": "Sonnet 5",
+      "effort": "high"
+    },
+    "research_agent": {
+      "model": "Haiku 4.5",
+      "effort": "low"
+    },
+    "reviewer": {
+      "effort": "medium"
+    },
+    "doc-sync-planner": {
+      "effort": "medium"
+    },
+    "spec-fixer": {
+      "effort": "low"
+    },
+    "plan-fixer": {
+      "effort": "low"
+    },
+    "tasks-fixer": {
+      "effort": "low"
+    },
+    "implement-fixer": {
+      "effort": "low"
+    },
+    "review-fixer": {
+      "effort": "low"
+    },
+    "test-runner": {
+      "effort": "low"
+    }
   }
 }

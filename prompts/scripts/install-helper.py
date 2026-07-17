@@ -55,15 +55,85 @@ AGENT_MODEL_KEYS = {
     "analyzer": "deep_reasoning_agent",
 }
 
-def get_model(models, platform, filename):
+# Cursor subagent `readonly: true` — CSAK azok az agentek, amelyek biztosan
+# SEMMIT nem írnak (a prózájuk is kimondja: „Read-only vagy"): tisztán a hívó
+# skillnek adnak vissza megállapítást/összefoglalót, fájlt nem hoznak létre.
+# FIGYELEM: a tool-lista nem megbízható jelzés — a `reviewer` (code-review.md)
+# és a `test-runner` (report-mappa/config) Bash-en keresztül ÍR, hiába nincs a
+# tool-listájukban Edit/Write; ezért ők NINCSENEK itt. Téves readonly=true
+# megtörné őket.
+READONLY_AGENTS = {"analyzer", "researcher", "doc-sync-planner"}
+
+# A models.json szerkezete (platformonként):
+#
+#   "<platform>": {
+#     "deep_reasoning_agent": { "model": <str>, "effort": <str> },
+#     "default":              { "model": <str>, "effort": <str> },
+#     "research_agent":       { "model": <str>, "effort": <str> },
+#     "<agent-stem>":         { "effort": <str> }   # opcionális felülírás(ok)
+#   }
+#
+# Két, egymástól FÜGGETLEN tengely:
+#   - MODELL: melyik modell fut. Az agent → tier hozzárendelést az
+#     AGENT_MODEL_KEYS adja (analyzer → deep, researcher/10-cycle-status →
+#     research); minden más a `default` tier modelljét kapja.
+#   - EFFORT: mennyit "gondolkodik" (thinking-token). Ez NEM esik egybe a
+#     modell-tierrel — pl. a fixerek a `default` MODELLEN futnak, de `low`
+#     EFFORT jár nekik. Ezért a defaulttól eltérő efforttal bíró agentek a
+#     models.json-ban SAJÁT NEVŰ bejegyzésként szerepelnek, csak az `effort`
+#     mezővel (a modelljük a default tierből jön).
+#
+# Feloldási szabály egy agentre (stem):
+#   model  = <saját nevű bejegyzés>.model  ha van, különben
+#            AGENT_MODEL_KEYS[stem] tier .model, különben default.model
+#   effort = <saját nevű bejegyzés>.effort ha van, különben
+#            AGENT_MODEL_KEYS[stem] tier .effort, különben default.effort
+#
+# Így ha egy agentnél a modell nincs külön megadva → default modell; ha az
+# effort nincs → az adott tier (vagy a default) effortja. A default effort a
+# models.json-ban `high` (biztonságos, mély alapértelmezés).
+#
+# Az effort NATÍVAN a Claude Code subagent-frontmatter `effort:` mezőjében
+# hat. Az Antigravity (agent.json), a Copilot és a Cursor configba is kiírjuk
+# (natív mező + látható "Recommended Effort" alert), hogy platformtól
+# függetlenül egyetlen helyről (models.json) legyen hangolható.
+
+def _resolve_agent_config(models, platform, filename):
+    """Feloldja egy agent (model, effort) párját a fenti szabály szerint.
+    Visszaad: (model_str, effort_str)."""
     platform_models = models.get(platform, {})
     stem = _agent_stem(filename)
 
-    agent_key = AGENT_MODEL_KEYS.get(stem)
-    if agent_key and agent_key in platform_models:
-        return platform_models[agent_key]
+    override = platform_models.get(stem, {})
+    if not isinstance(override, dict):
+        override = {}
 
-    return platform_models.get("default", "")
+    tier_key = AGENT_MODEL_KEYS.get(stem, "default")
+    tier = platform_models.get(tier_key)
+    if not isinstance(tier, dict):
+        tier = {}
+    default_tier = platform_models.get("default", {})
+    if not isinstance(default_tier, dict):
+        default_tier = {}
+
+    model = override.get("model") or tier.get("model") or default_tier.get("model", "")
+
+    if "effort" in override:
+        effort = override["effort"]
+    elif "effort" in tier:
+        effort = tier["effort"]
+    else:
+        effort = default_tier.get("effort", "high")
+
+    return model, effort
+
+def get_model(models, platform, filename):
+    model, _ = _resolve_agent_config(models, platform, filename)
+    return model
+
+def get_effort(models, platform, filename):
+    _, effort = _resolve_agent_config(models, platform, filename)
+    return effort
 
 # Minden helper scriptet (prompts/scripts/*.py) átmásol a cél scripts_dest
 # mappába, kivéve saját magát (install-helper.py, ami csak a telepítő gépén
@@ -80,33 +150,90 @@ def copy_helper_scripts(src_dir, scripts_dest):
         shutil.copy(script_src, script_dest)
         os.chmod(script_dest, 0o755)
 
-def inject_markdown_model(content, model, platform_name):
+def _build_alert(model, platform_name, effort=None):
+    lines = [f"> **Recommended Model ({platform_name}):** {model}"]
+    if effort is not None:
+        lines.append(f"> **Recommended Effort ({platform_name}):** {effort}")
+    return "> [!IMPORTANT]\n" + "\n".join(lines) + "\n\n"
+
+# A `model` mindig injektálódik (frontmatter mező + látható alert). Az `effort`
+# opcionális: ha None (pl. skilleknél, amik az orchestrátor-fő ágensek, nem
+# subagentek), nem kerül be — csak az agenteknél adjuk át.
+def inject_markdown_model(content, model, platform_name, effort=None):
     parts = content.split('---')
     if len(parts) >= 3:
         frontmatter = parts[1]
         body = '---'.join(parts[2:])
-        
-        # Inject model: <model> into frontmatter
+
+        # Inject model: <model> (és opcionálisan effort:) a frontmatterbe
         lines = frontmatter.splitlines()
         model_found = False
+        effort_found = False
         new_lines = []
         for line in lines:
-            if line.strip().startswith('model:'):
+            stripped = line.strip()
+            if stripped.startswith('model:'):
                 new_lines.append(f"model: {model}")
                 model_found = True
+            elif effort is not None and stripped.startswith('effort:'):
+                new_lines.append(f"effort: {effort}")
+                effort_found = True
             else:
                 new_lines.append(line)
         if not model_found:
             new_lines.append(f"model: {model}")
+        if effort is not None and not effort_found:
+            new_lines.append(f"effort: {effort}")
         new_frontmatter = '\n'.join(new_lines)
-        
+
         # Also inject visual warning alert block into body
-        alert = f"\n> [!IMPORTANT]\n> **Recommended Model ({platform_name}):** {model}\n\n"
+        alert = "\n" + _build_alert(model, platform_name, effort)
         return f"---{new_frontmatter}\n---{alert}{body.lstrip()}"
     else:
-        # No frontmatter, construct frontmatter with model
-        alert = f"> [!IMPORTANT]\n> **Recommended Model ({platform_name}):** {model}\n\n"
-        return f"---\nmodel: {model}\n---\n{alert}{content.lstrip()}"
+        # No frontmatter, construct frontmatter with model (+ effort)
+        fm = f"model: {model}"
+        if effort is not None:
+            fm += f"\neffort: {effort}"
+        alert = _build_alert(model, platform_name, effort)
+        return f"---\n{fm}\n---\n{alert}{content.lstrip()}"
+
+# Cursor Agent subagent (.cursor/agents/*.md): a szokásos model/effort + alert
+# injektálás, majd a Cursor-subagent által elvárt mezők pótlása:
+#   - description: az automatikus delegáláshoz KRITIKUS (a `role:` mezőből
+#     származtatjuk, ha nincs külön megadva);
+#   - readonly: true, ha az agent a READONLY_AGENTS allowlisten van (biztosan
+#     semmit nem ír) — így Cursorban sem tud véletlenül írni.
+# Az `effort` Cursorban nem dokumentált natív mező (a model lehet inherit/fast/
+# model-id); hintként írjuk ki + az alertben, a Cursor az ismeretlen
+# frontmatter-kulcsot figyelmen kívül hagyja.
+def inject_cursor_agent(content, model, effort, readonly=False):
+    injected = inject_markdown_model(content, model, "Cursor", effort)
+    parts = injected.split('---')
+    if len(parts) < 3:
+        return injected
+
+    frontmatter = parts[1]
+    body = '---'.join(parts[2:])
+    lines = frontmatter.splitlines()
+
+    role = ""
+    have_desc = False
+    have_readonly = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('role:'):
+            role = stripped[len('role:'):].strip().strip('"')
+        elif stripped.startswith('description:'):
+            have_desc = True
+        elif stripped.startswith('readonly:'):
+            have_readonly = True
+
+    if not have_desc:
+        lines.append(f'description: {role or "BerkiSpec agent"}')
+    if readonly and not have_readonly:
+        lines.append('readonly: true')
+
+    return f"---{chr(10).join(lines)}\n---{body}"
 
 def process_antigravity(src_dir, dest_path, models):
     dest_path = Path(dest_path)
@@ -126,18 +253,20 @@ def process_antigravity(src_dir, dest_path, models):
             continue
             
         model = get_model(models, "antigravity", agent_name)
-        
+        effort = get_effort(models, "antigravity", agent_name)
+
         with open(agent_json_src, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            
+
         data["model"] = model
-        
+        data["effort"] = effort
+
         try:
             sections = data["customAgentSpec"]["customAgent"]["systemPromptSections"]
             for section in sections:
                 if section.get("title") == "Instructions":
                     content = section.get("content", "")
-                    section["content"] = f"> [!IMPORTANT]\n> **Recommended Model (Antigravity):** {model}\n\n" + content
+                    section["content"] = _build_alert(model, "Antigravity", effort) + content
         except KeyError:
             pass
             
@@ -181,11 +310,12 @@ def process_claude(src_dir, dest_path, models):
     
     for agent_file in agents_src.glob("*.md"):
         model = get_model(models, "claude", agent_file.name)
+        effort = get_effort(models, "claude", agent_file.name)
         with open(agent_file, 'r', encoding='utf-8') as f:
             content = f.read()
-            
-        new_content = inject_markdown_model(content, model, "Claude Code")
-        
+
+        new_content = inject_markdown_model(content, model, "Claude Code", effort)
+
         with open(agents_dest / agent_file.name, 'w', encoding='utf-8') as f:
             f.write(new_content)
             
@@ -224,12 +354,13 @@ def process_copilot(src_dir, dest_path, models):
     for agent_file in agents_src.glob("*.md"):
         agent_name = agent_file.stem
         model = get_model(models, "copilot", agent_file.name)
-        
+        effort = get_effort(models, "copilot", agent_file.name)
+
         with open(agent_file, 'r', encoding='utf-8') as f:
             content = f.read()
-            
-        new_content = inject_markdown_model(content, model, "Copilot")
-        
+
+        new_content = inject_markdown_model(content, model, "Copilot", effort)
+
         with open(agents_dest / f"{agent_name}.agent.md", 'w', encoding='utf-8') as f:
             f.write(new_content)
             
@@ -252,6 +383,53 @@ def process_copilot(src_dir, dest_path, models):
 
     # 3. Process helper scripts
     scripts_dest = dest_path / ".github/scripts"
+    copy_helper_scripts(src_dir, scripts_dest)
+
+def process_cursor(src_dir, dest_path, models):
+    dest_path = Path(dest_path)
+    agents_src = Path(src_dir) / "prompts/agents"
+    skills_src = Path(src_dir) / "prompts/skills"
+
+    # 1. Process agents → .cursor/agents/*.md (Cursor Agent subagent formátum,
+    #    ugyanaz a szerkezet, mint Claude Code-nál: YAML frontmatter + prompt).
+    agents_dest = dest_path / ".cursor/agents"
+    agents_dest.mkdir(parents=True, exist_ok=True)
+
+    for agent_file in agents_src.glob("*.md"):
+        model = get_model(models, "cursor", agent_file.name)
+        effort = get_effort(models, "cursor", agent_file.name)
+        readonly = _agent_stem(agent_file.name) in READONLY_AGENTS
+
+        with open(agent_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        new_content = inject_cursor_agent(content, model, effort, readonly)
+
+        with open(agents_dest / agent_file.name, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+
+    # 2. Process skills → .cursor/skills/bs-<name>/SKILL.md (Agent Skills)
+    skills_dest = dest_path / ".cursor/skills"
+    skills_dest.mkdir(parents=True, exist_ok=True)
+
+    for skill_file in skills_src.glob("*.md"):
+        skill_name = skill_file.stem
+        model = get_model(models, "cursor", skill_file.name)
+
+        with open(skill_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Skill = orchestrátor fő ágens, nem subagent → nincs effort.
+        new_content = inject_markdown_model(content, model, "Cursor")
+
+        skill_dest_dir = skills_dest / f"bs-{skill_name}"
+        skill_dest_dir.mkdir(parents=True, exist_ok=True)
+
+        with open(skill_dest_dir / "SKILL.md", 'w', encoding='utf-8') as f:
+            f.write(new_content)
+
+    # 3. Process helper scripts
+    scripts_dest = dest_path / ".cursor/scripts"
     copy_helper_scripts(src_dir, scripts_dest)
 
 def main():
@@ -277,6 +455,8 @@ def main():
         process_claude(src_dir, dest_path, models)
     elif platform == "copilot":
         process_copilot(src_dir, dest_path, models)
+    elif platform == "cursor":
+        process_cursor(src_dir, dest_path, models)
     else:
         print(f"Error: Unknown platform {platform}")
         sys.exit(1)

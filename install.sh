@@ -143,7 +143,7 @@ ask_agent_platform() {
   echo -e "  ${CYAN}1)${RESET} ${GREEN}●${RESET} Google Antigravity CLI"
   echo -e "  ${CYAN}2)${RESET} ${GRAY}○${RESET} Google Gemini CLI"
   echo -e "  ${CYAN}3)${RESET} ${GREEN}●${RESET} Claude Code"
-  echo -e "  ${CYAN}4)${RESET} ${GRAY}○${RESET} Cursor"
+  echo -e "  ${CYAN}4)${RESET} ${GREEN}●${RESET} Cursor"
   echo -e "  ${CYAN}5)${RESET} ${GREEN}●${RESET} GitHub Copilot (CLI & IDE)"
   echo ""
 
@@ -161,17 +161,21 @@ ask_agent_platform() {
         PLATFORM_CHOICE="claude"
         break
         ;;
+      4)
+        PLATFORM_CHOICE="cursor"
+        break
+        ;;
       5)
         PLATFORM_CHOICE="copilot"
         break
         ;;
-      2|4)
+      2)
         echo ""
         separator
         echo ""
         echo -e "  ${ORANGE}🚧  Még nincs implementálva.${RESET}"
         echo ""
-        echo -e "  ${GRAY}Jelenleg a ${GREEN}Google Antigravity CLI${GRAY}, a ${GREEN}Claude Code${GRAY} és a ${GREEN}GitHub Copilot${GRAY} támogatott."
+        echo -e "  ${GRAY}Jelenleg a ${GREEN}Google Antigravity CLI${GRAY}, a ${GREEN}Claude Code${GRAY}, a ${GREEN}Cursor${GRAY} és a ${GREEN}GitHub Copilot${GRAY} támogatott."
         echo -e "  A többi platform hamarosan érkezik!${RESET}"
         echo ""
         separator
@@ -189,6 +193,8 @@ ask_agent_platform() {
     success "Platform: ${BOLD}Google Antigravity CLI${RESET}"
   elif [[ "${PLATFORM_CHOICE}" == "claude" ]]; then
     success "Platform: ${BOLD}Claude Code${RESET}"
+  elif [[ "${PLATFORM_CHOICE}" == "cursor" ]]; then
+    success "Platform: ${BOLD}Cursor${RESET}"
   else
     success "Platform: ${BOLD}GitHub Copilot${RESET}"
   fi
@@ -369,6 +375,48 @@ install_copilot() {
   fi
 }
 
+# ── Cursor Telepítés ──────────────────────────────────────────
+install_cursor() {
+  local agents_dest="${PROJECT_PATH}/.cursor/agents"
+  local skills_dest="${PROJECT_PATH}/.cursor/skills"
+
+  # ── .cursor mappa létrehozás ──
+  if [[ ! -d "${PROJECT_PATH}/.cursor" ]]; then
+    mkdir -p "${PROJECT_PATH}/.cursor"
+    success ".cursor/ mappa létrehozva"
+  fi
+
+  # ── Ütközés ellenőrzés ──
+  if has_existing_content "${agents_dest}" "${skills_dest}"; then
+    ask_conflict ".cursor/agents és .cursor/skills" "mappa"
+    case "${CONFLICT_ANSWER}" in
+      1)
+        warn "Cursor telepítés kihagyva, a meglévő fájlok érintetlenek."
+        INSTALL_STATUS="skipped"
+        return 0
+        ;;
+      2)
+        error "Telepítés megszakítva."
+        exit 1
+        ;;
+    esac
+  fi
+
+  # ── Agents & Skills ──
+  echo ""
+  echo -e "  ${BLUE}📦 Cursor Subagent-ek és Skill-ek telepítése (.cursor/)${RESET}"
+  separator
+
+  info "Fájlok másolása és modellek konfigurálása..."
+  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "cursor" "${SCRIPT_DIR}" "${PROJECT_PATH}"; then
+    success "Cursor rule-ok és command-ok sikeresen konfigurálva és másolva!"
+    INSTALL_STATUS="done"
+  else
+    error "Hiba történt a fájlok másolása során!"
+    exit 1
+  fi
+}
+
 # ── 3. lépés: Másolás és Konfigurálás (Orchestrator) ─────────────────────────
 create_symlinks() {
   step "3. lépés: Telepítés"
@@ -378,6 +426,8 @@ create_symlinks() {
     install_antigravity
   elif [[ "${PLATFORM_CHOICE}" == "claude" ]]; then
     install_claude
+  elif [[ "${PLATFORM_CHOICE}" == "cursor" ]]; then
+    install_cursor
   else
     install_copilot
   fi
@@ -426,6 +476,21 @@ show_summary() {
     echo ""
     echo -e "  ${GRAY}Kezdéshez indítsd el a Claude Code-ot a projektedben,"
     echo -e "  és futtasd a ${CYAN}bs-init-project${GRAY} skillt.${RESET}"
+  elif [[ "${PLATFORM_CHOICE}" == "cursor" ]]; then
+    echo -e "  ${WHITE}Platform:${RESET} ${BOLD}Cursor${RESET}"
+    echo ""
+    echo -e "  ${GRAY}A telepített struktúra:${RESET}"
+    echo -e "  ${DIM}${PROJECT_PATH}/.cursor/"
+    echo -e "  ├── agents/        ${CYAN}(subagent MD fájlok model + effort + readonly konfigurációval)${RESET}${DIM}"
+    echo -e "  └── skills/        ${CYAN}(skill SKILL.md fájlok modell-konfigurációval)${RESET}"
+    echo ""
+    echo -e "  ${DIM}${GRAY}Megjegyzés: a subagent \`model\` mezője natívan hat; az \`effort\`"
+    echo -e "  látható ajánlás (a Cursor a nem ismert frontmatter-kulcsot kihagyja).${RESET}"
+    echo ""
+    separator
+    echo ""
+    echo -e "  ${GRAY}Kezdéshez indítsd el a Cursor Agent CLI-t (${CYAN}agent${GRAY}) a projektedben,"
+    echo -e "  és kérd a ${CYAN}bs-init-project${GRAY} skill futtatását.${RESET}"
   else
     echo -e "  ${WHITE}Platform:${RESET} ${BOLD}GitHub Copilot (CLI & IDE)${RESET}"
     echo ""

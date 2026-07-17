@@ -27,7 +27,7 @@
   - [5. Teljes berki spec flow (00–09)](#5-teljes-berki-spec-flow-0009)
     - [5.1 Magas szintű összefoglalás](#51-magas-szintű-összefoglalás)
     - [5.2 Részletes folyamat](#52-részletes-folyamat)
-    - [5.3 Automatikus modell választás](#53-automatikus-modell-választás)
+    - [5.3 Modellek és effort-szintek automatikus választása](#53-modellek-és-effort-szintek-automatikus-választása)
     - [5.4 Az 05-analyze önjavító hurok (részletes)](#54-az-05-analyze-önjavító-hurok-részletes)
     - [5.5 Az 07-validate önjavító hurok (részletes)](#55-az-07-validate-önjavító-hurok-részletes)
     - [5.6 Az 09-review önjavító hurok (részletes)](#56-az-09-review-önjavító-hurok-részletes)
@@ -77,7 +77,7 @@ A legtöbb SDD sablon egyetlen, merev „spec → terv → kód" fonalat ad. A B
 - **Emberi kapuk a döntéseknél.** A fázisváltások **explicit jóváhagyáshoz** kötöttek: az ágens javasol és indokol, de nem „szalad el" — a scope- és irányválasztás a fejlesztőé marad.
 - **Eszközfüggetlen, egyetlen forrásból.** Ugyanaz a skill/ágens definíció (single source of truth) fut Claude Code, Cursor, Antigravity és Codex alatt is.
 - **Gyenge/olcsó modellekre optimalizálva.** Determinisztikus védőhálók (szűkített fix-mód belépők, kötelező ellenőrzőlisták, egyszerre egy kérdés) csökkentik a hibázás esélyét akkor is, ha nem a legerősebb modell hajtja.
-- **Maximális token-megtakarítás — feladatarányos modellválasztás.** Minden lépés a hozzá **elégséges legolcsóbb ágensen** fut. A legdrágább (Opus-osztályú) modellt **egyetlen** pont kapja: a legkritikusabb reasoning, az `analyzer` konzisztencia-diagnózisa. A kódkeresést, teszt-futtatást és a determinisztikus lépéseket olcsó subagentek és scriptek végzik, a fő kontextust óvva; minden más a `default` tier-en fut. A teljes leosztást lásd az [5.3 szekcióban](#53-automatikus-modell-választás).
+- **Maximális token-megtakarítás — feladatarányos modell- és reasoning-szint-választás.** Minden lépés a hozzá **elégséges legolcsóbb ágensen** fut, **két független tengelyen** hangolva: a *modell* (melyik modell) és az *effort* (mennyi reasoning/thinking-token). A legdrágább (Opus-osztályú) modellt **egyetlen** pont kapja: a legkritikusabb reasoning, az `analyzer` konzisztencia-diagnózisa. A pontos hibalistát célzottan javító fixerek és a mechanikus futtatók **alacsony efforton** dolgoznak (a `default` modellen is), mert nekik nem kell felfedezniük a problémát. A kódkeresést, teszt-futtatást és a determinisztikus lépéseket olcsó subagentek és scriptek végzik, a fő kontextust óvva. A teljes leosztást lásd az [5.3 szekcióban](#53-modellek-és-effort-szintek-automatikus-választása).
 
 ## 1. Két fejlesztési út — válassz a feladat mérete szerint
 
@@ -113,10 +113,10 @@ A BerkiSpec keretrendszer beállítása a célprojektben rendkívül egyszerű �
    ```
 3. A script interaktív módon üdvözöl, és bekéri a célprojekted gyökérmappáját.
    * *Tipp:* Az útvonal beírása közben a **Tab** billentyűvel automatikusan kiegészítheted a mappaneveket, míg a **Tab kétszeri megnyomásával** kilistázhatod az aktuális könyvtár tartalmát.
-4. Válaszd ki az általad használt AI agent platformot (1 vagy 5).
+4. Válaszd ki az általad használt AI agent platformot (1–5).
 
 ### Támogatott platformok és ágensek:
-A keretrendszer három népszerű fejlesztő platformra képes beállítani a környezetet:
+A keretrendszer négy népszerű fejlesztő platformra képes beállítani a környezetet:
 
 1. **Google Antigravity CLI:**
    * A projekt gyökerében létrehozza a `.agents/` konfigurációs mappát.
@@ -124,13 +124,16 @@ A keretrendszer három népszerű fejlesztő platformra képes beállítani a k�
 2. **Claude Code:**
    * A projekt gyökerében létrehozza a `.claude/` konfigurációs mappát.
    * Az ágenseket a `.claude/agents/<név>.md` (Markdown) formátumban linkeli be, a skilleket pedig a `.claude/skills/bs-<név>/SKILL.md` alá.
-3. **GitHub Copilot (CLI & IDE):**
+3. **Cursor (Agent CLI):**
+   * A projekt gyökerében létrehozza a `.cursor/` konfigurációs mappát.
+   * A subagenteket a `.cursor/agents/<név>.md` (Markdown) formátumban linkeli be (a read-only agentek `readonly: true`-t kapnak), a skilleket pedig a `.cursor/skills/bs-<név>/SKILL.md` alá.
+4. **GitHub Copilot (CLI & IDE):**
    * A projekt gyökerében létrehozza a `.github/` konfigurációs mappát.
    * Az ágenseket a `.github/agents/<név>.agent.md` fájlként linkeli be, a skilleket pedig globális utasításokként a `.github/instructions/bs-<név>.instructions.md` fájlba rendezi.
 
 ### Hogyan lehet használni?
 A telepítés után az adott platform automatikusan beolvassa a symlinkelt definíciókat:
-* **Google Antigravity CLI / Claude Code:** Indítsd el a CLI-t a célprojekt mappájában. A chat felületen a `/` (per) karakter leütésével előhívhatod a skillek listáját. Mindegyik skill egységesen a `berkispec - <fázis>: <leírás>` névvel fog megjelenni, így azonnal láthatod az SDD lépések sorrendjét és célját. Kezdéshez hívd meg a `bs-init-project` skillt!
+* **Google Antigravity CLI / Claude Code / Cursor Agent CLI:** Indítsd el a CLI-t a célprojekt mappájában (Cursornál az `agent` paranccsal). A chat felületen a `/` (per) karakter leütésével előhívhatod a skillek listáját. Mindegyik skill egységesen a `berkispec - <fázis>: <leírás>` névvel fog megjelenni, így azonnal láthatod az SDD lépések sorrendjét és célját. Kezdéshez hívd meg a `bs-init-project` skillt!
 * **GitHub Copilot:** A Copilot Chat ablakában vagy a Copilot CLI-ben a `@` szimbólummal (pl. `@bs-init-project`) tudod közvetlenül aktiválni a kívánt fázis utasításait.
 
 ---
@@ -154,11 +157,16 @@ A telepítés után a platform chat felületén a `/` karakter leütésével ér
 
 * **`/bs-init-project`**: A projekt legelső inicializálása (létrehozza a `conventions.md` fájlt).
 * **`/bs-add-cycles`**: Új fejlesztési ciklus hozzáadása az ütemtervhez (`roadmap.md`).
-* **`/bs-<fázis neve>`**: A teljes flow minden további fázisát a sorszámozott parancsokkal indíthatod el. A leírások fejléce mutatja a fázis célját, pl.:
-  * `/bs-write-spec` — *berkispec - 02. Használd egy ciklus indításakor...*
-  * `/bs-write-plan` — *berkispec - 03. Használd a részletes technikai tervhez...*
-  * és így tovább a merge-ig (`/bs-review-and-merge`).
-* **`/bs-quick-flow`**: A könnyű flow elindítása. Ezen a flown belül nincsenek különválasztott al-fázisok, a teljes egyszerűsített folyamathoz mindig ezt az egy skillt kell használni.
+* **`/bs-write-spec`**: Követelmények rögzítése, új ciklus specifikációjának elkészítése (`spec.md` + `spec-questions.md`).
+* **`/bs-write-plan`**: Részletes technikai megvalósítási terv kidolgozása (`plan.md` + `plan-questions.md`).
+* **`/bs-write-tasks`**: A technikai terv lebontása mérhető feladatokra (`tasks.md` + `tasks-questions.md`).
+* **`/bs-analyze`**: Kereszt-fázisos konzisztencia-ellenőrzés és automatikus javítás (spec/plan/tasks egyezés).
+* **`/bs-implement`**: Tényleges kódfejlesztés a feladatlista alapján, a haladás rögzítésével a `tasks.md`-ben.
+* **`/bs-validate`**: Tesztek, lint és build ellenőrzése, automatikus javító hurokkal (sikeres futtatás után 'Kész' státusz).
+* **`/bs-doc-sync`**: Az élő dokumentáció (`docs-generated/`) és README-k szinkronizálása a kódváltozásokkal.
+* **`/bs-review-and-merge`**: Automatikus kódreview (reviewer agent) és a branch beolvasztása (merge).
+* **`/bs-cycle-status`**: Ciklusok státuszának ellenőrzése (interaktív TUI vagy parancssori státusz).
+* **`/bs-quick-flow`**: Az egyszerűsített (lightweight) flow elindítása kis feladatokhoz (spec → task → implementáció).
 
 ---
 
@@ -196,11 +204,11 @@ berkispec/                            # repo gyökér
     │   └── gemini-agent/             # Antigravity-specifikus agent.json másolatok (per-agent almappa)
     ├── templates/                    # jövőbeli sablonok
     ├── scripts/                      # automatizációs scriptek (a telepítő minden *.py-t átmásol a célprojektbe)
-    │   ├── install-helper.py         # a telepítő motorja (modell-tier hozzárendelés, fájlmásolás) — NEM kerül a célprojektbe
+    │   ├── install-helper.py         # a telepítő motorja (modell- + effort-hozzárendelés, fájlmásolás) — NEM kerül a célprojektbe
     │   ├── cycle-status.py           # a 10-cycle-status skill futtató scriptje
     │   ├── ds22-gate-check.py        # a 08-doc-sync DS22 Réteg 1 magkapuja (determinisztikus, LLM nélkül)
     │   └── failure-counter.py        # a 07/09 hurok futás-naplója + per-item 3-próba számláló (determinisztikus)
-    ├── models.json                   # modell-tier konfiguráció platformonként (lásd 5.3)
+    ├── models.json                   # modell- + effort-konfiguráció platformonként (tier→{model,effort} + per-agent felülírás; lásd 5.3)
     ├── meta-improve-prompts.md       # prompt-fejlesztési meta-sablon
     ├── inprove-list.md               # prompt-fejlesztési lista
     └── inprove-list2.md              # prompt-fejlesztési lista (folytatás)
@@ -249,7 +257,7 @@ flowchart TD
     4["<b>4. Create Tasks</b><br/>(create tasks.md from plan.md)"]:::design
     5["<b>5. Analyze</b><br/>(cross-phase consistency check)"]:::design
     6["<b>6. Implement</b><br/>(create code from plan.md and tasks.md)"]:::dev
-    7["<b>7. Validate</b><br/>(regression and sonar check)"]:::dev
+    7["<b>7. Validate</b><br/>(regression, sonar and E2E check)"]:::dev
     8["<b>8. Doc-sync</b><br/>(docs-generated/ konzisztencia + objektív kapu)"]:::doc
     9["<b>9. Review and Merge</b><br/>(reviewer agent and merge)"]:::review
     End([Ciklus befejezve]):::start
@@ -483,24 +491,39 @@ flowchart TD
     Merge --> End([Ciklus befejezve])
 ```
 
-### 5.3 Automatikus modell választás
+### 5.3 Modellek és effort-szintek automatikus választása
 
-> **Elv: maximális token-megtakarítás.** Minden lépés a hozzá **elégséges legolcsóbb ágensen** fut; a drága modellt csak ott költjük, ahol a nyers ész nélkülözhetetlen. A minőséget nem a modell ereje adja, hanem a **szigorú kontraktusok** (kötelező ellenőrzőlisták, „csak összefoglaló", determinisztikus scriptek).
+> **Elv: maximális token-megtakarítás.** Minden lépés a hozzá **elégséges legolcsóbb ágensen** fut; a drága modellt és a mély reasoningot csak ott költjük, ahol nélkülözhetetlen. A minőséget nem a modell ereje adja, hanem a **szigorú kontraktusok** (kötelező ellenőrzőlisták, „csak összefoglaló", determinisztikus scriptek).
 
-**Három tier — ki mit kap:**
+A hangolás **két független tengelyen** történik:
+- **Modell** — *melyik* modell fut (tier: `deep_reasoning_agent` / `default` / `research_agent`).
+- **Effort** — *mennyi* reasoning/thinking-tokent éget (`high` / `medium` / `low`).
 
-| Tier (`models.json` kulcs) | Ki kapja | Claude / Antigravity / Copilot | Miért ez a tier |
+A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de **`low` efforton**, mert pontos, előre azonosított hibalistát kapnak — nem nekik kell felfedezni a problémát.
+
+**Modell-tier — ki mit kap:**
+
+| Tier (`models.json` kulcs) | Ki kapja | Claude / Antigravity / Copilot / Cursor | Miért ez a tier |
 |---|---|---|---|
-| `deep_reasoning_agent` (legdrágább) | **kizárólag** `analyzer` (05) | `claude-opus-4-8` / `opus 4.8` / `Claude Opus 4.6` | Kereszt-fázisos konzisztencia-**diagnózis** (spec/plan/tasks/conventions) — a legmélyebb reasoning; egy itt vétett hiba a legdrágább downstream (rossz diagnózisra rossz kód épül). |
-| `default` | **minden más:** orchestrátor-skillek (05, 07…), a 4 fixer (`spec`/`plan`/`tasks`/`implement`-fixer), `reviewer`, `review-fixer`, `doc-sync-planner`, `test-runner` | `claude-sonnet-5` / `gemini flash 3.5` / `Claude Sonnet 5` | A fixerek **kész, pontos hibalistát** kapnak (megoldás/eszkaláció, nem felfedezés); az orchestrátorok bookkeeping-et végeznek (marker, számláló, routing) a subagent **kész** jelentése alapján — nem diagnózis. |
-| `research_agent` (legolcsóbb) | `researcher` (00/01/02/03/06), `10-cycle-status` skill | `claude-haiku-4-5-20251001` / `haiku 4.5` / `Claude Haiku 4.5` | Tiszta grep/glob/read fan-out, ill. determinisztikus script-futtatás — **nulla tervezési ítélet**; a „csak összefoglaló, soha nyers fájltartalom" kontraktus véd. |
+| `deep_reasoning_agent` (legdrágább) | **kizárólag** `analyzer` (05) | `claude-opus-4-8` / `Claude Opus 4.6` / `Claude Opus 4.8` / `Opus 4.8` | Kereszt-fázisos konzisztencia-**diagnózis** (spec/plan/tasks/conventions) — a legmélyebb reasoning; egy itt vétett hiba a legdrágább downstream (rossz diagnózisra rossz kód épül). |
+| `default` | **minden más:** orchestrátor-skillek (05, 07…), a 4 fixer (`spec`/`plan`/`tasks`/`implement`-fixer), `reviewer`, `review-fixer`, `doc-sync-planner`, `test-runner` | `claude-sonnet-5` / `Gemini 3.5 Flash` / `Claude Sonnet 5` / `Sonnet 5` | A fixerek **kész, pontos hibalistát** kapnak (megoldás/eszkaláció, nem felfedezés); az orchestrátorok bookkeeping-et végeznek (marker, számláló, routing) a subagent **kész** jelentése alapján — nem diagnózis. |
+| `research_agent` (legolcsóbb) | `researcher` (00/01/02/03/06), `10-cycle-status` skill | `claude-haiku-4-5-20251001` / `Gemini 3.5 Flash` (low) / `Claude Haiku 4.5` / `Haiku 4.5` | Tiszta grep/glob/read fan-out, ill. determinisztikus script-futtatás — **nulla tervezési ítélet**; a „csak összefoglaló, soha nyers fájltartalom" kontraktus véd. Antigravityn nincs Haiku, ezért itt a `default` Flash modell fut, csak `low` efforton. |
 
-**Egy szándékos kivétel:** a `test-runner` mechanikus (tesztek/Sonar/E2E futtatása), mégis `default` (nem a legolcsóbb) — a több lépéses Bash-orchesztráció (portütközés, config-visszaállítás) és a projektenként eltérő teszt-/Sonar-kimenet megbízható, **konzisztens tesztnevű** összegzése kritikus: egy elgépelt név csendben elronthatná a 07-hurok per-item 3-próba számlálóját (VD4).
+**Effort-leosztás — mennyi reasoning:**
+
+| Effort | Ki kapja | Miért |
+|---|---|---|
+| `high` (default effort) | `analyzer`, és minden nem-felülírt agent | Nyílt végű felfedezés/diagnózis, ahol a mély reasoning fizet. Ez a **biztonságos alapértelmezés** (a `models.json` `default` effortja). |
+| `medium` | `reviewer`, `doc-sync-planner` | Ítéletet igényel, de **kötött szempontlista** mentén (nem nyílt felfedezés). |
+| `low` | a 4 fixer + `review-fixer`, `test-runner`, `researcher`, `10-cycle-status` | Pontos hibalistát célzottan javító, ill. tisztán mechanikus munka — a reasoning-mélység itt nem fizet, csak tokent éget. |
+
+**Egy szándékos kivétel:** a `test-runner` mechanikus (tesztek/Sonar/E2E futtatása), mégis `default` **modellen** (nem a legolcsóbbon) fut — a több lépéses Bash-orchesztráció (portütközés, config-visszaállítás) és a projektenként eltérő teszt-/Sonar-kimenet megbízható, **konzisztens tesztnevű** összegzése kritikus: egy elgépelt név csendben elronthatná a 07-hurok per-item 3-próba számlálóját (VD4). (Az effortja viszont `low` — a pontosság formakövetés, nem reasoning-mélység kérdése.)
 
 **Konfiguráció és telepítés:**
-- **Forrás:** [`prompts/models.json`](prompts/models.json) — platformonként a 3 kulcs. Az `install-helper.py` `AGENT_MODEL_KEYS` szótára rendeli az agent/skill stemeket a kulcsokhoz; ami nincs benne, `default`-ot kap.
-- **Beírás telepítéskor** (`./install.sh`): Antigravity → `agent.json` `"model"` kulcs; Claude Code / Copilot → az `.md` / `.agent.md` YAML frontmatter `model` mezője.
-- **Manuális váltás:** ha nem a telepített ágensekre támaszkodsz, kövesd a fenti leosztást a CLI/IDE modellválasztójában.
+- **Forrás:** [`prompts/models.json`](prompts/models.json) — platformonként (`claude` / `antigravity` / `copilot` / `cursor`) a 3 tier `{model, effort}` objektumként, plusz a defaulttól eltérő agentek **saját nevű sorként** (csak az `effort` mezővel; a modelljük a `default` tierből jön). Az `install-helper.py` `AGENT_MODEL_KEYS` szótára rendeli az `analyzer`/`researcher`/`10-cycle-status` stemeket a tierekhez; ami nincs sem itt, sem saját sorként a `models.json`-ban, `default` modellt és `default` (=`high`) effortot kap.
+- **Beírás telepítéskor** (`./install.sh`): Antigravity → `agent.json` `"model"` + `"effort"` kulcs; Claude Code / Copilot / Cursor → az agent-fájl YAML frontmatter `model` + `effort` mezője. A skillek (orchestrátor fő ágensek, nem subagentek) **csak `model`-t** kapnak, effortot nem.
+- **Effort natív támogatása:** Claude Code-ban a subagent `effort:` frontmatter-mező natívan hat. A többi platformon (Antigravity/Copilot/Cursor) az érték **látható ajánlás** (frontmatter + „Recommended Effort" alert), a Cursor `model` mezője viszont natív. Cursornál a read-only agentek (`analyzer`, `researcher`, `doc-sync-planner`) `readonly: true`-t is kapnak.
+- **Manuális váltás:** ha nem a telepített ágensekre támaszkodsz, kövesd a fenti leosztást a CLI/IDE modell- és effort-választójában.
 
 ### 5.4 Az 05-analyze önjavító hurok (részletes)
 
@@ -1087,9 +1110,10 @@ A `prompts/skills/` és `prompts/agents/` a **single source of truth**. A külö
 
 | Ágens | Skill-hely | Subagent-hely |
 |---|---|---|
-| Claude Code | `~/.claude/commands/` vagy `.claude/commands/` | `~/.claude/agents/` vagy `.claude/agents/` |
-| Cursor | `.cursor/rules/` vagy `.cursor/commands/` | — |
+| Claude Code | `~/.claude/skills/bs-{skill_name}/SKILL.md` vagy `.claude/skills/…` | `~/.claude/agents/` vagy `.claude/agents/` |
+| Cursor (Agent CLI) | `.cursor/skills/bs-{skill_name}/SKILL.md` | `.cursor/agents/{agent_name}.md` |
 | Antigravity | `.agents/skills/{skill_name}/SKILL.md` | `.agents/agents/{agent_name}/agent.json` |
+| GitHub Copilot | `.github/instructions/bs-{name}.instructions.md` | `.github/agents/{agent_name}.agent.md` |
 | Codex CLI | nincs standard skill-rendszer (manuális másolás) | — |
 
 Az integrációk beállításához futtasd a [`install.sh`](install.sh) scriptet:

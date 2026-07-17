@@ -636,7 +636,7 @@ A `prompts/skills/` és `prompts/agents/` a **single source of truth**. A külö
 | Ágens | Skill-hely | Subagent-hely |
 |---|---|---|
 | Claude Code | `~/.claude/commands/` vagy `.claude/commands/` (project) | `~/.claude/agents/` vagy `.claude/agents/` |
-| Cursor | `.cursor/rules/` vagy `.cursor/commands/` | — (nincs külön) |
+| Cursor (Agent CLI) | `.cursor/skills/bs-{skill_name}/SKILL.md` | `.cursor/agents/{agent_name}.md` |
 | Antigravity | nincs natív skill-konvenció (manuális másolás) | — |
 | Codex CLI | nincs standard skill-rendszer (manuális másolás) | — |
 | OpenCode | saját konvenció (nem dokumentált a listában) | — |
