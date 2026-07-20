@@ -108,9 +108,14 @@ A BerkiSpec keretrendszer beállítása a célprojektben rendkívül egyszerű �
 ### Telepítés lépései:
 1. Nyiss meg egy terminált a `berkispec` repository gyökerében.
 2. Futtasd a telepítő scriptet:
-   ```bash
-   ./install.sh
-   ```
+   * **Linux/macOS:**
+     ```bash
+     ./install.sh
+     ```
+   * **Windows (PowerShell):**
+     ```powershell
+     .\install.ps1
+     ```
 3. A script interaktív módon üdvözöl, és bekéri a célprojekted gyökérmappáját.
    * *Tipp:* Az útvonal beírása közben a **Tab** billentyűvel automatikusan kiegészítheted a mappaneveket, míg a **Tab kétszeri megnyomásával** kilistázhatod az aktuális könyvtár tartalmát.
 4. Válaszd ki az általad használt AI agent platformot (1–5).
@@ -1116,11 +1121,16 @@ A `prompts/skills/` és `prompts/agents/` a **single source of truth**. A külö
 | GitHub Copilot | `.github/instructions/bs-{name}.instructions.md` | `.github/agents/{agent_name}.agent.md` |
 | Codex CLI | nincs standard skill-rendszer (manuális másolás) | — |
 
-Az integrációk beállításához futtasd a [`install.sh`](install.sh) scriptet:
-```bash
-chmod +x install.sh
-./install.sh
-```
+Az integrációk beállításához futtasd a [`install.sh`](install.sh) vagy a [`install.ps1`](install.ps1) scriptet:
+* **Linux/macOS:**
+  ```bash
+  chmod +x install.sh
+  ./install.sh
+  ```
+* **Windows (PowerShell):**
+  ```powershell
+  .\install.ps1
+  ```
 
 ### 19.1 Antigravity CLI (Google DeepMind)
 
