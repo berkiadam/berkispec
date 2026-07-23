@@ -279,7 +279,7 @@ A végrehajtás után **kötelező** lefuttatni a kétrétegű, projektfüggetle
 
 ### Réteg 1 — mindig futó, generikus magkapu (`ds22-gate-check.py`)
 
-Futtasd a `ds22-gate-check.py`-t a `docs-generated/` mappára. A telepítő a platform-specifikus scripts-mappába másolja (a 10-cycle-status mintájára): Antigravity-nél `.agents/scripts/`, Claude Code-nál `.claude/scripts/`, Copilotnál `.github/scripts/`.
+Futtasd a `ds22-gate-check.py`-t a `docs-generated/` mappára. A telepítő a platform-specifikus scripts-mappába másolja (a 10-cycle-status mintájára): Antigravity-nél `.agents/scripts/`, Claude Code-nál `.claude/scripts/`, Cursornál `.cursor/scripts/`, Copilotnál `.github/scripts/`, Codexnél `.codex/scripts/`.
 
 ```bash
 python3 <platform-scripts-mappa>/ds22-gate-check.py docs-generated/ \

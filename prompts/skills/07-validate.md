@@ -114,7 +114,7 @@ Csak akkor hívd, ha az 1. lépés PASS volt. Hívd újra a `test-runner` subage
 
 > **⚠ Átmeneti port-módosítás:** ha a subagent jelentése ideiglenes config-/port-csere kell, ellenőrizd, hogy a jelentés szerint sikeresen visszaállt-e az eredeti állapot; ha nem, állítsd vissza te (`git checkout -- <fájl>`), mielőtt a validate fázis véget ér — ez nem kerülhet be a ciklus diffjébe.
 
-**Ismételt hibák naplózása (szkripttel, determinisztikusan):** mindkét lépés (1. és 2.) eredményét naplóznod kell a `specs/cycle-NN-<cycle-name>/test-report/validate-decision.md` `# Validation History` szekciójába. **A futás-bejegyzést és a per-item egymást-követő-bukás számlálót NE kézzel írd/számold** — a `failure-counter.py` szkript végzi (a telepítő a platform scripts-mappájába másolja: `.claude/scripts/` / `.agents/scripts/` / `.github/scripts/`). A `test-runner` által **szó szerint** visszaadott bukott-item neveket add át neki:
+**Ismételt hibák naplózása (szkripttel, determinisztikusan):** mindkét lépés (1. és 2.) eredményét naplóznod kell a `specs/cycle-NN-<cycle-name>/test-report/validate-decision.md` `# Validation History` szekciójába. **A futás-bejegyzést és a per-item egymást-követő-bukás számlálót NE kézzel írd/számold** — a `failure-counter.py` szkript végzi (a telepítő a platform scripts-mappájába másolja: `.claude/scripts/` / `.agents/scripts/` / `.cursor/scripts/` / `.github/scripts/` / `.codex/scripts/`). A `test-runner` által **szó szerint** visszaadott bukott-item neveket add át neki:
 
 ```bash
 # FAIL — minden bukott itemet külön --failed-item-ként (a test-runner nevein):

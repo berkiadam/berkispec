@@ -145,11 +145,12 @@ ask_agent_platform() {
   echo -e "  ${CYAN}3)${RESET} ${GREEN}●${RESET} Claude Code"
   echo -e "  ${CYAN}4)${RESET} ${GREEN}●${RESET} Cursor"
   echo -e "  ${CYAN}5)${RESET} ${GREEN}●${RESET} GitHub Copilot (CLI & IDE)"
+  echo -e "  ${CYAN}6)${RESET} ${GREEN}●${RESET} Codex CLI"
   echo ""
 
   local choice=""
   while true; do
-    echo -ne "  ${MAGENTA}❯${RESET} Választás [1-5]: "
+    echo -ne "  ${MAGENTA}❯${RESET} Választás [1-6]: "
     read -r choice
 
     case "${choice}" in
@@ -169,13 +170,17 @@ ask_agent_platform() {
         PLATFORM_CHOICE="copilot"
         break
         ;;
+      6)
+        PLATFORM_CHOICE="codex"
+        break
+        ;;
       2)
         echo ""
         separator
         echo ""
         echo -e "  ${ORANGE}🚧  Még nincs implementálva.${RESET}"
         echo ""
-        echo -e "  ${GRAY}Jelenleg a ${GREEN}Google Antigravity CLI${GRAY}, a ${GREEN}Claude Code${GRAY}, a ${GREEN}Cursor${GRAY} és a ${GREEN}GitHub Copilot${GRAY} támogatott."
+        echo -e "  ${GRAY}Jelenleg a ${GREEN}Google Antigravity CLI${GRAY}, a ${GREEN}Claude Code${GRAY}, a ${GREEN}Cursor${GRAY}, a ${GREEN}GitHub Copilot${GRAY} és a ${GREEN}Codex CLI${GRAY} támogatott."
         echo -e "  A többi platform hamarosan érkezik!${RESET}"
         echo ""
         separator
@@ -183,7 +188,7 @@ ask_agent_platform() {
         exit 0
         ;;
       *)
-        warn "Kérlek válassz 1-5 közötti számot."
+        warn "Kérlek válassz 1-6 közötti számot."
         ;;
     esac
   done
@@ -195,8 +200,18 @@ ask_agent_platform() {
     success "Platform: ${BOLD}Claude Code${RESET}"
   elif [[ "${PLATFORM_CHOICE}" == "cursor" ]]; then
     success "Platform: ${BOLD}Cursor${RESET}"
+  elif [[ "${PLATFORM_CHOICE}" == "codex" ]]; then
+    success "Platform: ${BOLD}Codex CLI${RESET}"
   else
     success "Platform: ${BOLD}GitHub Copilot${RESET}"
+  fi
+
+  # ── Codex ↔ Antigravity kölcsönös kizárás — előzetes figyelmeztetés ──
+  if [[ "${PLATFORM_CHOICE}" == "codex" || "${PLATFORM_CHOICE}" == "antigravity" ]]; then
+    echo ""
+    warn "A ${BOLD}Codex CLI${RESET} és a ${BOLD}Google Antigravity CLI${RESET} a közös ${BOLD}.agents/skills/${RESET} mappát használja."
+    echo -e "  ${GRAY}Ezért egy projektbe gyakorlatilag csak az egyik telepíthető — ha ezt"
+    echo -e "  telepíted, a másikat ugyanebbe a projektbe később már nem tudod.${RESET}"
   fi
 }
 
@@ -249,10 +264,42 @@ ask_conflict() {
   handle_conflict "${target}" "${type}" || CONFLICT_ANSWER=$?
 }
 
+# ── Codex ↔ Antigravity kölcsönös kizárás ─────────────────────────────────────
+# A Codex és az Antigravity UGYANAZT a .agents/skills/ mappát használja, ezért
+# egy projektbe csak az egyik telepíthető értelmesen. Ha a másik platform egyedi
+# markere (.codex/agents vagy .agents/agents) már létezik, figyelmeztet és rákérdez.
+# Argumentumok: <másik-platform-marker-mappa> <másik-platform-neve>
+check_mutual_exclusion() {
+  local other_marker="$1"
+  local other_name="$2"
+
+  if has_existing_content "${other_marker}"; then
+    echo ""
+    warn "Úgy tűnik, a(z) ${BOLD}${other_name}${RESET} már telepítve van ebbe a projektbe."
+    echo -e "  ${GRAY}A Codex és az Antigravity a közös ${BOLD}.agents/skills/${RESET}${GRAY} mappát használja,"
+    echo -e "  ezért a folytatás felülírhatja a(z) ${other_name} skilljeit.${RESET}"
+    echo -ne "    ${YELLOW}?${RESET} Biztosan folytatod? [${BOLD}i${RESET}/${BOLD}n${RESET}]: "
+    local answer=""
+    read -r answer
+    case "${answer,,}" in
+      i|igen)
+        return 0
+        ;;
+      *)
+        error "Telepítés megszakítva."
+        exit 1
+        ;;
+    esac
+  fi
+}
+
 # ── Google Antigravity Telepítés ──────────────────────────────
 install_antigravity() {
   local agents_dest="${PROJECT_PATH}/.agents/agents"
   local skills_dest="${PROJECT_PATH}/.agents/skills"
+
+  # ── Codex ↔ Antigravity kölcsönös kizárás ──
+  check_mutual_exclusion "${PROJECT_PATH}/.codex/agents" "Codex CLI"
 
   # ── .agents mappa létrehozás ──
   if [[ ! -d "${PROJECT_PATH}/.agents" ]]; then
@@ -417,6 +464,69 @@ install_cursor() {
   fi
 }
 
+# ── Codex CLI Telepítés ───────────────────────────────────────
+install_codex() {
+  local agents_dest="${PROJECT_PATH}/.codex/agents"
+  local skills_dest="${PROJECT_PATH}/.agents/skills"
+
+  # ── Codex ↔ Antigravity kölcsönös kizárás ──
+  check_mutual_exclusion "${PROJECT_PATH}/.agents/agents" "Google Antigravity CLI"
+
+  # ── .codex létezik, de nem mappa (stray fájl/hivatkozás) ──
+  if [[ -e "${PROJECT_PATH}/.codex" && ! -d "${PROJECT_PATH}/.codex" ]]; then
+    warn "A ${DIM}${PROJECT_PATH}/.codex${RESET} létezik, de nem mappa (fájl vagy hivatkozás)."
+    echo -e "  ${GRAY}A Codex telepítéshez ennek mappának kell lennie.${RESET}"
+    echo -ne "    ${YELLOW}?${RESET} Eltávolítsam és mappaként hozzam létre? [${BOLD}i${RESET}/${BOLD}n${RESET}]: "
+    local codex_rm=""
+    read -r codex_rm
+    case "${codex_rm,,}" in
+      i|igen)
+        rm -f "${PROJECT_PATH}/.codex"
+        ;;
+      *)
+        error "Telepítés megszakítva. Töröld vagy nevezd át a .codex fájlt, majd futtasd újra."
+        exit 1
+        ;;
+    esac
+  fi
+
+  # ── .codex mappa létrehozás ──
+  if [[ ! -d "${PROJECT_PATH}/.codex" ]]; then
+    mkdir -p "${PROJECT_PATH}/.codex"
+    success ".codex/ mappa létrehozva"
+  fi
+
+  # ── Ütközés ellenőrzés ──
+  if has_existing_content "${agents_dest}" "${skills_dest}"; then
+    ask_conflict ".codex/agents és .agents/skills" "mappa"
+    case "${CONFLICT_ANSWER}" in
+      1)
+        warn "Codex telepítés kihagyva, a meglévő fájlok érintetlenek."
+        INSTALL_STATUS="skipped"
+        return 0
+        ;;
+      2)
+        error "Telepítés megszakítva."
+        exit 1
+        ;;
+    esac
+  fi
+
+  # ── Agents & Skills ──
+  echo ""
+  echo -e "  ${BLUE}📦 Codex Subagent-ek (.codex/agents/) és Skill-ek (.agents/skills/) telepítése${RESET}"
+  separator
+
+  info "Fájlok másolása és modellek konfigurálása..."
+  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "codex" "${SCRIPT_DIR}" "${PROJECT_PATH}"; then
+    success "Codex subagentek (TOML) és skillek sikeresen konfigurálva és másolva!"
+    INSTALL_STATUS="done"
+  else
+    error "Hiba történt a fájlok másolása során!"
+    exit 1
+  fi
+}
+
 # ── 3. lépés: Másolás és Konfigurálás (Orchestrator) ─────────────────────────
 create_symlinks() {
   step "3. lépés: Telepítés"
@@ -428,6 +538,8 @@ create_symlinks() {
     install_claude
   elif [[ "${PLATFORM_CHOICE}" == "cursor" ]]; then
     install_cursor
+  elif [[ "${PLATFORM_CHOICE}" == "codex" ]]; then
+    install_codex
   else
     install_copilot
   fi
@@ -458,7 +570,7 @@ show_summary() {
     echo -e "  ${GRAY}A telepített struktúra:${RESET}"
     echo -e "  ${DIM}${PROJECT_PATH}/.agents/"
     echo -e "  ├── agents/        ${CYAN}(agent JSON fájlok modell-konfigurációval)${RESET}${DIM}"
-    echo -e "  └── skills/        ${CYAN}(skill SKILL.md fájlok modell-konfigurációval)${RESET}"
+    echo -e "  └── skills/        ${CYAN}(fázis-skillek, SKILL.md)${RESET}"
     echo ""
     separator
     echo ""
@@ -470,7 +582,7 @@ show_summary() {
     echo -e "  ${GRAY}A telepített struktúra:${RESET}"
     echo -e "  ${DIM}${PROJECT_PATH}/.claude/"
     echo -e "  ├── agents/        ${CYAN}(agent MD fájlok modell-konfigurációval)${RESET}${DIM}"
-    echo -e "  └── skills/        ${CYAN}(skill SKILL.md fájlok modell-konfigurációval)${RESET}"
+    echo -e "  └── skills/        ${CYAN}(fázis-skillek, SKILL.md)${RESET}"
     echo ""
     separator
     echo ""
@@ -482,7 +594,7 @@ show_summary() {
     echo -e "  ${GRAY}A telepített struktúra:${RESET}"
     echo -e "  ${DIM}${PROJECT_PATH}/.cursor/"
     echo -e "  ├── agents/        ${CYAN}(subagent MD fájlok model + effort + readonly konfigurációval)${RESET}${DIM}"
-    echo -e "  └── skills/        ${CYAN}(skill SKILL.md fájlok modell-konfigurációval)${RESET}"
+    echo -e "  └── skills/        ${CYAN}(fázis-skillek, SKILL.md)${RESET}"
     echo ""
     echo -e "  ${DIM}${GRAY}Megjegyzés: a subagent \`model\` mezője natívan hat; az \`effort\`"
     echo -e "  látható ajánlás (a Cursor a nem ismert frontmatter-kulcsot kihagyja).${RESET}"
@@ -491,13 +603,31 @@ show_summary() {
     echo ""
     echo -e "  ${GRAY}Kezdéshez indítsd el a Cursor Agent CLI-t (${CYAN}agent${GRAY}) a projektedben,"
     echo -e "  és kérd a ${CYAN}bs-init-project${GRAY} skill futtatását.${RESET}"
+  elif [[ "${PLATFORM_CHOICE}" == "codex" ]]; then
+    echo -e "  ${WHITE}Platform:${RESET} ${BOLD}Codex CLI${RESET}"
+    echo ""
+    echo -e "  ${GRAY}A telepített struktúra:${RESET}"
+    echo -e "  ${DIM}${PROJECT_PATH}/.codex/"
+    echo -e "  ├── agents/        ${CYAN}(subagent TOML fájlok model + reasoning-effort + sandbox konfigurációval)${RESET}${DIM}"
+    echo -e "  └── scripts/       ${CYAN}(helper scriptek)${RESET}${DIM}"
+    echo -e "  ${PROJECT_PATH}/.agents/"
+    echo -e "  └── skills/        ${CYAN}(skill SKILL.md fájlok — a Codex innen olvassa a projekt-skilleket)${RESET}"
+    echo ""
+    echo -e "  ${DIM}${GRAY}Megjegyzés: a subagent \`model\` és \`model_reasoning_effort\` mezője"
+    echo -e "  natívan hat. A skillek az Antigravity-vel KÖZÖS .agents/skills/ mappát"
+    echo -e "  használják — ugyanabba a projektbe a kettő közül csak az egyik telepíthető.${RESET}"
+    echo ""
+    separator
+    echo ""
+    echo -e "  ${GRAY}Kezdéshez indítsd el a Codex CLI-t a projektedben,"
+    echo -e "  és kérd a ${CYAN}bs-init-project${GRAY} skill futtatását.${RESET}"
   else
     echo -e "  ${WHITE}Platform:${RESET} ${BOLD}GitHub Copilot (CLI & IDE)${RESET}"
     echo ""
     echo -e "  ${GRAY}A telepített struktúra:${RESET}"
     echo -e "  ${DIM}${PROJECT_PATH}/.github/"
     echo -e "  ├── agents/        ${CYAN}(*.agent.md fájlok modell-konfigurációval)${RESET}${DIM}"
-    echo -e "  └── instructions/  ${CYAN}(*.instructions.md fájlok modell-konfigurációval)${RESET}"
+    echo -e "  └── instructions/  ${CYAN}(fázis-skillek, *.instructions.md)${RESET}"
     echo ""
     separator
     echo ""

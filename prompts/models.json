@@ -150,5 +150,43 @@
     "test-runner": {
       "effort": "low"
     }
+  },
+  "codex": {
+    "deep_reasoning_agent": {
+      "model": "gpt-5.6-sol",
+      "effort": "high"
+    },
+    "default": {
+      "model": "gpt-5.6-luna",
+      "effort": "high"
+    },
+    "research_agent": {
+      "model": "gpt-5.4-mini",
+      "effort": "low"
+    },
+    "reviewer": {
+      "effort": "medium"
+    },
+    "doc-sync-planner": {
+      "effort": "medium"
+    },
+    "spec-fixer": {
+      "effort": "low"
+    },
+    "plan-fixer": {
+      "effort": "low"
+    },
+    "tasks-fixer": {
+      "effort": "low"
+    },
+    "implement-fixer": {
+      "effort": "low"
+    },
+    "review-fixer": {
+      "effort": "low"
+    },
+    "test-runner": {
+      "effort": "low"
+    }
   }
 }

@@ -154,11 +154,12 @@ function Ask-AgentPlatform {
     Write-Host "  ${CYAN}3)${RESET} ${GREEN}●${RESET} Claude Code"
     Write-Host "  ${CYAN}4)${RESET} ${GREEN}●${RESET} Cursor"
     Write-Host "  ${CYAN}5)${RESET} ${GREEN}●${RESET} GitHub Copilot (CLI & IDE)"
+    Write-Host "  ${CYAN}6)${RESET} ${GREEN}●${RESET} Codex CLI"
     Write-Host ""
 
     $choice = ""
     while ($true) {
-        Write-Host -NoNewline "  ${MAGENTA}❯${RESET} Választás [1-5]: "
+        Write-Host -NoNewline "  ${MAGENTA}❯${RESET} Választás [1-6]: "
         $choice = Read-Host
 
         switch ($choice) {
@@ -178,13 +179,17 @@ function Ask-AgentPlatform {
                 $script:PLATFORM_CHOICE = "copilot"
                 break
             }
+            "6" {
+                $script:PLATFORM_CHOICE = "codex"
+                break
+            }
             "2" {
                 Write-Host ""
                 Write-Separator
                 Write-Host ""
                 Write-Host "  ${ORANGE}🚧  Még nincs implementálva.${RESET}"
                 Write-Host ""
-                Write-Host "  ${GRAY}Jelenleg a ${GREEN}Google Antigravity CLI${GRAY}, a ${GREEN}Claude Code${GRAY}, a ${GREEN}Cursor${GRAY} és a ${GREEN}GitHub Copilot${GRAY} támogatott."
+                Write-Host "  ${GRAY}Jelenleg a ${GREEN}Google Antigravity CLI${GRAY}, a ${GREEN}Claude Code${GRAY}, a ${GREEN}Cursor${GRAY}, a ${GREEN}GitHub Copilot${GRAY} és a ${GREEN}Codex CLI${GRAY} támogatott."
                 Write-Host "  A többi platform hamarosan érkezik!${RESET}"
                 Write-Host ""
                 Write-Separator
@@ -192,7 +197,7 @@ function Ask-AgentPlatform {
                 exit 0
             }
             default {
-                Write-Warn "Kérlek válassz 1-5 közötti számot."
+                Write-Warn "Kérlek válassz 1-6 közötti számot."
             }
         }
         if ($script:PLATFORM_CHOICE) { break }
@@ -205,8 +210,18 @@ function Ask-AgentPlatform {
         Write-Success "Platform: ${BOLD}Claude Code${RESET}"
     } elseif ($script:PLATFORM_CHOICE -eq "cursor") {
         Write-Success "Platform: ${BOLD}Cursor${RESET}"
+    } elseif ($script:PLATFORM_CHOICE -eq "codex") {
+        Write-Success "Platform: ${BOLD}Codex CLI${RESET}"
     } else {
         Write-Success "Platform: ${BOLD}GitHub Copilot${RESET}"
+    }
+
+    # ── Codex ↔ Antigravity kölcsönös kizárás — előzetes figyelmeztetés ──
+    if ($script:PLATFORM_CHOICE -eq "codex" -or $script:PLATFORM_CHOICE -eq "antigravity") {
+        Write-Host ""
+        Write-Warn "A ${BOLD}Codex CLI${RESET} és a ${BOLD}Google Antigravity CLI${RESET} a közös ${BOLD}.agents/skills/${RESET} mappát használja."
+        Write-Host "  ${GRAY}Ezért egy projektbe gyakorlatilag csak az egyik telepíthető — ha ezt"
+        Write-Host "  telepíted, a másikat ugyanebbe a projektbe később már nem tudod.${RESET}"
     }
 }
 
@@ -265,10 +280,41 @@ function Ask-Conflict {
     $script:CONFLICT_ANSWER = Handle-Conflict $target $type
 }
 
+# ── Codex ↔ Antigravity kölcsönös kizárás ─────────────────────────────────────
+# A Codex és az Antigravity UGYANAZT a .agents/skills/ mappát használja, ezért
+# egy projektbe csak az egyik telepíthető értelmesen. Ha a másik platform egyedi
+# markere (.codex/agents vagy .agents/agents) már létezik, figyelmeztet és rákérdez.
+function Check-MutualExclusion {
+    param(
+        [string]$other_marker,
+        [string]$other_name
+    )
+
+    if (Has-ExistingContent @($other_marker)) {
+        Write-Host ""
+        Write-Warn "Úgy tűnik, a(z) ${BOLD}${other_name}${RESET} már telepítve van ebbe a projektbe."
+        Write-Host "  ${GRAY}A Codex és az Antigravity a közös ${BOLD}.agents/skills/${RESET}${GRAY} mappát használja,"
+        Write-Host "  ezért a folytatás felülírhatja a(z) ${other_name} skilljeit.${RESET}"
+        Write-Host -NoNewline "    ${YELLOW}?${RESET} Biztosan folytatod? [${BOLD}i${RESET}/${BOLD}n${RESET}]: "
+        $answer = Read-Host
+        switch ($answer.ToLower()) {
+            "i" { return }
+            "igen" { return }
+            default {
+                Write-Error "Telepítés megszakítva."
+                exit 1
+            }
+        }
+    }
+}
+
 # ── Google Antigravity Telepítés ──────────────────────────────
 function Install-Antigravity {
     $agents_dest = Join-Path $script:PROJECT_PATH ".agents/agents"
     $skills_dest = Join-Path $script:PROJECT_PATH ".agents/skills"
+
+    # Codex ↔ Antigravity kölcsönös kizárás
+    Check-MutualExclusion (Join-Path $script:PROJECT_PATH ".codex/agents") "Codex CLI"
 
     # .agents mappa létrehozás
     $agents_folder = Join-Path $script:PROJECT_PATH ".agents"
@@ -445,6 +491,71 @@ function Install-Cursor {
     }
 }
 
+# ── Codex CLI Telepítés ───────────────────────────────────────
+function Install-Codex {
+    $agents_dest = Join-Path $script:PROJECT_PATH ".codex/agents"
+    $skills_dest = Join-Path $script:PROJECT_PATH ".agents/skills"
+
+    # Codex ↔ Antigravity kölcsönös kizárás
+    Check-MutualExclusion (Join-Path $script:PROJECT_PATH ".agents/agents") "Google Antigravity CLI"
+
+    $codex_folder = Join-Path $script:PROJECT_PATH ".codex"
+
+    # .codex létezik, de nem mappa (stray fájl/hivatkozás)
+    if ((Test-Path $codex_folder) -and -not (Test-Path $codex_folder -PathType Container)) {
+        Write-Warn "A ${DIM}$codex_folder${RESET} létezik, de nem mappa (fájl vagy hivatkozás)."
+        Write-Host "  ${GRAY}A Codex telepítéshez ennek mappának kell lennie.${RESET}"
+        Write-Host -NoNewline "    ${YELLOW}?${RESET} Eltávolítsam és mappaként hozzam létre? [${BOLD}i${RESET}/${BOLD}n${RESET}]: "
+        $codex_rm = Read-Host
+        switch ($codex_rm.ToLower()) {
+            "i" { Remove-Item -Force $codex_folder }
+            "igen" { Remove-Item -Force $codex_folder }
+            default {
+                Write-Error "Telepítés megszakítva. Töröld vagy nevezd át a .codex fájlt, majd futtasd újra."
+                exit 1
+            }
+        }
+    }
+
+    # .codex mappa létrehozás
+    if (-not (Test-Path $codex_folder -PathType Container)) {
+        New-Item -ItemType Directory -Path $codex_folder -Force | Out-Null
+        Write-Success ".codex/ mappa létrehozva"
+    }
+
+    # Ütközés ellenőrzés
+    if (Has-ExistingContent @($agents_dest, $skills_dest)) {
+        Ask-Conflict ".codex/agents és .agents/skills" "mappa"
+        switch ($script:CONFLICT_ANSWER) {
+            1 {
+                Write-Warn "Codex telepítés kihagyva, a meglévő fájlok érintetlenek."
+                $script:INSTALL_STATUS = "skipped"
+                return
+            }
+            2 {
+                Write-Error "Telepítés megszakítva."
+                exit 1
+            }
+        }
+    }
+
+    # Agents & Skills
+    Write-Host ""
+    Write-Host "  ${BLUE}📦 Codex Subagent-ek (.codex/agents/) és Skill-ek (.agents/skills/) telepítése${RESET}"
+    Write-Separator
+
+    Write-Info "Fájlok másolása és modellek konfigurálása..."
+    $helper_script = Join-Path $SCRIPT_DIR "prompts/scripts/install-helper.py"
+    & $script:PYTHON_CMD $helper_script "codex" $SCRIPT_DIR $script:PROJECT_PATH
+    if ($LASTEXITCODE -eq 0) {
+        Write-Success "Codex subagentek (TOML) és skillek sikeresen konfigurálva és másolva!"
+        $script:INSTALL_STATUS = "done"
+    } else {
+        Write-Error "Hiba történt a fájlok másolása során!"
+        exit 1
+    }
+}
+
 # ── 3. lépés: Másolás és Konfigurálás (Orchestrator) ─────────────────────────
 function Create-Symlinks {
     Write-Step "3. lépés: Telepítés"
@@ -456,6 +567,8 @@ function Create-Symlinks {
         Install-Claude
     } elseif ($script:PLATFORM_CHOICE -eq "cursor") {
         Install-Cursor
+    } elseif ($script:PLATFORM_CHOICE -eq "codex") {
+        Install-Codex
     } else {
         Install-Copilot
     }
@@ -486,7 +599,7 @@ function Show-Summary {
         Write-Host "  ${GRAY}A telepített struktúra:${RESET}"
         Write-Host "  ${DIM}$($script:PROJECT_PATH)/.agents/"
         Write-Host "  ├── agents/        ${CYAN}(agent JSON fájlok modell-konfigurációval)${RESET}${DIM}"
-        Write-Host "  └── skills/        ${CYAN}(skill SKILL.md fájlok modell-konfigurációval)${RESET}"
+        Write-Host "  └── skills/        ${CYAN}(fázis-skillek, SKILL.md)${RESET}"
         Write-Host ""
         Write-Separator
         Write-Host ""
@@ -498,7 +611,7 @@ function Show-Summary {
         Write-Host "  ${GRAY}A telepített struktúra:${RESET}"
         Write-Host "  ${DIM}$($script:PROJECT_PATH)/.claude/"
         Write-Host "  ├── agents/        ${CYAN}(agent MD fájlok modell-konfigurációval)${RESET}${DIM}"
-        Write-Host "  └── skills/        ${CYAN}(skill SKILL.md fájlok modell-konfigurációval)${RESET}"
+        Write-Host "  └── skills/        ${CYAN}(fázis-skillek, SKILL.md)${RESET}"
         Write-Host ""
         Write-Separator
         Write-Host ""
@@ -510,7 +623,7 @@ function Show-Summary {
         Write-Host "  ${GRAY}A telepített struktúra:${RESET}"
         Write-Host "  ${DIM}$($script:PROJECT_PATH)/.cursor/"
         Write-Host "  ├── agents/        ${CYAN}(subagent MD fájlok model + effort + readonly konfigurációval)${RESET}${DIM}"
-        Write-Host "  └── skills/        ${CYAN}(skill SKILL.md fájlok modell-konfigurációval)${RESET}"
+        Write-Host "  └── skills/        ${CYAN}(fázis-skillek, SKILL.md)${RESET}"
         Write-Host ""
         Write-Host "  ${DIM}${GRAY}Megjegyzés: a subagent \`model\` mezője natívan hat; az \`effort\`"
         Write-Host "  látható ajánlás (a Cursor a nem ismert frontmatter-kulcsot kihagyja).${RESET}"
@@ -519,13 +632,31 @@ function Show-Summary {
         Write-Host ""
         Write-Host "  ${GRAY}Kezdéshez indítsd el a Cursor Agent CLI-t (${CYAN}agent${GRAY}) a projektedben,"
         Write-Host "  és kérd a ${CYAN}bs-init-project${GRAY} skill futtatását.${RESET}"
+    } elseif ($script:PLATFORM_CHOICE -eq "codex") {
+        Write-Host "  ${WHITE}Platform:${RESET} ${BOLD}Codex CLI${RESET}"
+        Write-Host ""
+        Write-Host "  ${GRAY}A telepített struktúra:${RESET}"
+        Write-Host "  ${DIM}$($script:PROJECT_PATH)/.codex/"
+        Write-Host "  ├── agents/        ${CYAN}(subagent TOML fájlok model + reasoning-effort + sandbox konfigurációval)${RESET}${DIM}"
+        Write-Host "  └── scripts/       ${CYAN}(helper scriptek)${RESET}${DIM}"
+        Write-Host "  $($script:PROJECT_PATH)/.agents/"
+        Write-Host "  └── skills/        ${CYAN}(skill SKILL.md fájlok — a Codex innen olvassa a projekt-skilleket)${RESET}"
+        Write-Host ""
+        Write-Host "  ${DIM}${GRAY}Megjegyzés: a subagent \`model\` és \`model_reasoning_effort\` mezője"
+        Write-Host "  natívan hat. A skillek az Antigravity-vel KÖZÖS .agents/skills/ mappát"
+        Write-Host "  használják — ugyanabba a projektbe a kettő közül csak az egyik telepíthető.${RESET}"
+        Write-Host ""
+        Write-Separator
+        Write-Host ""
+        Write-Host "  ${GRAY}Kezdéshez indítsd el a Codex CLI-t a projektedben,"
+        Write-Host "  és kérd a ${CYAN}bs-init-project${GRAY} skill futtatását.${RESET}"
     } else {
         Write-Host "  ${WHITE}Platform:${RESET} ${BOLD}GitHub Copilot (CLI & IDE)${RESET}"
         Write-Host ""
         Write-Host "  ${GRAY}A telepített struktúra:${RESET}"
         Write-Host "  ${DIM}$($script:PROJECT_PATH)/.github/"
         Write-Host "  ├── agents/        ${CYAN}(*.agent.md fájlok modell-konfigurációval)${RESET}${DIM}"
-        Write-Host "  └── instructions/  ${CYAN}(*.instructions.md fájlok modell-konfigurációval)${RESET}"
+        Write-Host "  └── instructions/  ${CYAN}(fázis-skillek, *.instructions.md)${RESET}"
         Write-Host ""
         Write-Separator
         Write-Host ""

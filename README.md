@@ -57,6 +57,7 @@
       - [17.1.1 Tervezési és naplózási folyamat (Planning Mode)](#1711-tervezési-és-naplózási-folyamat-planning-mode)
       - [17.1.2 Jogosultságok kezelése (Permissions)](#1712-jogosultságok-kezelése-permissions)
       - [17.1.3 Skillek és Ágensek indítása (TUI használat)](#1713-skillek-és-ágensek-indítása-tui-használat)
+    - [19.2 Codex CLI (OpenAI)](#192-codex-cli-openai)
 
 <!-- /TOC -->
 
@@ -118,10 +119,10 @@ A BerkiSpec keretrendszer beállítása a célprojektben rendkívül egyszerű �
      ```
 3. A script interaktív módon üdvözöl, és bekéri a célprojekted gyökérmappáját.
    * *Tipp:* Az útvonal beírása közben a **Tab** billentyűvel automatikusan kiegészítheted a mappaneveket, míg a **Tab kétszeri megnyomásával** kilistázhatod az aktuális könyvtár tartalmát.
-4. Válaszd ki az általad használt AI agent platformot (1–5).
+4. Válaszd ki az általad használt AI agent platformot (1–6).
 
 ### Támogatott platformok és ágensek:
-A keretrendszer négy népszerű fejlesztő platformra képes beállítani a környezetet:
+A keretrendszer öt népszerű fejlesztő platformra képes beállítani a környezetet:
 
 1. **Google Antigravity CLI:**
    * A projekt gyökerében létrehozza a `.agents/` konfigurációs mappát.
@@ -135,10 +136,14 @@ A keretrendszer négy népszerű fejlesztő platformra képes beállítani a kö
 4. **GitHub Copilot (CLI & IDE):**
    * A projekt gyökerében létrehozza a `.github/` konfigurációs mappát.
    * Az ágenseket a `.github/agents/<név>.agent.md` fájlként linkeli be, a skilleket pedig globális utasításokként a `.github/instructions/bs-<név>.instructions.md` fájlba rendezi.
+5. **Codex CLI:**
+   * A subagenteket a `.codex/agents/<név>.toml` **TOML** fájlokként hozza létre (natív `model` + `model_reasoning_effort` mezőkkel; a read-only agentek `sandbox_mode = "read-only"`-t kapnak).
+   * A skilleket a `.agents/skills/bs-<név>/SKILL.md` alá helyezi — a Codex a projekt-szintű skilleket innen olvassa.
+   * ⚠️ **Figyelem:** a Codex és az Antigravity **közös** `.agents/skills/` mappát használ, ezért egy projektbe a kettő közül csak az egyik telepíthető. A telepítő figyelmeztet és rákérdez, ha a másik már jelen van.
 
 ### Hogyan lehet használni?
 A telepítés után az adott platform automatikusan beolvassa a symlinkelt definíciókat:
-* **Google Antigravity CLI / Claude Code / Cursor Agent CLI:** Indítsd el a CLI-t a célprojekt mappájában (Cursornál az `agent` paranccsal). A chat felületen a `/` (per) karakter leütésével előhívhatod a skillek listáját. Mindegyik skill egységesen a `berkispec - <fázis>: <leírás>` névvel fog megjelenni, így azonnal láthatod az SDD lépések sorrendjét és célját. Kezdéshez hívd meg a `bs-init-project` skillt!
+* **Google Antigravity CLI / Claude Code / Cursor Agent CLI / Codex CLI:** Indítsd el a CLI-t a célprojekt mappájában (Cursornál az `agent` paranccsal). A chat felületen a `/` (per) karakter leütésével előhívhatod a skillek listáját. Mindegyik skill egységesen a `berkispec - <fázis>: <leírás>` névvel fog megjelenni, így azonnal láthatod az SDD lépések sorrendjét és célját. Kezdéshez hívd meg a `bs-init-project` skillt! (Codexnél a subagenteket a `/agent` paranccsal listázhatod/válthatsz köztük.)
 * **GitHub Copilot:** A Copilot Chat ablakában vagy a Copilot CLI-ben a `@` szimbólummal (pl. `@bs-init-project`) tudod közvetlenül aktiválni a kívánt fázis utasításait.
 
 ---
@@ -508,11 +513,11 @@ A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de *
 
 **Modell-tier — ki mit kap:**
 
-| Tier (`models.json` kulcs) | Ki kapja | Claude / Antigravity / Copilot / Cursor | Miért ez a tier |
+| Tier (`models.json` kulcs) | Ki kapja | Claude / Antigravity / Copilot / Cursor / Codex | Miért ez a tier |
 |---|---|---|---|
-| `deep_reasoning_agent` (legdrágább) | **kizárólag** `analyzer` (05) | `claude-opus-4-8` / `Claude Opus 4.6` / `Claude Opus 4.8` / `Opus 4.8` | Kereszt-fázisos konzisztencia-**diagnózis** (spec/plan/tasks/conventions) — a legmélyebb reasoning; egy itt vétett hiba a legdrágább downstream (rossz diagnózisra rossz kód épül). |
-| `default` | **minden más:** orchestrátor-skillek (05, 07…), a 4 fixer (`spec`/`plan`/`tasks`/`implement`-fixer), `reviewer`, `review-fixer`, `doc-sync-planner`, `test-runner` | `claude-sonnet-5` / `Gemini 3.5 Flash` / `Claude Sonnet 5` / `Sonnet 5` | A fixerek **kész, pontos hibalistát** kapnak (megoldás/eszkaláció, nem felfedezés); az orchestrátorok bookkeeping-et végeznek (marker, számláló, routing) a subagent **kész** jelentése alapján — nem diagnózis. |
-| `research_agent` (legolcsóbb) | `researcher` (00/01/02/03/06), `10-cycle-status` skill | `claude-haiku-4-5-20251001` / `Gemini 3.5 Flash` (low) / `Claude Haiku 4.5` / `Haiku 4.5` | Tiszta grep/glob/read fan-out, ill. determinisztikus script-futtatás — **nulla tervezési ítélet**; a „csak összefoglaló, soha nyers fájltartalom" kontraktus véd. Antigravityn nincs Haiku, ezért itt a `default` Flash modell fut, csak `low` efforton. |
+| `deep_reasoning_agent` (legdrágább) | **kizárólag** `analyzer` (05) | `claude-opus-4-8` / `Claude Opus 4.6` / `Claude Opus 4.8` / `Opus 4.8` / `gpt-5.6-sol` | Kereszt-fázisos konzisztencia-**diagnózis** (spec/plan/tasks/conventions) — a legmélyebb reasoning; egy itt vétett hiba a legdrágább downstream (rossz diagnózisra rossz kód épül). |
+| `default` | **minden más:** orchestrátor-skillek (05, 07…), a 4 fixer (`spec`/`plan`/`tasks`/`implement`-fixer), `reviewer`, `review-fixer`, `doc-sync-planner`, `test-runner` | `claude-sonnet-5` / `Gemini 3.5 Flash` / `Claude Sonnet 5` / `Sonnet 5` / `gpt-5.6-luna` | A fixerek **kész, pontos hibalistát** kapnak (megoldás/eszkaláció, nem felfedezés); az orchestrátorok bookkeeping-et végeznek (marker, számláló, routing) a subagent **kész** jelentése alapján — nem diagnózis. |
+| `research_agent` (legolcsóbb) | `researcher` (00/01/02/03/06), `10-cycle-status` skill | `claude-haiku-4-5-20251001` / `Gemini 3.5 Flash` (low) / `Claude Haiku 4.5` / `Haiku 4.5` / `gpt-5.4-mini` | Tiszta grep/glob/read fan-out, ill. determinisztikus script-futtatás — **nulla tervezési ítélet**; a „csak összefoglaló, soha nyers fájltartalom" kontraktus véd. Antigravityn nincs Haiku, ezért itt a `default` Flash modell fut, csak `low` efforton. |
 
 **Effort-leosztás — mennyi reasoning:**
 
@@ -525,9 +530,16 @@ A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de *
 **Egy szándékos kivétel:** a `test-runner` mechanikus (tesztek/Sonar/E2E futtatása), mégis `default` **modellen** (nem a legolcsóbbon) fut — a több lépéses Bash-orchesztráció (portütközés, config-visszaállítás) és a projektenként eltérő teszt-/Sonar-kimenet megbízható, **konzisztens tesztnevű** összegzése kritikus: egy elgépelt név csendben elronthatná a 07-hurok per-item 3-próba számlálóját (VD4). (Az effortja viszont `low` — a pontosság formakövetés, nem reasoning-mélység kérdése.)
 
 **Konfiguráció és telepítés:**
-- **Forrás:** [`prompts/models.json`](prompts/models.json) — platformonként (`claude` / `antigravity` / `copilot` / `cursor`) a 3 tier `{model, effort}` objektumként, plusz a defaulttól eltérő agentek **saját nevű sorként** (csak az `effort` mezővel; a modelljük a `default` tierből jön). Az `install-helper.py` `AGENT_MODEL_KEYS` szótára rendeli az `analyzer`/`researcher`/`10-cycle-status` stemeket a tierekhez; ami nincs sem itt, sem saját sorként a `models.json`-ban, `default` modellt és `default` (=`high`) effortot kap.
-- **Beírás telepítéskor** (`./install.sh`): Antigravity → `agent.json` `"model"` + `"effort"` kulcs; Claude Code / Copilot / Cursor → az agent-fájl YAML frontmatter `model` + `effort` mezője. A skillek (orchestrátor fő ágensek, nem subagentek) **csak `model`-t** kapnak, effortot nem.
-- **Effort natív támogatása:** Claude Code-ban a subagent `effort:` frontmatter-mező natívan hat. A többi platformon (Antigravity/Copilot/Cursor) az érték **látható ajánlás** (frontmatter + „Recommended Effort" alert), a Cursor `model` mezője viszont natív. Cursornál a read-only agentek (`analyzer`, `researcher`, `doc-sync-planner`) `readonly: true`-t is kapnak.
+- **Forrás:** [`prompts/models.json`](prompts/models.json) — platformonként (`claude` / `antigravity` / `copilot` / `cursor` / `codex`) a 3 tier `{model, effort}` objektumként, plusz a defaulttól eltérő agentek **saját nevű sorként** (csak az `effort` mezővel; a modelljük a `default` tierből jön). Az `install-helper.py` `AGENT_MODEL_KEYS` szótára rendeli az `analyzer`/`researcher`/`10-cycle-status` stemeket a tierekhez; ami nincs sem itt, sem saját sorként a `models.json`-ban, `default` modellt és `default` (=`high`) effortot kap.
+- **Beírás telepítéskor** (`./install.sh`): Antigravity → `agent.json` `"model"` + `"effort"` kulcs; Claude Code / Copilot / Cursor → az agent-fájl YAML frontmatter `model` + `effort` mezője; Codex → a `.codex/agents/<név>.toml` `model` + `model_reasoning_effort` kulcsa (+ read-only agenteknél `sandbox_mode = "read-only"`).
+- **A skillek** (orchestrátor fő ágensek, nem subagentek) **sem `model`-t, sem `effort`-ot nem kapnak** — egyetlen platformon sem. A skill-szintű `model` ugyanis **nem része az Agent Skills alap-szabványnak** (az csak `name`/`description`/`license`/`compatibility`/`metadata`/`allowed-tools`), hanem Claude Code-kiterjesztés, amit a célplatformokon a modellváltás **nem, vagy nem megbízhatóan** követ:
+  - **Codex:** a SKILL.md csak `name` + `description`-t ismer → egy `model` inert.
+  - **Copilot:** az `.instructions.md` nem ismer `model` mezőt (az csak *prompt*-fájlnál van) → inert.
+  - **Antigravity:** a `model` az *agent* frontmatter mezője, a skillé nem → inert.
+  - **Cursor:** a `model`-kiterjesztést legfeljebb részlegesen ismeri → nem garantált.
+  - **Claude Code:** a dokumentáció ígéri a skill-`model` váltást, de a valóságban **runtime-ban nem hat** ([anthropics/claude-code #45191](https://github.com/anthropics/claude-code/issues/45191), „not planned"-ként lezárva).
+  Mivel egy beírt skill-`model` a legjobb esetben inert, a legrosszabban félrevezető (nem létező képességet sugall), **sehová nem injektáljuk**. A modell-hangolás **kizárólag az agentek/subagentek** szintjén hat megbízhatóan (Claude subagent `model`/`effort`, Codex `.codex/agents/*.toml` `model`/`model_reasoning_effort`) — ott marad meg.
+- **Effort natív támogatása:** Claude Code-ban a subagent `effort:` frontmatter-mező, Codexben a `.codex/agents/*.toml` `model_reasoning_effort` mezője **natívan hat** (a fájl értéke elsőbbséget élvez). A többi platformon (Antigravity/Copilot/Cursor) az érték **látható ajánlás** (frontmatter + „Recommended Effort" alert), a Cursor `model` mezője viszont natív. Cursornál a read-only agentek (`analyzer`, `researcher`, `doc-sync-planner`) `readonly: true`-t, Codexnél `sandbox_mode = "read-only"`-t kapnak.
 - **Manuális váltás:** ha nem a telepített ágensekre támaszkodsz, kövesd a fenti leosztást a CLI/IDE modell- és effort-választójában.
 
 ### 5.4 Az 05-analyze önjavító hurok (részletes)
@@ -1119,7 +1131,7 @@ A `prompts/skills/` és `prompts/agents/` a **single source of truth**. A külö
 | Cursor (Agent CLI) | `.cursor/skills/bs-{skill_name}/SKILL.md` | `.cursor/agents/{agent_name}.md` |
 | Antigravity | `.agents/skills/{skill_name}/SKILL.md` | `.agents/agents/{agent_name}/agent.json` |
 | GitHub Copilot | `.github/instructions/bs-{name}.instructions.md` | `.github/agents/{agent_name}.agent.md` |
-| Codex CLI | nincs standard skill-rendszer (manuális másolás) | — |
+| Codex CLI | `.agents/skills/bs-{skill_name}/SKILL.md` (közös az Antigravity-vel) | `.codex/agents/{agent_name}.toml` |
 
 Az integrációk beállításához futtasd a [`install.sh`](install.sh) vagy a [`install.ps1`](install.ps1) scriptet:
 * **Linux/macOS:**
@@ -1157,3 +1169,16 @@ Az integrációs script lefutása után az Antigravity felületén kétfélekép
   ```
 * **Interaktív választómenü:** A `/skill` (vagy `/skills`) parancs beírásával egy vizuális menü ugrik fel a terminálban, ahonnan a nyilakkal (`↑/↓`) kiválaszthatod és az `enter` billentyűvel életre hívhatod a kívánt fázist.
 * **Egyedi ágensek listázása:** A `/agens` (vagy `/agent`) paranccsal tekintheted meg a regisztrált, egyedileg konfigurált subagenteket.
+
+### 19.2 Codex CLI (OpenAI)
+
+Ha a **Codex CLI**-t használod, a telepítő két különböző helyre dolgozik, mert a Codex az agenteket és a skilleket eltérő formátumban/helyen várja:
+
+1. **Subagentek → `.codex/agents/<név>.toml`.** A Codex subagentek **TOML**-fájlok (nem markdown). A telepítő a markdown agent-definíciókat automatikusan TOML-ra fordítja, és kitölti:
+   * `name`, `description` (az agent `role`-jából), `developer_instructions` (a teljes agent-prompt);
+   * `model` és `model_reasoning_effort` — ezek **natívan hatnak** (a fájlban megadott érték elsőbbséget élvez a spawn-/`[agents]`-default/parent érték felett);
+   * `sandbox_mode = "read-only"` a read-only agenteknél (`analyzer`, `researcher`, `doc-sync-planner`).
+   * Futás közben a subagentek a `/agent` paranccsal listázhatók, illetve válthatsz közöttük.
+2. **Skillek → `.agents/skills/bs-<név>/SKILL.md`.** A Codex a **projekt-szintű** skilleket a `.agents/skills/` mappából olvassa (a `.codex/skills` csak legacy, user-szintű hely — projekt-szinten nem található meg). A skillek slash-parancsként érhetők el (pl. `/bs-analyze`).
+
+> ⚠️ **Codex ↔ Antigravity kölcsönös kizárás.** A `.agents/skills/` mappát **a Codex ÉS az Antigravity is használja**, ezért egy projektbe a kettő közül gyakorlatilag csak az egyik telepíthető. A telepítő ezt figyeli: a platform kiválasztásakor előre figyelmeztet, és ha a másik platform már jelen van (`.codex/agents/` ↔ `.agents/agents/`), a telepítés előtt rákérdez, folytatod-e.

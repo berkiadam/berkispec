@@ -235,6 +235,132 @@ def inject_cursor_agent(content, model, effort, readonly=False):
 
     return f"---{chr(10).join(lines)}\n---{body}"
 
+# A skillek (orchestrátor fő ágensek, NEM subagentek) SZÁNDÉKOSAN nem kapnak
+# modell-injektálást egyetlen platformon sem. Indok: a skill-szintű `model` mező
+# NEM része az Agent Skills alap-szabványnak (az csak name/description/license/
+# compatibility/metadata/allowed-tools) — Claude Code-kiterjesztés. A célplatformok
+# vagy egyáltalán nem ismerik (Codex SKILL.md = csak name+description; Copilot
+# instructions = csak applyTo; Antigravity = a `model` az AGENT mezője, nem a skillé;
+# Cursor = a `model`-kiterjesztést legfeljebb részlegesen), vagy — Claude Code
+# esetén — a dokumentáció ígéri, de runtime-ban NEM hat (anthropics/claude-code
+# #45191, "not planned"-ként lezárva). Egy beírt skill-`model` így a legjobb
+# esetben inert, a legrosszabb esetben félrevezető (nem létező képességet sugall).
+# A modellváltás KIZÁRÓLAG az agentek/subagentek szintjén hat megbízhatóan (Claude
+# subagent model/effort, Codex TOML model/model_reasoning_effort) — ott marad meg.
+def write_markdown_skill(skill_file, skills_dest):
+    """Skill másolása modell-injektálás NÉLKÜL a <skills_dest>/bs-<stem>/SKILL.md alá."""
+    with open(skill_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    skill_dest_dir = skills_dest / f"bs-{skill_file.stem}"
+    skill_dest_dir.mkdir(parents=True, exist_ok=True)
+    with open(skill_dest_dir / "SKILL.md", 'w', encoding='utf-8') as f:
+        f.write(content)
+
+# ── Codex CLI (.codex/agents/*.toml + .agents/skills/) ──────────────────────
+# A Codex subagentek NEM markdownok, hanem TOML-fájlok (.codex/agents/<n>.toml).
+# A hivatalos spec szerint minden mező, ami a config.toml-ben él, itt is megadható;
+# a `model` és a `model_reasoning_effort` NATÍVAN hat (a fájlban megadott érték
+# elsőbbséget élvez a spawn-/[agents]-default/parent érték felett). A read-only
+# agentek (READONLY_AGENTS) `sandbox_mode = "read-only"`-t kapnak. A markdown
+# agent-prompt teljes törzse a `developer_instructions` mezőbe kerül, elé a
+# szokásos "Recommended" alerttel (a modell/effort natív, de a láthatóság kedvéért
+# ott is jelezzük, egységesen a többi platformmal).
+#
+# A skillek viszont a `.agents/skills/`-be kerülnek (bs-<n>/SKILL.md): a Codex a
+# PROJEKT-szintű skilleket innen olvassa — a `.codex/skills` csak legacy,
+# user-szintű hely, projekt-szinten NEM található meg. Ez a mappa UGYANAZ, mint
+# az Antigravity-é; a telepítő ezért kölcsönösen kizárja a két platform egyidejű
+# telepítését ugyanabba a projektbe (lásd install.sh / install.ps1).
+
+def _split_agent_markdown(content):
+    """Visszaadja az agent markdown (name, role, body) hármasát. A body a
+    frontmatter utáni teljes törzs (a --- lezárás után)."""
+    parts = content.split('---')
+    if len(parts) >= 3:
+        frontmatter = parts[1]
+        body = '---'.join(parts[2:]).lstrip('\n')
+        name = ""
+        role = ""
+        for line in frontmatter.splitlines():
+            stripped = line.strip()
+            if stripped.startswith('name:'):
+                name = stripped[len('name:'):].strip().strip('"').strip("'")
+            elif stripped.startswith('role:'):
+                role = stripped[len('role:'):].strip().strip('"').strip("'")
+        return name, role, body
+    return "", "", content
+
+def _toml_basic_string(s):
+    """TOML basic (egysoros) string, escape-elve."""
+    s = s.replace('\\', '\\\\').replace('"', '\\"')
+    s = s.replace('\r', '').replace('\n', '\\n').replace('\t', '\\t')
+    return f'"{s}"'
+
+def _toml_multiline_string(s):
+    """TOML többsoros string a hosszú törzshöz. Alapból literal ('''…'''), ami
+    NEM dolgoz fel escape-eket (a markdown \\ és " karakterei érintetlenek
+    maradnak); ha a törzs tartalmaz ''' szekvenciát, basic (\"\"\"…\"\"\")
+    változatra esünk vissza, escape-eléssel. A nyitó delimiter utáni azonnali
+    újsort a TOML lenyeli, ezért szándékosan újsorral kezdünk/zárunk."""
+    if "'''" not in s:
+        return "'''\n" + s + "\n'''"
+    esc = s.replace('\\', '\\\\').replace('"""', '\\"\\"\\"')
+    return '"""\n' + esc + '\n"""'
+
+def _build_codex_agent_toml(name, description, model, effort, developer_instructions, readonly):
+    lines = [
+        f"name = {_toml_basic_string(name)}",
+        f"description = {_toml_basic_string(description)}",
+    ]
+    if model:
+        lines.append(f"model = {_toml_basic_string(model)}")
+    if effort:
+        lines.append(f"model_reasoning_effort = {_toml_basic_string(effort)}")
+    if readonly:
+        lines.append('sandbox_mode = "read-only"')
+    lines.append(f"developer_instructions = {_toml_multiline_string(developer_instructions)}")
+    return "\n".join(lines) + "\n"
+
+def process_codex(src_dir, dest_path, models):
+    dest_path = Path(dest_path)
+    agents_src = Path(src_dir) / "prompts/agents"
+    skills_src = Path(src_dir) / "prompts/skills"
+
+    # 1. Agents → .codex/agents/<stem>.toml (TOML subagent formátum)
+    agents_dest = dest_path / ".codex/agents"
+    agents_dest.mkdir(parents=True, exist_ok=True)
+
+    for agent_file in agents_src.glob("*.md"):
+        stem = _agent_stem(agent_file.name)
+        model = get_model(models, "codex", agent_file.name)
+        effort = get_effort(models, "codex", agent_file.name)
+        readonly = stem in READONLY_AGENTS
+
+        with open(agent_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        name, role, body = _split_agent_markdown(content)
+        agent_name = name or stem
+        description = role or "BerkiSpec agent"
+        developer_instructions = _build_alert(model, "Codex", effort) + body
+
+        toml_text = _build_codex_agent_toml(
+            agent_name, description, model, effort, developer_instructions, readonly
+        )
+        with open(agents_dest / f"{stem}.toml", 'w', encoding='utf-8') as f:
+            f.write(toml_text)
+
+    # 2. Skills → .agents/skills/bs-<name>/SKILL.md (a Codex innen olvassa)
+    skills_dest = dest_path / ".agents/skills"
+    skills_dest.mkdir(parents=True, exist_ok=True)
+
+    for skill_file in skills_src.glob("*.md"):
+        write_markdown_skill(skill_file, skills_dest)
+
+    # 3. Helper scripts → .codex/scripts/
+    scripts_dest = dest_path / ".codex/scripts"
+    copy_helper_scripts(src_dir, scripts_dest)
+
 def process_antigravity(src_dir, dest_path, models):
     dest_path = Path(dest_path)
     agents_src = Path(src_dir) / "prompts/agents/gemini-agent"
@@ -281,19 +407,7 @@ def process_antigravity(src_dir, dest_path, models):
     skills_dest.mkdir(parents=True, exist_ok=True)
     
     for skill_file in skills_src.glob("*.md"):
-        skill_name = skill_file.stem
-        model = get_model(models, "antigravity", skill_file.name)
-        
-        with open(skill_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-            
-        new_content = inject_markdown_model(content, model, "Antigravity")
-        
-        skill_dest_dir = skills_dest / f"bs-{skill_name}"
-        skill_dest_dir.mkdir(parents=True, exist_ok=True)
-        
-        with open(skill_dest_dir / "SKILL.md", 'w', encoding='utf-8') as f:
-            f.write(new_content)
+        write_markdown_skill(skill_file, skills_dest)
 
     # 3. Process helper scripts
     scripts_dest = dest_path / ".agents/scripts"
@@ -324,19 +438,7 @@ def process_claude(src_dir, dest_path, models):
     skills_dest.mkdir(parents=True, exist_ok=True)
     
     for skill_file in skills_src.glob("*.md"):
-        skill_name = skill_file.stem
-        model = get_model(models, "claude", skill_file.name)
-        
-        with open(skill_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-            
-        new_content = inject_markdown_model(content, model, "Claude Code")
-        
-        skill_dest_dir = skills_dest / f"bs-{skill_name}"
-        skill_dest_dir.mkdir(parents=True, exist_ok=True)
-        
-        with open(skill_dest_dir / "SKILL.md", 'w', encoding='utf-8') as f:
-            f.write(new_content)
+        write_markdown_skill(skill_file, skills_dest)
 
     # 3. Process helper scripts
     scripts_dest = dest_path / ".claude/scripts"
@@ -371,15 +473,15 @@ def process_copilot(src_dir, dest_path, models):
     for skill_file in skills_src.glob("*.md"):
         skill_name = skill_file.stem
         clean_name = re.sub(r'^\d\d-', '', skill_name)
-        model = get_model(models, "copilot", skill_file.name)
-        
+
+        # Nincs modell-injektálás: a Copilot `.instructions.md` frontmatter nem
+        # ismer `model` mezőt (az csak prompt-fájlnál van) → inert lenne. Lásd a
+        # write_markdown_skill fölötti indoklást.
         with open(skill_file, 'r', encoding='utf-8') as f:
             content = f.read()
-            
-        new_content = inject_markdown_model(content, model, "Copilot")
-        
+
         with open(instructions_dest / f"bs-{clean_name}.instructions.md", 'w', encoding='utf-8') as f:
-            f.write(new_content)
+            f.write(content)
 
     # 3. Process helper scripts
     scripts_dest = dest_path / ".github/scripts"
@@ -413,20 +515,7 @@ def process_cursor(src_dir, dest_path, models):
     skills_dest.mkdir(parents=True, exist_ok=True)
 
     for skill_file in skills_src.glob("*.md"):
-        skill_name = skill_file.stem
-        model = get_model(models, "cursor", skill_file.name)
-
-        with open(skill_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-
-        # Skill = orchestrátor fő ágens, nem subagent → nincs effort.
-        new_content = inject_markdown_model(content, model, "Cursor")
-
-        skill_dest_dir = skills_dest / f"bs-{skill_name}"
-        skill_dest_dir.mkdir(parents=True, exist_ok=True)
-
-        with open(skill_dest_dir / "SKILL.md", 'w', encoding='utf-8') as f:
-            f.write(new_content)
+        write_markdown_skill(skill_file, skills_dest)
 
     # 3. Process helper scripts
     scripts_dest = dest_path / ".cursor/scripts"
@@ -457,6 +546,8 @@ def main():
         process_copilot(src_dir, dest_path, models)
     elif platform == "cursor":
         process_cursor(src_dir, dest_path, models)
+    elif platform == "codex":
+        process_codex(src_dir, dest_path, models)
     else:
         print(f"Error: Unknown platform {platform}")
         sys.exit(1)

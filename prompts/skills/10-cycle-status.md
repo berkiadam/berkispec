@@ -40,7 +40,9 @@ A parancs kétféleképpen használható:
    - Határozd meg a platform-specifikus futtató script helyét a projekt gyökeréhez képest:
      - **Google Antigravity CLI** esetén: `.agents/scripts/cycle-status.py`
      - **Claude Code** esetén: `.claude/scripts/cycle-status.py`
+     - **Cursor** esetén: `.cursor/scripts/cycle-status.py`
      - **GitHub Copilot** esetén: `.github/scripts/cycle-status.py`
+     - **Codex CLI** esetén: `.codex/scripts/cycle-status.py`
    
    - **Ha a felhasználó megadott egy ciklust (pl. `specs/cycle-01-oidc-login`)**:
      Futtasd a scriptet a megadott argumentummal:
