@@ -9,6 +9,8 @@ prev: null
 next: bs-add-cycles
 subagents:
   - "agents/researcher.md"
+shared:
+  - "shared/git-preflight.md"
 ---
 # 00 — Projekt inicializálás
 ## Kontextus ellenőrzés
@@ -23,14 +25,38 @@ Ez a prompt egyszer fut le, új projekt indulásakor. Célja a projekt konvenci�
 
 ---
 
+## Git-előkészítés — az init saját branch-en fut (BD12)
+
+A `00-init-project` **maga is feature branch-en dolgozik**, alapértelmezett néven `feature/init-project`. **Csirke-tojás sorrend:** a git *elérhetőségét* már itt, az elején detektáld; a „van-e (és lesz-e) verziókezelő" formális rögzítése (BD11) lentebb, a kérdéseknél történik.
+
+1. **Git-elérhetőség detektálása:** `git rev-parse --is-inside-work-tree` (vagy `git rev-parse --git-dir`).
+   - **Ha nincs git / nem git-repo** → **ne** hozz branch-et, **ne** PR-ezz/merge-elj. Folytasd közvetlenül a konvenciók rögzítésével; a lenti VCS-kérdés (BD11) rögzíti a `conventions.md`-be a „NINCS VCS" flaget.
+   - **Ha van git** → futtasd a branch-nyitó preflightet (lent), majd hozz létre és válts az init-branch-re:
+
+<!-- INCLUDE:shared/git-preflight.md -->
+
+2. **Branch létrehozása (csak git esetén):** a friss, tiszta `main` után `git switch -c feature/init-project`. Az init innentől ezen a branch-en dolgozik (a `conventions.md` írása, commit).
+3. **Visszaintegrálás a futás végén:** lásd „Lezárás" — a `conventions.md`-be rögzített `## Merge stratégia` (BD7/BD15) szerint PR vagy közvetlen merge `main`-be; ha nincs döntés/remote, a **default a közvetlen merge** (BQ7).
+
+---
+
 ## Feladatod
 
 Hozz létre egy `conventions.md` fájlt a projekt gyökerében az alábbi struktúra szerint. Minden szekciót a felhasználóval közösen töltötök ki — tegyél fel kérdéseket, ahol a döntés nem egyértelmű. A struktúrában szereplő technológiák (pl. Playwright, pytest) és beállítások **ajánlott default-ok**; ezeket a projekt tényleges tech stackje alapján testre kell szabni (pl. Node/Jest, Go/go test stb.).
 
-Három szekciónál **aktívan rá kell kérdezned** (nem elég csak pre-fillelni):
+Az alábbi szekcióknál **aktívan rá kell kérdezned** (nem elég csak pre-fillelni):
+
+- **Verziókezelő megléte (BD11 — KAPU, elsőként):** *„Van a projektben verziókezelő (git)? Ha nincs, tervezel-e bevezetni?"* A git *elérhetőségét* már a „Git-előkészítés" lépésben detektáltad; itt a szándékot rögzíted. Ha **nincs és nem is lesz**, írd a `## Git és branching konvenciók` szekcióba **explicit**: „NINCS verziókezelő (se GIT, se más), és nem is lesz." Ez a flag **kapuzza** a 01 (és a többi fázis) összes git-lépését: ott ekkor nincs `git switch -c`, nincs branch-figyelmeztetés, nincs commit — csak a `specs/cycle-NN-<name>/` mappa + roadmap készül.
 - **Alapértelmezett flow:** kérdezz rá a feladatok jellegére, és ez alapján rögzíts egy default munkamódot: *„Milyen jellegű feladatok lesznek túlnyomórészt ebben a projektben? (a) Termékfejlesztés / új funkciók, több komponenst érintő, összetett logika → **teljes berki spec flow** (02–09); (b) Konfiguráció, scriptelés, üzemeltetés, kisebb javítások → **egyszerűsített flow** (`prompts/skills/sdd-lightweight-flow.md`). Ez lesz az alapértelmezett munkamód; feladatonként felülbírálható."* A választ a `## Fejlesztési módszertan` szekció **Alapértelmezett flow** mezőjébe írd.
 - **Teszt keretrendszer:** *„A javasolt teszt stack: <default>. Megfelelő, vagy mást szeretnél?"*
-- **Merge stratégia:** kérdezd meg a git szolgáltatót (GitHub / Bitbucket Cloud / Bitbucket Server / GitLab / Lokális), majd **próbáld ki az access-t** a megfelelő paranccsal (lásd a Merge stratégia szekciónál). Ha az access teszt sikertelen, **ne zárd le a `conventions.md`-t** — kérd a token / URL / permissions javítását, vagy alternatív szolgáltató / lokális merge választását.
+- **Merge stratégia + visszaintegrálás (BD7/BD15):** kérdezd meg a git szolgáltatót (GitHub / Bitbucket Cloud / Bitbucket Server / GitLab / Lokális), majd **próbáld ki az access-t** a megfelelő paranccsal (lásd a Merge stratégia szekciónál). Ha az access teszt sikertelen, **ne zárd le a `conventions.md`-t** — kérd a token / URL / permissions javítását, vagy alternatív szolgáltató / lokális merge választását. Ez az **egyetlen igazságforrás** arra, hogyan kerül vissza `main`-be egy elkészült branch (PR vagy közvetlen merge) — ezt használja a 09 (ciklus-merge), a 01/00 branch-figyelmeztetés, és a 00 init-branch visszaintegrálása is. Ha nincs döntés/remote, a default a **közvetlen merge** (BQ7). _(Csak a `## Merge stratégia` szekciót töltsd — ne vezess be új mezőt.)_
+- **Branch-elnevezési stratégia (BD8 — csak ha van VCS):** kérdezd meg:
+  - Kell-e **Jira-jegyszámot** a branch nevének elejére? (ha igen: milyen formátumban)
+  - A feature branch-ek **`feature/` prefixszel** kezdődnek-e?
+  - **Vagy** mutass rá egy dokumentumra, ahol ezek tisztázva vannak (onnan vesszük át a szabályt).
+  A választ a `## Git és branching konvenciók` **Branch-elnevezési stratégia** mezőjébe írd. **Default** (ha a felhasználó nem rendelkezik): `feature/cycle-NN-<name>` (a mappanév mindig prefix nélkül, tisztán `cycle-NN-<name>` — BD3). Kis branching-szabály (prefix, Jira-jegy) mehet **szó szerint** a `conventions.md`-be.
+- **API-szabályzat / API design guideline (BD9):** *„Van követendő API design guideline / API-szabályzat (REST konvenciók, verziózás, hibaformátum, elnevezés)? Ha igen, hol a dokumentuma?"* A pointer a `## Projekt referenciák` szekcióba kerül, hogy a 02–03 fázis ebből dolgozhasson.
+- **Nagy külső szabály-dokumentumok (BD10 — hibrid: pointer + kivonat):** ha a felhasználó **nagy** dokumentumra mutat (API-guideline, terjedelmes branching-szabályzat), azt **NE** tedd be teljes szöveggel a `conventions.md`-be (minden fázis behúzná → token-duzzadás). Helyette: **(a)** pointer a `## Projekt referenciák`-ba (forrás elérési útja/URL + egysoros leírás, mit szabályoz); **(b)** a `researcher` subagenttel (`agents/researcher.md`) **egyszer** olvastasd be, és hozass ki belőle egy tömör, normatív **szabály-checklistet** (konkrét do/don't pontok), ami a `conventions.md`-be kerül. A mély/ritka részleteket a fogyasztó fázis (branching → 01, API → 02–03) on-demand a `researcher`-rel olvassa. A pointer megőrzi a forrást, így a kivonat újragenerálható, ha a doksi változik.
 
 Ne kezdj spec-et, plan-t vagy implementációt. Ez a lépés kizárólag a projekt konvencióit rögzíti.
 
@@ -79,8 +105,10 @@ A fejlesztés és a doc-sync (08) során az alábbi globális tervezési, API é
 - **HLD (High Level Design):** _(pl. docs/design/hld.md vagy hagyd üresen)_
 - **LLD (Low Level Design):** _(pl. docs/design/lld.md vagy hagyd üresen)_
 - **API Specifikáció / API-leírók:** _(pl. docs/api/openapi.yaml vagy hagyd üresen; ha ki van töltve, a 08-doc-sync DS22 Réteg 2 ellenőrzése összeveti vele a generált interfész/endpoint-leltárt)_
+- **API design guideline / API-szabályzat (BD9):** _(pl. docs/api/guidelines.md vagy URL, vagy hagyd üresen — REST konvenciók, verziózás, hibaformátum, elnevezés. A 02–03 fázis ebből dolgozik. **Nagy dokumentum esetén** ne a teljes szöveg kerüljön ide: pointer + a `researcher`-rel készített tömör szabály-checklist — BD10.)_
 - **Adatbázis Séma:** _(pl. docs/db/schema.sql vagy hagyd üresen)_
 - **Külső / üzleti referencia-doksik:** _(pl. docs/poc.md, vendor dokumentáció, üzleti folyamatleírások vagy hagyd üresen)_
+- **Branching-szabályzat (BD8/BD10, ha nagy dokumentum):** _(pointer + kivonat; a kis branching-szabály inkább szó szerint a `## Git és branching konvenciók`-ba)_
 
 ## Projekt struktúra
 
@@ -125,15 +153,19 @@ A default csak a **kiindulópont**, feladatonként felülbírálható. Ha egy ad
 
 ## Git és branching konvenciók
 
-- **Fő branch:** `master`
-- **Cycle branch:** `feature/cycle-<cycle-name>` — minden fejlesztési ciklus saját branch-en él
-- **Branch nyitás:** a spec fázis (02) legelején, a branch tartalmazza a `specs/`, `docs/` és `src/` változásokat egyaránt
-- **Merge:** a `## Merge stratégia` szekció szerint, a review & merge fázis (09) sikeres lefutása után
-- **Commit granularitás:** taskonként egy commit
+- **Verziókezelő:** _(git | „NINCS verziókezelő (se GIT, se más), és nem is lesz." — BD11)_ — ha a „NINCS" flag van beírva, a 00/01 és a 02–09 fázisok **minden git-lépést kihagynak** (nincs branch, figyelmeztetés, commit).
+- **Fő branch:** `main` — a ciklus-branch-ek leágazási bázisa (BD2). _(Projekt eltérhet, pl. `master`; a branch-logika ezt a mezőt olvassa.)_
+- **Cycle branch:** minden fejlesztési ciklus **saját branch-en** él, `main`-ről ágazva (BD1–BD2). A branch a `specs/`, `docs/` és `src/` változásokat egyaránt tartalmazza.
+- **Branch nyitás:** a **ciklusok kezelése fázisban (01)** jön létre, a ciklus legelején (nem a 02/06-ban); a 00 init maga a `feature/init-project` branch-en fut (BD12).
+- **Branch-elnevezési stratégia (BD8):** _(default: `feature/cycle-NN-<name>`; ha van Jira-prefix / más szervezeti szabály / pointer egy dokumentumra, ide)_ — a **mappanév** ettől függetlenül mindig prefix nélkül, tisztán `cycle-NN-<name>` (BD3).
+- **Merge / visszaintegrálás:** a `## Merge stratégia` szekció szerint (PR vagy közvetlen merge; ha nincs döntés/remote, default a közvetlen merge — BQ7), a 09 sikeres lefutása után; ugyanez a szekció adja a 00 init-branch visszaintegrálását is (BD7/BD15).
+- **Commit granularitás:** taskonként egy commit.
 
 ## Merge stratégia
 
 _A ciklus lezárásakor (09 fázis) ezt használja az ágens. A 00 fázisban tisztázandó, és az access-t **ki kell próbálni** — a `conventions.md` nem zárható le, amíg a választott szolgáltatóhoz sikeresen hozzá nem férünk (vagy a felhasználó alternatívát/lokális merge-et választ)._
+
+_**Egyetlen igazságforrás a visszaintegrálásra (BD15):** ez a szekció adja meg, hogyan kerül vissza `main`-be **bármely** elkészült branch — a ciklus-branch (09), a 01/00 branch-figyelmeztetés (BD6), és a 00 saját `feature/init-project` branch-ének visszaintegrálása (BD12) is ebből dolgozik. Ha nincs explicit döntés vagy remote, a **default a közvetlen merge `main`-be** (nem PR — BQ7)._
 
 - **Szolgáltató:** GitHub | Bitbucket Cloud | Bitbucket Server | GitLab | Lokális (nincs PR)
 - **Repository URL:** _(Bitbucket on-prem esetén az API endpoint is)_
@@ -256,17 +288,23 @@ Mielőtt lezárod, ellenőrizd:
 3. A Merge stratégia kitöltött, és az access validáció **sikeresen lefutott** (vagy a fejlesztő explicit lokális merge-et választott)?
 4. A portok, env változók és Sonar (ha van) szekciók a projekt valóságát tükrözik?
 5. A `## Fejlesztési módszertan` **Alapértelmezett flow** mezője a fejlesztővel egyeztetett értékre van állítva (`teljes` vagy `egyszerűsített`), nem maradt placeholder?
+6. **A `## Git és branching konvenciók` VCS-flagje beállítva (BD11):** vagy git, vagy explicit „NINCS verziókezelő …"?
+7. **VCS mellett: a Branch-elnevezési stratégia mező kitöltött (BD8)** (default `feature/cycle-NN-<name>`, vagy a szervezeti szabály/pointer)?
+8. **Ha a felhasználó API design guideline-t / nagy szabályzatot jelölt (BD9/BD10):** a `## Projekt referenciák`-ban ott a pointer, és nagy doksinál a `researcher`-rel készített tömör szabály-checklist?
 
 Ha bármelyikre nem, egészítsd ki, mielőtt lezárod.
 
-### Commit és jelzés
+### Commit, visszaintegrálás és jelzés
 
 Ha a minőségellenőrzés átment:
-1. Készíts git commitot a fázis lezárásáról:
+
+1. **Commit (csak VCS esetén) — a `feature/init-project` branch-en** (BD12):
    ```bash
    git add conventions.md && git commit -m "cycle-NN: 00-init"
    ```
    _(A 00 fázis nem ciklusspecifikus; a `cycle-NN:` prefix az első ciklusra utal — pl. `cycle-01: 00-init`.)_
-2. Jelezd a felhasználónak:
+2. **Visszaintegrálás `main`-be (csak VCS esetén) — a `## Merge stratégia` szerint (BD7/BD12):** a szekcióban rögzített szolgáltató alapján **PR feladás** vagy **közvetlen merge** `main`-be; ha nincs explicit döntés/remote, a default a **közvetlen merge** (BQ7). Destruktív lépés (merge/branch-törlés) előtt kérj felhasználói megerősítést.
+3. **No-VCS ág (BD11):** ha a `conventions.md` szerint nincs verziókezelő, az 1–2. lépés kimarad — a `conventions.md` fájl puszta léte a „kész" jelölés, branch/commit/merge nélkül.
+4. Jelezd a felhasználónak:
 
    *"A projekt konvenciók rögzítve. A következő fázis indítása előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd megkezdhető a ciklusok kezelése: `prompts/skills/01-add-cycles.md`."*

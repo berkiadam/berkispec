@@ -34,10 +34,10 @@ Ez a folyamat **6. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 
 1. Olvasd be a `tasks.md` státuszát. **Ha a státusz nem `Implementálásra kész`, ne kezdj implementálni.** Jelezd a felhasználónak, hogy a tasks lista még nem zárult le.
 
-2. Futtasd: `git status --short`. Ha van commitálatlan változtatás:
+2. **Munkafa-ellenőrzés (csak VCS esetén):** futtasd: `git status --short`. Ha van commitálatlan változtatás:
    - Listázd ki az érintett fájlokat.
    - Jelezd: *"Az implementáció előtt érdemes ezeket commitálni — ha félremegy az implementáció, egy `git reset --hard` visszaállítja a kiindulóállapotot."*
-   - Kérdezd meg: *"Commitáljam ezeket most?"* — Ha igen: commitáld a változtatásokat, majd folytasd. Ha nem: folytasd commit nélkül.
+   - Kérdezd meg: *"Commitáljam ezeket most?"* — Ha igen: commitáld a változtatásokat, majd folytasd. Ha nem: folytasd commit nélkül. (No-VCS projektben kimarad.)
 
 ---
 

@@ -37,7 +37,7 @@ Ez a folyamat **9. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t (különösen a `## Merge stratégia` szekciót). Ha nem létezik, STOP — térjenek vissza a `00` fázishoz.
 
-2. **Munkafa ellenőrzés:** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e most vagy folytassam — várj a válaszra. (A review a cycle branch git diffjét nézi a `master`-höz képest; tiszta munkafa nélkül a diff félrevezető.)
+2. **Munkafa-ellenőrzés (csak VCS esetén):** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e most vagy folytassam — várj a válaszra. A ciklus **saját feature branch-én** dolgozol; a `main`-re váltás majd a Merge lépésben, felhasználói megerősítés után történik (RD8) — itt ne válts. (A review a ciklus branch git diffjét nézi a fő branch-hez; tiszta munkafa nélkül a diff félrevezető. No-VCS projektben kimarad.)
 
 3. **Státusz-kapu:** a validate fázis (07) PASS esetén mindhárom fájl státuszát `Kész`-re állítja. Ellenőrizd:
    - `tasks.md` státusza: `Kész`
@@ -199,7 +199,7 @@ Olvasd be a `conventions.md` `## Merge stratégia` szekcióját, és a **Szolgá
 ### Megerősítés (mindkét ágon kötelező)
 
 Kérdezd meg, és **várj explicit megerősítésre**:
-> *"A review tiszta, a doc-sync kapu zöld. Készen állok a merge-re a `<szolgáltató>` stratégia szerint (`feature/cycle-<cycle-name>` → `<target branch>`). Végrehajthatom?"*
+> *"A review tiszta, a doc-sync kapu zöld. Készen állok a merge-re a `<szolgáltató>` stratégia szerint (`feature/cycle-NN-<cycle-name>` → `<target branch>`). Végrehajthatom?"*
 > **A válasz végén helyezd el a `code-review.md` közvetlen, kattintható linkjét.**
 
 Ne lépj tovább a megerősítés előtt.
@@ -208,23 +208,24 @@ Ne lépj tovább a megerősítés előtt.
 
 Megerősítés után:
 ```bash
-# 1. Válts át a master (vagy a konvencióban megadott target) ágra
-git checkout master
+# 1. Válts át a fő branch-re (a conventions.md `## Git és branching konvenciók`
+#    Fő branch mezője, ill. a `## Merge stratégia` PR target — alapból `main`)
+git switch main
 
 # 2. Squash merge a ciklus ágáról
-git merge --squash feature/cycle-<cycle-name>
+git merge --squash feature/cycle-NN-<cycle-name>
 
 # 3. Commit a ciklus címével és a plan célkitűzésével
 git commit -m "cycle-NN: 09-merge - <cím>" -m "<cél és megközelítés a plan.md-ből>"
 
 # 4. A lokális ciklus ág törlése
-git branch -D feature/cycle-<cycle-name>
+git branch -D feature/cycle-NN-<cycle-name>
 ```
 
 ### B) GitHub / Bitbucket / GitLab (PR)
 
 Megerősítés után hozd létre a PR-t a `conventions.md`-ben megadott szolgáltató szerint, a `conventions.md` target branchére. A PR description a `code-review.md` tartalma legyen:
-- **GitHub:** `gh pr create --base <target> --head feature/cycle-<cycle-name> --title "cycle-NN: <cím>" --body-file specs/cycle-NN-<cycle-name>/code-review.md`
+- **GitHub:** `gh pr create --base <target> --head feature/cycle-NN-<cycle-name> --title "cycle-NN: <cím>" --body-file specs/cycle-NN-<cycle-name>/code-review.md`
 - **GitLab:** `glab mr create --target-branch <target> --title "cycle-NN: <cím>" --description "$(cat specs/cycle-NN-<cycle-name>/code-review.md)"`
 - **Bitbucket:** a `conventions.md` access-parancsa szerint, REST API-n vagy CLI-n keresztül.
 

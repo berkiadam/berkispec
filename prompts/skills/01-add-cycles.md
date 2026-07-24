@@ -10,6 +10,8 @@ prev: bs-init-project
 next: bs-write-spec
 subagents:
   - "agents/researcher.md"
+shared:
+  - "shared/git-preflight.md"
 ---
 # 01 — Ciklusok kezelése
 ## Kontextus ellenőrzés
@@ -29,13 +31,33 @@ Ez a folyamat **1. fázisa (0–9)**: 0-init · **1-ciklusok ←** · 2-spec · 
 ## Előfeltétel
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` projekt inicializálás fázishoz.
-2. **Munkafa ellenőrzés:** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e most vagy folytassam — várj a válaszra. (A 01 roadmapet ír és ciklusmappát hoz létre; tiszta munkafáról induljon.)
+2. **Git-preflight (közös leírás):** a 01 **branch-nyitó** fázis — a *teljes* preflight vonatkozik rá (no-VCS kapu + munkafa-ellenőrzés + branch-nyitó preflight: friss, tiszta `main`, illetve resume-felismerés). A tényleges `git switch -c`-t **nem** itt futtatod, hanem a ciklusszám + név meghatározása UTÁN, az adott mód (A/B/C) lezárásában (BD5).
+
+<!-- INCLUDE:shared/git-preflight.md -->
+
+> **Branch = ciklus (BD1–BD3).** A ciklus-branch **itt, a 01 fázisban** jön létre `main`-ről (nem a 06-ban), és a 02+ fázisok már ezen dolgoznak. A No-VCS ágon (a `conventions.md` szerint nincs verziókezelő) minden git-lépést kihagysz: csak a `specs/cycle-NN-<name>/` mappa és a roadmap készül el (BI8).
 
 ---
 
 ## Folytatás megszakított futás után
 
 Ha a 01 fázis félbeszakadt és új sessionban folytatódik:
+
+**Először a git-állapot (BQ3 — idempotencia, csak ha van verziókezelő).** A branch-nyitó preflight (fent) `git branch --show-current`-je ezt már eldönti; itt a következményei:
+
+```
+Milyen branch-en vagyunk?
+1. main → normál friss flow: a ciklusszám/név után jön a `git switch -c` (BD5).
+2. feature branch, ami az AKTUÁLIS ciklus várt branch-neve
+   (a roadmap in-progress blokkja / a ciklus mappaneve alapján)
+   → ez RESUME: a branch már létrejött. NE hozz új branch-et (`git switch -c` tilos),
+     folytasd ezen a branch-en a lenti dokumentum-állapot szerint.
+3. feature branch, ami NEM az aktuális ciklusé
+   → BD6: figyelmeztetés (a jelenlegi branch merge/PR a `## Merge stratégia` szerint),
+     majd kérd a felhasználót, hogy váltson main-re — ne válts automatikusan.
+```
+
+**Ezután a dokumentum-állapot:**
 
 ```
 1. Létezik specs/roadmap.md?
@@ -46,10 +68,12 @@ Ha a 01 fázis félbeszakadt és új sessionban folytatódik:
 2. Létrehozott, de hiányos ciklusmappa (mkdir megtörtént, de a roadmap
    blokk vagy a commit hiányzik)?
    → Fejezd be a hiányzó lépést (roadmap blokk, validáció, megerősítés, commit).
+     Ha a branch is hiányzik (VCS mellett), előbb a branch-nyitó preflight szerint
+     állj friss main-re, majd hozd létre a branch-et, és rajta fejezd be.
 
-3. Félbeszakadt C. mód rekonstrukció (roadmap.md hiányzik, de a kísérlet
-   elkezdődött)?
-   → Kezdd újra a C. módot tiszta lappal.
+3. Félbeszakadt C. mód (az aktuális ciklus roadmap-blokkja hiányos)?
+   → Folytasd az adott ciklus blokkjának pótlását a ciklus feature branch-én
+     (BQ5/BQ6 — per-ciklus javítás, nem teljes rekonstrukció).
 ```
 
 ---
@@ -73,13 +97,37 @@ Ha a 01 fázis félbeszakadt és új sessionban folytatódik:
      > *"Találtam [N] meglévő ciklust: [cycle-01-xxx, cycle-02-xxx, ...]. Új ciklust adok a roadmap-hez."*
 
    - **Ha NEM létezik** → kérdezd meg:
-     > *"Találtam [N] meglévő ciklust a `specs/` mappában, de nem találom a `specs/roadmap.md` fájlt. Szeretnéd, hogy a meglévő ciklus mappák és spec fájlok alapján rekonstruáljam a roadmap-et?"*
-     - **Igen** → Kövesd a **C. mód — Roadmap rekonstrukció** lépéseit, majd a rekonstrukció után automatikusan folytasd a **B. móddal**.
-     - **Nem** → Folytasd közvetlenül a **B. móddal**: az új ciklust hozzáadod, a roadmap többi része üres marad.
+     > *"Találtam [N] meglévő ciklust a `specs/` mappában, de nem találom a `specs/roadmap.md` fájlt. Melyik ciklussal dolgozunk most? Az adott ciklus roadmap-blokkját pótolom (per-ciklus, a ciklus feature branch-én) — a többi ciklus a saját branch-én / a merge-elt main-roadmap-ben él."*
+     - **Egy konkrét ciklus** → Kövesd a **C. mód — Egy ciklus roadmap-blokkjának pótlása** lépéseit arra az egy ciklusra (BQ5/BQ6). Ha utána új ciklust is fel akarsz venni, folytasd a **B. móddal**.
+     - **Új ciklus felvétele** → Folytasd közvetlenül a **B. móddal**: az új ciklust hozzáadod, a roadmap többi része üres/hiányos maradhat.
+
+---
+
+## Ciklusszám meghatározása (közös — BQ2)
+
+A következő ciklusszám (`NN`) meghatározásához **nem elég** a main `roadmap.md` + `ls specs/`, mert létezhet olyan ciklus, ami csak egy még nem merge-elt feature branch-en él. Ezért:
+
+- **Verziókezelő mellett:** `NN = max(main `roadmap.md`/`ls specs/` ciklusszámai, a feature branch-ekben lévő `cycle-NN` számok) + 1`.
+  - Feature-branch-scan: `git branch -a --list '*cycle-*'` (a `conventions.md` szerinti branch-prefixet, pl. `feature/cycle-*`, is lefedve), majd a branch-nevekből `cycle-(\d+)` kinyerése.
+  - Frissesség: a branch-nyitó preflight `git pull`-ja a remote-ot is frissítette, így a scan friss `git branch -a` állapotot lát — külön `git fetch` jellemzően nem kell.
+- **No-VCS ágon** (nincs verziókezelő): a scan kimarad, `NN = max(`ls specs/`/`roadmap.md` számai) + 1`.
+
+Ez a formula minden módban (A/B/C) érvényes, ahol új ciklusszám kell — ne ütközz párhuzamosan nyitott, még nem merge-elt ciklusokkal.
 
 ---
 
 ## A. mód — Teljes roadmap tervezés
+
+### Git-branch az A. módban (BQ1) — a tervezés ELŐTT
+
+A teljes roadmap az **első ciklus feature branch-én** készül és commitolódik. Verziókezelő mellett, **mielőtt bármit a `specs/roadmap.md`-be írnál**:
+
+1. Kérdezd meg a felhasználót, **mi legyen az első ciklus neve** (kebab-case). Ha nem ad nevet, a **default** branch: `feature/cycle-01` (név-suffix nélkül); ha ad, `feature/cycle-01-<name>`.
+2. Futtasd a branch-nyitó preflightet (fent: friss, tiszta `main`, illetve resume-felismerés — BD6/BQ3/BQ4).
+3. Hozd létre a branch-et: `git switch -c feature/cycle-01[-<name>]` (a `conventions.md` `## Git és branching konvenciók` **Branch-elnevezési stratégia** szerinti prefixszel; alapból `feature/`).
+4. **A továbbiakban (interjú, roadmap-írás, commit) minden ezen a branch-en történik** — a `main` védett marad (BD4).
+
+**No-VCS ágon** (nincs verziókezelő) ez a lépés kimarad: a roadmap közvetlenül készül, branch/commit nélkül (BI8).
 
 ### Feladatod
 
@@ -195,12 +243,12 @@ Ha minden kérdés `[x]` és a validációs ellenőrzés átment, tedd fel a ké
 
 Ha a felhasználó megerősíti:
 - Állítsd a `specs/roadmap.md` státuszát `Kész`-re.
-- Készíts git commitot a fázis befejezéséről:
+- Készíts git commitot a fázis befejezéséről — **a már létrehozott `feature/cycle-01[-<name>]` branch-en** (BD4/BQ1), nem `main`-en:
   ```bash
   git add specs/roadmap.md
   git commit -m "cycle-NN: 01-cycles"
   ```
-  ahol `NN` az éppen tervezett első ciklus száma (pl. `cycle-01: 01-cycles`).
+  ahol `NN` az éppen tervezett első ciklus száma (pl. `cycle-01: 01-cycles`). **No-VCS ágon a commit kimarad** (BI8).
 - Jelezd: *"A roadmap kész. Folytathatjuk az 1. ciklus spec fázisával (02)."*
 
 ---
@@ -209,8 +257,8 @@ Ha a felhasználó megerősíti:
 
 ### Előkészítés
 
-1. Olvasd be a `specs/roadmap.md`-t (ha létezik) — kontextus és ciklusszám meghatározáshoz. Ha nem létezik, hozd létre az alap struktúrával (`# Fejlesztési Roadmap\n\n**Státusz:** Kész`).
-2. Nézd meg a `specs/` könyvtárat — határozd meg a meglévő legmagasabb ciklusszámot (`ls specs/ | sort`). Az új ciklus száma: max + 1 (pl. ha van cycle-09, az új cycle-10). Ha nincs egy sem, az új cycle-01.
+1. Olvasd be a `specs/roadmap.md`-t (ha létezik) — kontextus és ciklusszám meghatározáshoz. Ha nem létezik, hozd létre az alap struktúrával (`# Fejlesztési Roadmap\n\n**Státusz:** Kész`). _(A roadmap tényleges írása/commitja a ciklus feature branch-én történik — lásd „Branch létrehozása".)_
+2. Határozd meg az új ciklusszámot a **„Ciklusszám meghatározása (BQ2)"** szerint — a main `roadmap.md`/`ls specs/` **és** a feature branch-ek `cycle-NN` számainak maximuma + 1 (VCS mellett). Ez a lépés még az induló branch-en (jellemzően `main`-en) fut.
 3. Jelezd a felhasználónak:
    > *"Meglévő ciklusok: [N db — cycle-01-xxx, ...]. Következő ciklusszám: [NN]."*
 
@@ -231,6 +279,16 @@ Ha a felhasználó megerősíti:
 Ha a név nem felel meg, kérd a felhasználó saját javaslatát, azt használd.
 
 Ha a leírás vagy a név alapján valamit tisztázni kell (pl. meglévő ciklusokkal való átfedés, függőség), tegyél fel még **egy** kérdést. Ne tegyél fel egyszerre többet.
+
+### Branch létrehozása (BD5/BI1) — a név jóváhagyása UTÁN, a roadmap-írás ELŐTT
+
+A név jóváhagyása után, **mielőtt** a `specs/roadmap.md`-be írnál vagy mappát hoznál létre (BD5 sorrend), verziókezelő mellett:
+
+1. Győződj meg róla, hogy a branch-nyitó preflight (fázis eleje) friss, tiszta `main`-re vitt — vagy hogy ez egy resume ugyanezen a ciklus-branch-en (BQ3). Resume esetén nincs teendő, folytatsz a meglévő branch-en.
+2. `main`-en állva hozd létre és válts a ciklus branch-ére: `git switch -c feature/cycle-NN-<name>` (a `conventions.md` `## Git és branching konvenciók` **Branch-elnevezési stratégia** szerinti prefix/formátum; alapból `feature/`). A **mappanév** ettől függetlenül tisztán `cycle-NN-<name>` (BD3).
+3. Innentől minden (roadmap-írás, `mkdir`, commit) **ezen a branch-en** történik; a `main` védett marad (BD4).
+
+**No-VCS ágon** (nincs verziókezelő) ez kimarad: a roadmap-írás és a mappa-létrehozás közvetlenül történik, branch/commit nélkül (BI8).
 
 ### Az új ciklus megírása
 
@@ -267,15 +325,15 @@ Ha bármelyikre "nem": javítsd vagy kérdezz rá, mielőtt hozzáfűzöd.
 1. Fűzd hozzá az új ciklus leírását a `specs/roadmap.md` végéhez, `---` elválasztóval a meglévők után. **Edge case:** ha a `roadmap.md` utolsó nem-üres sora nem `---`, először szúrj be egy `---`-t, mielőtt az új ciklust hozzáfűznéd — így minden ciklus blokk között garantáltan ott az elválasztó.
 2. Mutasd meg a kész ciklus leírást, és kérj megerősítést:
    > *"Hozzáadtam a Cycle NN — [cím] leírást. Ha megerősíted, frissítem a roadmap státuszát `Kész`-re és létrehozom a ciklus könyvtárát."*
-3. Ha a felhasználó megerősíti:
+3. Ha a felhasználó megerősíti (a `git switch -c` ekkor már megtörtént — lásd „Branch létrehozása"):
    - Állítsd a roadmap státuszát `Kész`-re.
-   - Hozd létre a ciklus könyvtárát: `mkdir -p specs/cycle-NN-<cycle-name>/`
-   - Készíts git commitot a fázis befejezéséről:
+   - Hozd létre a ciklus könyvtárát: `mkdir -p specs/cycle-NN-<cycle-name>/` (a **mappanév** prefix nélkül, tisztán `cycle-NN-<name>` — BD3).
+   - Készíts git commitot a fázis befejezéséről — a **ciklus feature branch-én** (BD4), nem `main`-en:
      ```bash
      git add specs/roadmap.md
      git commit -m "cycle-NN: 01-cycles"
      ```
-     ahol `NN` az éppen hozzáadott ciklus száma (pl. `cycle-16: 01-cycles`).
+     ahol `NN` az éppen hozzáadott ciklus száma (pl. `cycle-16: 01-cycles`). **No-VCS ágon a `git switch -c` és a commit kimarad** — csak a `mkdir` + roadmap-írás történik (BI8).
    - Jelezd a következő lépést:
 
      > *"Cycle NN — [cím] hozzáadva. Könyvtár létrehozva: `specs/cycle-NN-<cycle-name>/`*
@@ -287,31 +345,31 @@ Ha bármelyikre "nem": javítsd vagy kérdezz rá, mielőtt hozzáfűzöd.
 
 ---
 
-## C. mód — Roadmap rekonstrukció meglévő ciklusokból
+## C. mód — Egy ciklus roadmap-blokkjának pótlása/javítása (per-ciklus — BQ5/BQ6)
 
-### Feladatod
+### Mi változott (BQ6)
 
-A `specs/` mappában található ciklus mappák alapján hozd létre (vagy írd felül) a `specs/roadmap.md` fájlt. Ez akkor használandó, ha a `specs/roadmap.md` hiányzik, de a `specs/` már tartalmaz ciklusokat.
+A klasszikus „**teljes** roadmap-rekonstrukció az összes ciklusmappából egyetlen `Piszkozat` dokumentumba" forgatókönyv **megszűnt**. A **branch = ciklus** modellben a teljes main-roadmap a ciklusok **merge-elésével** áll össze, nem egy nagy rekonstrukciós lépésben. Ezért a C. mód mostantól **csak az adott ciklus** roadmap-blokkját pótolja/javítja, **az adott ciklus feature branch-én** (BQ5) — így a védett `main` + a „branch = ciklus" invariáns megmarad, és nincs több-ciklust-egyszerre-commitoló rekonstrukciós branch. A C→B automatikus átmenet is megszűnik.
+
+### Mikor fut
+
+Akkor, ha az **aktuális ciklus** roadmap-blokkja hiányzik vagy hibás (a `specs/roadmap.md` nem tartalmazza, vagy hiányosan tartalmazza az adott `cycle-NN-<name>` blokkját), miközben a ciklus mappája már létezik. **Csak azzal az egy ciklussal** dolgozol — nem a teljes `specs/`-fel.
 
 ### Lépések
 
-1. **Ciklusok azonosítása:** Listázd ki a ciklus mappákat (`ls -d specs/cycle-*/`), és rendezd őket szám szerint növekvő sorrendbe.
+1. **Ciklus azonosítása:** melyik ciklusról van szó (a felhasználó megadta / a folyamatban lévő ciklus mappaneve). Ez az EGY ciklus, amit pótolsz.
 
-2. **Spec fájlok beolvasása:** ha sok ciklus van, ne olvasd be egyenként a saját kontextusodba — hívd a `researcher` subagentet (`agents/researcher.md`, Mód B) egy összesített kéréssel: minden `specs/cycle-NN-<name>/spec.md`-hez add vissza a címet (`Cycle NN: cím`), a `Célkitűzés` szekció első mondatát, az érintett komponenseket (a `Komponensek és viselkedés` szekcióból), valamint a `Teszt specifikáció` és `Definition of done` kulcspontjait, táblázatos formában. Ha a `spec.md` nem létezik egy ciklushoz, jelezze ezt is a mappanév alapján (viselkedés: mappanévből következtetve, komponensek: ismeretlen, teszt kritérium: nincs specifikálva). Néhány (2-3) ciklusnál egyszerűbb, ha közvetlenül olvasod be őket.
+2. **Branch (BQ5):** verziókezelő mellett dolgozz az adott **ciklus feature branch-én** — a B. mód „Branch létrehozása" mintája szerint: ha még nincs branch, a branch-nyitó preflight (friss, tiszta `main`) után `git switch -c feature/cycle-NN-<name>`; ha ez egy resume és már a ciklus branch-én vagy (BQ3), folytasd ott, `git switch -c` nélkül. **No-VCS ágon a git kimarad.**
 
-3. **Roadmap felépítése (piszkozatként):** Építsd fel a `specs/roadmap.md`-t a standard struktúra szerint (`# Fejlesztési Roadmap`, **`Státusz: Piszkozat`**, majd minden ciklus `## Cycle NN — cím` blokkja). **Ne állítsd `Kész`-re automatikusan** — a rekonstrukció felülírhat fontos tervezési állapotot, ezért emberi jóváhagyás kell.
+3. **A hiányzó/hibás blokk pótlása:** ha a `specs/roadmap.md` nem létezik, hozd létre az alap struktúrával (`# Fejlesztési Roadmap\n\n**Státusz:** Kész`). Az adott ciklus `## Cycle NN — cím` blokkját a standard struktúra szerint pótold/javítsd, a ciklus `spec.md`-jéből (ha létezik). Ha az input sok, a `researcher` subagenttel (`agents/researcher.md`, Mód B) kérdezd le tömören (cím, `Célkitűzés` első mondata, érintett komponensek, `Teszt specifikáció`/`Definition of done` kulcspontjai) — a fő kontextust kímélve. **Csak ezt az egy blokkot** érintsd, a roadmap többi részét ne írd felül.
 
-4. **Felhasználói review és megerősítés:** Mutasd meg a rekonstruált roadmapet, és kérj megerősítést:
-   > *"A meglévő spec fájlokból [N] ciklust rekonstruáltam a `specs/roadmap.md`-be (jelenleg `Piszkozat`). Kérlek nézd át. Ha rendben van és megerősíted, `Kész`-re állítom és commitolom."*
+4. **Validáció + megerősítés:** mutasd meg a pótolt/javított blokkot, és kérj megerősítést:
+   > *"A(z) `cycle-NN-<name>` roadmap-blokkját pótoltam/javítottam a `specs/roadmap.md`-ben. Kérlek nézd át. Ha rendben van és megerősíted, commitolom a ciklus branch-én."*
    > **A válasz végén helyezd el a `specs/roadmap.md` közvetlen, kattintható linkjét.** Ne lépj tovább a megerősítés előtt.
 
-5. **Lezárás (megerősítés után):**
-   - Állítsd a roadmap státuszát `Kész`-re.
-   - Készíts git commitot:
-     ```bash
-     git add specs/roadmap.md
-     git commit -m "cycle-NN: 01-cycles"
-     ```
-   - Jelezd: *"A roadmap rekonstrukció kész és commitolva. Folytathatjuk az új ciklus hozzáadásával."*
-
-6. **Átmenet B. módba:** A megerősített rekonstrukció után automatikusan folytasd a **B. mód — Új ciklus hozzáadása** lépéseivel (az `### Előkészítés` ponttól kezdve: a roadmap most már létezik, olvasd be, határozd meg a következő ciklusszámot).
+5. **Lezárás (megerősítés után):** commit a **ciklus feature branch-én** (BD4):
+   ```bash
+   git add specs/roadmap.md
+   git commit -m "cycle-NN: 01-cycles"
+   ```
+   **No-VCS ágon a commit kimarad.** Ezután a ciklus folytatható a 02 spec fázissal (vagy, ha új ciklust is fel akarsz venni, a B. móddal).

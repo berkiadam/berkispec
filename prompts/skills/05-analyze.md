@@ -63,10 +63,10 @@ A `05-analyze` egy **vezénylő** fázis. Két dolgot tarts észben végig:
 
 2. **Tasks státusz:** olvasd be a `specs/cycle-NN-<cycle-name>/tasks.md` státuszát. **Ha nem `Implementálásra kész`, STOP** — a task lista még nem zárult le. Jelezd, és térjenek vissza a `04` tasks fázishoz. (Kivétel: ha a státusz `Implementálásra kész [analyze-loop]` markert visel, egy korábbi analyze-hurok szakadt meg — lásd „Folytatás megszakított futás után".)
 
-3. **Munkafa ellenőrzés:** futtasd: `git status --short`. Ha van commitálatlan változtatás:
+3. **Munkafa-ellenőrzés (csak VCS esetén):** futtasd: `git status --short`. Ha van commitálatlan változtatás:
    - Listázd ki az érintett fájlokat.
    - Jelezd: *"Az analízis hurok módosíthatja a tervezési dokumentumokat; a tiszta munkafa megkönnyíti a visszakövetést."*
-   - Kérdezd meg: *"Commitáljam ezeket most, vagy folytassam?"* — egy kérdés, várj a válaszra, majd folytasd.
+   - Kérdezd meg: *"Commitáljam ezeket most, vagy folytassam?"* — egy kérdés, várj a válaszra, majd folytasd. (No-VCS projektben kimarad.)
 
 ---
 

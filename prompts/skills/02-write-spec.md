@@ -1,7 +1,7 @@
 ---
 phase: 02
 name: bs-write-spec
-description: "berkispec - 02. Használd egy ciklus indításakor (Phase 02) a roadmap alapján, a funkcionális/üzleti követelmények specifikálásához. Megnyitja a ciklus git branch-ét ('feature/cycle-NN-...'), és létrehozza a 'spec.md'-t ('Tervezésre kész') + a 'spec-questions.md'-t. Előfeltétel: 'specs/roadmap.md' státusz 'Kész'."
+description: "berkispec - 02. Használd egy ciklus indításakor (Phase 02) a roadmap alapján, a funkcionális/üzleti követelmények specifikálásához. A ciklus git branch-én dolgozik (a branch a 01 fázisban jött létre 'main'-ről), és létrehozza a 'spec.md'-t ('Tervezésre kész') + a 'spec-questions.md'-t. Előfeltétel: 'specs/roadmap.md' státusz 'Kész'."
 prerequisites:
   - "specs/roadmap.md státusz: Kész"
 output:
@@ -31,17 +31,21 @@ Ez a folyamat **2. fázisa (0–9)**: 0-init · 1-ciklusok · **2-spec ←** · 
 
 0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni? Igen / Nem (megadom a ciklust)"* — és várj a válaszra, mielőtt továbblépsz.
 
-1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` fázishoz. **Munkafa:** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e most vagy folytassam — várj a válaszra. (A 02 branchet hoz létre; commitálatlan változások átkerülhetnek az új branch-re.)
+1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` fázishoz.
+
+1.a **Munkafa-ellenőrzés (csak VCS esetén):** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e most vagy folytassam — várj a válaszra. (No-VCS projektben — a `conventions.md` szerint nincs verziókezelő — ez és a lenti branch-lépés kimarad.)
 
 2. **Roadmap ellenőrzés:** Olvasd be a `specs/roadmap.md`-t. **Ha a státusz nem `Kész`, ne kezdj el spec-et írni.** Jelezd a felhasználónak, hogy a roadmap még nem zárult le, és térjenek vissza a `01` ciklusok kezelése fázishoz. Ha a státusz `Kész`, keresd meg a megadott ciklus (`cycle-NN-<cycle-name>`) bejegyzését a roadmap-ben, és használd azt a spec kiindulópontjaként — a viselkedés, az érintett komponensek, az előfeltételek és a teszt kritérium mind alapot adnak a spec részletes kidolgozásához.
 
 1.b **Current-truth kiindulás (DS5):** ha létezik a `docs-generated/system-overview.md`, olvasd be — ez a megvalósult (as-built) rendszer konszolidált, naprakész működésleírása, amit a `08-doc-sync` fázis tart karban. A spec a **jelenlegi valóságból** induljon: nézd meg, milyen flow-k/állapot/endpointok léteznek már, hogy az új spec ezekre épüljön, ne ütközzön velük. **Guard:** ha a fájl még nem létezik (korai ciklus / a bootstrap előtt), **ne állj meg** — jelezd egy mondatban, hogy a current-truth doksi még nincs, és folytasd a spec írását a roadmap alapján.
 
-2. **Branch létrehozás:** Ellenőrizd, hogy a cycle branch létezik-e. Ha nem, hozd létre a cycle neve alapján (a `specs/roadmap.md`-ből deriválva):
-   ```bash
-   git checkout -b feature/cycle-<cycle-name>
-   ```
-   Ha a felhasználó explicit más branch nevet adott meg, azt használd. A spec, plan, tasks fájlok és a schema artifaktumok mind erre a branch-re kerülnek.
+2. **Branch-ellenőrzés (a branch a 01-ben jött létre — BD1):** a ciklus feature branch-ét már a **01-add-cycles** fázis létrehozta `main`-ről; a 02 **nem** nyit új branch-et. Verziókezelő mellett:
+   - `git branch --show-current` → ha már a ciklus feature branch-én vagy, folytasd itt.
+   - Ha egy másik branch-en vagy, de a ciklusé létezik → válts rá: `git switch feature/cycle-<cycle-name>` (a `conventions.md` `## Git és branching konvenciók` **Branch-elnevezési stratégia** szerinti névvel).
+   - **Fallback** (ha a ciklus branch-e valamiért nem létezik — pl. régi flow vagy megszakadt 01): a branch-nyitó preflight (friss, tiszta `main`) után hozd létre: `git switch -c feature/cycle-<cycle-name>`. Ez kivétel, nem a főszabály — normál esetben a 01 már létrehozta.
+   - **No-VCS ágon** (a `conventions.md` szerint nincs verziókezelő) ez a lépés kimarad.
+
+   A spec, plan, tasks fájlok és a schema artifaktumok mind erre a branch-re kerülnek.
 
 ---
 
