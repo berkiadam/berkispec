@@ -1,5 +1,6 @@
 ---
 name: tasks-fixer
+description: "Az 05-analyze önjavító hurok 04-tasks Fix-mód belépője (vékony wrapper a 04-write-tasks Fix-módjához). Az 05-analyze skill hívja."
 role: "Tasks Fix-mód végrehajtó wrapper (az analyze-hurok 04-fázis javítója)"
 called_by: ["skills/05-analyze.md"]
 inputs:

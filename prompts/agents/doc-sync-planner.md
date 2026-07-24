@@ -1,5 +1,6 @@
 ---
 name: doc-sync-planner
+description: "Read-only diagnoszta, amely a docs-generated/ frissítésének per-fájl pipálható tervét és kész csereszövegeit állítja elő (doc-sync-plan.md). A 08-doc-sync skill hívja."
 role: "Dokumentáció-szinkron diagnoszta ágens (read-only tervkészítő)"
 called_by: ["skills/08-doc-sync.md"]
 inputs:

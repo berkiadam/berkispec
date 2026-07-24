@@ -1,5 +1,6 @@
 ---
 name: reviewer
+description: "Read-only kód-review diagnoszta a merge előtt: a cycle branch diffjét vizsgálja és code-review.md-t ad (Must Fix / Suggestion). A 09-review-and-merge skill hívja."
 role: "Kód-review specialista ágens"
 called_by: ["skills/09-review-and-merge.md"]
 inputs:

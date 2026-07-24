@@ -1,5 +1,6 @@
 ---
 name: plan-fixer
+description: "Az 05-analyze önjavító hurok 03-plan Fix-mód belépője (vékony wrapper a 03-write-plan Fix-módjához). Az 05-analyze skill hívja."
 role: "Plan Fix-mód végrehajtó wrapper (az analyze-hurok 03-fázis javítója)"
 called_by: ["skills/05-analyze.md"]
 inputs:

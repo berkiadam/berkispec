@@ -314,22 +314,26 @@ def write_markdown_skill(skill_file, skills_dest, src_dir=None):
 # telepítését ugyanabba a projektbe (lásd install.sh / install.ps1).
 
 def _split_agent_markdown(content):
-    """Visszaadja az agent markdown (name, role, body) hármasát. A body a
-    frontmatter utáni teljes törzs (a --- lezárás után)."""
+    """Visszaadja az agent markdown (name, role, description, body) négyesét. A
+    body a frontmatter utáni teljes törzs (a --- lezárás után). A `description`
+    az agent-regisztráció kanonikus mezője; ha nincs, a `role`-ra esünk vissza."""
     parts = content.split('---')
     if len(parts) >= 3:
         frontmatter = parts[1]
         body = '---'.join(parts[2:]).lstrip('\n')
         name = ""
         role = ""
+        description = ""
         for line in frontmatter.splitlines():
             stripped = line.strip()
             if stripped.startswith('name:'):
                 name = stripped[len('name:'):].strip().strip('"').strip("'")
             elif stripped.startswith('role:'):
                 role = stripped[len('role:'):].strip().strip('"').strip("'")
-        return name, role, body
-    return "", "", content
+            elif stripped.startswith('description:'):
+                description = stripped[len('description:'):].strip().strip('"').strip("'")
+        return name, role, description, body
+    return "", "", "", content
 
 def _toml_basic_string(s):
     """TOML basic (egysoros) string, escape-elve."""
@@ -380,9 +384,9 @@ def process_codex(src_dir, dest_path, models):
         with open(agent_file, 'r', encoding='utf-8') as f:
             content = f.read()
 
-        name, role, body = _split_agent_markdown(content)
+        name, role, description, body = _split_agent_markdown(content)
         agent_name = name or stem
-        description = role or "BerkiSpec agent"
+        description = description or role or "BerkiSpec agent"
         developer_instructions = _build_alert(model, "Codex", effort) + body
 
         toml_text = _build_codex_agent_toml(

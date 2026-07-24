@@ -1,5 +1,6 @@
 ---
 name: implement-fixer
+description: "A 07-validate önjavító hurok javító belépője: a 06-implement Fix-módjára delegál a teszt-/Sonar-/DoD-hibák javításához (## Validációs javítások). A 07-validate skill hívja."
 role: "Implement Fix-mód végrehajtó wrapper (a validate-hurok 06-fázis javítója)"
 called_by: ["skills/07-validate.md"]
 inputs:

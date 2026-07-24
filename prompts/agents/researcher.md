@@ -1,5 +1,6 @@
 ---
 name: researcher
+description: "Read-only kódbázis- és dokumentáció-kutató, amely csak tömör path+összefoglaló listát ad vissza (kontextus-kímélés, soha nyers fájltartalom). A 00/01/02/03/06 fázisok hívják feltáráshoz."
 role: "Kódbázis- és dokumentáció-kutató specialista ágens (kontextus-őr)"
 called_by:
   - "skills/00-init-project.md"

@@ -1,5 +1,6 @@
 ---
 name: spec-fixer
+description: "Az 05-analyze önjavító hurok 02-spec Fix-mód belépője (vékony wrapper a 02-write-spec Fix-módjához). Az 05-analyze skill hívja."
 role: "Spec Fix-mód végrehajtó wrapper (az analyze-hurok 02-fázis javítója)"
 called_by: ["skills/05-analyze.md"]
 inputs:

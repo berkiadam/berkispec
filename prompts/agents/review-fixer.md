@@ -1,5 +1,6 @@
 ---
 name: review-fixer
+description: "A 09-review önjavító hurok javító belépője: a 06-implement Fix-módjára delegál a ## Review javítások alapján. A 09-review-and-merge skill hívja."
 role: "Review Fix-mód végrehajtó wrapper (a review-hurok 06-fázis javítója)"
 called_by: ["skills/09-review-and-merge.md"]
 inputs:

@@ -1,5 +1,6 @@
 ---
 name: test-runner
+description: "Tesztek/Sonar/E2E mechanikus futtatása és tényszerű összegzése (nem dönt PASS/FAIL-ról). A 07-validate — és közvetve a 09 re-validate — hívja."
 role: "Teszt- és kódminőség-futtató specialista ágens (mechanikus végrehajtó — tényeket jelent, nem dönt)"
 called_by:
   - "skills/07-validate.md"

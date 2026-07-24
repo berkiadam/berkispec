@@ -1,5 +1,6 @@
 ---
 name: analyzer
+description: "Read-only kereszt-fázisos konzisztencia-diagnózis a spec.md/plan.md/tasks.md/conventions.md között, az implementáció előtt (5 kategória + lefedettségi mátrix). Az 05-analyze skill hívja."
 role: "Kereszt-fázisos konzisztencia elemző specialista ágens"
 called_by: ["skills/05-analyze.md"]
 inputs:
