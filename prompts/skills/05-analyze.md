@@ -120,7 +120,7 @@ A diagnózis **5 kategóriában** keres problémát (a `analyzer` subagent végz
 
 ## Kontextus betöltési szabályok
 
-- A kereszt-vizsgálat sok fájl együttes olvasását igényli — **kötelező az `agents/analyzer.md` subagent indítása**. A subagent beolvassa a `spec.md` + `plan.md` + `tasks.md` + `conventions.md` négyest, elvégzi az 5 kategóriás vizsgálatot, és **kizárólag a strukturált megállapítás-listát adja vissza** (a nyers fájltartalom nem terheli a fő kontextust).
+- A kereszt-vizsgálat sok fájl együttes olvasását igényli — **kötelező az `agents/analyzer.md` subagent indítása**. A subagent beolvassa a `spec.md` + `plan.md` + `tasks.md` + `conventions.md` négyest, elvégzi a **6 kategóriás** vizsgálatot (az utolsó, „végrehajthatóság és artefaktum-tulajdon" kategóriához **célzottan a repóban is ellenőriz létezést** — `Glob`/`Read`, nem audit), és **kizárólag a strukturált megállapítás-listát adja vissza** (a nyers fájltartalom nem terheli a fő kontextust).
 - A subagent rendszerpromptja: olvasd be a `prompts/agents/analyzer.md`-t, és ezzel definiáld az `analyzer` subagentet.
 - A subagent kimenetét te értékeled, és ez alapján döntesz PASS / FAIL-ról.
 - A javító fixer-subagenteket szintén Task tool subagent-ként indítod, a saját wrapper-promptjukkal (`agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`) — lásd „Az önjavító hurok".
@@ -249,6 +249,19 @@ _Egy-két mondat: konzisztens-e a négyes, vagy hol van a baj, és hogyan zárul
 ### Suggestions
 - <kategória> — <leírás>
 
+## Végrehajthatósági leltár (6. kategória)
+
+_Az `analyzer` subagent kimenetéből átvéve. **Kötelező szekció** — ha hiányzik, a PASS nem fogadható el._
+
+**Futtatott artefaktumok:** <fájl → létezik / létrehozó task Tnnn / HIÁNYZIK>
+**Prózában ígért tesztek:** <ígéret → teszteset + task / HIÁNYZIK>
+**Artefaktum-tulajdon:** <rendben / a planben szerepel: ...>
+**Státusz-frissítő task:** <nincs / Tnnn>
+**Marker-helyesség:** <rendben / téves [OPS]: ...>
+**Destruktív műveletek:** <jóváhagyás + immutable azonosító + rollback megvan / hiányzik: ...>
+**Horgony-feloldás:** <feloldható / nem oldható fel: ...>
+**Artefaktum-hang:** <rendben / skill-hangú meta-utasítás maradt: ...>
+
 ## Lefedettségi mátrix (követelmény ↔ task)
 
 | Spec követelmény | Plan szekció | Task(ok) | Lefedve |
@@ -275,7 +288,7 @@ _Iterációnkénti audit-nyom — a megszakítás-utáni folytatás horgonya._
 
 ## Minőségellenőrzés — a jelentés lezárása előtt
 
-Menj végig, mind az 5 kategória ténylegesen lefutott-e (a `analyzer` subagent kimenetében):
+Menj végig, mind a **6** kategória ténylegesen lefutott-e (az `analyzer` subagent kimenetében). **A 6. kategóriánál külön ellenőrizd, hogy a subagent visszaadta-e a „Végrehajthatósági leltárt"** — enélkül a PASS nem fogadható el, mert épp azok a hibák maradnának rejtve, amelyeket a lefedettségi mátrix szerkezetileg nem lát:
 
 1. **Duplikáció** — átnézve spec/plan/tasks redundanciára?
 2. **Ambiguitás** — minden elfogadási feltétel mérhető/eldönthető?
