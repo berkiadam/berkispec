@@ -8,11 +8,13 @@ inputs:
   - "Cycle branch git diff (vs master) vagy bootstrap forráslista"
   - "conventions.md (különösen a Projekt referenciák szekció)"
   - "docs-generated/ aktuális tartalma és fejléc-scope mezői"
+  - "specs/test-conventions.md aktuális tartalma (ha létezik) + a ciklus test-report/ eredménye"
 outputs:
   - "Per-fájl doc-sync-plan.md tervjavaslat (a fő ágens írja fájlba)"
   - "Minden `reconciliation`/`új` tételhez a KÉSZ csereszöveg (sebészi patch: cél-szekció + a lecserélendő pontos jelenlegi szövegrészlet + a megírt új szöveg) — a fő ágens mechanikusan alkalmazza, nem komponál újra"
   - "doc-sync-questions.md-be felveendő döntési pontok / kapu-bukások listája"
   - "DS22 objektív kapu-leltár: átnevezések, ábrák, mappa-index, coverage-marker, feltételes API-check"
+  - "specs/test-conventions.md terv-tételei: promóció, Utolsó futás bump, törlés (TC3/TC4) + a TC8 létezés-leltár"
 tools: ["Read", "Bash", "Grep", "Glob"]
 ---
 
@@ -57,7 +59,21 @@ Mindig adj tervsort az alábbiakra:
 - a `docs-generated/CHANGELOG.md` ciklus-bejegyzésére, ha a fájl létezik vagy bootstrap hozza létre;
 - a `docs-generated/design-drift.md` drift-összevetésére, ha a fájl létezik vagy bootstrap hozza létre;
 - az érintett komponens README-k ellenőrzésére/frissítésére;
+- a `specs/test-conventions.md` karbantartására (lásd lent — akkor is, ha a fájl még nem létezik);
 - a DS22 objektív konzisztencia-kapu futtatására.
+
+## `specs/test-conventions.md` — terv-tételek (TC3/TC4/TC5/TC6)
+
+Ez a fájl a `docs-generated/`-en **kívül** van (a `specs/roadmap.md` mellett), a doc-sync gazdája, és **normatív** input a jövő ciklusainak. A szabályait a `08-doc-sync.md` „A `specs/test-conventions.md` karbantartása (TC1–TC8)" szekciója írja le — **azt kövesd**. A te dolgod a terv és a csereszöveg előállítása:
+
+1. **Ha a fájl létezik (steady state):** javasolj tételeket három művelettel:
+   - **promóció** — csak TC3 szerint: (a) korábbi ciklusból származó teszt/recept, amely **ebben** a ciklusban is a `plan.md` `Regressziós érintettség` táblájában szerepelt vagy tényleg lefutott, **vagy** (b) a felhasználó korábban megerősítette. Recept csak akkor, ha **ebben a ciklusban zölden lefutott** (a `test-report/` a bizonyíték) — **kitalált parancsot ne írj**;
+   - **`Utolsó futás: cycle-NN` bump** — csak azokon a tételeken, amelyek ebben a ciklusban tényleg futottak;
+   - **törlés** — ha a ciklus megszüntette/átalakította a komponenst, vagy a tétel már nem értelmezhető. **Minden törlés külön terv-tétel**, hogy a felhasználó lássa és pipálhassa. A törlés oka a `CHANGELOG.md` bejegyzésébe is bekerül.
+2. **Ha a fájl NEM létezik (TC6 bootstrap — akár a 30. ciklusban):** ne üres vázat javasolj. Gyűjts **javaslatot** a meglévő anyagból: a lezárt ciklusok `spec.md`/`plan.md` `Teszt specifikáció` / `Tesztelési stratégia` / `E2E infrastruktúra` / `Regressziós érintettség` szekciói, a lezárt `plan-questions.md`-k (**itt vannak a környezeti koordináták**), a `test/` mappa, az E2E compose fájl és a `conventions.md` `## Projekt referenciák`. A javaslatot a TC2 három szekciójába szervezve add vissza, és jelöld, hogy a start előtt **széles interjú** kell (TC7). **Ha nincs egyetlen TC3-konform tétel sem, a fájlt NE javasold létrehozni** — adj „nincs teendő" tételt indoklással.
+3. **Titok-szűrés (TC5):** minden javasolt értéket osztályozz a „személyt hitelesít vagy osztott platformhoz ad hozzáférést?" kérdéssel. Dev-hatókörű teszt-user/jelszó/realm-admin **bekerülhet**; klaszter-, registry-, VPN-, IAM-, git/CI-credential **nem** — helyette pointer. **Bizonytalan eset → kérdésjavaslat**, és a csereszövegbe pointer kerül, nem érték.
+4. **Staleness (TC4):** ha egy tétel `Utolsó futás` markere 3+ ciklussal régebbi az aktuálisnál, adj kérdésjavaslatot, hogy még érvényes-e vagy törlendő.
+5. **TC8 leltár (informatív):** a kapu-ellenőrzést maga a `tc8-gate-check.py` script végzi (útvonal-létezés, lógó hivatkozás, titok-check, `Utolsó futás` marker) — **ezt te nem futtatod, és nem is grepelsz kézzel**. A te dolgod annyi, hogy a leltárban jelezd, ha a tervezett változtatás nyomán a script bukására számítasz (pl. olyan tesztfájlra hivatkozó tétel marad benne, amit a ciklus törölt), hogy a fő ágens már a végrehajtáskor kezelni tudja.
 
 ## DS22 kapu-leltár
 
@@ -103,6 +119,15 @@ _(minden `reconciliation`/`új` tervsorhoz egy blokk; `nincs teendő` tételhez 
 **Mappa-index:** <elvárt fájllista>
 **Coverage-marker:** <módosítandó fájlok>
 **Feltételes API-check:** <fut / skip + indok>
+
+## test-conventions leltár (TC)
+
+**Mód:** <steady state | bootstrap (TC6, széles interjú kell) | nincs teendő + indok>
+**Promóció:** <tételek + a TC3 szerinti bizonyíték (melyik plan/test-report igazolja) vagy N/A>
+**Bump:** <mely tételek Utolsó futás markere → cycle-NN vagy N/A>
+**Törlés:** <tétel + indok, külön terv-tételként vagy N/A>
+**Titok-döntés:** <mi került be értékként, mi lett pointer, mi ment kérdésbe>
+**TC8 létezés-leltár:** <megnevezett repo-belső útvonalak + lógó hivatkozások vagy N/A>
 ```
 
 Ha nincs kérdés, a `Doc-sync kérdésjavaslatok` blokkban írd: `Nincs.`.

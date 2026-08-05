@@ -36,6 +36,7 @@ Ez a folyamat **3. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · **3-plan
 | Kontextus | Spec + dokumentáció; forrásfájlokat a `researcher` subagent azonosítja (D2=A). |
 | Plan struktúra | Tervezett módosítások, tesztstratégia, végrehajtási sorrend, ellenőrzési stratégia. |
 | Teszt eszköz | A `conventions.md`-re hivatkozz, ne ismételd a konkrét tool-nevet. |
+| Teszt-receptek | A `specs/test-conventions.md`-ből **maradéktalanul, önhordóan** átemelve (TC1/a) — hivatkozás nem elég. |
 | Validációs ciklusok | Minden nagy szekció után célzott ellenőrzés, mielőtt továbblépsz. |
 | Spec kritika | Aktív checklist minden komponensre; hiányosság → vissza a 02 fázisba. |
 | Lezárás | Minőségellenőrzés + Constitution Check (SK4) + user megerősítés → `Task írásra kész`, commit. |
@@ -119,6 +120,7 @@ Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Kn
 1. **Induláskor:** mielőtt bármilyen plan szekciót megírsz, olvasd be a spec-et és az érintett forrásfájlokat, és azonosítsd az összes felmerülő kérdést — beleértve a spec-ben jelzett _„Technológiai alapdöntések tisztázandók a plan fázisban"_ pontokat is. Vedd fel mindegyiket a `plan-questions.md`-be `- [ ] Knn` formátumban, szekvenciális számozással (K01, K02, ...). Ha már vannak korábbi kérdések a fájlban, folytasd a számozást onnan — a régi bejegyzéseket ne módosítsd, ne töröld. Ha kérdések kerülnek a `plan-questions.md`-be, állítsd a `plan.md` státuszát `Nyitott kérdések vannak`-ra.
 
     > **🔴 KÖTELEZŐ ELSŐ KÉRDÉS — E2E teszt stratégia.** A `plan-questions.md` **első** bejegyzése (`K01`) mindig az E2E lefedettség megközelítése. Ezt ne hagyd ki és ne told hátrébb. Az agent köteles előzetesen átvizsgálni a meglévő tesztelési infrastruktúrát (a `conventions.md` / meglévő integrációs tesztek alapján).
+    - **Ha létezik `specs/test-conventions.md`:** a K01 kérdést **abból** kiindulva tedd fel — ne a nulláról kérdezz. Sorold fel konkrétan, mely 2./3. szekciós tételeket és 1. szekciós recepteket tervezed beemelni ebbe a ciklusba, és kérdezz rá: érvényesek-e még az adatok (URL, pod, teszt-user, paraméter), kell-e valamit elhagyni vagy hozzáadni. `osztott-remote` hatókörű recept beemeléséhez **explicit jóváhagyás kell**.
     - Ha a meglévő tesztelési infrastruktúra hibrid vagy natív gazdagépes folyamatokra épül (nem teljesen konténerizált), a kérdésben kötelezően fel kell tárnia ezt az eltérést a "Szigorú konténerizációs szabállyal" szemben, és javaslatot kell tennie:
       1. a meglévő hibrid/natív infrastruktúrát használjuk tovább ebben a ciklusban (hogy minimalizáljuk a meglévő tesztek átírásának kockázatát), vagy
       2. most alakítsuk át a teljes tesztelési infrastruktúrát teljesen konténerizáltra (megfelelve a szigorú szabálynak).
@@ -138,6 +140,14 @@ Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Kn
 
 - Olvasd be a ciklus `spec.md`-jét.
 - Ha létezik `plan-questions.md`: olvasd be.
+- **Visszatérő teszt-elvárások és receptek (TC1) — `specs/test-conventions.md`:** ha létezik, olvasd be **teljes egészében** (mindhárom szekciót). Ez a `08-doc-sync` által karbantartott regiszter: 1. szekció = recept-regiszter (koordináták, URL-ek, teszt-userek, paraméterek, példa hívások, build/deploy parancsok), 2. szekció = minden körben szükséges lokális (mock alapú) tesztek, 3. szekció = minden körben szükséges integrációs/E2E tesztek. **Guard:** ha a fájl nem létezik (korai ciklus), ne állj meg és ne hozd létre — egy mondatban jelezd, és a `plan-questions.md` K01 kérdését a meglévő tesztelési infrastruktúra alapján tedd fel.
+
+  > **🔴 A `plan.md` ÖNHORDÓ (TC1/a — kötelező).** A `test-runner` subagent a `test-conventions.md`-t **nem olvassa** — kizárólag a `plan.md` `Tesztelési stratégia` és `Regressziós érintettség` szekcióit. Ezért **minden tesztelési feladatot maradéktalanul át kell emelni a `plan.md`-be**, kiegészítve az 1. szekció **összes** hozzá tartozó adatával: teszt-userek és jelszavaik, URL-ek, portok, namespace/pod, image-név, registry-cél, paraméterek, **példa hívások (`curl`)**, build/push/restart parancsok, előfeltételek és futási sorrend.
+  > - **Puszta hivatkozás NEM elég** (`„lásd test-conventions.md R03"` önmagában tilos) — a `test-conventions.md`-re csak **provenance**-ként hivatkozz a beemelt tartalom mellett (pl. „_(forrás: test-conventions.md R03)_").
+  > - **Placeholder TILOS** (`<ide jön a jelszó>`, `<TODO URL>`) — ha egy adat hiányzik vagy elavult, az `plan-questions.md` kérdés, nem placeholder.
+  > - **Nem automatikus futtatás:** a regiszterből **csak az** kerül át, ami ebben a ciklusban tényleg szükséges. Ez a beemelés maga az emberi kontroll-pont — a `plan.md` a futtatás egyetlen igazsága.
+  > - **Elavult tétel:** ha egy recept adata nem stimmel a valósággal, vagy az `Utolsó futás` markere régi, **kérdezz rá** a `plan-questions.md`-ben. A `test-conventions.md`-t **ne írd** — a javítás a `08-doc-sync` dolga (TC4); a ciklus a plan-be a felhasználóval egyeztetett, helyes adatot veszi.
+  > - **`osztott-remote` hatókörű recept** (a regiszter így jelöli): a beemelés előtt **kötelezően kérdezz rá** a `plan-questions.md`-ben — osztott dev/test környezetben egy image-push vagy pod-restart más munkáját is érinti.
 - **Forrásfájl-azonosítás (a plan dolga, nem a spec-é):** a spec `Hivatkozott fájlok` szekciója **csak dokumentációs/specifikációs anyagot** tartalmaz (README, OpenAPI, séma, példa payload) — forrásfájlokat (`.ts`, `.tsx`, `.js`, `package.json`, stb.) **nem**. A módosítandó/érintett forrásfájlokat a **03 fázis azonosítja önállóan**, a spec `Komponensek és viselkedés` szekciója alapján. Ehhez indítsd el a `researcher` subagentet (`agents/researcher.md`), amely visszaadja az érintett forrásfájlok listáját (path + hely + jelleg) — a nyers fájltartalom nem terheli a fő kontextust. Csak az így azonosított, valóban releváns forrásfájl-részeket olvasd be közvetlenül.
 - **Spec-ben hivatkozott dokumentációs/specifikációs fájlok:** ha a `spec.md` a `Hivatkozott fájlok`-ban külső leírókra hivatkozik (JSON séma, OpenAPI leíró, példa payload), ezeket is olvasd be a terv elkészítése előtt.
 - **Külső függőségek dokumentációja:** Ha a ciklus külső függőséget vezet be vagy igénybe vesz (pl. Keycloak, külső API, messaging broker), kérd be a vonatkozó dokumentációt vagy MCP szervereket a felhasználótól még a plan megkezdése előtt. Nézd át, és döntsd el, hogy elegendő és releváns információ áll-e rendelkezésre. Ha nem, vedd fel nyitott kérdésként a `plan-questions.md`-be.
@@ -199,9 +209,13 @@ _A ciklus által bevezetett vagy módosított formális sémák és API leírók
 
 _Milyen típusú tesztek kellenek (unit / integrációs / e2e)? Melyik meglévő tesztfájl módosul, melyik új fájl keletkezik?_
 
+_**Beemelt visszatérő elvárások (TC1) — kötelező, ha létezik `specs/test-conventions.md`:** a regiszter 2. és 3. szekciójának ebben a ciklusban szükséges tételei, **önhordóan** (a hozzájuk tartozó recept-adatokkal, nem puszta hivatkozással). Minden beemelt tétel mellé írd a provenance-t: `_(forrás: test-conventions.md L01)_`. Ha egy tétel adatát a `plan-questions.md`-ben javítottad, a **javított** adat kerül ide._
+
 ### E2E infrastruktúra
 
 _(Kitöltése kötelező — a `plan-questions.md`-ben megállapodott szint alapján.)_
+
+_**A recept-adatok helye (TC1/a):** a `specs/test-conventions.md` 1. szekciójából beemelt **összes** végrehajtáshoz szükséges adat ebbe a szekcióba kerül, szó szerint: komponens-koordináták (repo-útvonal, image-név, registry-cél, namespace/pod), URL-ek és portok, health endpoint, **teszt-userek és jelszavaik**, scope/client-id és egyéb paraméterek, **példa hívások (`curl`)**, build/push/restart parancsok, előfeltételek és a lépések sorrendje. **Hivatkozás nem helyettesíti az adatot, és placeholder nem használható** — a `test-runner` csak ezt a fájlt látja. Credential-t ide is csak a regiszter titok-szabálya (TC5) szerint írj: dev-hatókörű teszt-user igen, klaszter/registry/VPN/IAM/token credential soha — arra pointer megy._
 
 > [!IMPORTANT]
 > **Szigorú konténerizációs szabály:** A tesztkörnyezet konzisztenciája és gépfüggetlensége érdekében az E2E és integrációs tesztekben részt vevő összes háttér-szolgáltatást és komponenst kötelező konténerben (pl. Docker/Podman) futtatni. Tilos a gazdagépen helyileg futó natív szolgáltatásokra hagyatkozni (kivéve magát a tesztet futtató keretrendszert/böngészőt).
@@ -229,10 +243,13 @@ _Ha a ciklus meglévő kódot módosít: explicit lista az érintett meglévő t
 
 _Ha nincs regressziós érintettség, ezt explicit írd ki: „Nincs regressziós érintettség."_
 
+_**Származtatás a regiszterből (TC1):** ha létezik `specs/test-conventions.md`, ezt a táblát **ne a nulláról találd ki** — vesd össze a ciklus által módosított komponenseket/fájlokat a regiszter 2./3. szekciós tételeivel, és minden érintett tétel kerüljön a táblába (a `Miért érintett` oszlopban a tétel ID-jával). Ide azok a „ne törjön el" jellegű tételek is bekerülnek, amelyek a `spec.md`-be nem mennek át, mert nem a ciklus célja. A futtatáshoz szükséges recept-adatokat a fenti `E2E infrastruktúra` szekció tartalmazza._
+
 | Tesztfájl / E2E script | Miért érintett |
 |---|---|
 | `test/unit/...` | ... |
 | `test/integration/cycle-XX-....sh` | ... |
+| `test/e2e/auth-login.spec.ts` | test-conventions I01 — a módosított middleware ezen a flow-n fut |
 
 ## Teszt specifikáció
 
@@ -340,6 +357,14 @@ Ha bármely pontra nem, egészítsd ki a tervezett módosításokat, majd folyta
 ### 2. Teszt specifikáció után
 
 - Az **E2E infrastruktúra szekció** kitöltött és a teszt stratégia megállapodott (lezárt kérdés a `plan-questions.md`-ben)?
+- **Önhordó-e a plan a beemelt receptekre? (TC1/a — kötelező)** — Ha létezik `specs/test-conventions.md`: menj végig **minden** beemelt tételen, és ellenőrizd, hogy a `plan.md` önmagában elegendő a végrehajtáshoz. Konkrétan:
+  - minden hivatkozott URL, port, namespace/pod, image-név és registry-cél **szó szerint** szerepel;
+  - minden szükséges teszt-user, jelszó, scope, client-id és paraméter szerepel (a TC5 titok-szabály korlátain belül; ami pointer, az explicit pointerként);
+  - minden build / push / restart / indító parancs és **példa hívás (`curl`)** szerepel, futtatható formában;
+  - szerepel az előfeltétel és a lépések sorrendje;
+  - **nincs** olyan tétel, amely csak hivatkozik a regiszterre (`„lásd test-conventions.md ..."`) az adat helyett, és **nincs placeholder** (`<...>`, `TODO`).
+  Ha bármelyik hiányzik: pótold a regiszterből, vagy — ha az adat bizonytalan/elavult — vedd fel `plan-questions.md` kérdésként. **Ne találd ki.**
+- **Beemelt-e minden ebben a ciklusban szükséges baseline tétel?** — A regiszter 2./3. szekcióján végigmenve: minden tétel vagy megjelenik a `Tesztelési stratégia` / `Regressziós érintettség` szekcióban, vagy van explicit indok, miért nem érinti ez a ciklus.
 - A spec DoD-jában szereplő E2E elfogadási feltétel le van-e fedve valamelyik E2E tesztesettel?
 - A spec `Teszt specifikáció` vagy hibamátrix minden bejegyzéséhez van-e TC a plan Teszt specifikációjában?
 - **Regressziós érintettség kitöltve?** — Ha a ciklus meglévő kódot módosít, a `Regressziós érintettség` táblázat tartalmazza az összes érintett meglévő tesztfájlt és E2E scriptet. Ez különösen kritikus, ha:
@@ -415,6 +440,7 @@ Mielőtt \`Task írásra kész\` státuszra váltasz, tedd fel magadnak:
 - **Kommentek és docstringek:** A tervezett módosítások figyelembe veszik-e a forráskódban lévő kommentek és leírások frissítését az új elnevezéseknek/működésnek megfelelően?
 - **Fájl elérési utak formátuma:** Minden fájl elérési útja és linkje a fájl aktuális könyvtárához képest relatív útvonal legyen (a mappa mélységének megfelelő számú visszalépéssel a projekt gyökeréig, pl. `../../apps/legacy-login/config/users.json`)? Abszolút útvonalak vagy `file://` sémájú linkek sehol nem szerepelhetnek a dokumentációban.
 - A `Teszt specifikáció` szekció tartalmaz teszteseteket minden érintett komponenshez?
+- **A plan önhordó a beemelt teszt-receptekre (TC1/a)?** — Nincs olyan tesztelési lépés, amely a `specs/test-conventions.md` beolvasása nélkül nem végrehajtható (a `test-runner` azt a fájlt nem olvassa). Nincs placeholder, nincs adat helyett hivatkozás.
 - Minden teszteset Elvárt kimenet oszlopa tartalmaz HTTP státuszt és errorCode-ot (ahol a spec hibamátrixa definiálja)?
 - A unit tesztek a végrehajtási sorrendben az implementáció ELŐTT szerepelnek?
 - Minden szükséges schema artifact azonosítva és a táblázatban szerepel?

@@ -1,13 +1,14 @@
 ---
 phase: 08
 name: bs-doc-sync
-description: "berkispec - 08. Használd a validáció után, merge előtt (Phase 08), ha a tasks.md/plan.md/spec.md mind 'Kész'. A kódváltozásokat a 'docs-generated/' rendszer-dokumentációba és az érintett komponens-README-kbe szinkronizálja (doc-sync-planner subagent, design-drift ellen), és létrehozza a 'doc-sync-plan.md'-t."
+description: "berkispec - 08. Használd a validáció után, merge előtt (Phase 08), ha a tasks.md/plan.md/spec.md mind 'Kész'. A kódváltozásokat a 'docs-generated/' rendszer-dokumentációba és az érintett komponens-README-kbe szinkronizálja (doc-sync-planner subagent, design-drift ellen), karbantartja a 'specs/test-conventions.md' visszatérő teszt-elvárás regisztert, és létrehozza a 'doc-sync-plan.md'-t."
 prerequisites:
   - "specs/cycle-NN-<name>/tasks.md státusz: Kész"
   - "specs/cycle-NN-<name>/plan.md státusz: Kész"
   - "specs/cycle-NN-<name>/spec.md státusz: Kész"
 output:
   - "docs-generated/ konzisztens állapota (system-overview.md, architecture.md, CHANGELOG.md, design-drift.md, README.md mappa-index + a mappa többi fájlja)"
+  - "specs/test-conventions.md — a visszatérő teszt-elvárások és a hozzájuk tartozó receptek élő regisztere (TC1)"
   - "Érintett komponens README-k frissítve"
   - "specs/cycle-NN-<name>/doc-sync-plan.md (a végrehajtás és a folytatás horgonya)"
   - "specs/cycle-NN-<name>/doc-sync-questions.md (ha merül fel döntési pont / kapu-bukás)"
@@ -80,6 +81,8 @@ A skill **csak két fájlt nevez meg kötelezőként**, amelyet a doc-sync akkor
 
 > A `docs-generated/` mappát a doc-sync **hozza létre, ha még nincs** (bootstrap-ág) — így nincs sorrend-probléma azzal, hogy ki hozza létre.
 
+**A `docs-generated/`-en kívül egy további fájl gazdája a doc-sync:** a **`specs/test-conventions.md`** (a `specs/roadmap.md` mellett, **nem** a `docs-generated/`-ben). Ez a mappa-bejárás (DS11) és a DS22 mappa-index halmaz-egyezés **hatókörén kívül** van — saját szabályai vannak, lásd „A `specs/test-conventions.md` karbantartása (TC1–TC8)".
+
 ---
 
 ## Forrás-grounding — forrás-hierarchia (DS19)
@@ -130,9 +133,9 @@ A doc-sync bármikor megszakadhat. Újraindításkor **NE kezdj tiszta lapról**
 A doc-sync **„terv előbb, aztán mechanikus végrehajtás"** mintát követ. A lépések:
 
 1. **Ág-elágazás:** bootstrap vagy inkrementális? (lásd lent)
-2. **Tervkészítés:** a `doc-sync-planner` subagent megírja a `doc-sync-plan.md`-t (per-fájl pipálható terv).
+2. **Tervkészítés:** a `doc-sync-planner` subagent megírja a `doc-sync-plan.md`-t (per-fájl pipálható terv) — a `specs/test-conventions.md` tételeivel együtt.
 3. **Mechanikus végrehajtás:** a fő ágens végrehajtja a terv `[ ]` tételeit, fájlonként mentve és pipálva.
-4. **Objektív konzisztencia-kapu (DS22):** a magkapu lefuttatása; bukáskor ember-vezérelt javító hurok (a kérdés a `doc-sync-questions.md`-be).
+4. **Objektív konzisztencia-kapu (DS22):** a magkapu lefuttatása; bukáskor ember-vezérelt javító hurok (a kérdés a `doc-sync-questions.md`-be). Ezt követi a `test-conventions.md` saját kapuja (TC8, `tc8-gate-check.py`).
 5. **Commit + továbblépés a 09-re.**
 
 ---
@@ -186,6 +189,7 @@ A tipikus tételek (mind a subagent csereszövegével érkezik):
 - **`CHANGELOG.md`** — új, részletes, inkrementális ciklus-bejegyzés (DS15, lásd a sablont). A `system-overview.md` csak coverage-markert + linket tart rá, nem duplikál.
 - **`design-drift.md`** — az adott ciklus által bevezetett **új** eltérések felvétele; a megszűnt eltérés áthelyezése a „Lezárt eltérések" szekcióba (**nem törlés**) — lásd „Drift-összevetés".
 - **`docs-generated/README.md`** — a mappa-index karbantartása: új generált fájl → bekerül; elavult bejegyzés → ki.
+- **`specs/test-conventions.md`** — promóció / `Utolsó futás` bump / elavult tétel törlése (TC1–TC8). Ez a fájl a `docs-generated/`-en **kívül** van; ha még nem létezik, a TC6 bootstrap-út fut rá — akkor is, ha a `system-overview.md` már létezik.
 
 ### 3.3 Diagram-csere + átkerülés-ellenőrzés (DS7)
 
@@ -270,6 +274,104 @@ A mappa **indexe/manifesztje** — röviden leírja, melyik fájl micsoda (egy-e
 - **Elavult bejegyzés → ki** (a mappa tényleges tartalma == a README bejegyzései, halmaz-egyezés).
 
 A mappa **létrehozásakor** (bootstrap) az index is létrejön. Ez a `docs-generated/README.md` **külön** a `prompts/README.md`-től és a gyökér `README.md`-től.
+
+---
+
+## A `specs/test-conventions.md` karbantartása (TC1–TC8)
+
+### TC1 — Mi ez, és mi NEM
+
+A `specs/test-conventions.md` a projekt **visszatérő teszt-elvárásainak és a hozzájuk tartozó receptek** élő regisztere: az a tudás, ami pár ciklus után „alap" — mit kell minden körben letesztelni, milyen sorrendben, milyen paranccsal, milyen környezetben. A doc-sync a **kizárólagos gazdája**, a `specs/roadmap.md` mellett él (**nem** a `docs-generated/`-ben, mert **normatív** input a jövő ciklusainak, nem leíró as-built doksi).
+
+> **🔴 TC1/a — Ez NEM futtatható forrás.** A regiszterből **semmi nem fut le automatikusan**. A `test-runner` subagent ezt a fájlt **nem olvassa** — kizárólag a `plan.md` Tesztelési stratégia / Regressziós érintettség szekcióit. Egy recept akkor és csak akkor hajtódik végre, ha a `02`/`03` fázis azt tudatosan **beemelte** az adott ciklus `spec.md`/`plan.md`-jébe (emberi jóváhagyással). A regiszter **memória**, a `plan.md` az **egyetlen futtatási igazság**.
+
+**Mi nem tartozik ide:** a `conventions.md` rögzíti, **hogyan** tesztelünk (eszközök, mappastruktúra, futtatási parancsok, elvek) — azt itt **nem ismételjük**. A `plan.md` rögzíti, mi az **új** az adott ciklusban. Ez a fájl azt rögzíti, **mit és mikor kötelező** tesztelni, komponensenként, as-built.
+
+### TC2 — Szerkezet: pontosan három szekció
+
+A fájlnak **három** szekciója van, se több, se kevesebb. A 2. és 3. szekció tételei az 1. szekcióra hivatkoznak (nem duplikálják a koordinátákat).
+
+1. **Recept-regiszter** — paraméterek, URL-ek, portok, komponens-koordináták (repo-útvonal, image-név, registry-cél, namespace/pod), teszt-userek, példa REST/`curl` hívások, build/deploy/indító parancsok.
+2. **Minden körben szükséges lokális (mock alapú) tesztek** — az 1. szekció receptjeire hivatkozva.
+3. **Minden körben szükséges integrációs / E2E tesztek** — az 1. szekció receptjeire hivatkozva.
+
+A sablont lásd a **Sablonok** szekcióban. **Prózát ne írj** — a fájl táblázatos/parancsblokkos, mert a fogyasztója a `02`/`03` fázis, nem az olvasgató ember.
+
+### TC3 — Promóció: mi kerül be (bizonyíték-alapú)
+
+**Ne ítéld meg „érzésre", hogy egy teszt „alapvető-e".** Egy tétel akkor promótálódik a 2./3. szekcióba, ha az alábbiak **valamelyike** teljesül:
+
+1. **Empirikus jel (elsődleges):** a teszt/recept egy **korábbi** ciklusban keletkezett, és **ebben** a ciklusban is szerepelt a `plan.md` `Regressziós érintettség` táblájában vagy tényleges futtatásra került — azaz a gyakorlatban bizonyította a ciklus-független relevanciáját.
+2. **Emberi döntés:** a felhasználó a `doc-sync-questions.md`-ben megerősítette, hogy a tétel legyen tartós elvárás.
+
+**Recept (1. szekció) csak akkor kerül be, ha ebben a ciklusban tényleg lefutott és zöld volt** (a `test-report/` a bizonyíték). **Kitalált, nem verifikált parancsot TILOS beírni** — ha egy koordináta hiányzik vagy bizonytalan, az `doc-sync-questions.md` kérdés, nem néma tipp.
+
+Ami egyik feltételt sem teljesíti, **nem kerül be** — az egyetlen ciklusra szóló teszt marad a ciklus `plan.md`-jében.
+
+### TC4 — A fájl élő snapshot, nem napló (karbantartás + törlés)
+
+- Minden tétel mellett kötelező az **`Utolsó futás: cycle-NN`** marker. Ez azt mutatja, mikor futott a tétel utoljára zölden.
+- A fájl **mindig az aktuális állapotot** tükrözi. Ha egy komponens megszűnt, átalakult, vagy a tétel a fejlesztés miatt már nem értelmezhető, a tétel **törlődik** — nem archiválódik, nem kap „elavult" megjegyzést. **A fájl nem hízhat monoton.**
+- **Az információ nem vész el:** a törlés ténye és oka a `CHANGELOG.md` ciklus-bejegyzésébe kerül (DS15). Ezért itt **nem** érvényes a „sosem törlünk" elv, ami a `design-drift.md`-re és a kérdés-listákra igen.
+- **A törlés látható:** minden törlendő tétel **külön terv-tételként** megjelenik a `doc-sync-plan.md`-ben, így a felhasználó látja és pipálja, mielőtt megtörténik. Csendben nem törölhetsz.
+- **Staleness-jelzés:** ha egy tétel `Utolsó futás` markere **3 vagy több ciklussal** régebbi az aktuálisnál, vedd fel `doc-sync-questions.md` kérdésként: *„A(z) `<tétel>` utoljára a cycle-NN-ben futott. Még érvényes elvárás, vagy törlendő?"* Környezeti koordinátát (URL, pod, namespace) **nem tudsz automatikusan verifikálni** — ezért a staleness-marker az egyetlen védőháló ellene.
+
+### TC5 — Titok-osztályozás (KÖTELEZŐ, hatókör-alapú)
+
+Ez a fájl **verziókezelt és merge-elt** — ami bekerül, az a git history-ban marad. A döntés **nem** szubjektív veszélybecslés, hanem egyetlen mechanikus kérdés: **„személyt hitelesít, vagy osztott platformhoz ad hozzáférést?"**
+
+| **Bekerülhet** (hatóköre az eldobható dev-példány, nem személyhez tartozik) | **NEM kerülhet be — csak pointer** (személyt hitelesít vagy osztott platformhoz ad hozzáférést) |
+|---|---|
+| seedelt dev teszt-userek + jelszavaik, dev IdP (pl. Keycloak) realm-admin, lokális DB-user, mock-service API-kulcs, dev client-secret | klaszter/OpenShift login, registry (pl. Nexus) push-credential, VPN, cloud IAM, git/CI token, **bármi, ami más környezetben (test/prod) is működik** |
+
+- A bal oszlop tételei jellemzően **már ma is a repóban vannak** (seed/realm-import fájlok, Clean Slate szabály) — összegyűjtésük nem új expozíció.
+- **Pointer formája:** *„a credential a `<hely>`-ből szerezhető meg"* — soha nem az érték.
+- **Bizonytalan eset → kérdés** a `doc-sync-questions.md`-be, és amíg nincs válasz, **pointert írsz, nem értéket**. A default a kihagyás.
+
+### TC6 — Bootstrap: ha a fájl nem létezik (akár a 30. ciklusban)
+
+A berkispec bekerülhet egy **már futó projektbe**, ahol ez a fájl soha nem létezett. **Ne üres lappal kezdj, és ne az embert kérdezd ki a nulláról** — először állíts össze egy **javaslatot** abból, ami már megvan (ezt a `doc-sync-planner` végzi):
+
+- a lezárt ciklusok `spec.md` / `plan.md` fájljainak `Teszt specifikáció`, `Tesztelési stratégia`, `E2E infrastruktúra` és `Regressziós érintettség` szekciói — itt vannak a visszatérő tételek;
+- a lezárt ciklusok `plan-questions.md` fájljai — **itt vannak a környezeti koordináták**, amik eddig ciklusonként elszivárogtak;
+- a meglévő `test/` mappa és E2E compose fájl, valamint a `conventions.md` `## Projekt referenciák` szekciója.
+
+Ezután a **javaslatról** folytatsz párbeszédet a `doc-sync-questions.md`-n keresztül: *„Ezeket találtam visszatérő elvárásként; melyik érvényes még, mi maradt ki, és mi a helyes URL / pod / paraméter ma?"* — javítani sokkal könnyebb, mint diktálni.
+
+> A `test-conventions.md` bootstrapja **független** a `docs-generated/` bootstrap-ágától: akkor is le kell futnia, ha a `system-overview.md` már létezik (inkrementális ág). A fájl **hiánya nem hiba** korai ciklusokban — ha nincs mit promótálni (nincs TC3 szerinti tétel), a fájl **ne jöjjön létre**; ekkor a `doc-sync-plan.md` „nincs teendő" tétele rögzíti az indokot. Üres vázat **ne** hozz létre — egy üres fájlt a következő fázis hajlamos találgatással kitölteni.
+
+### TC7 — Kérdés-hatókör: bootstrap vs steady state
+
+**Minden ciklusban kérdezni kell**, hogy mi kerüljön be — de a kérdés terjedelme eltér:
+
+- **Első futás (bootstrap):** széles interjú a TC6 szerinti javaslat alapján. Egyszeri, megéri.
+- **Minden további ciklus (steady state):** **ne** nyisd újra a teljes beszélgetést. Egy **rövid, célzott megerősítés** a doc-sync javaslatáról: *„Ezt promótálnám, ezt törölném, ezeket bumpolom — jó?"* A felhasználó pipál vagy javít. A javaslat maga a `doc-sync-plan.md` tételeiben áll, a kérdés a `doc-sync-questions.md`-ben.
+
+### TC8 — A fájl saját kapuja (`tc8-gate-check.py` — szkriptelt)
+
+A DS22 magkapu a `docs-generated/`-re fut, ez a fájl azon **kívül** van, ezért **saját kapuja** van. A kapu **teljesen szkriptelt** — nincs benne LLM-ítélet, ezért **ne grepelj kézzel**, futtasd a scriptet (a telepítő ugyanabba a platform-scripts mappába másolja, mint a `ds22-gate-check.py`-t):
+
+```bash
+python3 <platform-scripts-mappa>/tc8-gate-check.py specs/test-conventions.md \
+  --project-root . \
+  --marker cycle-NN
+```
+
+- **`--marker`**: az aktuális ciklus — ehhez képest számol staleness-t az `Utolsó futás` markereken. Elhagyható; akkor csak a marker **létét** ellenőrzi, az elavulást nem.
+- **`--stale-after N`**: ennyi vagy több ciklus eltérésnél elavult a tétel (default: **3**, a TC4 szabály szerint).
+
+**A négy check:**
+
+| # | Mit ellenőriz | Blokkol? |
+|---|---|---|
+| 1 | **Útvonal-létezés (TC8/1)** — a fájlban megnevezett repo-belső útvonalak (tesztfájl, script, compose fájl, komponens-mappa) léteznek-e | **FAIL**, ha a szülő-mappa létezik, de a cél nem (biztos jel: elavult tétel). Ha az útvonal repo-belsőként nem oldható fel (külső hivatkozás, image-ref, endpoint), csak **WARN** |
+| 2 | **Lógó hivatkozás (TC8/2)** — a 2./3. szekció minden tétele létező 1. szekciós receptre (`R-ID`) hivatkozik-e, és van-e egyáltalán hivatkozása | **FAIL**. A nem hivatkozott recept **WARN** |
+| 3 | **Titok-check (TC8/3)** — bekerült-e TC5 szerint tiltott credential | **FAIL** biztos mintánál (PAT/kulcs-prefix, privát kulcs blokk, `oc login --password`, `docker login -p`); platform-szó + credential-szó egy sorban csak **WARN** |
+| 4 | **`Utolsó futás` marker (TC4)** — minden recept és 2./3. szekciós tétel kap-e markert, és melyik avult el | Hiányzó marker: **FAIL**. Elavult (`--stale-after`): **WARN** → kérdés a `doc-sync-questions.md`-be |
+
+**Kilépő kód:** `0` = minden kemény check PASS (WARN megengedett), `1` = legalább egy FAIL, `2` = használati hiba. **Ha a fájl nem létezik, a script `0`-val, „kihagyva" jelzéssel tér vissza** — TC6 szerint a hiánya korai ciklusban nem hiba.
+
+**A WARN-okat nem hagyhatod figyelmen kívül**, csak nem blokkolnak: mindegyikre vagy javítás, vagy `doc-sync-questions.md` kérdés a válasz. Bukáskor (`1`) ugyanaz az **ember-vezérelt** javító hurok fut, mint a DS22-nél: a konkrét eltérés `Knn`-ként a `doc-sync-questions.md`-be, javítás, majd a kapu újrafut, amíg zöld nem lesz.
 
 ---
 
@@ -437,6 +539,67 @@ _<Endpoint → rövid leírás. Ha nincs hálózati interfész, ez a szekció el
 - **init-endpoint-név** — Terv: HLD `/init-cache`. As-built: `/init-hash` (cycle-16). Lezárva: a HLD frissítendő; a rendszer az `/init-hash`-t használja.
 ```
 
+### `specs/test-conventions.md` (TC2)
+
+**Váz** — pontosan három szekció; a 2./3. szekció az 1.-re hivatkozik:
+````md
+> **Utolsó felülvizsgálat:** cycle-NN · **Gazda:** 08-doc-sync · **Nem futtatható forrás** — a receptet a 02/03 fázis emeli be a ciklus spec.md/plan.md-jébe (TC1/a).
+
+# Teszt konvenciók — visszatérő elvárások és receptek
+
+## 1. Recept-regiszter
+
+### R01 — <komponens / lépés neve>
+- **Hol van:** <repo-útvonal, image-név, registry-cél, namespace/pod>
+- **Elérés:** <URL-ek, portok, health endpoint>
+- **Teszt-userek / paraméterek:** <user + jelszó (csak dev-hatókörű, TC5!), scope, client-id>
+- **Parancsok:**
+  ```bash
+  <build / push / restart / indítás — csak verifikált, tényleg lefutott parancs (TC3)>
+  ```
+- **Példa hívás:**
+  ```bash
+  curl -s -X POST "<URL>" -d '<payload>' -H '<header>'
+  ```
+- **Előfeltétel / sorrend:** <mi kell hozzá, mi jön előtte/utána>
+- **Hatókör:** `lokális` | `osztott-remote` — <ha osztott, a beemelésnél a 03 kötelezően rákérdez>
+- **Utolsó futás:** cycle-NN
+
+## 2. Minden körben szükséges lokális (mock alapú) tesztek
+
+| ID | Mit ellenőriz | Recept | Utolsó futás |
+|---|---|---|---|
+| L01 | <viselkedés, amit minden körben zöldnek kell látni> | R01 | cycle-NN |
+
+## 3. Minden körben szükséges integrációs / E2E tesztek
+
+| ID | Mit ellenőriz | Recept | Előfeltétel | Utolsó futás |
+|---|---|---|---|---|
+| I01 | <viselkedés> | R01, R02 | <sorrend / env> | cycle-NN |
+````
+
+**Kész mini-példa (1. szekció egy tétele):**
+````md
+### R03 — Keycloak dev image build + deploy
+- **Hol van:** `infra/keycloak/` · image: `nexus.example.local/dev/keycloak:latest` · namespace: `dev-auth`, pod: `keycloak-0`
+- **Elérés:** `https://keycloak-dev.example.local` · health: `/health/ready`
+- **Teszt-userek / paraméterek:** `test-user` / `Test123!` (scope: `profile openid`), realm-admin: `admin` / `admin` (dev realm), client-id: `demo-app`
+- **Parancsok:**
+  ```bash
+  podman build -t nexus.example.local/dev/keycloak:latest infra/keycloak/
+  podman push nexus.example.local/dev/keycloak:latest
+  oc -n dev-auth rollout restart statefulset/keycloak && oc -n dev-auth rollout status statefulset/keycloak
+  ```
+- **Példa hívás:**
+  ```bash
+  curl -s -X POST "https://keycloak-dev.example.local/realms/demo/protocol/openid-connect/token" \
+    -d "grant_type=password&client_id=demo-app&username=test-user&password=Test123!"
+  ```
+- **Előfeltétel / sorrend:** `oc login` megtörtént (a credential nem itt van — TC5 pointer: a csapat vault-jában); a restart után a health `ready`-t ad, csak utána futhat bármely I-tétel
+- **Hatókör:** `osztott-remote` — a dev klasztert más is használja
+- **Utolsó futás:** cycle-29
+````
+
 ### `docs-generated/README.md` index-sor (DS21)
 
 **Váz:**
@@ -459,9 +622,10 @@ A kapu zöldre futása után:
 
 1. **Commit** — a `docs-generated/` + a komponens README-k + a ciklus munkafájljai:
    ```bash
-   git add docs-generated/ <érintett README-k> specs/cycle-NN-<cycle-name>/doc-sync-plan.md specs/cycle-NN-<cycle-name>/doc-sync-questions.md
+   git add docs-generated/ <érintett README-k> specs/test-conventions.md specs/cycle-NN-<cycle-name>/doc-sync-plan.md specs/cycle-NN-<cycle-name>/doc-sync-questions.md
    git commit -m "cycle-NN: 08-doc-sync"
    ```
+   _(A `specs/test-conventions.md`-t csak akkor add hozzá, ha létezik — korai ciklusban, promótálható tétel nélkül nem jön létre, TC6.)_
    _(Bootstrapnél a `docs-generated/` + az áthelyezett fájlok + a hivatkozás-átírások; a gyökér `temp/` munkafájlok sorsát a 8. munkaterv dönti el.)_
 
 2. **Jelezd a felhasználónak a következő lépést:**

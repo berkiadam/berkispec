@@ -37,7 +37,13 @@ Ez a folyamat **2. fázisa (0–9)**: 0-init · 1-ciklusok · **2-spec ←** · 
 
 2. **Roadmap ellenőrzés:** Olvasd be a `specs/roadmap.md`-t. **Ha a státusz nem `Kész`, ne kezdj el spec-et írni.** Jelezd a felhasználónak, hogy a roadmap még nem zárult le, és térjenek vissza a `01` ciklusok kezelése fázishoz. Ha a státusz `Kész`, keresd meg a megadott ciklus (`cycle-NN-<cycle-name>`) bejegyzését a roadmap-ben, és használd azt a spec kiindulópontjaként — a viselkedés, az érintett komponensek, az előfeltételek és a teszt kritérium mind alapot adnak a spec részletes kidolgozásához.
 
-1.b **Current-truth kiindulás (DS5):** ha létezik a `docs-generated/system-overview.md`, olvasd be — ez a megvalósult (as-built) rendszer konszolidált, naprakész működésleírása, amit a `08-doc-sync` fázis tart karban. A spec a **jelenlegi valóságból** induljon: nézd meg, milyen flow-k/állapot/endpointok léteznek már, hogy az új spec ezekre épüljön, ne ütközzön velük. **Guard:** ha a fájl még nem létezik (korai ciklus / a bootstrap előtt), **ne állj meg** — jelezd egy mondatban, hogy a current-truth doksi még nincs, és folytasd a spec írását a roadmap alapján.
+1.b **Visszatérő teszt-elvárások beolvasása (TC1):** ha létezik a `specs/test-conventions.md`, olvasd be — ez a projekt visszatérő teszt-elvárásainak és a hozzájuk tartozó recepteknek az élő regisztere, amit a `08-doc-sync` tart karban. **Guard:** ha a fájl még nem létezik (korai ciklus — még nincs promótálható tétel), **ne állj meg és ne hozd létre** — egy mondatban jelezd, és folytasd. A fájl használata:
+   - a **2. és 3. szekció** tételeiből azt emeld be a `Teszt specifikáció` szekcióba (és — ha valódi elfogadási feltétel — a `Definition of done`-ba), amit **ez a ciklus tényleges elfogadási feltételként vállal**, **viselkedés-szinten**: mit kell ellenőrizni, milyen bemenetre mi a helyes kimenet. **Parancs, tesztfájl-útvonal, eszköznév és build/deploy lépés ide NEM kerül** — az a `plan.md` dolga (a spec/plan határvonal szerint);
+   - a puszta „ne törjön el" jellegű regressziós tételeket **ne** emeld a spec-be — azok a `plan.md` `Regressziós érintettség` táblájába tartoznak, mert nem a ciklus célja;
+   - az **1. szekciót** (koordináták, URL-ek, parancsok) csak **kontextusként** olvasod: ebből látod, milyen környezeti korlátok között mozog a ciklus. A spec-be nem kerül át.
+   - **Érvénytelenítés jelzése (a 08 bemenete):** ha a ciklus egy meglévő baseline-tételt **érvénytelenít** (megszünteti vagy átalakítja a komponenst, amire hivatkozik), írd ki explicit a `Teszt specifikáció` szekció végén: *„Érvénytelenített baseline tétel: `<ID>` — <miért>."* Ebből tudja a `08-doc-sync` (TC4), hogy a tételt törölni kell a regiszterből. **Magad ne írd a `test-conventions.md`-t** — annak a doc-sync a kizárólagos gazdája.
+
+1.c **Current-truth kiindulás (DS5):** ha létezik a `docs-generated/system-overview.md`, olvasd be — ez a megvalósult (as-built) rendszer konszolidált, naprakész működésleírása, amit a `08-doc-sync` fázis tart karban. A spec a **jelenlegi valóságból** induljon: nézd meg, milyen flow-k/állapot/endpointok léteznek már, hogy az új spec ezekre épüljön, ne ütközzön velük. **Guard:** ha a fájl még nem létezik (korai ciklus / a bootstrap előtt), **ne állj meg** — jelezd egy mondatban, hogy a current-truth doksi még nincs, és folytasd a spec írását a roadmap alapján.
 
 2. **Branch-ellenőrzés (a branch a 01-ben jött létre — BD1):** a ciklus feature branch-ét már a **01-add-cycles** fázis létrehozta `main`-ről; a 02 **nem** nyit új branch-et. Verziókezelő mellett:
    - `git branch --show-current` → ha már a ciklus feature branch-én vagy, folytasd itt.
@@ -114,6 +120,8 @@ _Ha a ciklus REST API-t, üzenetsor-üzenetet, cache struktúrát vagy DB sémá
 ## Teszt specifikáció
 
 _Tesztadatok, tesztelendő esetek (happy path + hibaesetek), kötelező viselkedési ellenőrzések._
+
+_Ha létezik `specs/test-conventions.md`: a 2./3. szekció azon tételei, amelyeket ez a ciklus elfogadási feltételként vállal — **viselkedés-szinten**, a tétel ID-jára hivatkozva (pl. „I01 — a token-csere a `<scope>` scope-pal 200-at ad"). Parancs, tesztfájl-útvonal és eszköznév ide nem kerül (TC1). A ciklus által **érvénytelenített** baseline tételeket a szekció végén explicit írd ki._
 
 ## Kockázatok
 
@@ -267,6 +275,8 @@ A `Tervezésre kész`-re váltás után készíts git commitot (`cycle-NN: 02-sp
   - Külső service hibáknál (timeout, 5xx): hogyan kezeli a hívó komponens, mit ad vissza a kliensnek
   - Ha egy hibaág nincs specifikálva, ne töltsd ki magad — jelezd nyitott kérdésként
 - **E2E elfogadási feltétel a DoD-ban?** — Ha a ciklus bármilyen funkcionális viselkedést vezet be (API, service, UI flow), a DoD-ban szerepelnie kell egy E2E szintű elfogadási feltételnek. A konkrét módszertant (Playwright, pytest, mock szint) a plan fázis határozza meg — a spec az elvárást rögzíti, nem az implementációt. Ha nincs ilyen pont a DoD-ban, add hozzá.
+
+- **Visszatérő teszt-elvárások átvezetve? (TC1)** — Ha létezik `specs/test-conventions.md`, végigmentél a 2. és 3. szekción, és minden olyan tétel, amelyet ez a ciklus elfogadási feltételként vállal, megjelenik a `Teszt specifikáció`-ban (viselkedés-szinten, a tétel ID-jára hivatkozva)? Bekerült-e parancs, tesztfájl-útvonal vagy eszköznév a spec-be? Ha igen, **töröld** — az a `plan.md`-be tartozik. A ciklus által érvénytelenített baseline tételek explicit jelölve vannak a 08 számára?
 
 - **Szükséges-e regressziós ellenőrzés?** — Ha a ciklus meglévő funkciót bővít vagy módosít, a spec Teszt specifikáció szekciójában jelezni kell, hogy a korábbi működés regressziós tesztekkel ellenőrizendő. Ez különösen kritikus, ha:
   - Meglévő interfész új funkcióval vagy elágazással bővül (pl. új paraméter, új kód ág, flow detection bevezetése) — a meglévő hívási út nem törhetett el
