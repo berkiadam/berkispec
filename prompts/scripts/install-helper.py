@@ -434,8 +434,14 @@ def process_antigravity(src_dir, dest_path, models):
         with open(agent_json_src, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
+        # Az Antigravity `model` mezője MODELL-TIER enum (`inherit` / `flash` /
+        # `pro`), nem modellnév: egy "Claude Opus 4.6" érték érvénytelen, és a
+        # subagent az `inherit` alapértelmezésre esik vissza (a szülő ágens
+        # modelljén fut). Ezért a models.json antigravity-szekciójába tiert kell
+        # írni. Külön `effort` mező nincs a sémában — csak látható ajánlásként
+        # (alert) tesszük ki, a JSON-ba nem írjuk, hogy ne sugalljon nem létező
+        # képességet.
         data["model"] = model
-        data["effort"] = effort
 
         try:
             sections = data["customAgentSpec"]["customAgent"]["systemPromptSections"]

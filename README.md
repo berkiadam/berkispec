@@ -528,9 +528,9 @@ A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de *
 
 | Tier (`models.json` kulcs) | Ki kapja | Claude / Antigravity / Copilot / Cursor / Codex | Miért ez a tier |
 |---|---|---|---|
-| `deep_reasoning_agent` (legdrágább) | **kizárólag** `analyzer` (05) | `claude-opus-4-8` / `Claude Opus 4.6` / `Claude Opus 4.8` / `claude-opus-5` / `gpt-5.6-sol` | Kereszt-fázisos konzisztencia-**diagnózis** (spec/plan/tasks/conventions) — a legmélyebb reasoning; egy itt vétett hiba a legdrágább downstream (rossz diagnózisra rossz kód épül). |
-| `default` | **minden más:** orchestrátor-skillek (05, 07…), a 4 fixer (`spec`/`plan`/`tasks`/`implement`-fixer), `reviewer`, `review-fixer`, `doc-sync-planner`, `test-runner` | `claude-sonnet-5` / `Gemini 3.5 Flash` / `Claude Sonnet 5` / `claude-sonnet-5` / `gpt-5.6-luna` | A fixerek **kész, pontos hibalistát** kapnak (megoldás/eszkaláció, nem felfedezés); az orchestrátorok bookkeeping-et végeznek (marker, számláló, routing) a subagent **kész** jelentése alapján — nem diagnózis. |
-| `research_agent` (legolcsóbb) | `researcher` (00/01/02/03/06), `10-cycle-status` skill | `claude-haiku-4-5-20251001` / `Gemini 3.5 Flash` (low) / `Claude Haiku 4.5` / `claude-sonnet-5` (low) / `gpt-5.4-mini` | Tiszta grep/glob/read fan-out, ill. determinisztikus script-futtatás — **nulla tervezési ítélet**; a „csak összefoglaló, soha nyers fájltartalom" kontraktus véd. Antigravityn nincs Haiku, ezért itt a `default` Flash modell fut, csak `low` efforton; Cursorban sincs Haiku, ott a `default` Sonnet 5 fut `low` efforton. |
+| `deep_reasoning_agent` (legdrágább) | **kizárólag** `analyzer` (05) | `claude-opus-4-8` / `pro` (tier) / `Claude Opus 4.8` / `claude-opus-5` / `gpt-5.6-sol` | Kereszt-fázisos konzisztencia-**diagnózis** (spec/plan/tasks/conventions) — a legmélyebb reasoning; egy itt vétett hiba a legdrágább downstream (rossz diagnózisra rossz kód épül). |
+| `default` | **minden más:** orchestrátor-skillek (05, 07…), a 4 fixer (`spec`/`plan`/`tasks`/`implement`-fixer), `reviewer`, `review-fixer`, `doc-sync-planner`, `test-runner` | `claude-sonnet-5` / `flash` (tier) / `Claude Sonnet 5` / `claude-sonnet-5` / `gpt-5.6-luna` | A fixerek **kész, pontos hibalistát** kapnak (megoldás/eszkaláció, nem felfedezés); az orchestrátorok bookkeeping-et végeznek (marker, számláló, routing) a subagent **kész** jelentése alapján — nem diagnózis. |
+| `research_agent` (legolcsóbb) | `researcher` (00/01/02/03/06), `10-cycle-status` skill | `claude-haiku-4-5-20251001` / `flash` (tier) / `Claude Haiku 4.5` / `claude-sonnet-5` (low) / `gpt-5.4-mini` | Tiszta grep/glob/read fan-out, ill. determinisztikus script-futtatás — **nulla tervezési ítélet**; a „csak összefoglaló, soha nyers fájltartalom" kontraktus véd. Antigravityn nincs olcsóbb tier a `flash`-nél, ezért ott a `default` tierrel esik egybe; Cursorban nincs Haiku, ott a `default` Sonnet 5 fut `low` efforton. |
 
 **Effort-leosztás — mennyi reasoning:**
 
@@ -544,7 +544,7 @@ A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de *
 
 **Konfiguráció és telepítés:**
 - **Forrás:** [`prompts/models.json`](prompts/models.json) — platformonként (`claude` / `antigravity` / `copilot` / `cursor` / `codex`) a 3 tier `{model, effort}` objektumként, plusz a defaulttól eltérő agentek **saját nevű sorként** (csak az `effort` mezővel; a modelljük a `default` tierből jön). Az `install-helper.py` `AGENT_MODEL_KEYS` szótára rendeli az `analyzer`/`researcher`/`10-cycle-status` stemeket a tierekhez; ami nincs sem itt, sem saját sorként a `models.json`-ban, `default` modellt és `default` (=`high`) effortot kap.
-- **Beírás telepítéskor** (`./install.sh`): Antigravity → `agent.json` `"model"` + `"effort"` kulcs; Claude Code / Copilot → az agent-fájl YAML frontmatter `model` + `effort` mezője; Cursor → az agent-fájl YAML frontmatter `model` mezője, **modell-azonosítóval és zárójeles paraméterrel**: `model: claude-opus-5[effort=high]` (a Cursor nem ismer külön `effort:` mezőt); Codex → a `.codex/agents/<név>.toml` `model` + `model_reasoning_effort` kulcsa (+ read-only agenteknél `sandbox_mode = "read-only"`).
+- **Beírás telepítéskor** (`./install.sh`): Antigravity → `agent.json` `"model"` kulcs, **tier-értékkel** (`pro` / `flash` / `inherit`); Claude Code / Copilot → az agent-fájl YAML frontmatter `model` + `effort` mezője; Cursor → az agent-fájl YAML frontmatter `model` mezője, **modell-azonosítóval és zárójeles paraméterrel**: `model: claude-opus-5[effort=high]` (a Cursor nem ismer külön `effort:` mezőt); Codex → a `.codex/agents/<név>.toml` `model` + `model_reasoning_effort` kulcsa (+ read-only agenteknél `sandbox_mode = "read-only"`).
 - **A skillek** (orchestrátor fő ágensek, nem subagentek) **sem `model`-t, sem `effort`-ot nem kapnak** — egyetlen platformon sem. A skill-szintű `model` ugyanis **nem része az Agent Skills alap-szabványnak** (az csak `name`/`description`/`license`/`compatibility`/`metadata`/`allowed-tools`), hanem Claude Code-kiterjesztés, amit a célplatformokon a modellváltás **nem, vagy nem megbízhatóan** követ:
   - **Codex:** a SKILL.md csak `name` + `description`-t ismer → egy `model` inert.
   - **Copilot:** az `.instructions.md` nem ismer `model` mezőt (az csak *prompt*-fájlnál van) → inert.
@@ -552,8 +552,24 @@ A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de *
   - **Cursor:** a `model`-kiterjesztést legfeljebb részlegesen ismeri → nem garantált.
   - **Claude Code:** a dokumentáció ígéri a skill-`model` váltást, de a valóságban **runtime-ban nem hat** ([anthropics/claude-code #45191](https://github.com/anthropics/claude-code/issues/45191), „not planned"-ként lezárva).
   Mivel egy beírt skill-`model` a legjobb esetben inert, a legrosszabban félrevezető (nem létező képességet sugall), **sehová nem injektáljuk**. A modell-hangolás **kizárólag az agentek/subagentek** szintjén hat megbízhatóan (Claude subagent `model`/`effort`, Codex `.codex/agents/*.toml` `model`/`model_reasoning_effort`) — ott marad meg.
-- **Effort natív támogatása:** Claude Code-ban a subagent `effort:` frontmatter-mező, Codexben a `.codex/agents/*.toml` `model_reasoning_effort` mezője **natívan hat** (a fájl értéke elsőbbséget élvez). A többi platformon (Antigravity/Copilot/Cursor) az érték **látható ajánlás** (frontmatter + „Recommended Effort" alert), a Cursor `model` mezője viszont natív — ott az effort is natívan hat a `[effort=...]` paraméterben. Fontos: a Cursor a **modell-azonosítót** várja (`claude-opus-5`), nem megjelenített nevet („Opus 4.8"); érvénytelen azonosítónál csendben a szülő ágens modelljére esik vissza. Cursornál a read-only agentek (`analyzer`, `researcher`, `doc-sync-planner`) `readonly: true`-t, Codexnél `sandbox_mode = "read-only"`-t kapnak.
+- **Effort natív támogatása:** Claude Code-ban a subagent `effort:` frontmatter-mező, Codexben a `.codex/agents/*.toml` `model_reasoning_effort` mezője **natívan hat** (a fájl értéke elsőbbséget élvez). A többi platformon (Antigravity/Copilot) az érték **látható ajánlás** (frontmatter + „Recommended Effort" alert) — az Antigravity sémájában nincs is `effort` mező, ezért oda csak az alertbe kerül. A Cursor `model` mezője viszont natív — ott az effort is natívan hat a `[effort=...]` paraméterben. Fontos: a Cursor a **modell-azonosítót** várja (`claude-opus-5`), nem megjelenített nevet („Opus 4.8"); érvénytelen azonosítónál csendben a szülő ágens modelljére esik vissza. Cursornál a read-only agentek (`analyzer`, `researcher`, `doc-sync-planner`) `readonly: true`-t, Codexnél `sandbox_mode = "read-only"`-t kapnak.
 - **Manuális váltás:** ha nem a telepített ágensekre támaszkodsz, kövesd a fenti leosztást a CLI/IDE modell- és effort-választójában.
+
+**Antigravity-specifikum — a `model` mező TIER, nem modellnév** ([Antigravity: Subagents](https://antigravity.google/docs/subagents))
+
+Az Antigravity custom agent sémájában a `model` mező **modell-tiert** vesz fel, nem konkrét modell nevét:
+
+```
+model: pro       # a legerősebb tier
+model: flash     # gyors/olcsó tier
+model: inherit   # a szülő ágens modellje (alapértelmezés)
+```
+
+- **A modellnév érvénytelen.** A korábban beírt `"model": "Claude Opus 4.6"` nem tier → a subagent az `inherit` alapértelmezésre esik vissza, azaz **a szülő ágens modelljén fut** (jellemzően Flash-en). Ez néma: a fájlban ott a „helyes" modellnév, a futás mégis a szülőé — pontosan ezért futott az `analyzer` Flash-en akkor is, amikor az `agent.json`-ban Opus szerepelt.
+- **`effort` mező nincs a sémában.** A tier maga hordozza a képesség-szintet; az `effort` értéket ezért csak **látható ajánlásként** (alert) írjuk ki, az `agent.json`-ba nem. Ennek egy következménye van a leosztásban: mivel a `flash`-nél nincs olcsóbb tier, a `research_agent` és a `default` **ugyanazt kapja** — az effort-alapú megkülönböztetés itt nem érvényesíthető gépiesen.
+- **Tier-leképezés:** `deep_reasoning_agent` → `pro`, `default` és `research_agent` → `flash`.
+
+> A `.agents/agents/<név>/agent.json` formátumot a jelenlegi Antigravity-doksi már nem említi — a leírt hely `.agents/agents/<név>.md` YAML frontmatterrel. Az `agent.json` a gyakorlatban továbbra is betöltődik (a telepített ágensek megjelennek és futnak), ezért egyelőre maradunk nála; ha az Antigravity ejti a támogatását, a telepítő `process_antigravity` függvénye az a pont, ahol a `.md` formátumra kell váltani.
 
 **Cursor-specifikum — a subagent `model` mező** ([Cursor: Subagents](https://cursor.com/docs/subagents))
 

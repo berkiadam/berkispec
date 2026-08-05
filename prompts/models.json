@@ -1,15 +1,15 @@
 {
   "antigravity": {
     "deep_reasoning_agent": {
-      "model": "Claude Opus 4.6",
+      "model": "pro",
       "effort": "high"
     },
     "default": {
-      "model": "Gemini 3.5 Flash",
+      "model": "flash",
       "effort": "high"
     },
     "research_agent": {
-      "model": "Gemini 3.5 Flash",
+      "model": "flash",
       "effort": "low"
     },
     "reviewer": {
