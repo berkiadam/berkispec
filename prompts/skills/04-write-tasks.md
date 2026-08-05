@@ -13,6 +13,7 @@ next: bs-analyze
 subagents: []
 shared:
   - "shared/input-from-prev.md"
+  - "shared/artifact-voice.md"
 ---
 # 04 — Tasks írás
 ## Kontextus ellenőrzés
@@ -99,26 +100,37 @@ Soha nem kerül bele:
 
 ---
 
+<!-- INCLUDE:shared/artifact-voice.md -->
+
+---
+
 ## Task formátum
 
 ```md
 - [ ] T001 [RED]   <tesztfájl létrehozása / teszt megírása> — `path/to/test.ts`
 - [ ] T002 [GREEN] <implementáció> — `path/to/file.ts`
-- [ ] T003         <nem TDD task> — `path/to/file`  ⟂ T007
+- [ ] T003 [OPS]   <nem TDD lépés: build / push / deploy / kézi konfiguráció> — parancs vagy `path/to/file`
 - [ ] T004 [CHECK] Futtasd a teszteket / typecheck-et
 ```
 
 - A sorszám (`T001`, `T002`, ...) szekvenciális, a végrehajtási sorrend alapján.
 - A leírás egysoros, konkrét, cselekvő igével kezdődik (pl. *Hozd létre*, *Bővítsd*, *Adj hozzá*, *Futtasd*).
 - A fájl path kötelező, ha a task fájlt érint. Ha a task parancs futtatás, a fájl path elhagyható.
-- **TDD jelölés:** teszt-írási taskot `[RED]`, a hozzá tartozó implementációs taskot `[GREEN]` prefixszel jelöld. A `[RED]` task mindig megelőzi a párját. Nem TDD task esetén nincs prefix.
+- **TDD jelölés:** teszt-írási taskot `[RED]`, a hozzá tartozó implementációs taskot `[GREEN]` prefixszel jelöld. A `[RED]` task mindig megelőzi a párját.
+- **Marker minden taskon kötelező — prefix nélküli task nincs.** Indok: a prefix hiánya nem megkülönböztethető attól, hogy valaki **elfelejtette** a markert.
+- **`[OPS]` — éles határvonal:** kizárólag olyan lépés kaphatja, amely **NEM módosít repo-fájlt**, hanem a **környezetet vagy egy artefaktumot** változtatja: build, image push, deploy, kézi konfiguráció, külső erőforrás létrehozása/törlése, jóváhagyás-kérés, rollback.
+  - **Ami repo-fájlt szerkeszt, az SOHA nem `[OPS]`** — az `[RED]` (teszt írása/frissítése) vagy `[GREEN]` (forrás- és konfigfájl módosítása), akkor is, ha **regressziós javításról** van szó. Egy `TREG` task, amely egy meglévő tesztfájlt frissít, `[RED]` markert kap.
+  - Ez a határvonal teszi lehetővé, hogy az `[OPS]` taskokat gépiesen ki lehessen szűrni a destruktív-művelet ellenőrzéshez (lásd lent) — ha kód-szerkesztő taskok is `[OPS]`-ok, az a szűrés használhatatlan.
 - **Ellenőrzési task:** `[CHECK]` prefix, minden logikai csoport végén kötelező — konkrét parancsot tartalmaz a plan `Ellenőrzési stratégia` szekciójából (pl. `npm test`, `npm run typecheck`). Fájl path elhagyható.
 - **Párhuzamosítható task jelölése:** ha egy task egy másikkal egyszerre elvégezhető (köztük nincs függőség), jelöld `⟂ Tkkk` suffixszel. Csak akkor jelöld, ha a párhuzamosítás valóban időt takarít meg.
   - **Példa:** `- [ ] T012 [GREEN] Implementáld a foo service-t — `src/foo.ts` ⟂ T013` — azt jelenti, hogy T012 és T013 egyszerre szerkeszthető, mert **nem ugyanazt a fájlt érintik** és nincs köztük függőség. Ha ugyanazt a fájlt érintenék, NEM jelölhető párhuzamosnak.
 - **Sorszámozási konvenciók — `T`, `TREG`, `TLAST`:**
   - **`Tnnn`** — normál, szekvenciálisan számozott implementációs task (`T001`, `T002`, …) a logikai csoportokban.
-  - **`TREGn`** — regressziós felülvizsgálati task (`TREG1`, `TREG2`, …) a kötelező „Regressziós tesztek felülvizsgálata" záró csoportban. Sorrendben, `[CHECK]` nélkül. Csak olyan fájlra, amely a plan `Regressziós érintettség` táblázatában van, de a `Tervezett módosítások`-ban nincs.
-  - **`TLASTn`** — a „Dokumentáció" záró csoport taskjai (`TLAST1`, `TLAST2`, …), a lista legvégén, ha vannak. Ezek futnak utoljára. **FONTOS (DS4):** a `docs-generated/` minden fájlja — köztük az `architecture.md` és a komponens README-k — a `08-doc-sync` fázis **kizárólagos** gazdája; a 04 ezekhez **nem** generál `TLAST` taskot. `TLAST` csak akkor kerül a listába, ha a plan **explicit** kér egy olyan dokumentáció-frissítést, ami **nem** a `docs-generated/`-ben él (pl. egy kódbeli `README` vagy egy projekt-specifikus kézi doksi).
+  - **`TREGn`** — regressziós felülvizsgálati task (`TREG1`, `TREG2`, …) a kötelező „Regressziós tesztek felülvizsgálata" záró csoportban. Sorrendben, `[CHECK]` nélkül. Csak olyan fájlra, amely a plan `Regressziós érintettség` táblázatában van, de a `Tervezett módosítások`-ban nincs. **Markere `[RED]`** (meglévő tesztfájlt frissít) — **nem `[OPS]`**, mert repo-fájlt szerkeszt.
+  - **`TLASTn`** — a „Dokumentáció" záró csoport taskjai (`TLAST1`, `TLAST2`, …), a lista legvégén, ha vannak. Ezek futnak utoljára. **FONTOS (DS4):** a `docs-generated/` minden fájlja (`system-overview.md`, `architecture.md`, `CHANGELOG.md`, `design-drift.md`, mappa-index) a `08-doc-sync` fázis **kizárólagos** gazdája; a 04 ezekhez **nem** generál `TLAST` taskot.
+    - **Komponens-README — a határvonal a komponens létezése:** **meglévő** komponens README-jének frissítése (env-változó, port, indítás, kapcsolatok) a **08-doc-sync** dolga → **nincs rá `TLAST`**. **Új komponens első `README.md`-je** viszont a felépítés része → normál `Tnnn` taskként szerepel (`[GREEN]`), a komponens többi fájljával együtt, **nem** `TLAST`-ként.
+    - **🔴 Státusz-frissítő task TILOS.** Soha ne vegyél fel taskot a `spec.md` / `plan.md` / `tasks.md` **státuszmezőjének** átállítására („állítsd `Kész`-re", „frissítsd a fázis állapotát"). A státusz-életciklus a **keretrendszer gépezete**: a `07-validate` állítja mindhármat `Kész`-re PASS esetén. Egy ilyen task ütközik vele, és hamis lefedettséget ad. Ha a spec `Definition of done`-jában szerepel ilyen „meta" pont (pl. *„a dokumentáció és a spec.md állapota frissítésre került"*), az **spec-hiba** — ne fedd le taskkal, hanem vedd fel a `tasks-questions.md`-be.
+    - `TLAST` tehát csak akkor kerül a listába, ha a plan **explicit** kér egy olyan dokumentáció-frissítést, ami **sem** a `docs-generated/`-ben él, **sem** komponens-README (pl. egy projekt-specifikus kézi doksi).
   - A számozás minden prefixen belül 1-től indul és növekvő.
 
 ---
@@ -161,7 +173,7 @@ _Az implementáló agent ezeket olvassa be a végrehajtás előtt._
 - `specs/<cycle-name>/plan.md`
 - _(további Reviewed artifaktok a plan Schema Artifaktumok táblájából)_
 
-> `[RED]` = teszt írása (bukni fog) · `[GREEN]` = implementáció (teszt zöldítése) · `[CHECK]` = ellenőrzés futtatása
+> `[RED]` = teszt írása (bukni fog) · `[GREEN]` = implementáció (teszt zöldítése) · `[CHECK]` = ellenőrzés futtatása · `[OPS]` = nem-TDD lépés (build, deploy, kézi konfiguráció, jóváhagyás, rollback)
 
 ## <Logikai csoport 1 — a plan végrehajtási sorrendje alapján>
 
@@ -188,13 +200,35 @@ A csoportok a plan végrehajtási sorrendjének szakaszait tükrözik. Minden cs
 Ha a plan azt mondja, hogy nincs regressziós érintettség, ez a csoport kihagyható.
 
 ```md
+## Destruktív / osztott környezetet érintő taskok — jóváhagyás és rollback
+
+Ha a plan **közös (nem eldobható) környezetet** módosító lépést tervez — deployment/pod csere osztott klaszterben, image push közös registrybe, seed vagy törlés osztott adatbázisban, konfiguráció felülírása —, azt **három tasknak kell közrefognia** a saját logikai csoportjában:
+
+```md
+- [ ] T0nn [OPS]   Kérj JÓVÁHAGYÁST a felhasználótól a <művelet> futtatására — érintett: <környezet/namespace/registry>; a művelet más fejlesztők munkáját is érintheti. Rögzítsd az eredeti állapotot FÁJLBA: `<állapot-kiolvasó parancs> > .rollback-state`
+- [ ] T0nn [OPS]   <a tényleges destruktív művelet> — `<konkrét parancs; a korábbi lépés állapotát a fájlból olvasva>`
+- [ ] T0nn [CHECK] Ellenőrizd a művelet sikerét — `<ellenőrző parancs + elvárt kimenet>`
+- [ ] T0nn [OPS]   ROLLBACK (csak ha az előző `[CHECK]` elbukott): állítsd vissza az eredeti állapotot — `<visszaállító parancs, a .rollback-state-ből olvasva>`
+```
+
+> **🔴 Állapot-perzisztencia — a leggyakoribb csendes hiba.** Minden task **külön shellben** fut, ezért a `VAR=...` vagy `export VAR=...` a **következő taskra elpárolog**. Ha a rollback vagy a deploy egy korábbi taskban előállított értékre (mentett eredeti azonosító, generált egyedi tag) hivatkozik, az **üres paraméterrel futna** — vagyis a rollback papíron megvan, a gyakorlatban nem működik. Ezért az ilyen állapot **fájlba kerül**, és a későbbi taskok onnan olvassák; vagy a függő parancsokat **egy taskba** vonod.
+
+Az állapot-fájlra két további szabály:
+- **Hova kerüljön:** a ciklus mappájába (`specs/cycle-NN-<cycle-name>/.rollback-state`), **ne a repo gyökerébe**. Ha mégis a gyökérbe kerül, vedd fel egy taskot, ami a `.gitignore`-ba is beírja — különben egy megszakadt futás után a munkafában marad, és bekerülhet egy commitba.
+- **Takarítás kötelező:** a csoport utolsó taskja (vagy a sikeres `[CHECK]`) törölje (`rm -f`). Megszakadt futás után egy régi állapot-fájl **rosszabb, mint a semmi**: egy elavult azonosítóra állítana vissza.
+
+- A **jóváhagyó task az első** — a destruktív művelet nem futhat le anélkül, hogy a felhasználó rábólintott volna.
+- A jóváhagyó task **rögzíti az eredeti állapotot** (a kiolvasó paranccsal együtt) — enélkül a rollback nem végrehajtható.
+- A **rollback task a csoport végén** áll, feltételesen. Ha a plan nem ad rollback-forgatókönyvet, az **plan-hiányosság**: vedd fel kérdésként a `tasks-questions.md`-be, ne találd ki magad.
+- **Ha a művelet felülír egy meglévő azonosítót** (pl. ugyanarra az image-tagre pushol), jelezd: ilyenkor **nincs mihez visszaállni**, tehát vagy verziót kell léptetni, vagy a rollback nem valós — ez a plan felülvizsgálatát igényli.
+
 ## Regressziós tesztek felülvizsgálata
 
 - [ ] TREG1 Ellenőrizd / frissítsd: `test/unit/foo.test.ts` — érintett, mert [indok a plan-ből]
 - [ ] TREG2 Ellenőrizd / frissítsd: `test/integration/cycle-XX-foo.sh` — érintett, mert [indok a plan-ből]
 ```
 
-**2. Dokumentáció** — önálló, utolsó csoport, **csak ha szükséges**. **A `docs-generated/` egyetlen fájljához sem (architecture.md, system-overview.md, CHANGELOG.md, design-drift.md, komponens README-k) generálsz `TLAST` taskot** — ezeket a `08-doc-sync` fázis írja és tartja konzisztensen, a teljes ciklus rálátásával (DS4). Ez a csoport **csak akkor** kerül a listába, ha a plan **explicit** kér egy olyan dokumentáció-frissítést, amely **nem** a `docs-generated/` gazdája alá tartozik. Tisztán átnevezési/refaktorálási ciklusnál, vagy ha a plan nem nevez meg ilyen doksit, ez a csoport **elhagyható**.
+**2. Dokumentáció** — önálló, utolsó csoport, **csak ha szükséges**. **A `docs-generated/` egyetlen fájljához sem (architecture.md, system-overview.md, CHANGELOG.md, design-drift.md), és meglévő komponens `README.md`-jéhez sem generálsz `TLAST` taskot** — ezeket a `08-doc-sync` fázis írja és tartja konzisztensen, a teljes ciklus rálátásával (DS4). Ez a csoport **csak akkor** kerül a listába, ha a plan **explicit** kér egy olyan dokumentáció-frissítést, amely **nem** a `docs-generated/` gazdája alá tartozik. Tisztán átnevezési/refaktorálási ciklusnál, vagy ha a plan nem nevez meg ilyen doksit, ez a csoport **elhagyható**.
 
 ```md
 ## Dokumentáció
@@ -226,8 +260,18 @@ Menj végig a következő csoportokon sorban. Minden csoportot önállóan pipá
 - A Prerequisite dokumentumok listája tartalmazza a `plan.md`-t és minden `Reviewed` schema artifaktot?
 - **Plan `Tervezett módosítások` lefedettség:** menj végig fájlonként — minden fájl kapott legalább egy taskot?
 - **Plan `Ellenőrzési stratégia` lefedettség:** menj végig a plan `Ellenőrzési stratégia` szekciójának minden parancsán — mindegyik megjelent `[CHECK]` taskként valamelyik csoportban?
-- **Regressziós érintettség lefedve:** a plan `Regressziós érintettség` táblázatának minden sora megjelent-e `TREG` taskként? Ha a plan azt mondja nincs érintettség, ez a csoport hiányozhat.
+- **Regressziós érintettség lefedve:** a plan `Regressziós érintettség` táblázatának **minden sora megjelent-e taskként** — vagy `TREG` taskként a záró csoportban, **vagy** (ha a fájl a plan `Tervezett módosítások` szekciójában is szerepel) **normál `Tnnn` taskként**? A `TREG` **definíció szerint csak azokra a fájlokra jár, amelyek a `Tervezett módosítások`-ban NINCSENEK** — ami ott van, azt ne duplikáld `TREG`-ként. Ha a plan azt mondja, nincs érintettség, ez a csoport hiányozhat.
+- **`[CHECK]` parancsok által futtatott fájlok létrehozása:** menj végig minden `[CHECK]` task parancsán, és nézd meg, milyen **fájlt vagy scriptet futtat** (pl. integrációs teszt script, futtató wrapper, seed script). Mindegyikre igaz kell legyen, hogy **vagy már létezik a repóban, vagy van rá létrehozó task korábban a listában**. Egy futtatandó, de sehol nem létrehozott állomány garantált bukás — ilyenkor vedd fel a hiányzó létrehozó taskot.
+- **Ígért teszt → `[RED]` task:** ha a plan **szövegesen tesztelést ígér** valamire (jellemzően a `Kockázatok` „kezelés" mondataiban, pl. *„a fallback logikát egységteszttel igazoljuk"*), akkor annak a logikának a `[GREEN]` taskja **előtt** szerepelnie kell egy `[RED]` teszt-írási tasknak. Ígéret teszt-task nélkül lefedettségi rés.
 - **`tasks-input-from-prev.md` lezárva? (IP1)** — Ha a fájl létezik, nem maradhat benne `[ ]` tétel: mindegyik vagy beépült a `tasks.md`-be (task vagy sorrend-megkötés), vagy explicit indokkal elvetett. Ami a validálásnál lesz csak releváns, az a `validate-input-from-prev.md`-be került?
+
+### A/2) Marker és destruktív műveletek
+
+- **Artefaktum-hang (AV1)?** — A task-leírások cselekvő, konkrét utasítások az implementálónak; nincs bennük skill-hangú meta-szabály (`🔴`, „Tilos…", „a minőségellenőrzés bukik, ha…") és nincs átmásolt skill-magyarázat.
+- **Marker minden taskon:** nincs prefix nélküli task — minden sor `[RED]`, `[GREEN]`, `[CHECK]` vagy `[OPS]` markert visel.
+- **`[OPS]` helyesen használva?** — Menj végig az `[OPS]` taskokon: **mindegyik környezetet vagy artefaktumot módosít, nem repo-fájlt.** Ha egy `[OPS]` task fájl-útvonalat szerkeszt (tipikusan a `TREG` regressziós taskok), az **hibás besorolás** → `[RED]`/`[GREEN]`. A téves `[OPS]` besorolás elrontja a destruktív-művelet ellenőrzést.
+- **Destruktív / osztott környezeti művelet teljes?** — Ha van olyan `[OPS]` task, amely **közös** környezetet módosít (osztott klaszter, közös registry, megosztott adatbázis), akkor a csoportjában szerepel-e (a) **jóváhagyás-kérő** task az eredeti állapot rögzítésével, (b) a művelet, (c) `[CHECK]` ellenőrzés, (d) feltételes **rollback** task? Ha a plan nem ad rollback-forgatókönyvet, az plan-hiányosság → `tasks-questions.md`.
+- **Állapot-perzisztencia ellenőrzése:** ha egy task olyan shell-változóra hivatkozik (`$VAR`), amelyet **egy korábbi task** állít be, az **hibás** — a taskok külön shellben futnak, az érték üres lesz. Az állapot fájlba írandó és onnan olvasandó, vagy a parancsok egy taskba vonandók. Ez különösen a **rollbackre** kritikus: üres azonosítóval nem áll vissza semmi.
 
 ### B) TDD helyesség
 
@@ -252,7 +296,8 @@ Menj végig a következő csoportokon sorban. Minden csoportot önállóan pipá
 
 ### E) Dokumentáció és TypeScript
 
-- **Meglévő komponens README:** Ha a ciklus meglévő komponens konfigurációját (env var-ok, indítási paraméterek, külső kapcsolatok) változtatta meg, a komponens `README.md` frissítése szerepel-e taskként a Dokumentáció csoportban?
+- **Meglévő komponens README: NEM lehet task.** Ha a ciklus meglévő komponens konfigurációját (env var-ok, indítási paraméterek, külső kapcsolatok) változtatta meg, a `README.md` frissítése a **`08-doc-sync`** dolga — ha ilyen task bekerült (jellemzően `TLAST`-ként), **töröld**. **Kivétel:** **új** komponens első `README.md`-je, ami normál `Tnnn` `[GREEN]` taskként a komponens fájljai közé tartozik.
+- **Nincs státusz-frissítő task?** — Nem szerepel olyan task, amely a `spec.md` / `plan.md` / `tasks.md` **státuszmezőjét** állítja át. Ez a `07-validate` dolga (keretrendszer-gépezet), nem implementációs lépés. Ha a spec DoD-ja ilyet kér, az spec-hiba → `tasks-questions.md`.
 - **Architecture / generált dokumentáció (DS4):** **NE** generálj taskot a `docs-generated/architecture.md` (vagy a `docs-generated/` bármely fájlja) frissítésére, még új komponens/interfész/adatfolyam bevezetésekor sem — ezek **kizárólag a `08-doc-sync` fázis** gazdái, amely a teljes ciklus rálátásával komponálja és validálja őket. Az implementáció (06) a kódra koncentrál; az „as-built" dokumentáció a doc-syncben készül.
 - **TypeScript rename ellenőrzés:** Ha a ciklus TypeScript interfész-, típus- vagy metódusnevet nevez át, ellenőrizd, hogy a plan `Ellenőrzési stratégia` szekciója tartalmaz-e `typecheck` parancsot minden érintett npm package-hez. Ha igen, vedd fel [CHECK] taskként. Ha nem szerepel a planban, **ne találd ki magad** — a parancs csak akkor kerülhet taskba, ha a plan explicit felsorolja (a plan agent ellenőrzi a package.json-ban, hogy a script létezik-e).
 - **Rename teljességi `[CHECK]`:** Ha a ciklus egy nevet (végpont, szimbólum, env-változó, fájlnév) **az egész projektben** cserél le, a Dokumentáció csoport záró taskja legyen egy `[CHECK]`, amely a teljes repóban grep-eli a **régi nevet** annak minden alakváltozatában (pl. `init-cache`, `initCache`, `init_cache`, `InitCache`), kizárva a spec **Out of scope**-jában történetinek jelölt utakat (lezárt ciklusok `test-report`-jai, régi `spec.md`-k, `roadmap.md` múltbeli bejegyzései) és a `node_modules`/`.git` mappákat. A task akkor zöld, ha az élő forráson, dokumentáción (gyökér + app `README.md`, `docs/`, `.agent/`) és a verziókövetett build-kimeneten (`dist/`) **nulla** találat marad. Ha a `dist/` verziókövetett, ezt egy tiszta újrabuild (`dist` törlés + `npm run build`) előzze meg, mert a `tsc`/vite nem törli az átnevezett forrás orphan kimenetét.

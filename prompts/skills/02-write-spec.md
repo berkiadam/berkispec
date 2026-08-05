@@ -14,6 +14,7 @@ subagents:
   - "agents/researcher.md"
 shared:
   - "shared/input-from-prev.md"
+  - "shared/artifact-voice.md"
 ---
 # 02 — Spec írás
 ## Kontextus ellenőrzés
@@ -112,6 +113,10 @@ A tapasztalat szerint a spec-be leggyakrabban **környezeti koordináták és el
 5. Ha bizonytalan vagy, hogy egy tétel szerződés-e vagy koordináta, **ne dönts magadtól** — vedd fel kérdésként a `spec-questions.md`-be.
 
 > **Miért nem hagyhatjuk a spec-ben „biztos, ami biztos" alapon?** Mert a `plan.md`-nek **önhordónak** kell lennie: a `test-runner` subagent kizárólag a `plan.md`-t olvassa, a spec-et nem. Egy spec-ben hagyott URL vagy parancs **soha nem fog lefutni** — csak azt a hamis benyomást adja, hogy dokumentálva van. Az áthelyezés tehát nem formalitás, hanem az, ami az infót egyáltalán végrehajthatóvá teszi.
+
+---
+
+<!-- INCLUDE:shared/artifact-voice.md -->
 
 ---
 
@@ -325,6 +330,7 @@ A `Tervezésre kész`-re váltás után készíts git commitot (`cycle-NN: 02-sp
 - **DoD anti-minta: nincs „meta" pont?** — A *„X leírása elkészült"*, *„a teszt definiált"*, *„a menete dokumentált"* típusú pont **nem DoD**: egy doksi létét ellenőrzi, nem a rendszer működését. Minden DoD-pont **megfigyelhető viselkedésre** legyen igen/nem eldönthető. Rossz: *„a dev Keycloak SPI-frissítés menetének tesztje definiált."* Jó: *„a frissített SPI-val a status endpoint 200-at és `spi-ok` státuszt ad."*
 - Az "Out of scope" szekció megakadályozza-e a scope creep-et?
 - A "Hivatkozott fájlok" lista teljes, **és kizárólag dokumentációs anyagokat tartalmaz?** (OpenAPI leírók, README-k, sémák, meglévő spec fájlok, viselkedés-referencia szkriptek) — `.ts`, `.tsx`, `.js`, `.mjs`, `package.json` és egyéb forrásfájlok **nem szerepelhetnek**; ha szerepelnek, töröld őket. Forrásfájlok azonosítása a plan fázis feladata. **Szigorú szabály: a specifikáció szöveges részeiben sem szerepelhetnek (még a Kockázatok, az Out of scope vagy a Teszt specifikáció szekciókban sem) konkrét forrásfájlnevek — és ugyanez érvényes a build-/deploy-parancsokra (`mvn`, `oc`, `kubectl`, `docker`/`podman`, `npm run`), az image-nevekre és tagekre, a registry/namespace/pod/deployment nevekre, valamint a konkrét `host:port` és abszolút URL értékekre (KX). Ezeket nem törölni kell, hanem a `plan-input-from-prev.md`-be áthelyezni. A fájlok elérési útjai/linkjei mindig a fájl aktuális könyvtárához képest relatív útvonalak legyenek (a mappa mélységének megfelelő számú visszalépéssel a projekt gyökeréig, pl. `../../apps/legacy-login/README.md`), abszolút útvonalak vagy `file://` sémájú linkek nem szerepelhetnek bennük.**
+- **Artefaktum-hang (AV1)?** — Nincs a spec-ben skill-hangú meta-utasítás (`🔴`, `[!CAUTION]`, „Tilos…", „kötelező ellenőrizned…", „menj végig…")? Ami szabályból származik, az **döntésként** van megfogalmazva, az indoklás pedig a `Kockázatok` szekcióban.
 - **Koordináta-kiszűrés (KX) lefutott?** — Végigmentél a spec teljes szövegén, és nincs benne környezeti koordináta (abszolút URL hosttal, `host:port`, image-név, namespace/pod/deployment, registry) vagy eljárás-leírás (build/deploy parancs, runbook, forrás-/artefaktum-fájl útvonal)? Ami volt, azt **áthelyezted** a `plan-input-from-prev.md`-be (nem törölted), teljes szöveggel, és **jelezted a felhasználónak**? A `Teszt specifikáció` szekciót külön is nézd át — ott szivárog be a leggyakrabban egy deployment-runbook „teszt" címszó alatt.
 
 - **Minden hivatkozott érték, struktúra és adat specifikálva van?** — **Hatókör:** ez a szabály a **szerződés-adatokra** vonatkozik (payload-mezők, fejlécnevek, hibakódok, endpoint-útvonalak, konfigurációs paraméterek neve és szemantikája) — **nem** a környezeti koordinátákra. Egy hostra/portra/namespace-re **nem** az a helyes válasz, hogy „írjuk be a konkrét értéket", hanem hogy **szimbolikusan hivatkozunk rá, az értéket pedig a plan tartalmazza** (KX). Ha a spec szerződés-adatot említ vagy hivatkozik rá, teljesülnie kell:
