@@ -1,0 +1,7 @@
+# A telepítő által generált előzmény-fájl: a legutóbbi telepítés célmappája.
+# Gépfüggő (lokális útvonalat tartalmaz), ezért nem verziókezeljük.
+history
+
+# Python bytecode
+__pycache__/
+*.pyc

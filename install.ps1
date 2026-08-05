@@ -31,6 +31,35 @@ $SCRIPT_DIR = $PSScriptRoot
 if ([string]::IsNullOrEmpty($SCRIPT_DIR)) {
     $SCRIPT_DIR = Get-Location
 }
+$HISTORY_FILE = Join-Path $SCRIPT_DIR "history"
+
+# ── Telepitesi elozmeny (history fajl) ──────────────────────────────────────
+# A legutobbi celprojekt utvonalat a repo gyokereben levo `history` fajlban
+# taroljuk, hogy ujrafuttataskor ne kelljen ujra begepelni. A fajl GEPFUGGO
+# (lokalis utvonalat tartalmaz), ezert a .gitignore kizarja.
+
+function Get-LastProjectPath {
+    if (-not (Test-Path $HISTORY_FILE -PathType Leaf)) { return "" }
+    $line = Get-Content $HISTORY_FILE -ErrorAction SilentlyContinue |
+        Where-Object { $_ -match '^LAST_PROJECT_PATH=' } | Select-Object -Last 1
+    if ([string]::IsNullOrWhiteSpace($line)) { return "" }
+    return $line -replace '^LAST_PROJECT_PATH=', ''
+}
+
+function Save-History {
+    param([string]$Path, [string]$Platform)
+    try {
+        @(
+            "# BerkiSpec telepitesi elozmeny - automatikusan generalt, ne szerkeszd kezzel.",
+            "# Ebbol tolti ki a telepito az alapertelmezett celmappat ujrafuttataskor.",
+            "LAST_PROJECT_PATH=$Path",
+            "LAST_PLATFORM=$Platform",
+            "LAST_INSTALL=$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+        ) | Set-Content -Path $HISTORY_FILE -Encoding UTF8
+    } catch {
+        Write-Warn "A telepitesi elozmenyt nem sikerult elmenteni ($HISTORY_FILE)."
+    }
+}
 
 $AGENTS_SRC_DIR = Join-Path $SCRIPT_DIR "prompts/agents"
 $AGENTS_GEMINI_SRC = Join-Path $SCRIPT_DIR "prompts/agents/gemini-agent"
@@ -97,9 +126,27 @@ function Ask-ProjectPath {
     Write-Host "     az automatikus kiegészítéshez.${RESET}"
     Write-Host ""
 
+    $last_path = Get-LastProjectPath
+    if (-not [string]::IsNullOrWhiteSpace($last_path)) {
+        if (Test-Path $last_path -PathType Container) {
+            Write-Host "  ${GRAY}Legutóbbi telepítés helye: ${BOLD}${last_path}${RESET}"
+            Write-Host "  ${GRAY}Nyomj ${BOLD}Enter${RESET}${GRAY}-t az elfogadásához, vagy adj meg másikat.${RESET}"
+            Write-Host ""
+        } else {
+            Write-Host "  ${GRAY}A legutóbbi telepítési hely már nem létezik (${last_path}) — add meg az újat.${RESET}"
+            Write-Host ""
+            $last_path = ""
+        }
+    }
+
     while ($true) {
         Write-Host -NoNewline "  ${MAGENTA}❯${RESET} Projekt mappa: "
         $project_path = Read-Host
+
+        # Üres bevitel = a legutóbbi telepítési hely elfogadása
+        if ([string]::IsNullOrWhiteSpace($project_path) -and -not [string]::IsNullOrWhiteSpace($last_path)) {
+            $project_path = $last_path
+        }
 
         # Tilde kifejtés
         if ($project_path -like "~*") {
@@ -686,6 +733,10 @@ function Main {
     Ask-ProjectPath
     Ask-AgentPlatform
     Create-Symlinks
+    # A célmappa megjegyzése a következő futtatáshoz (lásd `history` fájl).
+    if (-not [string]::IsNullOrWhiteSpace($script:PROJECT_PATH)) {
+        Save-History -Path $script:PROJECT_PATH -Platform $script:PLATFORM_CHOICE
+    }
     Show-Summary
 }
 

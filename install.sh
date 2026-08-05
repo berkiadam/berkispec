@@ -32,6 +32,8 @@ readonly BG_BLUE='\033[48;5;24m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 
+readonly HISTORY_FILE="${SCRIPT_DIR}/history"
+
 readonly AGENTS_SRC_DIR="${SCRIPT_DIR}/prompts/agents"
 readonly AGENTS_GEMINI_SRC="${SCRIPT_DIR}/prompts/agents/gemini-agent"
 readonly SKILLS_SRC="${SCRIPT_DIR}/prompts/skills"
@@ -43,6 +45,31 @@ INSTALL_STATUS=""  # "done" vagy "skipped" (ütközés esetén kihagyva)
 
 # ── Segédfüggvények ─────────────────────────────────────────────────────────
 info()    { echo -e "  ${CYAN}ℹ${RESET}  $*"; }
+
+# ── Telepítési előzmény (`history` fájl) ────────────────────────────────────
+# A legutóbbi célprojekt útvonalát a repo gyökerében lévő `history` fájlban
+# tartjuk, hogy újrafuttatáskor ne kelljen újra begépelni (előre kitöltve
+# jelenik meg, Enterrel elfogadható, nyilakkal szerkeszthető). A fájl GÉPFÜGGŐ
+# — lokális útvonalat tartalmaz —, ezért a `.gitignore` kizárja.
+
+load_last_project_path() {
+  [[ -f "${HISTORY_FILE}" ]] || return 0
+  local line
+  line="$(grep -E '^LAST_PROJECT_PATH=' "${HISTORY_FILE}" 2>/dev/null | tail -n 1)"
+  [[ -n "${line}" ]] || return 0
+  printf '%s' "${line#LAST_PROJECT_PATH=}"
+}
+
+save_history() {
+  local path="$1" platform="$2"
+  {
+    echo "# BerkiSpec telepítési előzmény — automatikusan generált, ne szerkeszd kézzel."
+    echo "# Ebből tölti ki a telepítő az alapértelmezett célmappát újrafuttatáskor."
+    echo "LAST_PROJECT_PATH=${path}"
+    echo "LAST_PLATFORM=${platform}"
+    echo "LAST_INSTALL=$(date '+%Y-%m-%d %H:%M:%S')"
+  } > "${HISTORY_FILE}" 2>/dev/null || warn "A telepítési előzményt nem sikerült elmenteni (${HISTORY_FILE})."
+}
 success() { echo -e "  ${GREEN}✔${RESET}  $*"; }
 warn()    { echo -e "  ${YELLOW}⚠${RESET}  $*"; }
 error()   { echo -e "  ${RED}✖${RESET}  $*"; }
@@ -99,9 +126,22 @@ ask_project_path() {
   echo ""
 
   local project_path=""
+  local last_path
+  last_path="$(load_last_project_path)"
+
+  if [[ -n "${last_path}" ]]; then
+    if [[ -d "${last_path}" ]]; then
+      echo -e "  ${GRAY}Legutóbbi telepítés helye előre kitöltve — ${BOLD}Enter${RESET}${GRAY} = elfogadás, vagy írd át.${RESET}"
+    else
+      echo -e "  ${GRAY}A legutóbbi telepítési hely már nem létezik (${last_path}) — add meg az újat.${RESET}"
+      last_path=""
+    fi
+    echo ""
+  fi
+
   while true; do
     echo -ne "  ${MAGENTA}❯${RESET} Projekt mappa: "
-    read -e -r project_path
+    read -e -i "${last_path}" -r project_path
 
     # Tilde kifejtés
     project_path="${project_path/#\~/$HOME}"
@@ -644,6 +684,8 @@ main() {
   ask_project_path
   ask_agent_platform
   create_symlinks
+  # A célmappa megjegyzése a következő futtatáshoz (lásd `history` fájl).
+  [[ -n "${PROJECT_PATH}" ]] && save_history "${PROJECT_PATH}" "${PLATFORM_CHOICE}"
   show_summary
 }
 
