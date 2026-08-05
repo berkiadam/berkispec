@@ -555,6 +555,24 @@ A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de *
 - **Effort natív támogatása:** Claude Code-ban a subagent `effort:` frontmatter-mező, Codexben a `.codex/agents/*.toml` `model_reasoning_effort` mezője **natívan hat** (a fájl értéke elsőbbséget élvez). A többi platformon (Antigravity/Copilot/Cursor) az érték **látható ajánlás** (frontmatter + „Recommended Effort" alert), a Cursor `model` mezője viszont natív — ott az effort is natívan hat a `[effort=...]` paraméterben. Fontos: a Cursor a **modell-azonosítót** várja (`claude-opus-5`), nem megjelenített nevet („Opus 4.8"); érvénytelen azonosítónál csendben a szülő ágens modelljére esik vissza. Cursornál a read-only agentek (`analyzer`, `researcher`, `doc-sync-planner`) `readonly: true`-t, Codexnél `sandbox_mode = "read-only"`-t kapnak.
 - **Manuális váltás:** ha nem a telepített ágensekre támaszkodsz, kövesd a fenti leosztást a CLI/IDE modell- és effort-választójában.
 
+**Cursor-specifikum — a subagent `model` mező** ([Cursor: Subagents](https://cursor.com/docs/subagents))
+
+A Cursor subagent-frontmatter mezői: `name`, `description`, `model`, `readonly`, `is_background`. **Külön `effort:` mező nincs** — a paraméterek a modell azonosítójához tapadnak szögletes zárójellel, vesszővel elválasztva:
+
+```yaml
+model: claude-opus-5[effort=high]        # effort= / context= / fast=
+model: claude-sonnet-5[effort=low]
+model: inherit                            # a szülő ágens modellje (alapértelmezés)
+```
+
+Három dolog, ami könnyen félrevisz:
+
+1. **Azonosítót vár, nem megjelenített nevet.** A `model: Opus 4.8` alak nem érvényes; `claude-opus-5` / `claude-sonnet-5` kell.
+2. **A modellválasztó UI címkéi nem a frontmatter-forma.** A Cursor felületén látható `claude-opus-5-thinking-high` / `gpt-5.6-sol-medium` stílusú slugok a *picker* nevei; a dokumentált frontmatter-alak az azonosító + `[effort=…]`. Claude-ból a slug-listán csak `-thinking-high` létezik, tehát a `-thinking-low` / `-thinking-medium` alakok érvénytelenek — pont az alacsony effortú agenteknél (fixerek, `test-runner`, `researcher`) hibáznának.
+3. **Az érvénytelen érték NÉMA.** Ha az azonosítót a Cursor nem ismeri fel — vagy felismeri, de nincs hozzá jogosultság (admin letiltotta, a csomag nem tartalmazza, illetve legacy request-alapú csomagnál Max Mode kellene) —, akkor **hibaüzenet nélkül a szülő ágens modelljére esik vissza**. A tünet csak a viselkedésen látszik: pl. az `analyzer` látszólag fut, de nem Opus 5-ön.
+
+Emiatt a `models.json` **`cursor` szekciójába mindig modell-azonosítót írj**; az effortot a telepítő fűzi hozzá (`install-helper.py` → `inject_cursor_agent`). Ugyanitt egy tier-eltérés: **Cursorban nincs Haiku**, ezért a `research_agent` a `default` Sonnet 5-öt kapja `low` efforton — ugyanaz a megoldás, mint Antigravityn a Flash-sel.
+
 ### 5.4 Az 05-analyze önjavító hurok (részletes)
 
 Ez az ábra **kizárólag az 05-analyze lépést** mutatja be, a subagentek és a kérdés-folyam feltüntetésével. Az orchestrátor (05-analyze) read-only: a **diagnózist** az `analyzer` (ez az egyetlen pont a teljes rendszerben, ami a legdrágább, `deep_reasoning_agent` tier-en fut — lásd 5.3), a **javítást** a fixer-subagentek (02/03/04 fix-mód, `default` tier) végzik; a felhasználót mindig az **orchestrátor** (szintén `default` tier) kérdezi, fázis-jelzéssel.
