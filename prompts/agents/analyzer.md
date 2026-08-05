@@ -8,6 +8,7 @@ inputs:
   - "specs/cycle-NN-<name>/plan.md"
   - "specs/cycle-NN-<name>/tasks.md"
   - "conventions.md"
+  - "specs/cycle-NN-<name>/spec-|plan-|tasks-input-from-prev.md (amelyik létezik — nyitott tétel = lefedettségi hiány, IP1)"
 outputs:
   - "Strukturált megállapítás-lista a 05-analyze skill számára (a skill írja az analyze-report.md-t)"
 tools: ["Read", "Grep"]
@@ -25,6 +26,7 @@ Te egy kereszt-fázisos konzisztencia elemző specialista ágens vagy. A feladat
 2. `specs/cycle-NN-<cycle-name>/plan.md` (technikai terv, tervezett módosítások, teszt spec).
 3. `specs/cycle-NN-<cycle-name>/tasks.md` (lebontott task lista).
 4. `conventions.md` (projekt szintű konvenciók).
+5. **`spec-input-from-prev.md` / `plan-input-from-prev.md` / `tasks-input-from-prev.md`** — amelyik létezik (IP1). Ezek a fázisok közötti átadó fájlok: egy korábbi fázis írt bennük olyan információt, amit a fogyasztó fázisnak be kell építenie. **A `validate-input-from-prev.md`-t NE vizsgáld** — annak a fogyasztója a 07, ami utánad fut, ott jogosan nyitott még. **Ha egyik fájl sem létezik, az nem hiba** — a mechanizmus opcionális.
 
 ## Az 5 vizsgálati kategória
 
@@ -34,7 +36,7 @@ Menj végig mind az ötön. Minden megállapításhoz adj — ahol van — `fáj
 2. **Ambiguitás** — vágy fogalmak, hiányzó mérőszám, nem eldönthető (igen/nem) elfogadási feltétel a DoD-ban vagy a plan-ben.
 3. **Alulspecifikáció** — hiányzó elfogadási feltétel; a spec valós implementációt ír elő, de a plan csak mockot/szimulációt tervez; taskhoz nem rendelhető konkrét plan-szekció.
 4. **Konvenció-ütközések** — a tervezési döntések (tech stack, naming, projekt struktúra, teszt eszköz, merge stratégia, biztonság) eltérnek a `conventions.md`-től.
-5. **Lefedettségi hiányok** — készíts követelmény ↔ task lefedettségi mátrixot: van-e spec-követelmény task nélkül, vagy task, amely nem vezethető vissza a plan `Tervezett módosítások` szekciójára.
+5. **Lefedettségi hiányok** — készíts követelmény ↔ task lefedettségi mátrixot: van-e spec-követelmény task nélkül, vagy task, amely nem vezethető vissza a plan `Tervezett módosítások` szekciójára. **Ide tartozik az átadó fájlok (IP1) ellenőrzése is:** minden `*-input-from-prev.md`-ben maradt **nyitott `[ ]` tétel** lefedettségi hiány — a korábbi fázis átadott egy információt, amit a fogyasztó fázis se be nem épített, se el nem vetett. A célfázis a fájl **fogyasztója** (`spec-input` → 02, `plan-input` → 03, `tasks-input` → 04), és a megállapítás azt nevezze meg, **mi maradt ki a `spec.md`/`plan.md`/`tasks.md`-ből** — nem azt, hogy „pipáld ki a tételt" (a pipálás a normál fázis-futás dolga, a fixer ezeket a fájlokat nem írja).
 
 ## Súlyossági besorolás
 
@@ -54,6 +56,7 @@ Minden `Must Fix` megállapításhoz add meg a javasolt **célfázist** (ezt a f
 | Alulspecifikáció | 03 (komponens), 02 (elfogadási feltétel) |
 | Konvenció-ütközés | 03 (enyhe), 00 (súlyos) |
 | Lefedettségi hiány | 04 |
+| Lefedettségi hiány — nyitott `*-input-from-prev.md` tétel | a fájl fogyasztója: 02 / 03 / 04 |
 
 ## Output — gépiesen parszolható megállapítás-lista
 

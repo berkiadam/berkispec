@@ -45,6 +45,7 @@
   - [9. Frontmatter séma](#9-frontmatter-séma)
   - [10. conventions.md — Projekt konvenciók](#10-conventionsmd--projekt-konvenciók)
   - [11. Egy ciklus artifact fájljai](#11-egy-ciklus-artifact-fájljai)
+    - [11.1 Fázisok közötti átadás (`*-input-from-prev.md`)](#111-fázisok-közötti-átadás-input-from-prevmd)
   - [12. docs-generated/ — élő dokumentáció (a 08-doc-sync gazdája)](#12-docs-generated--élő-dokumentáció-a-08-doc-sync-gazdája)
     - [12.1 specs/test-conventions.md — visszatérő teszt-elvárások és receptek (TC1–TC8)](#121-specstest-conventionsmd--visszatérő-teszt-elvárások-és-receptek-tc1tc8)
     - [12.2 export/ — verziózott PDF export (/bs-export-doc)](#122-export--verziózott-pdf-export-bs-export-doc)
@@ -217,7 +218,8 @@ berkispec/                            # repo gyökér
     │   ├── review-fixer.md           # 09 önjavító hurok: 06 fix-mód belépő (vékony wrapper)
     │   └── gemini-agent/             # Antigravity-specifikus agent.json másolatok (per-agent almappa)
     ├── shared/                       # Skillek közötti megosztott szövegblokkok (build-time inline)
-    │   └── git-preflight.md          # közös git-preflight (no-VCS kapu, munkafa-ellenőrzés, branch-nyitó preflight); a telepítő a hivatkozó skillekbe beágyazza
+    │   ├── git-preflight.md          # közös git-preflight (no-VCS kapu, munkafa-ellenőrzés, branch-nyitó preflight); a telepítő a hivatkozó skillekbe beágyazza
+    │   └── input-from-prev.md        # közös fázis-átadás leírás (*-input-from-prev.md, IP1); a 01/02/03/04/07 hivatkozza
     ├── templates/                    # jövőbeli sablonok
     ├── scripts/                      # automatizációs scriptek (a telepítő minden *.py-t átmásol a célprojektbe)
     │   ├── install-helper.py         # a telepítő motorja (modell- + effort-hozzárendelés, fájlmásolás) — NEM kerül a célprojektbe
@@ -956,7 +958,7 @@ tools: ["Read", "Bash", "Grep"]
 ```
 
 - A **`description`** az ágens-regisztráció **kanonikus, kötelező** mezője: a Claude Code (és a Cursor) `name` + `description` alapján ismeri fel a subagentet és dönt a hívásáról, ezért „mit + mikor hívd" jellegű legyen. A `role` egy rövid emberi címke, amely megmarad; ha a `description` hiányozna, a telepítő a Codexnél/Cursornál erre esik vissza, de a Claude/Copilot frontmatterbe a `description` **kell**.
-- A **`shared`** (skilleknél) a `shared/` alatti közös szövegblokkokat jelzi, amelyeket a skill `<!-- INCLUDE:shared/<fájl> -->` markerrel hivatkoz, és a telepítő **build-time inline** beágyaz (jelenleg a `00`/`01` a `shared/git-preflight.md`-t).
+- A **`shared`** (skilleknél) a `shared/` alatti közös szövegblokkokat jelzi, amelyeket a skill `<!-- INCLUDE:shared/<fájl> -->` markerrel hivatkoz, és a telepítő **build-time inline** beágyaz. Jelenleg két ilyen blokk van: a `shared/git-preflight.md`-t a `00`/`01` (branch-nyitó fázisok), a `shared/input-from-prev.md`-t a `01`/`02`/`03`/`04`/`07` (fázisok közötti átadás, IP1) hivatkozza.
 
 A frontmatter egyébként **eszközfüggetlen** (saját séma, nem egy konkrét ágens-eszközhöz kötött); a telepítő fordítja a cél-platform natív formátumára (Claude/Cursor `.md`, Codex `.toml`, Copilot `.agent.md`, Antigravity `agent.json`).
 
@@ -1008,6 +1010,10 @@ Minden ciklus saját mappát kap: `specs/cycle-NN-<cycle-name>/`
 | `plan-questions.md` | 03 | A tervezési szakasz nyitott kérdései. A plan csak akkor `Task írásra kész`, ha itt nincs `- [ ]`. |
 | `tasks.md` | 04 | Checkboxos task lista (`[RED]`/`[GREEN]`/`[CHECK]` jelölésekkel) + prerequisite dokumentumok. |
 | `tasks-questions.md` | 04 | A tasks szakasz nyitott kérdései (főleg az 05 fix-mód használja). A `tasks.md` csak akkor `Implementálásra kész`, ha itt nincs `- [ ]`. |
+| `spec-input-from-prev.md` | írja: 01 · fogyasztja: **02** | Fázisok közötti átadás (IP1): a 01-ben elhangzott, de a roadmap-be nem illő viselkedési részletek. Csak ha van átadandó infó. |
+| `plan-input-from-prev.md` | írja: 01, 02 · fogyasztja: **03** | A spec-ből kivett vagy a kutatás során felszínre került technikai/implementációs részletek. |
+| `tasks-input-from-prev.md` | írja: 02, 03 · fogyasztja: **04** | Előkészítő lépések és sorrend-megkötések a task-bontáshoz. |
+| `validate-input-from-prev.md` | írja: 03, 04 · fogyasztja: **07** | Futtatási előfeltételek és üzemeltetési tudnivalók a validáláshoz (pl. „a stack indítása előtt VPN kell"). |
 | `analyze-report.md` | 05 | Kereszt-fázisos konzisztencia jelentés (PASS/FAIL), 5 kategória, lefedettségi mátrix, **Hurok-napló** (az önjavító hurok iterációnkénti audit-nyoma). |
 | `imp-decision.md` | 06 | Implementációs döntési napló: nem egyértelmű megoldások és a 3-próba szabály utáni leállások. |
 | `test-report/bs-validate-decision.md` | 07 | Validációs futástörténet, regressziós/Sonar hibák, consecutive failures számlálók — egyben az **07 önjavító hurok naplója** (LC2), a megszakított futás horgonya. |
@@ -1015,6 +1021,40 @@ Minden ciklus saját mappát kap: `specs/cycle-NN-<cycle-name>/`
 | `doc-sync-plan.md` | 08 | A `doc-sync-planner` per-fájl pipálható terve a `docs-generated/` frissítéséhez (mit kell tenni / nincs teendő + drift-megállapítások). A végrehajtás **és** a megszakítás-utáni folytatás determinisztikus horgonya (a fő ágens pipálja). |
 | `doc-sync-questions.md` | 08 | A doc-sync döntési pontjai és kapu-bukásai (`Knn`). A fő ágens kérdez egyenként; nyitott `[ ]` kérdésnél a fázis megáll. Sosem törlünk, csak `[x]`. |
 | `code-review.md` | 09 | A `reviewer` ágens code review jelentése (Must Fix + Suggestions) + `# Review History` (a 09 önjavító hurok naplója — az orchestrátor írja). FAIL esetén a `tasks.md` `## Review javítások` szekciója is keletkezik. |
+
+### 11.1 Fázisok közötti átadás (`*-input-from-prev.md`)
+
+**Milyen problémát old meg (IP1):** egy fázisban rendszeresen felszínre kerül olyan információ, ami **értékes, de nem oda tartozik** — túl technikai, túl részletes, vagy egyszerűen a következő fázis dolga. A skillek eddig ezt **törlésre** utasították: a `02-write-spec` szó szerint azt írja, hogy „ha egy mondat technológiát, fájlnevet, függvényt nevez meg → az plan-be való, töröld a spec-ből". Vagyis az infó a kukába ment, nem a következő fázisba — a `03` pedig újra felderítette (vagy nem). Ezek a fájlok adnak neki **célt a kuka helyett**.
+
+| Fájl | Ki írhat bele | Ki fogyasztja |
+|---|---|---|
+| `spec-input-from-prev.md` | 01-add-cycles | **02**-write-spec |
+| `plan-input-from-prev.md` | 01, 02 | **03**-write-plan |
+| `tasks-input-from-prev.md` | 02, 03 | **04**-write-tasks |
+| `validate-input-from-prev.md` | 03, 04 | **07**-validate |
+
+Mind a ciklus mappájában (`specs/cycle-NN-<name>/`). **Egy fázis több fájlba is írhat** ugyanabban a futásban, ha az infót szét kell szórni (pl. a 02-ben felmerülő technikai részlet a `plan-input`-ba, a belőle következő tesztelési előfeltétel a `validate-input`-ba). A **06-implement** szándékosan nem kap sajátot: az eleve beolvassa a `plan.md`-t és a `tasks.md`-t, tehát az implementációs részlet oda tartozik.
+
+**Tétel-formátum** — checkbox-lista, a kérdés-fájlok mintájára, forrás-megjelöléssel:
+
+```md
+- [ ] I01 — [az átadott információ] _(forrás: 02-write-spec)_
+- [x] I02 — [az átadott információ] _(forrás: 01-add-cycles)_ → beépítve: plan.md „Tervezett módosítások"
+- [x] I03 — [az átadott információ] _(forrás: 02-write-spec)_ → elvetve: a ciklus scope-ján kívül
+```
+
+**Szabályok:**
+
+- **Sosem törlünk** — a lezárt tétel `[x]` + egy soros megjegyzés (`→ beépítve: <hova>` / `→ elvetve: <miért>`).
+- **Nem blokkol menet közben**, de a **fázis lezárásakor nem maradhat nyitott tétel**: minden fogyasztó fázis minőségellenőrzésében kötelező pont, hogy minden tétel vagy beépült, vagy **explicit indokkal elvetett**. Csendben átlépni tilos — ez a védőháló egy gyengébb modell ellen, amely különben ignorálná a fájlt.
+- **Nem kérdez.** Határvonal a `*-questions.md`-hez: a **kérdés** = „nem tudom, döntsd el"; az **input-from-prev** = „tudom, de nem ide tartozik". Ami eldöntendő kérdés is, az kérdésként megy a saját fázis `*-questions.md`-jébe.
+- **Üres váz nem készül** — a fájl csak akkor jön létre, ha van mit beleírni; a hiánya nem hiba (ugyanaz az elv, mint a `test-conventions.md`-nél).
+- **Ami nem a következő fázisba, hanem egy későbbi CIKLUSBA tartozik**, az a `specs/roadmap.md`-be megy, nem ide. Ami pedig a **jövő összes ciklusában** kell (visszatérő teszt-elvárás), az a `specs/test-conventions.md`-be — annak a `08-doc-sync` a gazdája.
+- **Az önjavító hurkok fix-módjai (05/07/09) teljesen figyelmen kívül hagyják** ezeket a fájlokat — sem nem olvassák, sem nem írják. A fix-mód célzott javítás egy `Must Fix` listára; az átadás-mechanizmus újrafuttatása ott csak költség és zaj lenne.
+- **Az 05-analyze read-only diagnózisa viszont figyeli:** az `analyzer` subagent a `spec-`/`plan-`/`tasks-input-from-prev.md` nyitott `[ ]` tételét **lefedettségi hiányként** jelzi (a `validate-input`-ot nem, mert annak a fogyasztója utána fut). A `Must Fix` azt nevezi meg, **mi maradt ki** a `spec.md`/`plan.md`/`tasks.md`-ből — nem a pipálást kéri, hiszen a fixer ezeket a fájlokat nem írja.
+- A **`quick-flow`** nem érinti: háromfázisú, egy kontextusban fut, nincs mit átadni fázisok között.
+
+A mechanizmus közös leírása egyetlen helyen él — `prompts/shared/input-from-prev.md` —, amelyet a telepítő **build-time inline** beágyaz a hivatkozó skillek (`01`, `02`, `03`, `04`, `07`) telepített változatába; a skill csak a saját, fázis-specifikus részét írja a marker körül (mit olvas be, mely fájlokba írhat).
 
 ---
 

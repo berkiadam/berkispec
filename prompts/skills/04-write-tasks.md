@@ -7,9 +7,12 @@ prerequisites:
 output:
   - "specs/cycle-NN-<name>/tasks.md státusz: Implementálásra kész"
   - "specs/cycle-NN-<name>/tasks-questions.md (ha merül fel kérdés)"
+  - "specs/cycle-NN-<name>/validate-input-from-prev.md (csak ha van átadandó infó, IP1)"
 prev: bs-write-plan
 next: bs-analyze
 subagents: []
+shared:
+  - "shared/input-from-prev.md"
 ---
 # 04 — Tasks írás
 ## Kontextus ellenőrzés
@@ -65,6 +68,18 @@ Ha a tasks.md írása félbeszakadt és új sessionban folytatódik:
 
 - Csak a `plan.md`-t olvasd be. A spec és a forrásfájlok a plan fázisban már fel lettek dolgozva — ne olvasd be újra.
 - Ha egy task leírásához konkrét fájlnévre vagy path-ra van szükség és az nem szerepel a plan-ben, csak akkor olvasd be az érintett fájlt.
+- **`tasks-input-from-prev.md`** (ha létezik) — a korábbi fázisok által neked átadott tételek. Lásd a „Fázisok közötti átadás" szekciót.
+
+---
+
+## Fázisok közötti átadás (`*-input-from-prev.md`) — IP1
+
+**Amit BEOLVASSZ:** ha létezik a `specs/cycle-NN-<cycle-name>/tasks-input-from-prev.md`, olvasd be. Ez a 02/03 fázisban felszínre került előkészítő lépéseket és sorrend-megkötéseket tartalmazza (pl. „a kulcsgenerálásnak meg kell előznie a konténer-buildet"). Minden `[ ]` tételt vagy építs be a `tasks.md`-be **taskként vagy sorrend-megkötésként**, vagy vess el explicit indokkal, és pipáld ki. **Guard:** ha a fájl nem létezik, ez nem hiba — folytasd.
+
+**Amibe ÍRHATSZ:**
+- **`validate-input-from-prev.md`** — a **07**-nek: futtatási előfeltétel vagy üzemeltetési tudnivaló, ami a task-bontás során derült ki, de csak a validálásnál lesz releváns (pl. „a TREG-04 teszt csak a seed task után futtatható", „a port ütközik a fejlesztői stackkel, ezért a validate előtt le kell állítani").
+
+<!-- INCLUDE:shared/input-from-prev.md -->
 
 ---
 
@@ -212,6 +227,7 @@ Menj végig a következő csoportokon sorban. Minden csoportot önállóan pipá
 - **Plan `Tervezett módosítások` lefedettség:** menj végig fájlonként — minden fájl kapott legalább egy taskot?
 - **Plan `Ellenőrzési stratégia` lefedettség:** menj végig a plan `Ellenőrzési stratégia` szekciójának minden parancsán — mindegyik megjelent `[CHECK]` taskként valamelyik csoportban?
 - **Regressziós érintettség lefedve:** a plan `Regressziós érintettség` táblázatának minden sora megjelent-e `TREG` taskként? Ha a plan azt mondja nincs érintettség, ez a csoport hiányozhat.
+- **`tasks-input-from-prev.md` lezárva? (IP1)** — Ha a fájl létezik, nem maradhat benne `[ ]` tétel: mindegyik vagy beépült a `tasks.md`-be (task vagy sorrend-megkötés), vagy explicit indokkal elvetett. Ami a validálásnál lesz csak releváns, az a `validate-input-from-prev.md`-be került?
 
 ### B) TDD helyesség
 
@@ -308,7 +324,7 @@ A `tasks-questions.md` a tasks fázis kérdés-nyilvántartója, a `spec-questio
 
 > **Mikor aktív:** ezt a szekciót az `05-analyze` önjavító hurka indítja az `agents/tasks-fixer.md` wrapperen keresztül — **nem** a normál tasks-írás. A bemenet egy konkrét `Must Fix` lista, nem teljes újrafutás.
 
-A fix-mód egy **szűkített belépő:** a megadott `Must Fix` megállapításokat javítod célzottan (jellemzően lefedettségi rés vagy task-szintű duplikáció), **nem írod újra az egész listát**. (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A normál flow minőségellenőrzése a javított részekre továbbra is érvényes.
+A fix-mód egy **szűkített belépő:** a megadott `Must Fix` megállapításokat javítod célzottan (jellemzően lefedettségi rés vagy task-szintű duplikáció), **nem írod újra az egész listát**. A `*-input-from-prev.md` fájlokat fix-módban **teljesen figyelmen kívül hagyod** (sem nem olvasod, sem nem írod) — IP1/6. (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A normál flow minőségellenőrzése a javított részekre továbbra is érvényes.
 
 ### Két belépési alak
 1. **Közvetlen javítás:** a `Must Fix` a tasks listát érinti (lefedettségi rés, redundáns task — a célfázis 04).

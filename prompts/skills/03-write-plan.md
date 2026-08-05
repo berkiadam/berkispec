@@ -7,10 +7,13 @@ prerequisites:
 output:
   - "specs/cycle-NN-<name>/plan.md státusz: Task írásra kész"
   - "specs/cycle-NN-<name>/plan-questions.md"
+  - "specs/cycle-NN-<name>/tasks-input-from-prev.md és/vagy validate-input-from-prev.md (csak ha van átadandó infó, IP1)"
 prev: bs-write-spec
 next: bs-write-tasks
 subagents:
   - "agents/researcher.md"
+shared:
+  - "shared/input-from-prev.md"
 ---
 # 03 — Plan írás
 ## Kontextus ellenőrzés
@@ -37,6 +40,7 @@ Ez a folyamat **3. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · **3-plan
 | Plan struktúra | Tervezett módosítások, tesztstratégia, végrehajtási sorrend, ellenőrzési stratégia. |
 | Teszt eszköz | A `conventions.md`-re hivatkozz, ne ismételd a konkrét tool-nevet. |
 | Teszt-receptek | A `specs/test-conventions.md`-ből **maradéktalanul, önhordóan** átemelve (TC1/a) — hivatkozás nem elég. |
+| Fázis-átadás | `plan-input-from-prev.md` beolvasva és lezárva; a nem ide tartozó infó a `tasks-`/`validate-input-from-prev.md`-be (IP1). |
 | Validációs ciklusok | Minden nagy szekció után célzott ellenőrzés, mielőtt továbblépsz. |
 | Spec kritika | Aktív checklist minden komponensre; hiányosság → vissza a 02 fázisba. |
 | Lezárás | Minőségellenőrzés + Constitution Check (SK4) + user megerősítés → `Task írásra kész`, commit. |
@@ -133,6 +137,18 @@ Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Kn
 4. **Lezárás:** Ha minden szekció kész, minden kérdés lezárt és a minőségellenőrzés átment, tedd fel a kérdést a felhasználónak: *"A plan minőségellenőrzése átment és minden kérdés lezárt. Készen áll a plan tasks írásra? Ha megerősíted, átállítom `Task írásra kész` státuszra."* — Ne állítsd át a státuszt a megerősítés előtt. **A válasz végén helyezd el a `plan.md` közvetlen, kattintható linkjét.**
 
 5. **Újraindítás új kontextusban:** ha a plan fázis megszakad és új sessionban folytatódik, az első lépés a `plan-questions.md` beolvasása (ha létezik). Menj végig az összes kérdésen sorban — a `[x]`-eket átugorhatod, a `[ ]`-eket egyenként tisztázd a fentiek szerint. Ha egy már lezárt kérdés (`[x]`) áttekintésekor új kérdés merül fel, vedd fel a lista végére új `Knn` számmal, és tisztázd, mielőtt továbblépnél.
+
+---
+
+## Fázisok közötti átadás (`*-input-from-prev.md`) — IP1
+
+**Amit BEOLVASSZ:** ha létezik a `specs/cycle-NN-<cycle-name>/plan-input-from-prev.md`, olvasd be a fázis elején. Ez a 01/02 fázisban felszínre került technikai és implementációs részleteket tartalmazza (érintett komponensek, meglévő megoldások, technológiai megkötések), amelyek a spec-be nem illettek. Minden `[ ]` tételt vagy építs be a `plan.md` megfelelő szekciójába, vagy vess el explicit indokkal, és pipáld ki. **Guard:** ha a fájl nem létezik, ez nem hiba — folytasd.
+
+**Amibe ÍRHATSZ:**
+- **`tasks-input-from-prev.md`** — a **04**-nek: előkészítő lépés, sorrend-megkötés, konkrét parancs vagy környezeti előfeltétel, ami a task-bontásnál kell, de a `plan.md` szekcióiba nem illik.
+- **`validate-input-from-prev.md`** — a **07**-nek: futtatási előfeltétel és üzemeltetési tudnivaló, ami csak a validálásnál válik relevánssá (pl. „a stack indítása előtt VPN kell", „a Sonar futtatás előtt a mock szervert le kell állítani, mert ütközik a porton").
+
+<!-- INCLUDE:shared/input-from-prev.md -->
 
 ---
 
@@ -440,6 +456,8 @@ Mielőtt \`Task írásra kész\` státuszra váltasz, tedd fel magadnak:
 - **Kommentek és docstringek:** A tervezett módosítások figyelembe veszik-e a forráskódban lévő kommentek és leírások frissítését az új elnevezéseknek/működésnek megfelelően?
 - **Fájl elérési utak formátuma:** Minden fájl elérési útja és linkje a fájl aktuális könyvtárához képest relatív útvonal legyen (a mappa mélységének megfelelő számú visszalépéssel a projekt gyökeréig, pl. `../../apps/legacy-login/config/users.json`)? Abszolút útvonalak vagy `file://` sémájú linkek sehol nem szerepelhetnek a dokumentációban.
 - A `Teszt specifikáció` szekció tartalmaz teszteseteket minden érintett komponenshez?
+- **A `plan-input-from-prev.md` minden tétele lezárva? (IP1)** — Ha a fájl létezik, nem maradhat benne `[ ]` tétel: mindegyik vagy beépült a `plan.md`-be (a megjegyzés mutatja, hova), vagy explicit indokkal elvetett.
+- **A plan-ből kihagyott, de értékes infó át lett adva? (IP1)** — Task-szintű előkészítő lépés a `tasks-input-from-prev.md`-be, validálás-specifikus futtatási előfeltétel a `validate-input-from-prev.md`-be került?
 - **A plan önhordó a beemelt teszt-receptekre (TC1/a)?** — Nincs olyan tesztelési lépés, amely a `specs/test-conventions.md` beolvasása nélkül nem végrehajtható (a `test-runner` azt a fájlt nem olvassa). Nincs placeholder, nincs adat helyett hivatkozás.
 - Minden teszteset Elvárt kimenet oszlopa tartalmaz HTTP státuszt és errorCode-ot (ahol a spec hibamátrixa definiálja)?
 - A unit tesztek a végrehajtási sorrendben az implementáció ELŐTT szerepelnek?
@@ -482,7 +500,7 @@ Ha a státusz \`Task írásra kész\`, állj meg. Ne kezdj task listát. Jelezd 
 
 > **Mikor aktív:** ezt a szekciót az `05-analyze` önjavító hurka indítja az `agents/plan-fixer.md` wrapperen keresztül — **nem** a normál plan-írás. A bemenet egy konkrét `Must Fix` lista, nem teljes újrafutás.
 
-A fix-mód egy **szűkített belépő:** a megadott `Must Fix` megállapításokat javítod célzottan, **nem írod újra az egész plant**. (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A normál flow minőségi kapui (minőségellenőrzés + Constitution Check) a javított részekre továbbra is érvényesek.
+A fix-mód egy **szűkített belépő:** a megadott `Must Fix` megállapításokat javítod célzottan, **nem írod újra az egész plant**. A `*-input-from-prev.md` fájlokat fix-módban **teljesen figyelmen kívül hagyod** (sem nem olvasod, sem nem írod) — IP1/6. (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A normál flow minőségi kapui (minőségellenőrzés + Constitution Check) a javított részekre továbbra is érvényesek.
 
 ### Két belépési alak
 1. **Közvetlen javítás:** a `Must Fix` megállapítás a plant érinti (a célfázis 03) — célzottan javítod.

@@ -124,6 +124,11 @@ A diagnózis **5 kategóriában** keres problémát (a `analyzer` subagent végz
 - A subagent rendszerpromptja: olvasd be a `prompts/agents/analyzer.md`-t, és ezzel definiáld az `analyzer` subagentet.
 - A subagent kimenetét te értékeled, és ez alapján döntesz PASS / FAIL-ról.
 - A javító fixer-subagenteket szintén Task tool subagent-ként indítod, a saját wrapper-promptjukkal (`agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`) — lásd „Az önjavító hurok".
+- **A `*-input-from-prev.md` fájlok (IP1) is bemenetek:** a subagent beolvassa a ciklus mappájában lévő `spec-`/`plan-`/`tasks-input-from-prev.md` fájlokat (amelyik létezik), és **nyitott `[ ]` tételt lefedettségi hiányként** jelez. Indoklás: egy nyitott tétel azt jelenti, hogy egy korábbi fázis átadott egy információt, amit a fogyasztó fázis se be nem épített, se el nem vetett — ez ugyanolyan rés, mint egy task nélküli követelmény.
+
+  > **A `validate-input-from-prev.md`-t az 05 NEM vizsgálja:** annak a fogyasztója a 07, ami az analyze után fut — ott jogosan nyitott még.
+  >
+  > **A hurok fix-módjai (a fixer-subagentek) ezeket a fájlokat továbbra sem olvassák és nem írják** (IP1/6). Ez a check tehát **diagnózis**: a `Must Fix` a `spec.md`/`plan.md`/`tasks.md` hiányosságát nevezi meg (mi maradt ki), nem az átadó fájl kipipálását kéri. A pipálás a normál (nem fix-módú) fázis-futás dolga.
 
 ---
 
@@ -149,6 +154,7 @@ Egy olcsóbb LLM-nek konkrét célt kell adni, nem „vissza a megfelelő fázis
 | Alulspecifikáció | 03 (meghatározatlan komponens), 02 (hiányzó elfogadási feltétel) | a hiányzó döntés szintjére |
 | Konvenció-ütközés | 03 (enyhe), 00 (súlyos — `conventions.md` felülvizsgálat) | összhangban az SK4 logikájával |
 | Lefedettségi hiány | 04 (követelmény ↔ task újrarendelés) | a task lista a hiányos |
+| Lefedettségi hiány — nyitott `*-input-from-prev.md` tétel (IP1) | a **fogyasztó** fázis (02 / 03 / 04 a fájl szerint) | ott maradt ki az átadott infó beépítése |
 
 **Legkorábbi érintett fázis nyer:** ha több kategória is FAIL és különböző célfázisokra mutat, a hurok a **legkorábbi érintett fázisra** ugrik (02 < 03 < 04), majd onnan deriválja le újra a downstream fázisokat — különben a későbbi fázisok hibás alapra épülnének. (Súlyos konvenció-ütközés `00`-ra mutat: ez emberi döntést igényel a `conventions.md` szintjén — ilyenkor a hurok megáll és kérdez, nem javít automatikusan.)
 

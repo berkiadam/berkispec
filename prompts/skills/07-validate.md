@@ -12,6 +12,8 @@ next: bs-doc-sync
 subagents:
   - "agents/test-runner.md"
   - "agents/implement-fixer.md"
+shared:
+  - "shared/input-from-prev.md"
 ---
 # 07 — Validálás
 ## Kontextus ellenőrzés
@@ -90,7 +92,20 @@ A validáció bármikor megszakadhat. Újraindítás (ismételt futtatás) eset�
 - Olvasd be a `spec.md` Definition of done szekciót.
 - Olvasd be a `plan.md` Tesztelési stratégia és Ellenőrzési stratégia szekciókat.
 - Olvasd be a `tasks.md`-t.
+- **Olvasd be a `validate-input-from-prev.md`-t, ha létezik** — lásd a „Fázisok közötti átadás" szekciót.
 - Ne olvasd be az egész forráskódot — csak azt, ami egy konkrét ellenőrzéshez szükséges.
+
+---
+
+## Fázisok közötti átadás (`*-input-from-prev.md`) — IP1
+
+**Amit BEOLVASSZ:** ha létezik a `specs/cycle-NN-<cycle-name>/validate-input-from-prev.md`, olvasd be a validálás **megkezdése előtt**. A 03/04 fázisban derült ki futtatási előfeltételeket és üzemeltetési tudnivalókat tartalmazza (pl. „a stack indítása előtt VPN kell", „ez a teszt csak a seed lépés után futtatható", „a port ütközik a fejlesztői stackkel"). Ezek jellemzően **megelőzik** a teszthibát, ha figyelembe veszed őket — ezért a `test-runner` indítása **előtt** dolgozd fel, és a releváns tételeket **add át a subagent bemenetében**.
+
+Minden `[ ]` tételt zárj le: vagy figyelembe vetted a validálás során (`→ figyelembe vettem: <hogyan>`), vagy explicit indokkal elvetett (`→ elvetve: <miért>`). **Guard:** ha a fájl nem létezik, ez nem hiba — folytasd.
+
+**Amibe ÍRHATSZ:** semmibe — a 07 a lánc **vége**. Ha a validálás során olyan tartós tudnivaló derül ki, ami a **következő ciklusokban** is kell, az nem ide tartozik: a `specs/test-conventions.md`-be való, aminek a `08-doc-sync` a gazdája (TC3 — a promóciót ott javasold, ne írd magad).
+
+<!-- INCLUDE:shared/input-from-prev.md -->
 
 ---
 
@@ -139,6 +154,9 @@ A szkript hozzáfűzi a `Run X` bejegyzést a dokumentált formátumban, kiszám
 Minden DoD ponthoz adjál egyértelmű választ: ✓ vagy ✗, egy mondatban indokolva.
 
 > **⚠ Fontos akció:** Minden teljesített (`✓`) pontot azonnal jelölj `[x]`-szel a `spec.md` megfelelő sorában is — ne várd meg a teljes validálás végét.
+
+#### A/2. `validate-input-from-prev.md` lezárása (IP1)
+Ha a fájl létezik, menj végig a tételein: mindegyik vagy **figyelembe vett** (`→ figyelembe vettem: <hogyan>`), vagy **explicit indokkal elvetett**. Nyitott `[ ]` tétellel a validálás nem zárható PASS-ra. Ha egy tétel a validálás során **hibát okozott** (pl. hiányzó előfeltétel miatt bukott el egy teszt), az FAIL — a szokásos hurok szerint javítandó, nem elvetéssel elintézendő.
 
 #### B. Meglévő komponens README ellenőrzése
 Ha a ciklus meglévő komponens konfigurációját (env var-ok, indítási paraméterek, külső kapcsolatok) változtatta meg: a komponens `README.md` szinkronban van-e a változásokkal? Ha nem, jelezd — a README frissítése az implement fázis lezáratlan feladata.

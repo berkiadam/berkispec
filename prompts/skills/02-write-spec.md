@@ -7,10 +7,13 @@ prerequisites:
 output:
   - "specs/cycle-NN-<name>/spec.md státusz: Tervezésre kész"
   - "specs/cycle-NN-<name>/spec-questions.md"
+  - "specs/cycle-NN-<name>/plan-input-from-prev.md és/vagy tasks-input-from-prev.md (csak ha van átadandó infó, IP1)"
 prev: bs-add-cycles
 next: bs-write-plan
 subagents:
   - "agents/researcher.md"
+shared:
+  - "shared/input-from-prev.md"
 ---
 # 02 — Spec írás
 ## Kontextus ellenőrzés
@@ -74,7 +77,9 @@ A spec a **viselkedést** írja le (mit lát a kliens/felhasználó, milyen beme
 | „A válasz tartalmazza a `correlationId`-t." | „A `correlationId`-t a `requestContext` middleware injektálja." |
 | „Két párhuzamos kérés nem indíthat két refresh-t." | „Elosztott lock Redis `SET NX PX`-szel, 5s TTL." |
 
-Ha egy mondat technológiát, fájlnevet, függvényt vagy konkrét adatszerkezet-megvalósítást nevez meg → az plan-be való, töröld a spec-ből.
+Ha egy mondat technológiát, fájlnevet, függvényt vagy konkrét adatszerkezet-megvalósítást nevez meg → az plan-be való, **vedd ki a spec-ből**.
+
+> **🔴 De ne dobd el (IP1).** Ha a kivett információ **értékes** — a felhasználó mondta, vagy a kódbázisból derült ki, és a következő fázisnak szükség lesz rá —, akkor a törlés helyett **írd át a `plan-input-from-prev.md`-be** (task-szintű részletet a `tasks-input-from-prev.md`-be). Csak azt töröld véglegesen, ami tényleg fölösleges vagy duplikátum. Lásd a „Fázisok közötti átadás" szekciót.
 
 ---
 
@@ -140,6 +145,18 @@ _Ellenőrizhető, pipálható feltételek. Minden pont legyen konkrét és egyé
 - Ha egy bonyolult meglévő modult vagy logikát kell megértened, hívd a `researcher` subagentet (`agents/researcher.md`, Mód B) a kutatáshoz. A subagent csak az összefoglalót adja vissza — a nyers fájltartalom nem kerül be a fő kontextusba.
 - Ha az előző ciklusok architektúrájára van szükség, kérdezz rá egy mondatban — ne olvasd be az összes korábbi spec-et.
 - Ha konkrét meglévő kódot kell érteni, csak az érintett fájlt vagy részt olvasd be.
+
+---
+
+## Fázisok közötti átadás (`*-input-from-prev.md`) — IP1
+
+**Amit BEOLVASSZ:** ha létezik a `specs/cycle-NN-<cycle-name>/spec-input-from-prev.md`, olvasd be a fázis elején (a spec írása előtt). Ez a 01-add-cycles fázisban elhangzott, de a roadmap-be nem illő viselkedési részleteket tartalmazza. Minden `[ ]` tételt vagy építs be a `spec.md` megfelelő szekciójába, vagy vess el explicit indokkal, és pipáld ki. **Guard:** ha a fájl nem létezik, ez nem hiba — folytasd.
+
+**Amibe ÍRHATSZ:**
+- **`plan-input-from-prev.md`** — a **03**-nak: minden technikai/implementációs részlet, amit a spec-ből kivettél vagy a kutatás során megtudtál (érintett komponens, meglévő megoldás, technológiai megkötés, teljesítmény-korlát).
+- **`tasks-input-from-prev.md`** — a **04**-nek: konkrét előkészítő lépés vagy sorrend-megkötés, ami már most kiderült (pl. „a kulcsgenerálásnak meg kell előznie a konténer-buildet").
+
+<!-- INCLUDE:shared/input-from-prev.md -->
 
 ---
 
@@ -276,6 +293,9 @@ A `Tervezésre kész`-re váltás után készíts git commitot (`cycle-NN: 02-sp
   - Ha egy hibaág nincs specifikálva, ne töltsd ki magad — jelezd nyitott kérdésként
 - **E2E elfogadási feltétel a DoD-ban?** — Ha a ciklus bármilyen funkcionális viselkedést vezet be (API, service, UI flow), a DoD-ban szerepelnie kell egy E2E szintű elfogadási feltételnek. A konkrét módszertant (Playwright, pytest, mock szint) a plan fázis határozza meg — a spec az elvárást rögzíti, nem az implementációt. Ha nincs ilyen pont a DoD-ban, add hozzá.
 
+- **A `spec-input-from-prev.md` minden tétele lezárva? (IP1)** — Ha a fájl létezik, nem maradhat benne `[ ]` tétel: mindegyik vagy beépült a `spec.md`-be (a megjegyzés mutatja, hova), vagy explicit indokkal elvetett. Csendben átlépni tilos.
+- **A spec-ből kivett, de értékes infó át lett adva? (IP1)** — Ha technikai/implementációs részletet vettél ki a spec-ből, az a `plan-input-from-prev.md`-be került (nem a kukába)?
+
 - **Visszatérő teszt-elvárások átvezetve? (TC1)** — Ha létezik `specs/test-conventions.md`, végigmentél a 2. és 3. szekción, és minden olyan tétel, amelyet ez a ciklus elfogadási feltételként vállal, megjelenik a `Teszt specifikáció`-ban (viselkedés-szinten, a tétel ID-jára hivatkozva)? Bekerült-e parancs, tesztfájl-útvonal vagy eszköznév a spec-be? Ha igen, **töröld** — az a `plan.md`-be tartozik. A ciklus által érvénytelenített baseline tételek explicit jelölve vannak a 08 számára?
 
 - **Szükséges-e regressziós ellenőrzés?** — Ha a ciklus meglévő funkciót bővít vagy módosít, a spec Teszt specifikáció szekciójában jelezni kell, hogy a korábbi működés regressziós tesztekkel ellenőrizendő. Ez különösen kritikus, ha:
@@ -297,7 +317,7 @@ A `Tervezésre kész`-re váltás után készíts git commitot (`cycle-NN: 02-sp
 
 > **Mikor aktív:** ezt a szekciót az `05-analyze` önjavító hurka indítja az `agents/spec-fixer.md` wrapperen keresztül — **nem** a normál spec-írás. A bemenet egy konkrét `Must Fix` lista, nem teljes újrafutás.
 
-A fix-mód egy **szűkített belépő:** a megadott `Must Fix` megállapításokat javítod célzottan, **nem írod újra az egész specet**. (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A normál flow minőségi kapui (a fenti minőségellenőrzés) a javított részekre továbbra is érvényesek.
+A fix-mód egy **szűkített belépő:** a megadott `Must Fix` megállapításokat javítod célzottan, **nem írod újra az egész specet**. A `*-input-from-prev.md` fájlokat fix-módban **teljesen figyelmen kívül hagyod** (sem nem olvasod, sem nem írod) — IP1/6. (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A normál flow minőségi kapui (a fenti minőségellenőrzés) a javított részekre továbbra is érvényesek.
 
 ### Bemenet
 - A spec-re szűrt `Must Fix` lista (kategória + leírás + `fájl:hely`).
