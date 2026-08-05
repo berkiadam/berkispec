@@ -240,11 +240,16 @@ def inject_markdown_model(content, model, platform_name, effort=None):
 #     származtatjuk, ha nincs külön megadva);
 #   - readonly: true, ha az agent a READONLY_AGENTS allowlisten van (biztosan
 #     semmit nem ír) — így Cursorban sem tud véletlenül írni.
-# Az `effort` Cursorban nem dokumentált natív mező (a model lehet inherit/fast/
-# model-id); hintként írjuk ki + az alertben, a Cursor az ismeretlen
-# frontmatter-kulcsot figyelmen kívül hagyja.
+# A Cursor NEM ismer külön `effort:` frontmatter-mezőt: a modell azonosítója
+# maga hordozza a paramétereket szögletes zárójeles jelöléssel —
+# `model: <model-id>[effort=high]` (több paraméter vesszővel: `[effort=high,context=300k]`).
+# Ezért a models.json cursor-szekciójában MODELL-AZONOSÍTÓT kell megadni
+# (`claude-opus-5`), nem megjelenített nevet („Opus 4.8"), az effortot pedig
+# ide fűzzük hozzá. Érvénytelen azonosító esetén a Cursor csendben a szülő
+# ágens modelljére esik vissza — a hiba nem látszik, csak a viselkedésen.
 def inject_cursor_agent(content, model, effort, readonly=False):
-    injected = inject_markdown_model(content, model, "Cursor", effort)
+    model_spec = f"{model}[effort={effort}]" if effort else model
+    injected = inject_markdown_model(content, model_spec, "Cursor")
     parts = injected.split('---')
     if len(parts) < 3:
         return injected

@@ -122,6 +122,7 @@ A BerkiSpec keretrendszer beállítása a célprojektben rendkívül egyszerű �
      ```
 3. A script interaktív módon üdvözöl, és bekéri a célprojekted gyökérmappáját.
    * *Tipp:* Az útvonal beírása közben a **Tab** billentyűvel automatikusan kiegészítheted a mappaneveket, míg a **Tab kétszeri megnyomásával** kilistázhatod az aktuális könyvtár tartalmát.
+   * **Újratelepítéskor a legutóbbi célmappa automatikusan fel van kínálva** — Linux/macOS-en előre kitöltve jelenik meg (Enter = elfogadás, nyilakkal szerkeszthető), Windowson a script kiírja és üres Enterre elfogadja. A telepítő ehhez a repo gyökerében lévő **`history`** fájlt használja (`LAST_PROJECT_PATH`, `LAST_PLATFORM`, `LAST_INSTALL`). A fájl gépfüggő, ezért a `.gitignore` kizárja; ha a benne tárolt mappa időközben megszűnt, a script jelzi és újat kér.
 4. Válaszd ki az általad használt AI agent platformot (1–6).
 
 ### Támogatott platformok és ágensek:
@@ -219,7 +220,8 @@ berkispec/                            # repo gyökér
     │   └── gemini-agent/             # Antigravity-specifikus agent.json másolatok (per-agent almappa)
     ├── shared/                       # Skillek közötti megosztott szövegblokkok (build-time inline)
     │   ├── git-preflight.md          # közös git-preflight (no-VCS kapu, munkafa-ellenőrzés, branch-nyitó preflight); a telepítő a hivatkozó skillekbe beágyazza
-    │   └── input-from-prev.md        # közös fázis-átadás leírás (*-input-from-prev.md, IP1); a 01/02/03/04/07 hivatkozza
+    │   ├── input-from-prev.md        # közös fázis-átadás leírás (*-input-from-prev.md, IP1); a 01/02/03/04/07 hivatkozza
+    │   └── artifact-voice.md         # közös artefaktum-hang szabály (AV1: skill-szöveg ne szivárogjon a spec/plan/tasks-ba); a 02/03/04 hivatkozza
     ├── templates/                    # jövőbeli sablonok
     ├── scripts/                      # automatizációs scriptek (a telepítő minden *.py-t átmásol a célprojektbe)
     │   ├── install-helper.py         # a telepítő motorja (modell- + effort-hozzárendelés, fájlmásolás) — NEM kerül a célprojektbe
@@ -526,9 +528,9 @@ A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de *
 
 | Tier (`models.json` kulcs) | Ki kapja | Claude / Antigravity / Copilot / Cursor / Codex | Miért ez a tier |
 |---|---|---|---|
-| `deep_reasoning_agent` (legdrágább) | **kizárólag** `analyzer` (05) | `claude-opus-4-8` / `Claude Opus 4.6` / `Claude Opus 4.8` / `Opus 4.8` / `gpt-5.6-sol` | Kereszt-fázisos konzisztencia-**diagnózis** (spec/plan/tasks/conventions) — a legmélyebb reasoning; egy itt vétett hiba a legdrágább downstream (rossz diagnózisra rossz kód épül). |
-| `default` | **minden más:** orchestrátor-skillek (05, 07…), a 4 fixer (`spec`/`plan`/`tasks`/`implement`-fixer), `reviewer`, `review-fixer`, `doc-sync-planner`, `test-runner` | `claude-sonnet-5` / `Gemini 3.5 Flash` / `Claude Sonnet 5` / `Sonnet 5` / `gpt-5.6-luna` | A fixerek **kész, pontos hibalistát** kapnak (megoldás/eszkaláció, nem felfedezés); az orchestrátorok bookkeeping-et végeznek (marker, számláló, routing) a subagent **kész** jelentése alapján — nem diagnózis. |
-| `research_agent` (legolcsóbb) | `researcher` (00/01/02/03/06), `10-cycle-status` skill | `claude-haiku-4-5-20251001` / `Gemini 3.5 Flash` (low) / `Claude Haiku 4.5` / `Haiku 4.5` / `gpt-5.4-mini` | Tiszta grep/glob/read fan-out, ill. determinisztikus script-futtatás — **nulla tervezési ítélet**; a „csak összefoglaló, soha nyers fájltartalom" kontraktus véd. Antigravityn nincs Haiku, ezért itt a `default` Flash modell fut, csak `low` efforton. |
+| `deep_reasoning_agent` (legdrágább) | **kizárólag** `analyzer` (05) | `claude-opus-4-8` / `Claude Opus 4.6` / `Claude Opus 4.8` / `claude-opus-5` / `gpt-5.6-sol` | Kereszt-fázisos konzisztencia-**diagnózis** (spec/plan/tasks/conventions) — a legmélyebb reasoning; egy itt vétett hiba a legdrágább downstream (rossz diagnózisra rossz kód épül). |
+| `default` | **minden más:** orchestrátor-skillek (05, 07…), a 4 fixer (`spec`/`plan`/`tasks`/`implement`-fixer), `reviewer`, `review-fixer`, `doc-sync-planner`, `test-runner` | `claude-sonnet-5` / `Gemini 3.5 Flash` / `Claude Sonnet 5` / `claude-sonnet-5` / `gpt-5.6-luna` | A fixerek **kész, pontos hibalistát** kapnak (megoldás/eszkaláció, nem felfedezés); az orchestrátorok bookkeeping-et végeznek (marker, számláló, routing) a subagent **kész** jelentése alapján — nem diagnózis. |
+| `research_agent` (legolcsóbb) | `researcher` (00/01/02/03/06), `10-cycle-status` skill | `claude-haiku-4-5-20251001` / `Gemini 3.5 Flash` (low) / `Claude Haiku 4.5` / `claude-sonnet-5` (low) / `gpt-5.4-mini` | Tiszta grep/glob/read fan-out, ill. determinisztikus script-futtatás — **nulla tervezési ítélet**; a „csak összefoglaló, soha nyers fájltartalom" kontraktus véd. Antigravityn nincs Haiku, ezért itt a `default` Flash modell fut, csak `low` efforton; Cursorban sincs Haiku, ott a `default` Sonnet 5 fut `low` efforton. |
 
 **Effort-leosztás — mennyi reasoning:**
 
@@ -542,7 +544,7 @@ A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de *
 
 **Konfiguráció és telepítés:**
 - **Forrás:** [`prompts/models.json`](prompts/models.json) — platformonként (`claude` / `antigravity` / `copilot` / `cursor` / `codex`) a 3 tier `{model, effort}` objektumként, plusz a defaulttól eltérő agentek **saját nevű sorként** (csak az `effort` mezővel; a modelljük a `default` tierből jön). Az `install-helper.py` `AGENT_MODEL_KEYS` szótára rendeli az `analyzer`/`researcher`/`10-cycle-status` stemeket a tierekhez; ami nincs sem itt, sem saját sorként a `models.json`-ban, `default` modellt és `default` (=`high`) effortot kap.
-- **Beírás telepítéskor** (`./install.sh`): Antigravity → `agent.json` `"model"` + `"effort"` kulcs; Claude Code / Copilot / Cursor → az agent-fájl YAML frontmatter `model` + `effort` mezője; Codex → a `.codex/agents/<név>.toml` `model` + `model_reasoning_effort` kulcsa (+ read-only agenteknél `sandbox_mode = "read-only"`).
+- **Beírás telepítéskor** (`./install.sh`): Antigravity → `agent.json` `"model"` + `"effort"` kulcs; Claude Code / Copilot → az agent-fájl YAML frontmatter `model` + `effort` mezője; Cursor → az agent-fájl YAML frontmatter `model` mezője, **modell-azonosítóval és zárójeles paraméterrel**: `model: claude-opus-5[effort=high]` (a Cursor nem ismer külön `effort:` mezőt); Codex → a `.codex/agents/<név>.toml` `model` + `model_reasoning_effort` kulcsa (+ read-only agenteknél `sandbox_mode = "read-only"`).
 - **A skillek** (orchestrátor fő ágensek, nem subagentek) **sem `model`-t, sem `effort`-ot nem kapnak** — egyetlen platformon sem. A skill-szintű `model` ugyanis **nem része az Agent Skills alap-szabványnak** (az csak `name`/`description`/`license`/`compatibility`/`metadata`/`allowed-tools`), hanem Claude Code-kiterjesztés, amit a célplatformokon a modellváltás **nem, vagy nem megbízhatóan** követ:
   - **Codex:** a SKILL.md csak `name` + `description`-t ismer → egy `model` inert.
   - **Copilot:** az `.instructions.md` nem ismer `model` mezőt (az csak *prompt*-fájlnál van) → inert.
@@ -550,7 +552,7 @@ A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de *
   - **Cursor:** a `model`-kiterjesztést legfeljebb részlegesen ismeri → nem garantált.
   - **Claude Code:** a dokumentáció ígéri a skill-`model` váltást, de a valóságban **runtime-ban nem hat** ([anthropics/claude-code #45191](https://github.com/anthropics/claude-code/issues/45191), „not planned"-ként lezárva).
   Mivel egy beírt skill-`model` a legjobb esetben inert, a legrosszabban félrevezető (nem létező képességet sugall), **sehová nem injektáljuk**. A modell-hangolás **kizárólag az agentek/subagentek** szintjén hat megbízhatóan (Claude subagent `model`/`effort`, Codex `.codex/agents/*.toml` `model`/`model_reasoning_effort`) — ott marad meg.
-- **Effort natív támogatása:** Claude Code-ban a subagent `effort:` frontmatter-mező, Codexben a `.codex/agents/*.toml` `model_reasoning_effort` mezője **natívan hat** (a fájl értéke elsőbbséget élvez). A többi platformon (Antigravity/Copilot/Cursor) az érték **látható ajánlás** (frontmatter + „Recommended Effort" alert), a Cursor `model` mezője viszont natív. Cursornál a read-only agentek (`analyzer`, `researcher`, `doc-sync-planner`) `readonly: true`-t, Codexnél `sandbox_mode = "read-only"`-t kapnak.
+- **Effort natív támogatása:** Claude Code-ban a subagent `effort:` frontmatter-mező, Codexben a `.codex/agents/*.toml` `model_reasoning_effort` mezője **natívan hat** (a fájl értéke elsőbbséget élvez). A többi platformon (Antigravity/Copilot/Cursor) az érték **látható ajánlás** (frontmatter + „Recommended Effort" alert), a Cursor `model` mezője viszont natív — ott az effort is natívan hat a `[effort=...]` paraméterben. Fontos: a Cursor a **modell-azonosítót** várja (`claude-opus-5`), nem megjelenített nevet („Opus 4.8"); érvénytelen azonosítónál csendben a szülő ágens modelljére esik vissza. Cursornál a read-only agentek (`analyzer`, `researcher`, `doc-sync-planner`) `readonly: true`-t, Codexnél `sandbox_mode = "read-only"`-t kapnak.
 - **Manuális váltás:** ha nem a telepített ágensekre támaszkodsz, kövesd a fenti leosztást a CLI/IDE modell- és effort-választójában.
 
 ### 5.4 Az 05-analyze önjavító hurok (részletes)
@@ -566,7 +568,7 @@ flowchart TD
     classDef userInput fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
 
     O["<b>05-analyze orchestrátor</b><br/>(read-only: vezényel,<br/>analyze-report.md-t ír,<br/>státusz-markert kezel)"]:::orch
-    AZ["<b>analyzer</b> subagent<br/>(read-only diagnózis,<br/>5 kategória)"]:::agent
+    AZ["<b>analyzer</b> subagent<br/>(read-only diagnózis,<br/>6 kategória)"]:::agent
     FIX["<b>fixer-subagent</b><br/>spec/plan/tasks-fixer<br/>(02/03/04 fix-mód)"]:::agent
     Q["*-questions.md<br/>(fixer ír új Knn-t)"]:::doc
     REP["analyze-report.md<br/>(+ Hurok-napló)"]:::doc
@@ -912,7 +914,7 @@ A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a 
 | Ágens | Hívja | Mit csinál | Kimenet |
 |---|---|---|---|
 | `agents/reviewer.md` | 09 | Git diff code review a merge előtt | `code-review.md` (Must Fix + Suggestions) |
-| `agents/analyzer.md` | 05 | Kereszt-fázisos konzisztencia **diagnózis** (read-only, 5 kategória); az orchestrált önjavító hurok ezt értékeli. **Az egyetlen agent a rendszerben, ami a legdrágább (`deep_reasoning_agent`, Opus-osztályú) tier-en fut** — lásd 5.3 | megállapítás-lista → `analyze-report.md` |
+| `agents/analyzer.md` | 05 | Kereszt-fázisos konzisztencia **diagnózis** (read-only, 6 kategória — az utolsó a **végrehajthatóság és artefaktum-tulajdon**: futtatott script létezik-e, prózában ígért teszt le van-e fedve, `docs-generated/`/README tulajdon, státusz-frissítő task, marker-helyesség); az orchestrált önjavító hurok ezt értékeli. **Az egyetlen agent a rendszerben, ami a legdrágább (`deep_reasoning_agent`, Opus-osztályú) tier-en fut** — lásd 5.3 | megállapítás-lista → `analyze-report.md` |
 | `agents/researcher.md` | 00, 01, 02, 03, 06 | **Mód A** (03): forrásfájl-azonosítás + dokumentáció-kutatás a spec alapján. **Mód B** (00/01/02/06): ad-hoc kódbázis-kutatás (modul/szimbólum/nagy fájl megértése egy konkrét kérdésre). Legolcsóbb (`research_agent`) tier — tiszta grep/glob/read fan-out, nincs benne tervezési ítélet | path-listák / tömör összefoglaló, soha nyers fájltartalom |
 | `agents/test-runner.md` | 07 (közvetve 09 re-validate is) | Unit/integration/Sonar/E2E/regressziós tesztek lefuttatása, portütközés-elhárítás, ideiglenes erőforrás-takarítás — **tényszerű összegzést ad, nem dönt** PASS/FAIL-ről. `default` tier (szándékosan **nem** a legolcsóbb — a projektenként eltérő teszt-/Sonar-kimenet megbízható, konzisztens összegzése a 3-próba számláló miatt kritikus) | strukturált PASS/FAIL riport kategóriánként |
 | `agents/doc-sync-planner.md` | 08 | A `docs-generated/` mappa + ciklus-diff **read-only** diagnózisa; per-fájl pipálható terv + DS22 kapu-leltár. **A csereszöveget is ő írja meg** (sebészi patch: cél-szekció + jelenlegi részlet + új szöveg) — így a fő ágensnek nem kell újraolvasnia/újrakomponálnia a doksikat, csak alkalmaz | `doc-sync-plan.md` tervjavaslat + csereszövegek + `doc-sync-questions.md` kérdések |
@@ -958,7 +960,7 @@ tools: ["Read", "Bash", "Grep"]
 ```
 
 - A **`description`** az ágens-regisztráció **kanonikus, kötelező** mezője: a Claude Code (és a Cursor) `name` + `description` alapján ismeri fel a subagentet és dönt a hívásáról, ezért „mit + mikor hívd" jellegű legyen. A `role` egy rövid emberi címke, amely megmarad; ha a `description` hiányozna, a telepítő a Codexnél/Cursornál erre esik vissza, de a Claude/Copilot frontmatterbe a `description` **kell**.
-- A **`shared`** (skilleknél) a `shared/` alatti közös szövegblokkokat jelzi, amelyeket a skill `<!-- INCLUDE:shared/<fájl> -->` markerrel hivatkoz, és a telepítő **build-time inline** beágyaz. Jelenleg két ilyen blokk van: a `shared/git-preflight.md`-t a `00`/`01` (branch-nyitó fázisok), a `shared/input-from-prev.md`-t a `01`/`02`/`03`/`04`/`07` (fázisok közötti átadás, IP1) hivatkozza.
+- A **`shared`** (skilleknél) a `shared/` alatti közös szövegblokkokat jelzi, amelyeket a skill `<!-- INCLUDE:shared/<fájl> -->` markerrel hivatkoz, és a telepítő **build-time inline** beágyaz. Jelenleg három ilyen blokk van: a `shared/git-preflight.md`-t a `00`/`01` (branch-nyitó fázisok), a `shared/input-from-prev.md`-t a `01`/`02`/`03`/`04`/`07` (fázisok közötti átadás, IP1), a `shared/artifact-voice.md`-t a `02`/`03`/`04` (artefaktum-hang, AV1) hivatkozza.
 
 A frontmatter egyébként **eszközfüggetlen** (saját séma, nem egy konkrét ágens-eszközhöz kötött); a telepítő fordítja a cél-platform natív formátumára (Claude/Cursor `.md`, Codex `.toml`, Copilot `.agent.md`, Antigravity `agent.json`).
 
@@ -1008,13 +1010,13 @@ Minden ciklus saját mappát kap: `specs/cycle-NN-<cycle-name>/`
 | `spec-questions.md` | 02 | A specifikációval kapcsolatos nyitott kérdések. A spec csak akkor `Tervezésre kész`, ha itt nincs `- [ ]`. |
 | `plan.md` | 03 | Technikai végrehajtási terv, érintett komponensek, tervezett módosítások, teszt/ellenőrzési stratégia. |
 | `plan-questions.md` | 03 | A tervezési szakasz nyitott kérdései. A plan csak akkor `Task írásra kész`, ha itt nincs `- [ ]`. |
-| `tasks.md` | 04 | Checkboxos task lista (`[RED]`/`[GREEN]`/`[CHECK]` jelölésekkel) + prerequisite dokumentumok. |
+| `tasks.md` | 04 | Checkboxos task lista (`[RED]`/`[GREEN]`/`[CHECK]`/`[OPS]` jelölésekkel — marker minden taskon kötelező) + prerequisite dokumentumok. Osztott környezetet érintő destruktív `[OPS]` műveletnél kötelező a jóváhagyó és a rollback task. |
 | `tasks-questions.md` | 04 | A tasks szakasz nyitott kérdései (főleg az 05 fix-mód használja). A `tasks.md` csak akkor `Implementálásra kész`, ha itt nincs `- [ ]`. |
 | `spec-input-from-prev.md` | írja: 01 · fogyasztja: **02** | Fázisok közötti átadás (IP1): a 01-ben elhangzott, de a roadmap-be nem illő viselkedési részletek. Csak ha van átadandó infó. |
 | `plan-input-from-prev.md` | írja: 01, 02 · fogyasztja: **03** | A spec-ből kivett vagy a kutatás során felszínre került technikai/implementációs részletek. |
 | `tasks-input-from-prev.md` | írja: 02, 03 · fogyasztja: **04** | Előkészítő lépések és sorrend-megkötések a task-bontáshoz. |
 | `validate-input-from-prev.md` | írja: 03, 04 · fogyasztja: **07** | Futtatási előfeltételek és üzemeltetési tudnivalók a validáláshoz (pl. „a stack indítása előtt VPN kell"). |
-| `analyze-report.md` | 05 | Kereszt-fázisos konzisztencia jelentés (PASS/FAIL), 5 kategória, lefedettségi mátrix, **Hurok-napló** (az önjavító hurok iterációnkénti audit-nyoma). |
+| `analyze-report.md` | 05 | Kereszt-fázisos konzisztencia jelentés (PASS/FAIL), 6 kategória, lefedettségi mátrix + **végrehajthatósági leltár**, **Hurok-napló** (az önjavító hurok iterációnkénti audit-nyoma). |
 | `imp-decision.md` | 06 | Implementációs döntési napló: nem egyértelmű megoldások és a 3-próba szabály utáni leállások. |
 | `test-report/bs-validate-decision.md` | 07 | Validációs futástörténet, regressziós/Sonar hibák, consecutive failures számlálók — egyben az **07 önjavító hurok naplója** (LC2), a megszakított futás horgonya. |
 | `test-report/sonar-report.md` | 07 | SonarQube Quality Gate részletes eredmény (MD + HTML). |
@@ -1036,6 +1038,8 @@ Minden ciklus saját mappát kap: `specs/cycle-NN-<cycle-name>/`
 Mind a ciklus mappájában (`specs/cycle-NN-<name>/`). **Egy fázis több fájlba is írhat** ugyanabban a futásban, ha az infót szét kell szórni (pl. a 02-ben felmerülő technikai részlet a `plan-input`-ba, a belőle következő tesztelési előfeltétel a `validate-input`-ba). A **06-implement** szándékosan nem kap sajátot: az eleve beolvassa a `plan.md`-t és a `tasks.md`-t, tehát az implementációs részlet oda tartozik.
 
 **A legnagyobb „táplálója" a 02 koordináta-kiszűrése (KX).** A spec-be leggyakrabban **környezeti koordináták és eljárás-leírások** szivárognak be (dev hostok, `localhost` portok, image-nevek, deploy-parancsok, teljes deployment-runbookok a `Teszt specifikáció` szekcióban), mert hasznos infónak tűnnek. A `02-write-spec` ezért egy **kötelező kiszűrő rutint** futtat — új spec írásakor **és** meglévő spec újrafutásakor is —, ami ezeket felismeri és **áthelyezi** (nem törli) a `plan-input-from-prev.md`-be, a spec-ben pedig szimbolikus hivatkozást hagy (`{PUBLIC_BASE_URL}`). Az elhatárolás egyetlen szabályban: **az endpoint-útvonal szerződés (spec), a host / base URL / port / namespace / image / parancs koordináta (plan)**. A `03-write-plan` ennek a tükrét futtatja: ha a spec túl technikai maradt, az adatot **átemeli a planbe** és jelzi a felhasználónak (a `spec.md`-t nem írja át) — mert a `plan.md`-nek **önhordónak** kell lennie: a `test-runner` kizárólag azt olvassa, tehát ami nem ott van, az soha nem fut le.
+
+**A fogyasztó oldalon a hivatkozás nem elég (dereferencing).** Az átadott tétel gyakran magas absztrakciós szinten fogalmaz (*„képfájl build és push a registrybe a `build.sh` futtatásával"*). A `03-write-plan` **nem reprodukálhatja a bemenet absztrakciós szintjét**: ha egy tétel scriptre, eljárásra, meglévő tesztre vagy külső API-ra **hivatkozik**, a hivatkozást **fel kell oldania a forrásból** — a script tényleges parancsai, a registry-host, a teljes JSON payload minden kötelező mezővel —, és a konkrétumot a `plan.md`-be írnia, forrás-megjelöléssel. Nagy vagy szétszórt forrásnál a `researcher` subagentet hívja, **literál értékeket kérve**; a researcher erre kapott egy szűk kivételt a „soha nem nyers fájltartalom" szabálya alól (rövid, szó szerinti részletek: parancs, URL, payload, szignatúra — de nem teljes fájl, és titok helyett pointer). Ez azért kritikus, mert a `04`, a `06` és a `test-runner` **már nem látja a spec-et és a forrást**: ami nem került a `plan.md`-be, az számukra nem létezik.
 
 **Tétel-formátum** — checkbox-lista, a kérdés-fájlok mintájára, forrás-megjelöléssel:
 

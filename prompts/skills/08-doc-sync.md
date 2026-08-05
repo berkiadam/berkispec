@@ -244,9 +244,12 @@ A `docs-generated/architecture.md` a rendszer élő, kumulatív „hogyan épül
 Ha ellentmondást találsz, azonnal javítsd.
 
 ### Komponens README-k
+
+> **Tulajdon-határvonal (DS4) — a komponens létezése dönt, nem a fájltípus.** A **meglévő** komponensek README-je a **doc-sync tulajdona**: a 03 nem tervezi be, a 04 nem generál rá taskot, az implementáció nem írja — **te frissíted**. Egy **új** komponens első `README.md`-je viszont a komponens felépítésének része, ezért azt a **03/04/06 hozza létre** (a plan `Tervezett módosítások`-ban szerepel); neked ott már csak ellenőrizned kell.
+
 Az ebben a ciklusban **érintett** komponensek `README.md`-jét ellenőrizd:
-- Új komponens: létezik-e a `README.md`? Ha nem, hozd létre.
-- Meglévő komponens: ha a ciklus a viselkedésén/portján/indításán/kapcsolatain változtatott — frissítsd.
+- **Új komponens** (ebben a ciklusban jött létre): a `README.md`-t az implementáció már létrehozta — ellenőrizd, hogy létezik és konzisztens-e. Ha kivételesen hiányzik, pótold.
+- **Meglévő komponens:** ha a ciklus a viselkedésén/portján/indításán/kapcsolatain változtatott — **te frissítsd** (ez nem az implementáció elmaradása, hanem a te feladatod).
 - A README konzisztens-e az `architecture.md` megfelelő fejezetével?
 
 ---

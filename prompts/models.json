@@ -115,15 +115,15 @@
   },
   "cursor": {
     "deep_reasoning_agent": {
-      "model": "Opus 4.8",
+      "model": "claude-opus-5",
       "effort": "high"
     },
     "default": {
-      "model": "Sonnet 5",
+      "model": "claude-sonnet-5",
       "effort": "high"
     },
     "research_agent": {
-      "model": "Haiku 4.5",
+      "model": "claude-sonnet-5",
       "effort": "low"
     },
     "reviewer": {
