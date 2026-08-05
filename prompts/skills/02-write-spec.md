@@ -60,7 +60,7 @@ Ez a folyamat **2. fázisa (0–9)**: 0-init · 1-ciklusok · **2-spec ←** · 
 
 ## Feladatod
 
-**Ha már létezik `spec.md` a `specs/cycle-NN-<cycle-name>/` mappában:** olvasd be a `spec.md`-t és a `spec-questions.md`-t (ha létezik). Futtasd le a minőségellenőrzést. Ha hiányosságot vagy problémát találsz, vedd fel kérdésként a `spec-questions.md`-be, és állítsd vissza a `spec.md` státuszát a valódi állapotnak megfelelően (`Nyitott kérdések vannak` vagy `Piszkozat`). Utána az iterációs szabályok szerint folytatd.
+**Ha már létezik `spec.md` a `specs/cycle-NN-<cycle-name>/` mappában:** olvasd be a `spec.md`-t és a `spec-questions.md`-t (ha létezik). **Futtasd le a koordináta-kiszűrést (KX)** a meglévő szövegen — egy korábbi futás (vagy egy másik ágens) hagyhatott bent környezeti koordinátát vagy deploy-eljárást; ezeket most helyezd át a `plan-input-from-prev.md`-be. Utána futtasd le a minőségellenőrzést. Ha hiányosságot vagy problémát találsz, vedd fel kérdésként a `spec-questions.md`-be, és állítsd vissza a `spec.md` státuszát a valódi állapotnak megfelelően (`Nyitott kérdések vannak` vagy `Piszkozat`). Utána az iterációs szabályok szerint folytatd.
 
 **Ha még nem létezik `spec.md`:** hozd létre a `specs/cycle-NN-<cycle-name>/` mappában az alábbi struktúra szerint.
 
@@ -76,10 +76,42 @@ A spec a **viselkedést** írja le (mit lát a kliens/felhasználó, milyen beme
 | „A token lejárta után a kérés újraautentikálást igényel." | „Redis-ben `token:<id>` kulcs TTL-lel, refresh lock `SETNX`-szel." |
 | „A válasz tartalmazza a `correlationId`-t." | „A `correlationId`-t a `requestContext` middleware injektálja." |
 | „Két párhuzamos kérés nem indíthat két refresh-t." | „Elosztott lock Redis `SET NX PX`-szel, 5s TTL." |
+| „A folyamatindítás a `POST /rtm/api/runtime/app/{appId}/build/{buildId}/…/start` végponton érhető el." | „A mock a `localhost:5175`-en, a dev backend a `https://login.dev.example.local` hoston fut." |
+| „A PM és a public végpont **külön konfigurálható** (két külön base URL paraméter)." | „`PUBLIC_BASE_URL=http://localhost:5175`" — a konkrét érték, port, host. |
+| „A frissített SPI-val a status endpoint `200`-at és `{\"status\":\"spi-ok\"}`-ot ad." | „`mvn clean package`, image push a registrybe, deployment-csere a `dsp01` namespace-ben." |
+| „A hívás a felhasználó access tokenjével megy; S2S tokennel `403`." | „A teszt-user jelszava a `.env.dev`-ből olvasva; `oc login` szükséges." |
+
+> **🔴 A legfontosabb elhatárolás: útvonal vs. koordináta.** Az **endpoint-útvonal szerződés** → spec (pl. `POST /rtm/.../start`, fejlécnevek, hibakódok, payload-mezők). A **host / base URL / port / namespace / image / parancs koordináta vagy eljárás** → plan (pl. `https://…`, `localhost:5175`, `dsp01`, `mvn clean package`). A koordináta a viselkedés változása nélkül is változik környezetenként — ezért nem a spec dolga. A spec-ben **szimbolikusan** hivatkozz rá (`{PUBLIC_BASE_URL}`), a konkrét értéket a plan tartalmazza.
 
 Ha egy mondat technológiát, fájlnevet, függvényt vagy konkrét adatszerkezet-megvalósítást nevez meg → az plan-be való, **vedd ki a spec-ből**.
 
 > **🔴 De ne dobd el (IP1).** Ha a kivett információ **értékes** — a felhasználó mondta, vagy a kódbázisból derült ki, és a következő fázisnak szükség lesz rá —, akkor a törlés helyett **írd át a `plan-input-from-prev.md`-be** (task-szintű részletet a `tasks-input-from-prev.md`-be). Csak azt töröld véglegesen, ami tényleg fölösleges vagy duplikátum. Lásd a „Fázisok közötti átadás" szekciót.
+
+### Koordináta-kiszűrés — felismerés és ÁTHELYEZÉS (KX) — kötelező
+
+A tapasztalat szerint a spec-be leggyakrabban **környezeti koordináták és eljárás-leírások** szivárognak be (dev hostok, localhost-portok, image-nevek, deploy-parancsok), mert „hasznos infónak" tűnnek. **Ezeket aktívan ki kell szűrni** — akkor is, ha **te** írtad az előző körben, és akkor is, ha egy korábbi futás hagyta bent (lásd a „Feladatod" szekció újrafutás-ágát).
+
+**Menj végig a spec teljes szövegén** (minden szekción, a `Teszt specifikáció`-t és a `Célkitűzés`-t is beleértve), és jelöld meg az alábbiakat:
+
+| Kiszűrendő (koordináta / eljárás → **plan**) | Marad (szerződés / viselkedés → **spec**) |
+|---|---|
+| abszolút URL hosttal (`https://valami.dev.…`, `http://localhost:5175`) | endpoint-**útvonal** (`/rtm/.../start`, `/init-hash`) |
+| `host:port`, portszám, `localhost:NNNN` | HTTP metódus, státuszkód, errorCode |
+| image-név és tag (`…/keycloak:v1`), registry, namespace, pod, deployment név | request/response **payload-mezők**, példa JSON |
+| CLI-parancs végrehajtandó lépésként (`oc`, `kubectl`, `mvn`, `npm`, `docker`/`podman`, `curl`) | fejléc-**nevek** és kötelezőségük |
+| forrás-/artefaktum-fájl útvonal (`…/pom.xml`, `…-SNAPSHOT.jar`, `build.sh`) | konfigurációs paraméter **neve** és szemantikája (`PUBLIC_BASE_URL` — mit szabályoz) |
+| `.env*` fájlnév és a belőle olvasott **értékek** | realm/kliens/scope **azonosító**, ha a viselkedés (jogosultság) függ tőle |
+| build/deploy/telepítési lépés-sorozat (runbook) | „mit kell igaznak lennie" jellegű elfogadási feltétel |
+
+**A művelet mindig ÁTHELYEZÉS, nem törlés:**
+
+1. Vedd fel a tételt a `plan-input-from-prev.md`-be új `- [ ] Inn` bejegyzésként, a **teljes, szó szerinti** infóval (URL, port, parancs, sorrend — ne rövidítsd le, mert a 03 ebből fog dolgozni) és a forrás megjelölésével: `_(forrás: 02-write-spec, kiszűrt koordináta)_`.
+2. A spec-ben a helyére vagy **szimbolikus hivatkozás** kerül (`{PUBLIC_BASE_URL}/rtm/.../start`), vagy — ha a mondat tisztán eljárás volt — **kimarad**.
+3. Ha egy **teljes alszekció** eljárás-leírás (pl. „Dev Keycloak deployment és SPI frissítés": image build → registry push → deployment csere), akkor az **egész blokkot** vidd át egy tételként. Ne próbáld a spec-ben „viselkedéssé" átfogalmazni — a spec-be legfeljebb az **eredmény** kerül elfogadási feltételként (pl. „a frissített SPI-val a status endpoint `spi-ok`-ot ad").
+4. **Jelezd a felhasználónak**, mit helyeztél át — soronként vagy tételenként, egy tömör listában. Ez a spec tartalmának látható csökkentése, ezért nem történhet csendben.
+5. Ha bizonytalan vagy, hogy egy tétel szerződés-e vagy koordináta, **ne dönts magadtól** — vedd fel kérdésként a `spec-questions.md`-be.
+
+> **Miért nem hagyhatjuk a spec-ben „biztos, ami biztos" alapon?** Mert a `plan.md`-nek **önhordónak** kell lennie: a `test-runner` subagent kizárólag a `plan.md`-t olvassa, a spec-et nem. Egy spec-ben hagyott URL vagy parancs **soha nem fog lefutni** — csak azt a hamis benyomást adja, hogy dokumentálva van. Az áthelyezés tehát nem formalitás, hanem az, ami az infót egyáltalán végrehajthatóvá teszi.
 
 ---
 
@@ -125,6 +157,17 @@ _Ha a ciklus REST API-t, üzenetsor-üzenetet, cache struktúrát vagy DB sémá
 ## Teszt specifikáció
 
 _Tesztadatok, tesztelendő esetek (happy path + hibaesetek), kötelező viselkedési ellenőrzések._
+
+_**Eset-orientált, nem eljárás-orientált.** Azt írod le, **minek kell igaznak lennie** („S2S tokennel hívva a start-process 403-at ad"), nem azt, **hogyan jutunk oda** („indítsuk a stacket, majd…"). A lépésenkénti folyamat-leírás a `plan.md` dolga._
+
+_**Ide NEM kerül** (mind a `plan.md`-be való, a KX szabály szerint kiszűrendő):_
+- _port, host, base URL, konkrét `localhost:NNNN` — csak szimbolikus hivatkozás (`{PUBLIC_BASE_URL}`);_
+- _build-, deploy- vagy telepítési parancs és lépés-sorozat (image build, registry push, deployment csere, `oc`/`mvn`/`npm`) — **ez nem teszt, hanem runbook**;_
+- _teszt-eszköz és keretrendszer neve, tesztfájl-útvonal (a `conventions.md` rögzíti, a `plan.md` hivatkozza);_
+- _mock-szint és konténerizációs döntés („valódi stack vs. részleges mock", melyik service fut konténerben) — ez a `03` fázis kötelező első kérdése (`K01`), nem a spec dolga;_
+- _teszt-környezeti credential és `.env` érték._
+
+_A **teszt-szintek** (unit / integrációs / E2E) megnevezése rendben van, ha a viselkedés szintjét jelöli — de a szintek **infrastruktúrája** a plan-é._
 
 _Ha létezik `specs/test-conventions.md`: a 2./3. szekció azon tételei, amelyeket ez a ciklus elfogadási feltételként vállal — **viselkedés-szinten**, a tétel ID-jára hivatkozva (pl. „I01 — a token-csere a `<scope>` scope-pal 200-at ad"). Parancs, tesztfájl-útvonal és eszköznév ide nem kerül (TC1). A ciklus által **érvénytelenített** baseline tételeket a szekció végén explicit írd ki._
 
@@ -279,9 +322,12 @@ A `Tervezésre kész`-re váltás után készíts git commitot (`cycle-NN: 02-sp
 - Van bármi ami a spec fájlban nem egyértelmű, hiányzik, vagy pontosításra szorul?
 - Van-e olyan tartalom, ami plan-be vagy tasks-ba való, nem spec-be? Ha igen, töröld.
 - Minden "Definition of done" pont ellenőrizhető és egyértelmű?
+- **DoD anti-minta: nincs „meta" pont?** — A *„X leírása elkészült"*, *„a teszt definiált"*, *„a menete dokumentált"* típusú pont **nem DoD**: egy doksi létét ellenőrzi, nem a rendszer működését. Minden DoD-pont **megfigyelhető viselkedésre** legyen igen/nem eldönthető. Rossz: *„a dev Keycloak SPI-frissítés menetének tesztje definiált."* Jó: *„a frissített SPI-val a status endpoint 200-at és `spi-ok` státuszt ad."*
 - Az "Out of scope" szekció megakadályozza-e a scope creep-et?
-- A "Hivatkozott fájlok" lista teljes, **és kizárólag dokumentációs anyagokat tartalmaz?** (OpenAPI leírók, README-k, sémák, meglévő spec fájlok, viselkedés-referencia szkriptek) — `.ts`, `.tsx`, `.js`, `.mjs`, `package.json` és egyéb forrásfájlok **nem szerepelhetnek**; ha szerepelnek, töröld őket. Forrásfájlok azonosítása a plan fázis feladata. **Szigorú szabály: a specifikáció szöveges részeiben sem szerepelhetnek (még a Kockázatok vagy az Out of scope szekciókban sem) konkrét forrásfájlnevek! A fájlok elérési útjai/linkjei mindig a fájl aktuális könyvtárához képest relatív útvonalak legyenek (a mappa mélységének megfelelő számú visszalépéssel a projekt gyökeréig, pl. `../../apps/legacy-login/README.md`), abszolút útvonalak vagy `file://` sémájú linkek nem szerepelhetnek bennük.**
-- **Minden hivatkozott érték, struktúra és adat specifikálva van?** — Ha a spec portot, URL-t, konfigurációs értéket, hibakódot vagy bármilyen adatstruktúrát (JSON, YAML, vagy egyéb formátum) említ vagy hivatkozik rá, teljesülnie kell:
+- A "Hivatkozott fájlok" lista teljes, **és kizárólag dokumentációs anyagokat tartalmaz?** (OpenAPI leírók, README-k, sémák, meglévő spec fájlok, viselkedés-referencia szkriptek) — `.ts`, `.tsx`, `.js`, `.mjs`, `package.json` és egyéb forrásfájlok **nem szerepelhetnek**; ha szerepelnek, töröld őket. Forrásfájlok azonosítása a plan fázis feladata. **Szigorú szabály: a specifikáció szöveges részeiben sem szerepelhetnek (még a Kockázatok, az Out of scope vagy a Teszt specifikáció szekciókban sem) konkrét forrásfájlnevek — és ugyanez érvényes a build-/deploy-parancsokra (`mvn`, `oc`, `kubectl`, `docker`/`podman`, `npm run`), az image-nevekre és tagekre, a registry/namespace/pod/deployment nevekre, valamint a konkrét `host:port` és abszolút URL értékekre (KX). Ezeket nem törölni kell, hanem a `plan-input-from-prev.md`-be áthelyezni. A fájlok elérési útjai/linkjei mindig a fájl aktuális könyvtárához képest relatív útvonalak legyenek (a mappa mélységének megfelelő számú visszalépéssel a projekt gyökeréig, pl. `../../apps/legacy-login/README.md`), abszolút útvonalak vagy `file://` sémájú linkek nem szerepelhetnek bennük.**
+- **Koordináta-kiszűrés (KX) lefutott?** — Végigmentél a spec teljes szövegén, és nincs benne környezeti koordináta (abszolút URL hosttal, `host:port`, image-név, namespace/pod/deployment, registry) vagy eljárás-leírás (build/deploy parancs, runbook, forrás-/artefaktum-fájl útvonal)? Ami volt, azt **áthelyezted** a `plan-input-from-prev.md`-be (nem törölted), teljes szöveggel, és **jelezted a felhasználónak**? A `Teszt specifikáció` szekciót külön is nézd át — ott szivárog be a leggyakrabban egy deployment-runbook „teszt" címszó alatt.
+
+- **Minden hivatkozott érték, struktúra és adat specifikálva van?** — **Hatókör:** ez a szabály a **szerződés-adatokra** vonatkozik (payload-mezők, fejlécnevek, hibakódok, endpoint-útvonalak, konfigurációs paraméterek neve és szemantikája) — **nem** a környezeti koordinátákra. Egy hostra/portra/namespace-re **nem** az a helyes válasz, hogy „írjuk be a konkrét értéket", hanem hogy **szimbolikusan hivatkozunk rá, az értéket pedig a plan tartalmazza** (KX). Ha a spec szerződés-adatot említ vagy hivatkozik rá, teljesülnie kell:
   - A konkrét értéke vagy egyértelmű generálási szabálya szerepel a spec-ben
   - Van legalább egy példa (example request/response, example payload, stb.)
   - Ahol értelmezhető: szerepel vagy hivatkozva van egy séma (OpenAPI, JSON Schema, Avro, stb.)

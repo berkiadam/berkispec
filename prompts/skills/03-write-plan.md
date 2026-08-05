@@ -41,8 +41,9 @@ Ez a folyamat **3. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · **3-plan
 | Teszt eszköz | A `conventions.md`-re hivatkozz, ne ismételd a konkrét tool-nevet. |
 | Teszt-receptek | A `specs/test-conventions.md`-ből **maradéktalanul, önhordóan** átemelve (TC1/a) — hivatkozás nem elég. |
 | Fázis-átadás | `plan-input-from-prev.md` beolvasva és lezárva; a nem ide tartozó infó a `tasks-`/`validate-input-from-prev.md`-be (IP1). |
+| Önhordóság | A `plan.md` **minden** végrehajtási adatot tartalmaz (URL, port, teszt-user, parancs) — a `test-runner` csak ezt olvassa. |
 | Validációs ciklusok | Minden nagy szekció után célzott ellenőrzés, mielőtt továbblépsz. |
-| Spec kritika | Aktív checklist minden komponensre; hiányosság → vissza a 02 fázisba. |
+| Spec kritika | Aktív checklist minden komponensre; **hiányosság** → vissza a 02 fázisba, **túlnyúlás** (koordináta a spec-ben) → átemelve a planbe (KX tükre). |
 | Lezárás | Minőségellenőrzés + Constitution Check (SK4) + user megerősítés → `Task írásra kész`, commit. |
 
 ---
@@ -417,6 +418,24 @@ A plan fázis az első lépés, ahol a spec követelményei valódi kóddal és 
 3. Van-e olyan viselkedés, amelyet a spec feltételez, de nem ír le?
 
 Ha hiányosságot vagy ellentmondást találsz, **ne döntsd el magad** — irányítsd vissza a spec fázisba (lásd lentebb).
+
+### A spec TÚL technikai — koordináta-visszajelzés (KX tükre)
+
+A kritika nem csak a **hiányra** vonatkozik, hanem a **túlnyúlásra** is. Menj végig a spec-en, és jelöld meg, ha olyan tartalom van benne, ami a **plan-be** való — jellemzően:
+
+- abszolút URL hosttal, `host:port`, konkrét `localhost:NNNN`;
+- image-név és tag, registry, namespace, pod, deployment név;
+- build-/deploy-parancs vagy telepítési lépés-sorozat (`oc`, `kubectl`, `mvn`, `docker`/`podman`, `npm run`) — különösen, ha a spec `Teszt specifikáció` szekciójában „teszt" címszó alatt szerepel, holott **runbook**;
+- forrás- vagy artefaktum-fájl útvonal, `.env` fájlnév és a belőle olvasott értékek;
+- teszt-eszköz vagy keretrendszer neve, tesztfájl-útvonal, mock-szint döntés.
+
+**Mit tegyél vele — ez a te előnyöd, nem probléma:**
+
+1. **Használd fel:** ezek pontosan azok az adatok, amelyekre a `plan.md`-nek szüksége van. Emeld be őket a megfelelő szekcióba (`E2E infrastruktúra`, `Tesztelési stratégia`, `Konfiguráció és build változások`) — **szó szerint, teljes értékkel**.
+2. **Jelezd a felhasználónak** egy tömör listában, mi az, ami a spec-ben maradt, de a plan-be tartozik. **A `spec.md`-t magad ne írd át** — az a 02 fázis gazdálkodása alatt áll. Ha a felhasználó a spec tisztítását is kéri, az a 02-be való visszatérés (a 02 `KX` szabálya elvégzi).
+3. **Ne kérdezz rá** csak azért, mert a spec-ben rossz helyen volt: ha az adat egyértelmű, vedd át. **Akkor kérdezz** (`plan-questions.md`), ha az adat **elavultnak vagy bizonytalannak** tűnik (pl. két helyen más host szerepel), vagy ha `osztott-remote` hatókörű műveletet ír le (klaszter-restart, image-push) — ott jóváhagyás kell.
+
+> **🔴 Miért kritikus ez: a `plan.md`-nek ÖNHORDÓNAK kell lennie.** A `test-runner` subagent **kizárólag** a `plan.md` `Tesztelési stratégia` és `Regressziós érintettség` szekcióit olvassa — **a `spec.md`-t nem**, a `test-conventions.md`-t sem. Ezért egy spec-ben (vagy bárhol máshol) hagyott URL, port, teszt-user vagy parancs **soha nem fog lefutni**; csak azt a hamis benyomást adja, hogy dokumentálva van. **Minden végrehajtáshoz szükséges adatnak fizikailag a `plan.md`-ben kell lennie**, teljes értékkel, placeholder és „lásd a specet" jellegű hivatkozás nélkül. Ha egy adat máshol van, a te dolgod áthozni.
 
 > **„Ne találd ki magad" — hol a határ?** Akkor választhatsz alapértelmezést kérdés nélkül, ha a döntés **tisztán technikai** és a spec viselkedését nem érinti (pl. egy belső segédfüggvény neve, egy adatstruktúra belső reprezentációja). **Kötelező kérdezni** (`plan-questions.md`), ha a döntés **megfigyelhető viselkedést** befolyásol (pl. milyen HTTP kódot ad egy hibaág, mi a retry policy, melyik mező kerül a response-ba) — ezt a spec-nek kell rögzítenie, nem neked.
 
