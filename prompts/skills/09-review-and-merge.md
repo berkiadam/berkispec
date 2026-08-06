@@ -104,20 +104,22 @@ Ezt a szabályt a `review-fixer` is megkapja (a 06 Fix-mód garde-ja). **Ha egy 
 
 ### A hurok egy iterációja
 
-1. **FAIL naplózása + per-item számláló — a `failure-counter.py` szkripttel (determinisztikusan, ne kézzel).** Ugyanaz a szkript, mint a 07-ben, de a `# Review History`-t frissíti — add át a `--header "Review History"`-t és a megrekedt item(ek) pontos nevét:
+1. **FAIL naplózása + per-item számláló — a `failure-counter.py` szkripttel (determinisztikusan, ne kézzel).** Ugyanaz a szkript, mint a 07-ben, de a `# Review History`-t frissíti — add át a `--header "Review History"`-t és a megrekedt item(ek) pontos nevét. **Iterációnként pontosan EGY bejegyzés** (részeredményt ne naplózz külön: a közbeiktatott PASS megszakítaná az egymást követő bukások láncát):
    ```bash
    python3 <platform-scripts-mappa>/failure-counter.py \
      specs/cycle-NN-<cycle-name>/code-review.md \
-     --result FAIL --header "Review History" --timestamp "$(date '+%Y-%m-%d %H:%M')" \
+     --result FAIL --header "Review History" --timestamp "2026-08-06 14:32" \
      --failed-item "<pontos Must Fix / teszt azonosító>" [--failed-item "<másik>" ...]
    ```
-2. **3-próba döntés a szkript kilépő kódjából.** `exit 3` → legalább egy item elérte a 3-at → a hurok megáll (lásd „3-próba + globális backstop"); a megállás típusát az RD6 dönti el. `exit 0` → folytatható.
-3. **Globális backstop ellenőrzés.** Ha az összes iteráció száma elérte a **`max 5`**-öt → STOP + humán (a `# Review History`-ra hivatkozva), akkor is, ha egyetlen item sem ért el 3 próbát.
+   Az időbélyeget konkrét stringként add meg (`YYYY-MM-DD HH:MM`); shell-behelyettesítésnél bash → `$(date '+%Y-%m-%d %H:%M')`, PowerShell → `(Get-Date -Format 'yyyy-MM-dd HH:mm')`. A napló jelenlegi állapota bármikor lekérdezhető naplózás nélkül: `... code-review.md --header "Review History" --status`.
+2. **Leállás-döntés a szkript kilépő kódjából.** `exit 3` → valamelyik korlát betelt → a hurok megáll (lásd „3-próba + globális backstop"); a megállás típusát az RD6 dönti el. `exit 1` → hibás hívás, a napló NEM módosult: javítsd a hívást és futtasd újra — **kézzel naplózni tilos**. `exit 0` → folytatható.
+3. **Globális backstop — a szkript adja (nem kézi számolás).** A `--max-fail-runs` (alap: **5**) miatt az `exit 3` akkor is bekövetkezik, ha egyetlen item sem ért el 3 próbát, de a hurok **5 egymást követő FAIL-iteráción** át nem konvergál (körönként más finding bukik). Ugyanígy megáll a `--max-item-total` (alap: 5) korlátnál az az item, amelyik „hol bukik, hol nem". Ilyenkor: STOP + humán, a `# Review History`-ra hivatkozva.
 4. **Korai eszkaláció-ellenőrzés (RD6).** Ha az előző iteráció `review-fixer`-e **eszkalációs jelzést** adott (a findinget csak a szerződés módosításával vagy elnémítással lehetne kezelni) → ne körözz tovább, azonnal a felfelé/humán menekülő ág.
 5. **Javító-taskok felvétele.** A `tasks.md` végén `## Review javítások` szekció, a `code-review.md` prerequisite-tel; a konkrét `Must Fix`-ek `[GREEN]` taskként, a csoport végén `[CHECK]` ellenőrző taskkal. *(Review-javításnál `[RED]` pár nem kell — direkt javítás.)* Duplikátum-kerülés: ne vedd fel kétszer ugyanazt.
 6. **Marker felvétele (RD7).** A `tasks.md` státuszát fordítsd `Implementálásra kész [review-loop]`-ra. A marker jelzi: fix-mód aktív → a fixer automatikusan lépteti a státuszt, megerősítés nélkül.
 7. **`review-fixer` subagent indítása.** A konkrét `Must Fix`-listával + a `code-review.md` prerequisite-tel (lásd „A fixer-subagent indítása"). Ha a fixer eszkalációs jelzést ad → ugorj a 4. pontra.
-8. **Re-validate (a 07 teljes ellenőrzései).** Futtasd a `07-validate` „Validálási lépéseit" (gyors tesztek → Sonar → nehéz tesztek → DoD). **Nem** indítod a 07 saját hurkát.
+7.a **Szerződés-integritás kapu (a 07 VD3a-jával azonos, kötelező).** A fixer visszatérése után — **még a re-validate előtt** — nézd meg `git diff`-fel, hozzányúlt-e a tesztfájlokhoz, a `spec.md`-hez, a Sonar-/lint-konfighoz, vagy a `code-review.md` findingjeihez. Ha igen: legitim kiegészítés (új teszt a findinghez) → rendben, jegyezd fel; szerződés-gyengítés vagy finding-elnémítás (assertion lazítása, `skip`, suppress-komment, finding törlése/átfogalmazása javítás nélkül) → **`git checkout -- <fájl>` visszaállítás + RD6 eszkalációs ág**, ne indíts újabb fixert ugyanarra.
+8. **Re-validate (a 07 teljes ellenőrzései).** Futtasd a `07-validate` „Validálási lépéseit" (gyors tesztek → Sonar → nehéz tesztek → **teszt-riport kapu (TR3, `report-gate-check.py`)** → DoD). **Nem** indítod a 07 saját hurkát. **A re-validate körét a `test-report/validate-decision.md`-be dokumentáld** a 07 VD9 sablonja szerint (`## Kör N`, `**Indító:** 09-review re-validate`) — így a ciklus teljes validálási története egy fájlban marad; a `code-review.md` a review-hurok naplója, nem a validálásé.
    - **FAIL** (regresszió) → ez is a hurok FAIL-je: új iteráció az 1. ponttól (a regresszált teszt lesz a megrekedt item).
 9. **Re-review (reviewer subagent).** Ha a re-validate zöld, futtasd újra a `reviewer` subagentet a friss diffre, és olvasd be az új `code-review.md`-t.
    - **Tiszta** (nincs lezáratlan `Must Fix`) → a hurok konvergált: vedd le a `[review-loop]` markert (a `tasks.md` `Kész`), naplózd a `PASS`-t (`failure-counter.py ... --result PASS --header "Review History"`), egyetlen lezáró commit (RD9), majd lépj a merge előtti doc-sync ellenőrzésre (§2) és a merge-megerősítésre (§3).
@@ -139,8 +141,11 @@ Nem minden `Must Fix` kód-bug. A hurok **alapból minden findinget kód-fixkén
 
 ### 3-próba + globális backstop (RD5)
 
-- **Elsődleges kilépés — per-item 3-próba:** ha a `# Review History` alapján bármely `Must Fix` itemnél vagy regresszált tesztnél a `Consecutive Failures for this item` eléri a **3**-at (a mostani iterációt is beleszámítva) → STOP a megrekedt elemnél (okosabb, mint egy globális számláló, mert pont a beragadt itemet fogja meg).
-- **Másodlagos — globális backstop `max 5`:** a kétfázisú hurok runaway-kockázata ellen az összes iteráció felső határa `max 5`; elérve ugyanúgy STOP + humán, a `# Review History`-ra hivatkozva.
+Mindhárom korlátot a `failure-counter.py` érvényesíti, `exit 3`-mal — **ne számold kézzel**, és ne bíráld felül:
+
+- **Elsődleges — per-item 3-próba:** ha bármely `Must Fix` itemnél vagy regresszált tesztnél az egymást követő bukások száma eléri a **3**-at (a mostani iterációt is beleszámítva) → STOP a megrekedt elemnél (okosabb, mint egy globális számláló, mert pont a beragadt itemet fogja meg).
+- **Per-item összes bukás (`--max-item-total`, alap 5):** az az item, amelyik felváltva bukik és zöldül, sosem érné el a 3 egymást követőt — ez a korlát megfogja.
+- **Globális backstop (`--max-fail-runs`, alap 5):** a kétfázisú hurok runaway-kockázata ellen: **5 egymást követő FAIL-iteráció** után STOP + humán, akkor is, ha körönként más elem bukik.
 
 ### Commit-stratégia a hurokban (RD9)
 

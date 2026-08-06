@@ -13,6 +13,8 @@ subagents:
   - "agents/spec-fixer.md"
   - "agents/plan-fixer.md"
   - "agents/tasks-fixer.md"
+shared:
+  - "shared/phase-commit.md"
 ---
 # 05 — Analyze (kereszt-fázisos konzisztencia ellenőrzés + önjavító hurok)
 ## Kontextus ellenőrzés
@@ -41,6 +43,7 @@ Ez a folyamat **5. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 | FAIL | **Önjavító hurok indul:** legkorábbi érintett célfázis → fixer-subagent → downstream re-deriválás (`02→03→04`) → újra-analyze, amíg PASS — `max X = 3` iterációval. |
 | Kérdés-megállás | Ha a fixer nyitott kérdést jelentett: az orchestrátor (te) kérdezed a felhasználót `FÁZIS/Knn` fejléccel, beírod a választ, újraindítod a fixert — a hurok **folytatódik** (nem hiba). |
 | PASS | Tovább a 06-implement fázisra. Commit: a hurok végén egyetlen `cycle-NN: 05-analyze`. |
+| Fázis-záró commit | **Kötelező, minden lezáró ágon** (PASS és FAIL egyaránt) — a *Fázis-záró commit* szekció eljárása szerint (PC1). Commit nélkül a fázis nincs lezárva. |
 
 ---
 
@@ -198,7 +201,7 @@ FAIL esetén **nem** adod vissza egyszerűen a vezérlést a felhasználónak. H
 ### Commit-stratégia a hurokban (D9)
 
 - **`analyze-loop`-ban nincs iterációnkénti commit** — zaj-mentes marad a történet.
-- **Egyetlen commit a hurok lezárásakor** (PASS vagy `max X` feladás): `cycle-NN: 05-analyze`.
+- **Egyetlen commit a hurok lezárásakor** (PASS vagy `max X` feladás): `cycle-NN: 05-analyze`. Ez a commit **kötelező, mindkét ágon** — az eljárást (stage → commit → determinisztikus ellenőrzés → visszajelzés) lásd a *Fázis-záró commit* szekcióban (PC1).
 - **Megszakítás-biztos:** a köztes commit hiányát a `[analyze-loop]` státusz-marker + a `*-questions.md` + a Hurok-napló pótolja — ezekből a folytatás rekonstruálható (lásd „Folytatás megszakított futás után").
 
 ---
@@ -309,7 +312,7 @@ Nincs `Must Fix` megállapítás.
 Teendők **sorban**:
 1. Írd a `analyze-report.md` státuszát `PASS`-re, töltsd ki a `Hurok:` mezőt és a Hurok-naplót (ha volt iteráció).
 2. **Vedd le a `[analyze-loop]` markert** minden érintett dokumentumról — a fixerek a fázis valódi záró-státuszát adták (`Tervezésre kész` / `Task írásra kész` / `Implementálásra kész`); ellenőrizd, hogy ez áll-e mindegyiken.
-3. **Egyetlen lezáró commit** (a hurok alatt nem volt köztes commit):
+3. **Egyetlen lezáró commit** (a hurok alatt nem volt köztes commit) — a *Fázis-záró commit* szekció eljárása szerint, **kötelező**:
    ```bash
    git add specs/cycle-NN-<cycle-name>/
    git commit -m "cycle-NN: 05-analyze"
@@ -328,13 +331,19 @@ A hurok `max X = 3` iteráció után sem konvergált.
 Teendők **sorban**:
 1. Írd a `analyze-report.md` státuszát `FAIL`-re, a `Hurok:` mezőbe `<max X>/<max X> (feladva)`, és a Hurok-naplóba a megrekedt állapotot (mely `Must Fix` maradt, melyik fázisnál).
 2. **Hagyd rajta a `[analyze-loop]` markert** az érintett dokumentumokon — így a felhasználó (vagy egy következő session) látja, hogy a hurok nyitotta vissza őket, és hol akadt el.
-3. **Egyetlen lezáró commit:**
+3. **Egyetlen lezáró commit** — a *Fázis-záró commit* szekció eljárása szerint, **kötelező** (a FAIL ág sem kivétel):
    ```bash
    git add specs/cycle-NN-<cycle-name>/
    git commit -m "cycle-NN: 05-analyze"
    ```
 4. Összefoglalás + kérdés a felhasználónak: foglald össze, melyik `Must Fix` nem oldódott meg és miért (pl. ismétlődő ambiguitás, amit a fixer nem tud eldönteni), és kérdezd meg, hogyan folytassák (kézi javítás az adott fázisban / döntés egy nyitott kérdésre / a `conventions.md` felülvizsgálata súlyos konvenció-ütközésnél).
    > **A válasz végén helyezd el az `analyze-report.md` közvetlen, kattintható linkjét.**
+
+<!-- INCLUDE:shared/phase-commit.md -->
+
+A fenti blokkban a `<FÁZIS-TAG>` értéke ebben a fázisban: **`05-analyze`**. A commit a **hurok lezárásakor, egyszer** történik — de **minden lezáró ágon** (PASS és `max X` FAIL egyaránt). A hurok alatt nincs köztes commit; a köztes állapotot a `[analyze-loop]` marker, a `*-questions.md` fájlok és a Hurok-napló őrzi.
+
+> **Megállási szabály (PC1):** ha az `analyze-report.md` státusza `PASS` vagy `FAIL`, de a fázis-záró commit hiányzik (VCS-es projekt, `git log -1 --oneline` nem a `cycle-NN: 05-analyze` commitot mutatja), **STOP** — először commitolj, csak utána zárd le a fázist és add meg a következő lépést.
 
 ---
 

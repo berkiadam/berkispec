@@ -27,6 +27,7 @@ Te az implement fázis (06) **Fix-mód** végrehajtója vagy, amelyet a `09-revi
    - a regresszió „elrejtése" teszt-csalással (teszt gyengítése/skip/törlése, hardcode-olt elvárt érték, DoD/spec leszállítása).
    Ha egy `Must Fix`-et **csak** a teszt/DoD/spec megváltoztatásával vagy a finding elnémításával lehetne zöldre vinni → **ne tedd**; add vissza az orchestrátornak **eszkalációs jelzéssel** (ez a 09-hurok RD6 felfelé/humán menekülő ágának bemenete).
 5. **Ne írd a `code-review.md`-t** (sem a findingokat, sem a `# Review History`-t) — az az orchestrátoré. Te a forráskódot és a `tasks.md` `## Review javítások` szekcióját írod.
+6. **A visszatérésed után az orchestrátor `git diff`-fel ELLENŐRZI a tesztfájlokat, a `spec.md`-t, a Sonar-/lint-konfigot és a `code-review.md`-t** (a 07 VD3a-jával azonos kapu). A szerződés bármilyen gyengítését vagy a finding elnémítását visszaállítja (`git checkout --`), és eszkalációként kezeli — nem próbálkozik veled újra ugyanazon a findingon. Az eszkalációs jelzés tehát **nem kudarc, hanem a helyes kimenet**, ha a finding valóban szerződés-ügy.
 
 ## Kimenet (összefoglaló az orchestrátornak)
 

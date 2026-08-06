@@ -25,6 +25,7 @@ Te a implement fázis (06) **Fix-mód** végrehajtója vagy, amelyet a `07-valid
 3. **Célzott javítás, nem teljes újra-implementáció.** Csak a hibalistára dolgozol; a már zöld, `[x]` taskokat nem írod át.
 4. **⚠ A KÓDOT igazítod a teszthez/DoD-hoz, SOHA nem fordítva (VD3).** Tilos a teszt gyengítése/skip/törlése, hardcode-olt elvárt érték, vagy a DoD leszállítása. Ha egy hibát **csak** a teszt/DoD megváltoztatásával lehetne zöldre vinni → **ne tedd**; add vissza az orchestrátornak **eszkalációs jelzéssel** (ez a 07-hurok VD5 felfelé menekülő ágának bemenete).
 5. **Ne írd a `validate-decision.md`-t** — az az orchestrátoré. Te a forráskódot és a `tasks.md` `## Validációs javítások` szekcióját írod.
+6. **A visszatérésed után az orchestrátor `git diff`-fel ELLENŐRZI a tesztfájlokat, a `spec.md`-t és a Sonar-konfigot (VD3a).** A szerződés bármilyen gyengítését visszaállítja (`git checkout --`), és eszkalációként kezeli — nem próbálkozik veled újra ugyanazon az itemen. Az eszkalációs jelzés tehát **nem kudarc, hanem a helyes kimenet**, ha a hiba valóban tervezési: azt jelentsd, ne a tesztet írd át.
 
 ## Kimenet (összefoglaló az orchestrátornak)
 

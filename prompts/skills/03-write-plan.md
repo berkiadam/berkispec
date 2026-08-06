@@ -15,6 +15,7 @@ subagents:
 shared:
   - "shared/input-from-prev.md"
   - "shared/artifact-voice.md"
+  - "shared/phase-commit.md"
 ---
 # 03 — Plan írás
 ## Kontextus ellenőrzés
@@ -42,6 +43,7 @@ Ez a folyamat **3. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · **3-plan
 | Teszt eszköz | A `conventions.md`-re hivatkozz, ne ismételd a konkrét tool-nevet. |
 | Teszt-receptek | A `specs/test-conventions.md`-ből **maradéktalanul, önhordóan** átemelve (TC1/a) — hivatkozás nem elég. |
 | Fázis-átadás | `plan-input-from-prev.md` beolvasva és lezárva; a nem ide tartozó infó a `tasks-`/`validate-input-from-prev.md`-be (IP1). |
+| Design input | `cycle-design-input.md` (a felhasználó saját ciklus-leírása) **automatikusan beolvasva** — a technikai/eljárás-jellegű tartalma a planbe kerül; a fájlt nem írod át (CD1). |
 | **Önhordóság** | A `plan.md` **mindent** tartalmaz, ami a fejlesztéshez/teszteléshez kell — a 04 és a `test-runner` **csak ezt** olvassa, a spec-et nem. |
 | Hivatkozás-feloldás | Scriptre/tesztre/API-ra hivatkozó bemenetet **fel kell oldani**: a konkrét parancs, URL, payload a plan-be kerül, nem az utalás. |
 | Teszt-lépések | Minden integrációs/E2E teszt **lépésről lépésre** kifejtve (ige, végpont, fejléc, body, elvárt válasz) — „a cycle-XX mintájára" tilos. |
@@ -110,6 +112,8 @@ Ebből következik a szabály, amit **nem lehet felülbírálni**: **minden info
 2. **Munkafa-ellenőrzés (csak VCS esetén):** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e vagy folytassam. (No-VCS projektben kimarad.)
 3. Olvasd be a \`spec.md\` státuszát. **Ha a státusz nem \`Tervezésre kész\`, ne kezdj el plan-t írni.** Jelezd a felhasználónak, hogy a spec még nem zárult le, és térjenek vissza a `02` spec fázishoz.
 
+4. **Ciklus design input beolvasása (CD1) — automatikus:** ha létezik a `specs/cycle-NN-<cycle-name>/cycle-design-input.md`, olvasd be **minden futásban, külön felszólítás nélkül**. Ezt a felhasználó írta szabad formában a ciklusról; a 02 a viselkedési részét már a spec-be emelte, de a **technikai, eljárás- és koordináta-jellegű tartalma** (parancsok, hostok/portok, meglévő komponensek, build/deploy lépések, teljesítmény- és integrációs korlátok) **közvetlenül a plan bemenete**. A feldolgozás szabályait lásd a *„Ciklus design input feldolgozása (CD1)"* szekcióban. **Guard:** ha a fájl nem létezik vagy csak a sablon-szöveget tartalmazza, egy mondatban jelezd és folytasd — nem hiba, nem megállási ok.
+
 _Megjegyzés: ha a spec `Tervezésre kész`, a `specs/roadmap.md` implicit lezárt — a `02` spec fázis már ellenőrizte. Külön roadmap ellenőrzés nem szükséges._
 
 ---
@@ -159,7 +163,7 @@ Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Kn
 1. **Induláskor:** mielőtt bármilyen plan szekciót megírsz, olvasd be a spec-et és az érintett forrásfájlokat, és azonosítsd az összes felmerülő kérdést — beleértve a spec-ben jelzett _„Technológiai alapdöntések tisztázandók a plan fázisban"_ pontokat is. Vedd fel mindegyiket a `plan-questions.md`-be `- [ ] Knn` formátumban, szekvenciális számozással (K01, K02, ...). Ha már vannak korábbi kérdések a fájlban, folytasd a számozást onnan — a régi bejegyzéseket ne módosítsd, ne töröld. Ha kérdések kerülnek a `plan-questions.md`-be, állítsd a `plan.md` státuszát `Nyitott kérdések vannak`-ra.
 
     > **🔴 KÖTELEZŐ ELSŐ KÉRDÉS — E2E teszt stratégia.** A `plan-questions.md` **első** bejegyzése (`K01`) mindig az E2E lefedettség megközelítése. Ezt ne hagyd ki és ne told hátrébb. Az agent köteles előzetesen átvizsgálni a meglévő tesztelési infrastruktúrát (a `conventions.md` / meglévő integrációs tesztek alapján).
-    - **Ha létezik `specs/test-conventions.md`:** a K01 kérdést **abból** kiindulva tedd fel — ne a nulláról kérdezz. Sorold fel konkrétan, mely 2./3. szekciós tételeket és 1. szekciós recepteket tervezed beemelni ebbe a ciklusba, és kérdezz rá: érvényesek-e még az adatok (URL, pod, teszt-user, paraméter), kell-e valamit elhagyni vagy hozzáadni. `osztott-remote` hatókörű recept beemeléséhez **explicit jóváhagyás kell**.
+    - **Ha létezik `specs/test-conventions.md`:** a K01 kérdést **abból** kiindulva tedd fel — ne a nulláról kérdezz. Sorold fel konkrétan, mely 2./3. szekciós tételeket és 1. szekciós recepteket tervezed beemelni ebbe a ciklusba, és kérdezz rá: érvényesek-e még a 0. blokk adatai (URL, pod, teszt-user, paraméter), kell-e valamit elhagyni vagy hozzáadni. `osztott-remote` hatókörű recept beemeléséhez **explicit jóváhagyás kell**.
     - Ha a meglévő tesztelési infrastruktúra hibrid vagy natív gazdagépes folyamatokra épül (nem teljesen konténerizált), a kérdésben kötelezően fel kell tárnia ezt az eltérést a "Szigorú konténerizációs szabállyal" szemben, és javaslatot kell tennie:
       1. a meglévő hibrid/natív infrastruktúrát használjuk tovább ebben a ciklusban (hogy minimalizáljuk a meglévő tesztek átírásának kockázatát), vagy
       2. most alakítsuk át a teljes tesztelési infrastruktúrát teljesen konténerizáltra (megfelelve a szigorú szabálynak).
@@ -202,7 +206,7 @@ Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Kn
 
 **Mikor kötelező ezt lefuttatni:** minden olyan bemeneti tételnél (spec, `plan-input-from-prev.md`, `test-conventions.md`, roadmap), amely **eljárásra, scriptre, konfigurációs állományra, külső API-ra vagy meglévő tesztre hivatkozik**. Ez **különösen** igaz korai ciklusban, amikor a `specs/test-conventions.md` még nem létezik: ilyenkor a recept-adatok egyetlen forrása a **meglévő kód és teszt** — keresd meg őket, ne a bemenet szövegére hagyatkozz.
 
-> **A hurok bezárása:** amit így felderítesz (parancsok, koordináták, payload-sémák), az pontosan az, aminek a ciklus végén a `08-doc-sync` révén be kell kerülnie a `specs/test-conventions.md` 1. szekciójába (TC3) — hogy a következő ciklus már ne derítse fel újra.
+> **A hurok bezárása:** amit így felderítesz (parancsok, koordináták, payload-sémák), az pontosan az, aminek a ciklus végén a `08-doc-sync` révén be kell kerülnie a `specs/test-conventions.md`-be — a konkrét koordináták a 0. blokkba, a receptek az 1. szekcióba (TC3/TC13) — hogy a következő ciklus már ne derítse fel újra.
 
 ---
 
@@ -218,13 +222,37 @@ Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Kn
 
 ---
 
+## Ciklus design input feldolgozása (CD1)
+
+A `specs/cycle-NN-<cycle-name>/cycle-design-input.md` a **felhasználó saját, szabad formájú ciklus-leírása** (a 01 hozta létre üres sablonként, a felhasználó töltötte ki — opcionálisan). A 02 ennek a **viselkedési** részét már a `spec.md`-be emelte; ami **neked** marad, az a **technikai és eljárás-jellegű tartalom**, ami a spec-be nem való, de a plan-nek elsőrangú bemenete:
+
+- konkrét parancsok, scriptek, build/deploy lépések;
+- hostok, portok, base URL-ek, namespace-ek, image-nevek (koordináták);
+- meglévő komponensek, könyvtárak, minta-implementációk megnevezése;
+- technológiai megkötés, teljesítmény-korlát, integrációs feltétel;
+- a felhasználó által vázolt megvalósítási irány vagy sorrend-preferencia.
+
+**Szabályok:**
+
+1. **Ne írd át a fájlt, és ne pipálj ki benne semmit.** Ez a felhasználó dokumentuma, nem átadó-fájl (`*-input-from-prev.md`).
+2. **Az önhordóság szabálya (a fázis legfontosabb szabálya) itt is érvényes.** A design inputból származó adatot **be kell másolni a `plan.md`-be** — hivatkozni rá („lásd a design inputban") **tilos**: a 04 és a `test-runner` nem olvassa ezt a fájlt.
+3. **Hivatkozás-feloldás kötelező.** Ha a design input scriptre, meglévő tesztre, konfigra vagy külső API-ra **hivatkozik**, oldd fel a forrásból (konkrét parancs, URL, teljes payload) a *„Hivatkozás-feloldás (dereferencing)"* szekció szerint — a felhasználó vázlatos megfogalmazását ne reprodukáld.
+4. **Ütközés esetén kérdezz.** Ha a design input ellentmond a `spec.md`-nek (amit a felhasználó már jóváhagyott), **ne dönts magadtól**: vedd fel `Knn` kérdésként a `plan-questions.md`-be. Ha a design input olyan **viselkedési** elvárást tartalmaz, ami a spec-ből hiányzik, az a *spec kritika* ága — jelezd, hogy a 02-be tartozik.
+5. **Ami nem a plan dolga, azt add tovább**, ne dobd el: task-szintű előkészítő lépés → `tasks-input-from-prev.md`, futtatási/üzemeltetési tudnivaló → `validate-input-from-prev.md` (IP1).
+6. **Jelezd a felhasználónak** egy tömör listában, hogy a design input mely tételei hova kerültek (plan szekció / tasks-input / validate-input / új `Knn` / a 02-be visszairányítva).
+
+**Guard:** ha a fájl nem létezik vagy csak a sablon van benne, ez nem hiba — egy mondatban jelezd, és folytasd.
+
+---
+
 ## Kontextus betöltési szabályok
 
 - Olvasd be a ciklus `spec.md`-jét.
+- Ha létezik `cycle-design-input.md`: olvasd be (CD1) — a felhasználó saját ciklus-leírása, a technikai része a plan bemenete.
 - Ha létezik `plan-questions.md`: olvasd be.
-- **Visszatérő teszt-elvárások és receptek (TC1) — `specs/test-conventions.md`:** ha létezik, olvasd be **teljes egészében** (mindhárom szekciót). Ez a `08-doc-sync` által karbantartott regiszter: 1. szekció = recept-regiszter (koordináták, URL-ek, teszt-userek, paraméterek, példa hívások, build/deploy parancsok), 2. szekció = minden körben szükséges lokális (mock alapú) tesztek, 3. szekció = minden körben szükséges integrációs/E2E tesztek. **Guard:** ha a fájl nem létezik (korai ciklus), ne állj meg és ne hozd létre — egy mondatban jelezd, és a `plan-questions.md` K01 kérdését a meglévő tesztelési infrastruktúra alapján tedd fel.
+- **Visszatérő teszt-elvárások és receptek (TC1) — `specs/test-conventions.md`:** ha létezik, olvasd be **teljes egészében** (a 0. blokkot és mindhárom szekciót). Ez a `08-doc-sync` által karbantartott regiszter: **0. blokk = Koordináták** (környezetek, URL-ek/portok, health endpointok, teszt-userek, kliensek, scope-ok, paraméterek, env-pointerek — **minden konkrét érték egy helyen**), 1. szekció = recept-regiszter (komponens-koordináták, indítás, példa hívások, build/deploy parancsok), 2. szekció = minden körben szükséges lokális (mock alapú) tesztek, 3. szekció = minden körben szükséges integrációs/E2E tesztek. **Guard:** ha a fájl nem létezik (korai ciklus), ne állj meg és ne hozd létre — egy mondatban jelezd, és a `plan-questions.md` K01 kérdését a meglévő tesztelési infrastruktúra alapján tedd fel.
 
-  > **🔴 A `plan.md` ÖNHORDÓ (TC1/a — kötelező).** A `test-runner` subagent a `test-conventions.md`-t **nem olvassa** — kizárólag a `plan.md` `Tesztelési stratégia` és `Regressziós érintettség` szekcióit. Ezért **minden tesztelési feladatot maradéktalanul át kell emelni a `plan.md`-be**, kiegészítve az 1. szekció **összes** hozzá tartozó adatával: teszt-userek és jelszavaik, URL-ek, portok, namespace/pod, image-név, registry-cél, paraméterek, **példa hívások (`curl`)**, build/push/restart parancsok, előfeltételek és futási sorrend.
+  > **🔴 A `plan.md` ÖNHORDÓ (TC1/a — kötelező).** A `test-runner` subagent a `test-conventions.md`-t **nem olvassa** — kizárólag a `plan.md` `Tesztelési stratégia` és `Regressziós érintettség` szekcióit. Ezért **minden tesztelési feladatot maradéktalanul át kell emelni a `plan.md`-be**, kiegészítve a 0. blokk és az 1. szekció **összes** hozzá tartozó adatával: teszt-userek és jelszavaik, URL-ek, portok, namespace/pod, image-név, registry-cél, paraméterek, **példa hívások (`curl`)**, build/push/restart parancsok, előfeltételek és futási sorrend.
   > - **Puszta hivatkozás NEM elég** (`„lásd test-conventions.md R03"` önmagában tilos) — a `test-conventions.md`-re csak **provenance**-ként hivatkozz a beemelt tartalom mellett (pl. „_(forrás: test-conventions.md R03)_").
   > - **Placeholder TILOS** (`<ide jön a jelszó>`, `<TODO URL>`) — ha egy adat hiányzik vagy elavult, az `plan-questions.md` kérdés, nem placeholder.
   > - **Nem automatikus futtatás:** a regiszterből **csak az** kerül át, ami ebben a ciklusban tényleg szükséges. Ez a beemelés maga az emberi kontroll-pont — a `plan.md` a futtatás egyetlen igazsága.
@@ -630,6 +658,7 @@ Mielőtt \`Task írásra kész\` státuszra váltasz, tedd fel magadnak:
 - **Kommentek és docstringek:** A tervezett módosítások figyelembe veszik-e a forráskódban lévő kommentek és leírások frissítését az új elnevezéseknek/működésnek megfelelően?
 - **Fájl elérési utak formátuma:** Minden fájl elérési útja és linkje a fájl aktuális könyvtárához képest relatív útvonal legyen (a mappa mélységének megfelelő számú visszalépéssel a projekt gyökeréig, pl. `../../apps/legacy-login/config/users.json`)? Abszolút útvonalak vagy `file://` sémájú linkek sehol nem szerepelhetnek a dokumentációban.
 - A `Teszt specifikáció` szekció tartalmaz teszteseteket minden érintett komponenshez?
+- **A `cycle-design-input.md` feldolgozva? (CD1)** — Ha a fájl létezik és van benne érdemi tartalom, beolvastad, és minden technikai/eljárás-jellegű tételének van követhető sorsa: **szó szerint, önhordóan** beépült a `plan.md`-be (nem hivatkozásként!), vagy átkerült a `tasks-`/`validate-input-from-prev.md`-be, vagy `Knn` kérdés lett, vagy a 02-be visszairányított spec-hiányosság. A fájlt **nem** írtad át?
 - **A `plan-input-from-prev.md` minden tétele lezárva? (IP1)** — Ha a fájl létezik, nem maradhat benne `[ ]` tétel: mindegyik vagy beépült a `plan.md`-be (a megjegyzés mutatja, hova), vagy explicit indokkal elvetett.
 - **A plan-ből kihagyott, de értékes infó át lett adva? (IP1)** — Task-szintű előkészítő lépés a `tasks-input-from-prev.md`-be, validálás-specifikus futtatási előfeltétel a `validate-input-from-prev.md`-be került?
 - **A plan önhordó a beemelt teszt-receptekre (TC1/a)?** — Nincs olyan tesztelési lépés, amely a `specs/test-conventions.md` beolvasása nélkül nem végrehajtható (a `test-runner` azt a fájlt nem olvassa). Nincs placeholder, nincs adat helyett hivatkozás.
@@ -656,13 +685,15 @@ Ha bármelyikre nem teljesül a feltétel (vagy hiányzik valami), egészítsd k
 
 Ha a felhasználó megerősíti:
 - Állítsd a `plan.md` státuszát `Task írásra kész`-re.
-- Készíts git commitot a fázis befejezéséről:
-  ```bash
-  git add specs/cycle-NN-<cycle-name>/
-  git commit -m "cycle-NN: 03-plan"
-  ```
+- **Azonnal commitolj** a lenti *Fázis-záró commit* szerint (`<FÁZIS-TAG>` = `03-plan`). Megerősítés → státuszírás → commit: ez egyetlen lépéssor, ne szakítsd meg.
 
-Ha a státusz \`Task írásra kész\`, állj meg. Ne kezdj task listát. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
+<!-- INCLUDE:shared/phase-commit.md -->
+
+A fenti blokkban a `<FÁZIS-TAG>` értéke ebben a fázisban: **`03-plan`**, a záró státusz: **`Task írásra kész`**.
+
+Ha a státusz \`Task írásra kész\`, **de a fázis-záró commit hiányzik** (VCS-es projekt, `git log -1 --oneline` nem a `cycle-NN: 03-plan` commitot mutatja) — először commitolj, csak utána zárd le a fázist.
+
+Ha a státusz \`Task írásra kész\` (és a commit megvan), állj meg. Ne kezdj task listát. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
 > *"A plan kész. Folytathatjuk a 4. lépéssel (tasks). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:*
 > ```
 > /bs-write-tasks input: @specs/cycle-NN-<cycle-name>/plan.md

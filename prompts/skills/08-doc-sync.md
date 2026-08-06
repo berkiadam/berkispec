@@ -81,7 +81,7 @@ A skill **csak két fájlt nevez meg kötelezőként**, amelyet a doc-sync akkor
 
 > A `docs-generated/` mappát a doc-sync **hozza létre, ha még nincs** (bootstrap-ág) — így nincs sorrend-probléma azzal, hogy ki hozza létre.
 
-**A `docs-generated/`-en kívül egy további fájl gazdája a doc-sync:** a **`specs/test-conventions.md`** (a `specs/roadmap.md` mellett, **nem** a `docs-generated/`-ben). Ez a mappa-bejárás (DS11) és a DS22 mappa-index halmaz-egyezés **hatókörén kívül** van — saját szabályai vannak, lásd „A `specs/test-conventions.md` karbantartása (TC1–TC8)".
+**A `docs-generated/`-en kívül egy további fájl gazdája a doc-sync:** a **`specs/test-conventions.md`** (a `specs/roadmap.md` mellett, **nem** a `docs-generated/`-ben). Ez a mappa-bejárás (DS11) és a DS22 mappa-index halmaz-egyezés **hatókörén kívül** van — saját szabályai vannak, lásd „A `specs/test-conventions.md` karbantartása (TC1–TC11)".
 
 ---
 
@@ -189,7 +189,7 @@ A tipikus tételek (mind a subagent csereszövegével érkezik):
 - **`CHANGELOG.md`** — új, részletes, inkrementális ciklus-bejegyzés (DS15, lásd a sablont). A `system-overview.md` csak coverage-markert + linket tart rá, nem duplikál.
 - **`design-drift.md`** — az adott ciklus által bevezetett **új** eltérések felvétele; a megszűnt eltérés áthelyezése a „Lezárt eltérések" szekcióba (**nem törlés**) — lásd „Drift-összevetés".
 - **`docs-generated/README.md`** — a mappa-index karbantartása: új generált fájl → bekerül; elavult bejegyzés → ki.
-- **`specs/test-conventions.md`** — promóció / `Utolsó futás` bump / elavult tétel törlése (TC1–TC8). Ez a fájl a `docs-generated/`-en **kívül** van; ha még nem létezik, a TC6 bootstrap-út fut rá — akkor is, ha a `system-overview.md` már létezik.
+- **`specs/test-conventions.md`** — promóció / `Utolsó futás` bump / elavult tétel törlése (TC1–TC11). Ez a fájl a `docs-generated/`-en **kívül** van; ha még nem létezik, a TC6 bootstrap-út fut rá — akkor is, ha a `system-overview.md` már létezik.
 
 ### 3.3 Diagram-csere + átkerülés-ellenőrzés (DS7)
 
@@ -280,7 +280,7 @@ A mappa **létrehozásakor** (bootstrap) az index is létrejön. Ez a `docs-gene
 
 ---
 
-## A `specs/test-conventions.md` karbantartása (TC1–TC8)
+## A `specs/test-conventions.md` karbantartása (TC1–TC11)
 
 ### TC1 — Mi ez, és mi NEM
 
@@ -290,22 +290,35 @@ A `specs/test-conventions.md` a projekt **visszatérő teszt-elvárásainak és 
 
 **Mi nem tartozik ide:** a `conventions.md` rögzíti, **hogyan** tesztelünk (eszközök, mappastruktúra, futtatási parancsok, elvek) — azt itt **nem ismételjük**. A `plan.md` rögzíti, mi az **új** az adott ciklusban. Ez a fájl azt rögzíti, **mit és mikor kötelező** tesztelni, komponensenként, as-built.
 
-### TC2 — Szerkezet: pontosan három szekció
+### TC2 — Szerkezet: koordináta-blokk + pontosan három szekció
 
-A fájlnak **három** szekciója van, se több, se kevesebb. A 2. és 3. szekció tételei az 1. szekcióra hivatkoznak (nem duplikálják a koordinátákat).
+A fájl **`## 0. Koordináták`** blokkal kezdődik (TC13 — kötelező), utána **három számozott** szekció következik, se több, se kevesebb. A 2. és 3. szekció tételei az 1. szekcióra hivatkoznak (nem duplikálják a koordinátákat), az 1. szekció receptjei pedig a 0. blokk adataira.
 
-1. **Recept-regiszter** — paraméterek, URL-ek, portok, komponens-koordináták (repo-útvonal, image-név, registry-cél, namespace/pod), teszt-userek, példa REST/`curl` hívások, build/deploy/indító parancsok.
+0. **Koordináták** — környezetek, URL-ek/portok, health endpointok, teszt-userek, kliensek, scope-ok, paraméterek, env-fájl pointerek. **Egy helyen, kereshetően.**
+1. **Recept-regiszter** — komponensenként/lépésenként: repo-útvonal, image-név, registry-cél, namespace/pod, **indítás**, példa REST/`curl` hívások, build/deploy parancsok. A konkrét URL-eket, usereket és paramétereket **a 0. blokkból veszi** (ott az igazság, itt a hivatkozás).
 2. **Minden körben szükséges lokális (mock alapú) tesztek** — az 1. szekció receptjeire hivatkozva.
 3. **Minden körben szükséges integrációs / E2E tesztek** — az 1. szekció receptjeire hivatkozva.
 
-A sablont lásd a **Sablonok** szekcióban. **Prózát ne írj** — a fájl táblázatos/parancsblokkos, mert a fogyasztója a `02`/`03` fázis, nem az olvasgató ember.
+A sablont lásd a **Sablonok** szekcióban.
+
+> **⚠ „Prózát ne írj" — mit jelent és mit NEM (TC2/a).** A tiltás a **narratív magyarázatra** vonatkozik: bevezetők, indoklások, „ebben a ciklusban azért döntöttünk így…", tanulságok, összefoglalók. Ezek nem valók ide — a fogyasztó a `02`/`03` fázis, nem az olvasgató ember.
+>
+> **NEM vonatkozik a tesztesetek részletezésére.** A 2./3. szekció **táblázata index**, nem maga a teszteset: egy egysoros cella soha nem elég ahhoz, hogy a tesztet valaki reprodukálja. Ezért **minden promótált tételhez kötelező egy strukturált részletező blokk** a táblázat alatt (`### L01 — …` / `### I01 — …`), **Cél / Előfeltétel / Lépések / Elvárt eredmény** mezőkkel (TC10/b). Ez nem próza, hanem **struktúra** — a reprodukálhatóság minimuma.
+>
+> Rossz értelmezés (ez a hiba fordult elő élesben): a szabályt úgy venni, hogy *„csak táblázat lehet a fájlban"*, és a tesztek leírását egysoros cellákra zsugorítani. Az így keletkező regiszterből a következő ciklus nem tudja lefuttatni a tesztet.
 
 ### TC3 — Promóció: mi kerül be (bizonyíték-alapú)
 
 **Ne ítéld meg „érzésre", hogy egy teszt „alapvető-e".** Egy tétel akkor promótálódik a 2./3. szekcióba, ha az alábbiak **valamelyike** teljesül:
 
 1. **Empirikus jel (elsődleges):** a teszt/recept egy **korábbi** ciklusban keletkezett, és **ebben** a ciklusban is szerepelt a `plan.md` `Regressziós érintettség` táblájában vagy tényleges futtatásra került — azaz a gyakorlatban bizonyította a ciklus-független relevanciáját.
-2. **Emberi döntés:** a felhasználó a `doc-sync-questions.md`-ben megerősítette, hogy a tétel legyen tartós elvárás.
+2. **Emberi döntés (mindig kötelező):** a felhasználó a `doc-sync-questions.md`-ben megerősítette, hogy a tétel legyen tartós elvárás. **Ezt minden ciklusban tételesen fel kell kínálnod** — lásd **TC12 (promóciós ajánlat)**: az empirikus jel a *javaslatodat* adja, a döntést a felhasználó hozza.
+
+**A promóció HÁROM dolgot jelent, nem egyet (TC3/a).** Egy tétel akkor van promótálva, ha mindhárom megvan — a táblázatsor önmagában **nem** promóció:
+
+1. **Táblázatsor** a 2./3. szekcióban (ID, önhordó egysoros viselkedés, recept-hivatkozás, `Utolsó futás`) — ez az **index**;
+2. **Részletező blokk** a táblázat alatt (`### <ID> — <cím>`, Cél / Előfeltétel / Lépések / Elvárt eredmény) — ez a **teszteset** (TC10/b);
+3. **Recept** az 1. szekcióban (`Indítás`, `Példa hívás`, parancsok — TC11), amire a tétel hivatkozik, plus a hozzá tartozó koordináták a 0. blokkban (TC13).
 
 **Recept (1. szekció) csak akkor kerül be, ha ebben a ciklusban tényleg lefutott és zöld volt** (a `test-report/` a bizonyíték). **Kitalált, nem verifikált parancsot TILOS beírni** — ha egy koordináta hiányzik vagy bizonytalan, az `doc-sync-questions.md` kérdés, nem néma tipp.
 
@@ -350,6 +363,159 @@ Ezután a **javaslatról** folytatsz párbeszédet a `doc-sync-questions.md`-n k
 - **Első futás (bootstrap):** széles interjú a TC6 szerinti javaslat alapján. Egyszeri, megéri.
 - **Minden további ciklus (steady state):** **ne** nyisd újra a teljes beszélgetést. Egy **rövid, célzott megerősítés** a doc-sync javaslatáról: *„Ezt promótálnám, ezt törölném, ezeket bumpolom — jó?"* A felhasználó pipál vagy javít. A javaslat maga a `doc-sync-plan.md` tételeiben áll, a kérdés a `doc-sync-questions.md`-ben.
 
+**Mindkét esetben kötelező a TC12 promóciós ajánlat** — a ciklus tesztjeinek tételes felkínálása döntésre. A bootstrapnál ez a széles interjú része; steady state-ben ez a „rövid, célzott megerősítés" konkrét formája.
+
+### TC13 — Koordináta-blokk a fájl elején (KÖTELEZŐ)
+
+**A fájl első blokkja a `## 0. Koordináták`** — itt gyűlik össze minden környezet-, hozzáférés- és paraméter-adat, **egy helyen, kereshetően**. Aki tesztelni akar, ne recepteken lapozgasson végig azért, hogy megtalálja, melyik porton fut a mock, vagy mi a teszt-user jelszava.
+
+**Kötelező tartalom — három tábla:**
+
+| Tábla | Mit gyűjt |
+|---|---|
+| **Környezetek és végpontok** | környezet (lokális / dev / …), komponens, URL + port, health endpoint |
+| **Teszt-userek, kliensek, titkok** | környezet, név/azonosító (user, `client-id`, service account), titok **vagy pointer**, scope/szerep |
+| **Paraméterek és env-fájlok** | paraméter- és környezeti változó nevek, érték vagy pointer, hol használjuk |
+
+**Szabályok:**
+
+1. **Ez az igazságforrás.** Ha egy URL, user vagy paraméter itt szerepel, a receptek (1. szekció) **hivatkoznak rá**, nem másolják. Ha két helyen más érték áll, az hiba — a 0. blokk nyer, a receptet javítsd.
+2. **TC5 titok-szabály itt is él.** Dev-hatókörű teszt-jelszó beírható; **osztott platform credential (klaszter, registry, VPN, IAM, éles token) SOHA** — helyette pointer: `pointer: .env.dev → TMP_S2S_SECRET` vagy `pointer: jelszókezelő / Vault`. A TC8 titok-checkje ezt a blokkot is nézi.
+3. **Csak verifikált érték (TC3).** Ami ebben a ciklusban nem futott le és nem is erősítette meg a felhasználó, az nem kerül be. Bizonytalan koordináta → `doc-sync-questions.md` kérdés.
+4. **Környezetenként külön sor.** A „localhost:8080 vagy a dev host" típusú összemosás használhatatlan — a `Környezet` oszlop kötelező.
+5. **Elavulás.** Ha egy koordináta a ciklusban bizonyítottan megváltozott (más port, más host, más user), **itt kell frissíteni** — és a rá hivatkozó receptek automatikusan helyesek maradnak. Ez a blokk fő haszna.
+
+A TC8 kapu ellenőrzi, hogy a blokk **létezik, a fájl elején áll, és van benne kitöltött adatsor** — üres vagy placeholderes tábla bukik.
+
+### TC12 — Promóciós ajánlat: a ciklus tesztjeit tételesen felkínálod (KÖTELEZŐ)
+
+**A promóció soha nem néma döntés.** Minden doc-sync futásban **fel kell sorolnod a ciklus tesztjeit**, és **meg kell kérdezned a felhasználót, melyiket emeled be projekt szintre** a `test-conventions.md`-be. Sem a beemelés, sem a kihagyás nem történhet kérdés nélkül — a TC3 bizonyíték-szabály azt mondja meg, **mit javasolsz**, de a döntés a felhasználóé.
+
+**1. A jelöltlista összeállítása.** Gyűjtsd össze a ciklus tesztjeit három forrásból:
+- `plan.md` → `Tesztelési stratégia` és `Regressziós érintettség`;
+- `tasks.md` → a `[RED]` / `[CHECK]` / `TREG` taskok;
+- `test-report/` → **mi futott le ténylegesen** (a validate riportja és a teszt-eszköz riportja a bizonyíték).
+
+**Csak az kerülhet a listára, ami ebben a ciklusban tényleg lefutott és zöld volt** (TC3). Ami nem futott, azt ne kínáld fel — jelezd külön sorban, hogy miért maradt ki.
+
+**2. Minden jelölthez készítsd elő a döntéshez szükséges információt** — a felhasználónak ne kelljen visszakeresnie semmit:
+- **önhordó, viselkedés-szintű leírás** (TC10 szerint megfogalmazva — ez lesz a tétel szövege, ha bekerül);
+- **melyik szekcióba menne**: 2. (lokális/mock) vagy 3. (integrációs/E2E);
+- **milyen recept kell hozzá**: meglévő `R-ID`, vagy **új recept** (és akkor mi hiányzik belőle — indítás, példa hívás);
+- **javaslat + egysoros indok**: `promótálandó` (miért ciklus-független) vagy `marad ciklus-lokális` (miért egyszeri).
+
+**3. A kérdés — EGY körben, a `doc-sync-questions.md`-be.** Ne tegyél fel tesztenként külön kérdést: egy `Knn` tétel, benne a teljes táblázat, és egy egyszerű válaszformátum:
+
+```md
+- [ ] K03 — Melyik ciklus-tesztet emeljem be projekt szintre a `test-conventions.md`-be?
+
+| # | Viselkedés (így kerülne be) | Szekció | Recept | Javaslat | Indok |
+|---|---|---|---|---|---|
+| 1 | A mock `/start-process` 201-et ad érvényes `processName`-re, és 400-at hiányzó body-ra | 2 | R02 | promótálandó | a mock szerződése minden ciklusban él |
+| 2 | A `/verify` 403-at ad `TMP_031` errorCode-dal lejárt tokenre | 3 | **új recept kell** (indítás + példa hívás hiányzik) | promótálandó | minden auth-változás érinti |
+| 3 | A cycle-24-es migrációs script egyszeri lefutása | 2 | R01 | marad ciklus-lokális | egyszeri adatmigráció, nem ismételhető |
+
+_Nem futott le ebben a ciklusban (ezért nem jelölt): `<teszt>` — `<miért>`._
+
+**Válaszként elég a sorszámok felsorolása** (pl. „1, 2" vagy „mindet" / „egyiket sem"). A kihagyottakat a döntés-naplóba írom, hogy a következő ciklusban ne kérdezzek rá újra.
+```
+
+**4. Várd meg a választ.** Ez **blokkoló kérdés**: promóció nem történik válasz nélkül, és a fázis sem zárható le nyitott `[ ]` kérdéssel. Ha a felhasználó egy tételre nemet mond, **ne vitatkozz** — rögzítsd.
+
+**5. A válasz átvezetése:**
+- **Igen** → a tétel bekerül a 2./3. szekcióba (TC10 szerinti önhordó szöveggel), és ha új recept kell, azt is felveszed (TC11: indítás + példa hívás + takarítás, csak verifikált parancsokkal).
+- **Nem** → a tétel a **döntés-naplóba** kerül a fájl végén, hogy a következő ciklus ne kérdezzen rá újra:
+
+```md
+## Nem promótált jelöltek (döntés-napló)
+
+- A cycle-24-es migrációs script egyszeri lefutása — döntés: `nem promótálandó` (egyszeri adatmigráció) · cycle-24
+```
+
+Ez az appendix **nem** számozott szekció (a TC2 szerkezet érintetlen marad): sima felsorolás a `## 3.` szekció után. **Ha egy tétel itt szerepel, a következő ciklusban ne kínáld fel újra** — kivéve, ha a viselkedése lényegesen megváltozott; akkor új jelöltként, az új leírással jöhet.
+
+**Steady state rövidítés (TC7):** a 2–5. lépés minden ciklusban lefut, de ha a ciklusnak 1–2 tesztje van, a táblázat is 1–2 soros — a kérdés így is kötelező, csak rövid.
+
+### TC10 — Önhordó tételek: a regiszter nem hivatkozik a ciklus-dokumentumokra
+
+**A `test-conventions.md` egyedül is értelmes kell legyen.** Az olvasója (a `02`/`03` fázis egy friss kontextusban, vagy egy új kolléga) **nem fogja megnyitni** a régi `spec.md`-ket — azok a ciklussal együtt lezárultak, a számozásuk pedig ciklusonként újraindul.
+
+**🔴 TILOS a „Mit ellenőriz" mezőben** (és a recept-nevekben):
+- **spec-szekció sorszám átemelése:** *„1.2. FlowX Backend Mock negatív és pozitív tesztek"*, *„2.3. Teljes Dev integrációs teszt"* — a `1.2.` egy másik dokumentum belső számozása, itt semmit nem jelent;
+- **ciklusra hivatkozás azonosítóként:** *„Cycle 19 init-hash E2E integrációs tesztek"*, *„Level 2 E2E lokális Keycloak tesztek"* — melyik viselkedésről van szó? A ciklus-szám a `Utolsó futás` / `Bizonyíték` oszlopba való, nem a leírásba;
+- **fájlnév mint leírás:** *„external-apigee-client unit teszt"* — mit ellenőriz az a teszt?
+- **hivatkozás korábbi spec/plan dokumentumra** („a spec.md 3. pontja szerint").
+
+**Helyette: viselkedés-szintű, önhordó megfogalmazás** — milyen bemenetre mi a helyes kimenet. Például:
+
+| Rossz (hivatkozó) | Jó (önhordó) |
+|---|---|
+| `1.2. FlowX Backend Mock negatív és pozitív tesztek` | `A mock /start-process 201-et ad érvényes processName-re, és 400-at hiányzó body-ra` |
+| `Cycle 19 init-hash E2E integrációs tesztek` | `A TMP init-hash végpont ugyanazt a hash-t adja vissza ugyanarra a payloadra, és 409-et ismételt initre` |
+| `Mobile Bank external apigee client unit teszt` | `Az Apigee kliens 3× újrapróbál 503-ra, és a 4. hibánál felfelé dobja a hibát` |
+| `2.1. Dev Keycloak SPI működés-ellenőrzés` | `A dev Keycloak SPI a /health/ready-n 200-at és `spi-ok` státuszt ad` |
+
+#### TC10/b — A teszt részletes leírását át kell hozni (nem csak a címét)
+
+**A promótált teszt szöveges specifikációja nem veszhet el.** A ciklus `spec.md`-je / `plan.md`-je tartalmazza a teszteset célját, lépéseit és elvárt eredményét — **ezt a tartalmat hozd át** a regiszterbe, a táblázat alatti részletező blokkba. A táblázat egysoros cellája csak mutató; a következő ciklus a blokkból fogja tudni **lefuttatni** a tesztet.
+
+**Kötelező formátum — tételenként egy blokk a szekció táblázata alatt:**
+
+```md
+### L01 — A mock `/start-process` 201-et ad érvényes kérésre
+
+- **Cél:** a FlowX mock szerződése stabil marad — a kliens a dokumentált válaszra épülhet.
+- **Előfeltétel:** `R02` fut (a felhúzás ott van leírva) · a `0.` blokk `lokális` sora szerinti port.
+- **Lépések:**
+  1. `POST /start-process` a `{"processName": "onboarding"}` payloaddal.
+  2. Ugyanez üres body-val.
+- **Elvárt eredmény:** az 1. lépésre `201` + `{"processInstanceId": "<uuid>"}`; a 2. lépésre `400` + `MISSING_BODY` errorCode.
+```
+
+**Hűen, de önhordóra normalizálva — NE vakon másolj.** A `spec.md`/`plan.md` szövege gyakran olyan elemeket is tartalmaz, amelyek itt értelmetlenek vagy tiltottak. Az áthozatalkor **kötelező** ezeket kigyomlálni:
+
+| Amit a forrásszöveg tartalmazhat | Mit csinálsz vele |
+|---|---|
+| spec-szekció sorszám (`1.2.`), ciklus-hivatkozás (`a cycle-19-es teszt`) | **törlöd** — TC10 tiltja |
+| „lásd fent", „a fenti pont szerint", spec-belső kereszthivatkozás | **feloldod**: beírod, mire hivatkozik |
+| konkrét titok (osztott platform credential) | **pointerre cseréled** — TC5 |
+| ciklus-specifikus egyszeri lépés (migráció, egyszeri adatfeltöltés) | **elhagyod** — nem visszatérő elvárás |
+| nem verifikált / feltételezett lépés | **nem hozod át**, kérdés a `doc-sync-questions.md`-be — TC3 |
+
+A **tartalom** (cél, lépések sorrendje, elvárt értékek) viszont **maradéktalanul** átjön: ha a specben három lépés és két elvárt hibakód szerepelt, itt is három lépés és két hibakód lesz. Rövidíteni „a lényegre" **nem szabad** — pont az a lényeg, ami a reprodukáláshoz kell.
+
+**Átírás visszamenőleg:** ha a fájlban már van hivatkozó tétel vagy részletező blokk nélküli sor, **a következő doc-sync futásban írd át** önhordóra. Ha a viselkedés a tétel szövegéből és a tesztfájlból sem derül ki egyértelműen, az **kérdés a `doc-sync-questions.md`-be** (ne találgass) — a tétel addig marad, de megjelölve.
+
+### TC11 — Futtatható koordináták: indítás + példa hívás kötelező
+
+**A recept attól recept, hogy egy idegen le tudja futtatni** — nem attól, hogy megnevezi a tesztfájlt. Egy `npm test` sor önmagában nem recept: nem mondja meg, mi kell hozzá, hogyan hívom a végpontot, és honnan tudom, hogy jó.
+
+**Minden `R-ID` recept kötelező elemei:**
+
+1. **`Indítás`** — hogyan húzom fel azt a környezetet, amit ez a recept igényel: konkrét parancs (`docker compose -f … up -d`, `podman run …`, `npm run dev`, `oc port-forward …`), plusz **hogyan ellenőrzöm, hogy feláll** (health endpoint + várt válasz). Ha a recept nem igényel környezetet (tiszta unit teszt), írd ki explicit: `N/A — nem igényel futó környezetet`. Üresen hagyni nem opció.
+2. **`Példa hívás`** — ha a recept HTTP/gRPC/CLI végpontot érint: **legalább egy tényleges hívás**, teljes URL-lel, headerekkel, payloaddal és a **várt válasszal**. `curl`, vagy `.http` (VS Code REST Client / IntelliJ) blokk — az utóbbi akkor jobb, ha a projektben már vannak `.http` fájlok (akkor **hivatkozz a fájlra is**: `test/http/token-exchange.http`). Ha a hívás tokent igényel, **a token megszerzésének hívása is kerüljön ide** (az „Authorization: Bearer …" önmagában nem futtatható).
+3. **`Leállítás / takarítás`** — mit kell leállítani/törölni a futtatás után (különösen `osztott-remote` hatókörnél, TC5/TC3).
+
+**Az előfeltételek nem lóghatnak a levegőben.** A 2./3. szekció `Előfeltétel` oszlopában a *„lokális keycloak fut"*, *„mock stack fut"*, *„VPN kapcsolat aktív"* típusú szöveg **önmagában értéktelen** — meg kell mondani, **hogyan** teljesítem. Ezért az előfeltétel vagy **`R-ID`-re hivatkozik** (amelynek van `Indítás` blokkja), vagy a hivatkozott recept `Indítás` blokkja tartalmazza. Ha egy előfeltételhez nincs recept (pl. a lokális Keycloak indítása sehol nincs leírva), **vegyél fel rá új receptet** — ez tipikusan a leghasznosabb tétel az egész regiszterben.
+
+> **A TC3 verifikáció itt is él:** csak olyan indító parancsot és példa hívást írj be, ami **ebben a ciklusban tényleg lefutott** (a `test-report/` a bizonyíték), vagy amit a felhasználó a `doc-sync-questions.md`-ben megerősített. Kitalált `curl` rosszabb, mint a hiányzó — a következő ciklus rá fog építeni.
+
+### TC9 — Kötelező teszt-riport tétel (TR3) — a felhasználóval egyeztetve
+
+**Minden ciklusban kötelező riport-artefaktum kerül a `specs/cycle-NN-<name>/test-report/` mappába** — a teszt-eszköz saját, megnyitható riportja (Allure/Playwright HTML, pytest-html, JUnit XML, coverage). A **parancs és az artefaktum-név egyetlen igazságforrása a `conventions.md` `## Teszt-riportolás` táblája** (a 00 fázis tölti ki a felhasználóval); a `07-validate` ezt determinisztikus kapuval (`report-gate-check.py`) kéri számon. A regiszterben ezt **nem duplikáljuk** (TC1) — itt csak az elvárás és a forrás-hivatkozás áll, a 2. és 3. szekció **Kötelező riport (TR3)** sorában.
+
+**A doc-sync kötelező teendői minden futásban:**
+
+1. **Olvasd be** a `conventions.md` `## Teszt-riportolás` szekcióját és a ciklus `test-report/` mappájának tényleges tartalmát.
+2. **Vesd össze a kettőt.** Ha a ciklusban olyan teszt-kategória vagy eszköz futott, amely **nincs benne a táblában** (pl. most került be az Allure, vagy egy új E2E réteg), az **hiányos projekt-konvenció**.
+3. **Ilyenkor KÖTELEZŐ kérdés a felhasználónak** — vedd fel a `doc-sync-questions.md`-be, és **várd meg a választ** (ez nem néma javítás):
+   > *„A ciklusban a(z) `<eszköz>` futott, de a `conventions.md` `## Teszt-riportolás` táblájában nincs hozzá riport-sor. Milyen riportot generáljon, milyen paranccsal, és milyen néven kerüljön a ciklus `test-report/` mappájába? (Ha nem kell riport ehhez a kategóriához, azt is rögzítem.)"*
+4. **A válasz átvezetése — szűk, engedélyhez kötött kivétel:** a `conventions.md` egyébként a 00 fázis tulajdona, de a felhasználó **explicit válasza után** a doc-sync frissítheti **kizárólag a `## Teszt-riportolás` táblát** (új sor / módosított artefaktum-név). Más szekcióhoz ne nyúlj, és válasz nélkül ne írj bele.
+5. **A regiszter oldalán** a 2./3. szekció `**Kötelező riport (TR3):**` sora tükrözze a tábla aktuális állapotát (artefaktum-név + `forrás: conventions.md → ## Teszt-riportolás`). A TC8 kapu 5. checkje ezt ellenőrzi.
+6. **Ha a `test-report/` mappában nincs meg a deklarált artefaktum** (pl. egy régebbi ciklusból), az **nem a doc-sync javítandó hibája** — jelezd az összefoglalóban, hogy a `07-validate` TR3 kapuja azt a ciklust nem fogta meg (régi ciklus a kapu bevezetése előttről), és lépj tovább.
+
+> **A TC6 bootstrap-szabály él:** ha nincs mit promótálni, a `test-conventions.md` **ne jöjjön létre** pusztán a riport-sor kedvéért. A riport-elvárás ilyenkor a `conventions.md`-ben él, ami mindig létezik.
+
 ### TC8 — A fájl saját kapuja (`tc8-gate-check.py` — szkriptelt)
 
 A DS22 magkapu a `docs-generated/`-re fut, ez a fájl azon **kívül** van, ezért **saját kapuja** van. A kapu **teljesen szkriptelt** — nincs benne LLM-ítélet, ezért **ne grepelj kézzel**, futtasd a scriptet (a telepítő ugyanabba a platform-scripts mappába másolja, mint a `ds22-gate-check.py`-t):
@@ -363,7 +529,7 @@ python3 <platform-scripts-mappa>/tc8-gate-check.py specs/test-conventions.md \
 - **`--marker`**: az aktuális ciklus — ehhez képest számol staleness-t az `Utolsó futás` markereken. Elhagyható; akkor csak a marker **létét** ellenőrzi, az elavulást nem.
 - **`--stale-after N`**: ennyi vagy több ciklus eltérésnél elavult a tétel (default: **3**, a TC4 szabály szerint).
 
-**A négy check:**
+**A kilenc check:**
 
 | # | Mit ellenőriz | Blokkol? |
 |---|---|---|
@@ -371,6 +537,10 @@ python3 <platform-scripts-mappa>/tc8-gate-check.py specs/test-conventions.md \
 | 2 | **Lógó hivatkozás (TC8/2)** — a 2./3. szekció minden tétele létező 1. szekciós receptre (`R-ID`) hivatkozik-e, és van-e egyáltalán hivatkozása | **FAIL**. A nem hivatkozott recept **WARN** |
 | 3 | **Titok-check (TC8/3)** — bekerült-e TC5 szerint tiltott credential | **FAIL** biztos mintánál (PAT/kulcs-prefix, privát kulcs blokk, `oc login --password`, `docker login -p`); platform-szó + credential-szó egy sorban csak **WARN** |
 | 4 | **`Utolsó futás` marker (TC4)** — minden recept és 2./3. szekciós tétel kap-e markert, és melyik avult el | Hiányzó marker: **FAIL**. Elavult (`--stale-after`): **WARN** → kérdés a `doc-sync-questions.md`-be |
+| 5 | **Kötelező riport-sor (TC9/TR3)** — a 2. és 3. szekció elején ott van-e a `**Kötelező riport (TR3):**` sor | **FAIL**, ha hiányzik valamelyik szekcióból. **WARN**, ha a sor tartalmaz generáló parancsot (az a `conventions.md` dolga — duplikáció) |
+| 6 | **Futtatható koordináták (TC11)** — minden receptnek van-e `Indítás` mezője; a végpontot érintőknek `Példa hívás` blokkja; a 3. szekció környezeti előfeltételei hivatkoznak-e receptre | **FAIL** mindháromra — recept indítás/példa hívás nélkül nem futtatható, lógó előfeltétel mellett nem reprodukálható a teszt |
+| 7a | **Tétel-részletezés (TC10/b)** — minden 2./3. szekciós táblázat-tételhez tartozik-e `### <ID>` részletező blokk, benne `Cél` / `Lépések` / `Elvárt eredmény` | **FAIL** — a táblázatsor index, nem teszteset; blokk nélkül a tétel nem reprodukálható. Táblázatsor nélküli árva blokk: **WARN** |
+| 7 | **Önhordó tételek (TC10)** — a 2./3. szekció „Mit ellenőriz" cellája nem kezdődhet spec-szekció sorszámmal (`1.2.`) és nem hivatkozhat ciklusra (`Cycle 19 …`) | **FAIL** — a más dokumentumra mutató leírás önmagában értelmezhetetlen |
 
 **Kilépő kód:** `0` = minden kemény check PASS (WARN megengedett), `1` = legalább egy FAIL, `2` = használati hiba. **Ha a fájl nem létezik, a script `0`-val, „kihagyva" jelzéssel tér vissza** — TC6 szerint a hiánya korai ciklusban nem hiba.
 
@@ -544,11 +714,35 @@ _<Endpoint → rövid leírás. Ha nincs hálózati interfész, ez a szekció el
 
 ### `specs/test-conventions.md` (TC2)
 
-**Váz** — pontosan három szekció; a 2./3. szekció az 1.-re hivatkozik:
+**Váz** — egy kötelező **`## 0. Koordináták`** blokk a fájl elején (TC13), utána pontosan három **számozott** szekció (a 2./3. az 1.-re hivatkozik), végül egy opcionális, **nem számozott** `## Nem promótált jelöltek (döntés-napló)` appendix (TC12):
 ````md
 > **Utolsó felülvizsgálat:** cycle-NN · **Gazda:** 08-doc-sync · **Nem futtatható forrás** — a receptet a 02/03 fázis emeli be a ciklus spec.md/plan.md-jébe (TC1/a).
 
 # Teszt konvenciók — visszatérő elvárások és receptek
+
+## 0. Koordináták
+
+_Minden környezet-, hozzáférés- és paraméter-adat **egy helyen** (TC13). Az 1. szekció receptjei ezekre hivatkoznak, nem ismétlik meg őket._
+
+### Környezetek és végpontok
+
+| Környezet | Komponens | URL / port | Health endpoint |
+|---|---|---|---|
+| lokális | <komponens> | `http://localhost:PORT` | `/health` |
+| dev | <komponens> | `https://<host>` | `/health/ready` |
+
+### Teszt-userek, kliensek, titkok
+
+| Környezet | Név / azonosító | Titok | Scope / szerep |
+|---|---|---|---|
+| lokális | `<user>` | `<dev-only jelszó>` | `<realm / szerep>` |
+| dev | `<client-id>` | pointer: `.env.dev` → `<VÁLTOZÓ>` | `<scope>` |
+
+### Paraméterek és env-fájlok
+
+| Név | Érték / pointer | Hol használjuk |
+|---|---|---|
+| `<PARAMÉTER>` | `<érték vagy pointer>` | `<recept vagy komponens>` |
 
 ## 1. Recept-regiszter
 
@@ -556,30 +750,71 @@ _<Endpoint → rövid leírás. Ha nincs hálózati interfész, ez a szekció el
 - **Hol van:** <repo-útvonal, image-név, registry-cél, namespace/pod>
 - **Elérés:** <URL-ek, portok, health endpoint>
 - **Teszt-userek / paraméterek:** <user + jelszó (csak dev-hatókörű, TC5!), scope, client-id>
+- **Indítás:** _(kötelező — TC11)_
+  ```bash
+  <a környezet felhúzása: docker compose up / podman run / npm run dev / oc port-forward …>
+  <health-ellenőrzés: curl -s http://localhost:PORT/health → mit vársz vissza>
+  ```
 - **Parancsok:**
   ```bash
-  <build / push / restart / indítás — csak verifikált, tényleg lefutott parancs (TC3)>
+  <a teszt futtatása / build / push / restart — csak verifikált, tényleg lefutott parancs (TC3)>
   ```
-- **Példa hívás:**
+- **Példa hívás:** _(kötelező, ha a recept HTTP/gRPC/CLI végpontot érint — TC11)_
   ```bash
-  curl -s -X POST "<URL>" -d '<payload>' -H '<header>'
+  curl -s -X POST "<teljes URL>" \
+    -H 'Content-Type: application/json' -H 'Authorization: Bearer <hogyan szerzem meg>' \
+    -d '{"<mező>": "<érték>"}'
+  # Várt válasz: 200, body: {"<mező>": "<érték>"}
   ```
-- **Előfeltétel / sorrend:** <mi kell hozzá, mi jön előtte/utána>
+- **Leállítás / takarítás:** <hogyan állítom le a felhúzott környezetet, mit kell törölni>
+- **Előfeltétel / sorrend:** <mi kell hozzá — másik receptre `R-ID`-vel hivatkozva, mi jön előtte/utána>
 - **Hatókör:** `lokális` | `osztott-remote` — <ha osztott, a beemelésnél a 03 kötelezően rákérdez>
 - **Utolsó futás:** cycle-NN
 
 ## 2. Minden körben szükséges lokális (mock alapú) tesztek
 
+**Kötelező riport (TR3):** `<artefaktum a ciklus test-report/-jában>` — forrás: `conventions.md → ## Teszt-riportolás`
+
 | ID | Mit ellenőriz | Recept | Utolsó futás |
 |---|---|---|---|
-| L01 | <viselkedés, amit minden körben zöldnek kell látni> | R01 | cycle-NN |
+| L01 | <önhordó viselkedés-leírás: milyen bemenetre mi a helyes kimenet — TC10> | R01 | cycle-NN |
+
+### L01 — <a tétel önhordó címe>
+
+- **Cél:** <mit bizonyít ez a teszt — 1 mondat>
+- **Előfeltétel:** <`R-ID` fut · a 0. blokk melyik adatai kellenek>
+- **Lépések:**
+  1. <konkrét lépés — hívás/parancs/interakció>
+  2. <...>
+- **Elvárt eredmény:** <státuszkód, mező, érték — amit igen/nem el lehet dönteni>
 
 ## 3. Minden körben szükséges integrációs / E2E tesztek
 
+**Kötelező riport (TR3):** `<artefaktum a ciklus test-report/-jában>` — forrás: `conventions.md → ## Teszt-riportolás`
+
 | ID | Mit ellenőriz | Recept | Előfeltétel | Utolsó futás |
 |---|---|---|---|---|
-| I01 | <viselkedés> | R01, R02 | <sorrend / env> | cycle-NN |
+| I01 | <önhordó viselkedés-leírás — TC10> | R01, R02 | <`R05` fut (a felhúzás ott van leírva) — TC11> | cycle-NN |
+
+### I01 — <a tétel önhordó címe>
+
+- **Cél:** <mit bizonyít ez a teszt — 1 mondat>
+- **Előfeltétel:** <`R05` fut · a 0. blokk melyik adatai kellenek>
+- **Lépések:**
+  1. <konkrét lépés — hívás/parancs/interakció>
+  2. <...>
+- **Elvárt eredmény:** <státuszkód, mező, érték — amit igen/nem el lehet dönteni>
+
+## Nem promótált jelöltek (döntés-napló)
+
+_(Opcionális appendix, TC12 — nem számozott szekció. Ide kerül, amit a felhasználó nem kért projekt szintre; a következő ciklus ezeket már nem kínálja fel újra.)_
+
+- <önhordó viselkedés-leírás> — döntés: `nem promótálandó` (<indok>) · cycle-NN
 ````
+
+> **Minden táblázatsorhoz tartozik egy `### <ID>` részletező blokk** (TC10/b) — a táblázat az index, a blokk a teszteset. A TC8 kapu ellenőrzi, hogy egyik tételnek sincs hiányzó blokkja, és hogy a blokkban ott a Cél / Lépések / Elvárt eredmény.
+
+> A **Kötelező riport (TR3)** sor mindkét szekcióban kötelező (a TC8 kapu ellenőrzi). **Csak az artefaktum nevét és a forrás-hivatkozást tartalmazza — a generáló parancsot NEM** (az a `conventions.md` dolga, TC1: nem duplikálunk). Ha a projekt tudatosan nem generál riportot, a sor értéke `nincs — a conventions.md szerint a riport-generálás nem kötelező`.
 
 **Kész mini-példa (1. szekció egy tétele):**
 ````md
@@ -621,7 +856,7 @@ _<Endpoint → rövid leírás. Ha nincs hálózati interfész, ez a szekció el
 
 ## Commit + továbblépés a 09-re (1.13)
 
-A kapu zöldre futása után:
+A kapu zöldre futása után — **és csak akkor, ha a TC12 promóciós ajánlatra megjött a válasz** (nyitott `[ ]` promóciós kérdéssel a fázis nem zárható le):
 
 1. **Commit** — a `docs-generated/` + a komponens README-k + a ciklus munkafájljai:
    ```bash

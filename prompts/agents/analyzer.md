@@ -29,6 +29,8 @@ Te egy kereszt-fázisos konzisztencia elemző specialista ágens vagy. A feladat
 4. `conventions.md` (projekt szintű konvenciók).
 5. **`spec-input-from-prev.md` / `plan-input-from-prev.md` / `tasks-input-from-prev.md`** — amelyik létezik (IP1). Ezek a fázisok közötti átadó fájlok: egy korábbi fázis írt bennük olyan információt, amit a fogyasztó fázisnak be kell építenie. **A `validate-input-from-prev.md`-t NE vizsgáld** — annak a fogyasztója a 07, ami utánad fut, ott jogosan nyitott még. **Ha egyik fájl sem létezik, az nem hiba** — a mechanizmus opcionális.
 
+5.b **`cycle-design-input.md`** — ha létezik és van benne érdemi felhasználói tartalom (CD1). Ez a felhasználó saját, szabad formájú ciklus-specifikációja, a 02 elsődleges bemenete. Ellenőrizd, hogy a benne szereplő elvárásoknak van-e **követhető sorsa**: megjelennek a `spec.md`-ben, átkerültek a plan/tasks átadó fájlokba, explicit `Out of scope`-ba kerültek, vagy nyitott kérdésként szerepelnek. A **csendben elejtett** design-input tétel `Must Fix` (lefedettségi rés, célfázis: 02). **Read-only** ez is: sem te, sem a fixerek nem írják át. Ha a fájl hiányzik vagy csak a sablon van benne, az **nem hiba**.
+
 6. **A projekt kódbázisa — létezés-ellenőrzéshez.** A 6. kategória (végrehajthatóság) megköveteli, hogy `Glob`/`Grep`/`Read` segítségével **ellenőrizd, létezik-e** egy megnevezett fájl vagy script. Ez **célzott létezés-vizsgálat**, nem kódbázis-audit: csak azokat az útvonalakat nézed meg, amelyeket a plan vagy a tasks futtatni akar.
 
 ## A 6 vizsgálati kategória

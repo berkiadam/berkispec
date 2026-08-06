@@ -82,13 +82,14 @@ _(Az orchestrátor (09) írja — a reviewer ezt üresen hagyja.)_
 
 A `code-review.md` végén egy `# Review History` szekció áll, a `validate-decision.md` `# Validation History` mintájára. **Ezt NEM te (a reviewer) töltöd ki — az orchestrátor (09-review-and-merge) írja** a hurok iterációi során; te csak létrehozod üresen, hogy a szekció determinisztikusan jelen legyen. A diagnózist te adod (a `Must Fix` lista); a per-item próbaszámlálót a 09 lépteti, ahogy a 07 a `# Validation History`-t.
 
-A 09 minden hurok-iterációban így naplóz ide (a formátum kötött, hogy a 3-próba korlát és a megszakítás-utáni folytatás determinisztikus legyen):
+A 09 minden hurok-iterációban **egyszer** naplóz ide (részeredmény nem kap külön `Run` bejegyzést — az megszakítaná a bukás-láncot), és nem kézzel, hanem a `failure-counter.py` szkripttel. A formátum kötött, hogy a leállási korlátok és a megszakítás-utáni folytatás determinisztikus legyen:
 
 ```md
 - **Run X (YYYY-MM-DD HH:MM) - FAIL**
-  - **Failed Item:** [A megrekedt Must Fix finding / regresszált teszt pontos azonosítója]
-  - **Consecutive Failures for this item:** [Előző egymás utáni hibák száma + 1]
   - **Details:** [a finding / regresszió rövid leírása]
+  - **Failed Item:** [A megrekedt Must Fix finding / regresszált teszt pontos azonosítója]
+  - **Consecutive Failures for this item:** [egymást követő bukások száma]
+  - **Total Failures for this item:** [összes bukás a naplóban]
 ```
 
 Tiszta review + zöld re-validate esetén a 09 a végére jegyzi: `Run X (YYYY-MM-DD HH:MM) - PASS`.

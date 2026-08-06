@@ -49,6 +49,7 @@ Az alábbi szekcióknál **aktívan rá kell kérdezned** (nem elég csak pre-fi
 - **Verziókezelő megléte (BD11 — KAPU, elsőként):** *„Van a projektben verziókezelő (git)? Ha nincs, tervezel-e bevezetni?"* A git *elérhetőségét* már a „Git-előkészítés" lépésben detektáltad; itt a szándékot rögzíted. Ha **nincs és nem is lesz**, írd a `## Git és branching konvenciók` szekcióba **explicit**: „NINCS verziókezelő (se GIT, se más), és nem is lesz." Ez a flag **kapuzza** a 01 (és a többi fázis) összes git-lépését: ott ekkor nincs `git switch -c`, nincs branch-figyelmeztetés, nincs commit — csak a `specs/cycle-NN-<name>/` mappa + roadmap készül.
 - **Alapértelmezett flow:** kérdezz rá a feladatok jellegére, és ez alapján rögzíts egy default munkamódot: *„Milyen jellegű feladatok lesznek túlnyomórészt ebben a projektben? (a) Termékfejlesztés / új funkciók, több komponenst érintő, összetett logika → **teljes berki spec flow** (02–09); (b) Konfiguráció, scriptelés, üzemeltetés, kisebb javítások → **egyszerűsített flow** (`prompts/skills/sdd-lightweight-flow.md`). Ez lesz az alapértelmezett munkamód; feladatonként felülbírálható."* A választ a `## Fejlesztési módszertan` szekció **Alapértelmezett flow** mezőjébe írd.
 - **Teszt keretrendszer:** *„A javasolt teszt stack: <default>. Megfelelő, vagy mást szeretnél?"*
+- **Teszt-riportolás (TR3 — KÖTELEZŐ kérdés, a teszt stack után):** *„Milyen riportot generál a teszt-eszközötök, és milyen paranccsal? (pl. Allure HTML, Playwright HTML report, pytest-html, JUnit XML, coverage) — ez minden ciklusban bekerül a `specs/cycle-NN-<name>/test-report/` mappába, és a validálás determinisztikus kapuval ellenőrzi a meglétét."* A választ a `## Teszt-riportolás` szekció **táblázatába** vezesd (kategória / eszköz / parancs / artefaktum). **Ezt a szekciót nem hagyhatod pre-fillelt default-tal** — vagy valós parancsok kerülnek bele, vagy a felhasználó explicit kimondja, hogy nincs riport-generálás, és akkor a `**Riport-generálás kötelező:**` mező `nem` + indoklás. Ha az eszköz többféle formátumot tud, **egyfájlos HTML-t javasolj** (a riport a ciklus git-diffjébe kerül).
 - **Merge stratégia + visszaintegrálás (BD7/BD15):** kérdezd meg a git szolgáltatót (GitHub / Bitbucket Cloud / Bitbucket Server / GitLab / Lokális), majd **próbáld ki az access-t** a megfelelő paranccsal (lásd a Merge stratégia szekciónál). Ha az access teszt sikertelen, **ne zárd le a `conventions.md`-t** — kérd a token / URL / permissions javítását, vagy alternatív szolgáltató / lokális merge választását. Ez az **egyetlen igazságforrás** arra, hogyan kerül vissza `main`-be egy elkészült branch (PR vagy közvetlen merge) — ezt használja a 09 (ciklus-merge), a 01/00 branch-figyelmeztetés, és a 00 init-branch visszaintegrálása is. Ha nincs döntés/remote, a default a **közvetlen merge** (BQ7). _(Csak a `## Merge stratégia` szekciót töltsd — ne vezess be új mezőt.)_
 - **Branch-elnevezési stratégia (BD8 — csak ha van VCS):** kérdezd meg:
   - Kell-e **Jira-jegyszámot** a branch nevének elejére? (ha igen: milyen formátumban)
@@ -214,6 +215,23 @@ _Az alábbiak **ajánlott default-ok** modern, korszerű eszközökkel (lokális
   - E2E compose fájl: `docker-compose.e2e.yml` a projekt gyökerében
 - **Mock eszközök:** _projekt-specifikusan töltendő ki — milyen mock framework-öket, szervereket, stub eszközöket használunk_
 
+## Teszt-riportolás
+
+_**Kötelező szekció (TR3).** Minden ciklus `specs/cycle-NN-<name>/test-report/` mappájába be kell kerülnie a projekt teszt-eszközének **saját, megnyitható riportjának** (Allure HTML, Playwright HTML, pytest-html, JUnit XML, coverage-riport stb.) — a chat `/clear` után nincs, a riport az egyetlen utólag ellenőrizhető bizonyíték. Ezt a táblázatot a `07-validate` **determinisztikus kapuval** (`report-gate-check.py`) kéri számon: hiányzó artefaktum → a validálás nem zárható PASS-ra. Az oszlopsorrend kötött, az utolsó oszlop a `test-report/`-hoz képest relatív útvonal (fájl vagy mappa)._
+
+**Riport-generálás kötelező:** igen
+
+| Teszt-kategória | Eszköz | Riport-generáló parancs | Artefaktum a `test-report/`-ban |
+|---|---|---|---|
+| E2E | Playwright (+ Allure) | `npx playwright test --reporter=html && npx allure generate ./allure-results --single-file -o ./allure-report` | `allure-report.html` |
+| Unit / integrációs | _a választott futtató_ | `<riport-generáló parancs>` | `unit-report.html` |
+| Lefedettség | _pl. c8 / coverage.py_ | `<parancs>` | `coverage/` |
+
+_Kitöltési szabályok:_
+- **Egyfájlos HTML-t preferálj** (`allure generate --single-file`, `--reporter=html` egy fájlba), mert a riport a ciklus git-diffjébe kerül. Ha az eszköz csak mappát tud (pl. teljes Allure static site), az is elfogadható — akkor a mappa neve `/`-re végződjön (`allure-report/`).
+- Ha egy kategóriához nincs riport-artefaktum, az utolsó oszlopba `-` kerül (a kapu kihagyja azt a sort).
+- **Ha a projekt egyáltalán nem generál teszt-riportot**, a fenti flaget írd `nem`-re, **indoklással** (pl. „csak manuális smoke-teszt van"). Ez tudatos, rögzített döntés — a kapu ilyenkor kihagyódik. Üresen hagyni vagy kitöltetlen táblázatot hagyni **nem** opció: a kapu ilyenkor használati hibát jelez.
+
 ## Naming konvenciók
 
 - **Fájlok:** `kebab-case`
@@ -285,6 +303,7 @@ Ha a 00 fázis félbeszakadt és új sessionban folytatódik:
 Mielőtt lezárod, ellenőrizd:
 1. Minden szekció kitöltött (nincs üresen hagyott pre-fill placeholder)?
 2. A Teszt keretrendszer a fejlesztővel egyeztetett (nem csak a default maradt megerősítés nélkül)?
+2.a **A `## Teszt-riportolás` szekció valós adatokkal kitöltött (TR3)?** — a táblázatban tényleges riport-generáló parancsok és artefaktum-nevek állnak, **vagy** a `**Riport-generálás kötelező:**` mező `nem` + indoklás. Sablon-placeholder (`<parancs>`, `<a választott futtató>`) nem maradhat benne: a `07-validate` kapuja ezt a táblát olvassa, és placeholder mellett minden ciklus bukna.
 3. A Merge stratégia kitöltött, és az access validáció **sikeresen lefutott** (vagy a fejlesztő explicit lokális merge-et választott)?
 4. A portok, env változók és Sonar (ha van) szekciók a projekt valóságát tükrözik?
 5. A `## Fejlesztési módszertan` **Alapértelmezett flow** mezője a fejlesztővel egyeztetett értékre van állítva (`teljes` vagy `egyszerűsített`), nem maradt placeholder?

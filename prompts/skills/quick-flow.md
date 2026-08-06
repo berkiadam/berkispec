@@ -135,6 +135,7 @@ Ebben a fázisban tisztázzuk a követelményeket és rögzítjük a pontos tech
 *   **Szabály (Kritikus):**
     *   Ebben a fázisban semmilyen projektfájlt (kód, meglévő dokumentáció) ne módosíts.
     *   **⛔ ÁLLJ MEG a fázis végén.** A 2. fázist (a `task.md`-t) **csak akkor kezdd el, ha a Felhasználó kifejezetten (explicit módon) jóváhagyta** a `spec.md`-t. Jóváhagyás nélkül ne lépj tovább.
+    *   **Jóváhagyás után KÖTELEZŐ commit** (verziókezelt projektben): a jóváhagyás elhangzása után azonnal, még a 2. fázis megkezdése előtt commitold a `spec.md`-t a ciklus feature ágán — `git add specs/cycle-XX-<név>/ && git commit -m "<JIRA-ID>: spec.md — cycle-XX-<név>"`. Ellenőrizd `git log -1 --oneline`-nal, és a válaszodban írd ki a commit azonosítóját. Külön engedélyt ne kérj rá: a fázis jóváhagyása magában foglalja. Ha nincs verziókezelő, ez kimarad.
 
 ### 2. Fázis: Feladatlista (`task.md`)
 A jóváhagyott specifikáció alapján elkészítjük a lépésről lépésre követhető feladatlistát.
@@ -151,6 +152,7 @@ A jóváhagyott specifikáció alapján elkészítjük a lépésről lépésre k
     *   A `task.md`-t ne kezdd el a `spec.md` jóváhagyása előtt.
     *   A 3. fázisra (implementáció) csak akkor lépj, ha a `spec.md` és a `task.md` **teljesen koherens**, és nincs nyitott kérdés közted és a Felhasználó között.
     *   **⛔ ÁLLJ MEG a fázis végén.** Az implementációt (3. fázis) **csak a `task.md` explicit felhasználói jóváhagyása után** kezdd el. Jóváhagyás nélkül ne lépj tovább.
+    *   **Jóváhagyás után KÖTELEZŐ commit** (verziókezelt projektben): a jóváhagyás után azonnal, még az implementáció megkezdése előtt commitold a `task.md`-t — `git add specs/cycle-XX-<név>/ && git commit -m "<JIRA-ID>: task.md — cycle-XX-<név>"`. Ellenőrizd `git log -1 --oneline`-nal, és írd ki a commit azonosítóját. Külön engedélyt ne kérj rá. Ha nincs verziókezelő, ez kimarad.
 
 ### 3. Fázis: Megvalósítás (Implementáció)
 Ebben a fázisban történik a tényleges kódolás a feladatlista alapján.

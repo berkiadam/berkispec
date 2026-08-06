@@ -14,6 +14,7 @@ subagents: []
 shared:
   - "shared/input-from-prev.md"
   - "shared/artifact-voice.md"
+  - "shared/phase-commit.md"
 ---
 # 04 — Tasks írás
 ## Kontextus ellenőrzés
@@ -326,15 +327,17 @@ Ha a lista teljes és a minőségellenőrzés átment, tedd fel a kérdést a fe
 
 Ha a felhasználó megerősíti:
 - Állítsd a `tasks.md` státuszát `Implementálásra kész`-re.
-- Készíts git commitot a fázis befejezéséről:
-  ```bash
-  git add specs/cycle-NN-<cycle-name>/
-  git commit -m "cycle-NN: 04-tasks"
-  ```
+- **Azonnal commitolj** a lenti *Fázis-záró commit* szerint (`<FÁZIS-TAG>` = `04-tasks`). Megerősítés → státuszírás → commit: ez egyetlen lépéssor, ne szakítsd meg.
+
+<!-- INCLUDE:shared/phase-commit.md -->
+
+A fenti blokkban a `<FÁZIS-TAG>` értéke ebben a fázisban: **`04-tasks`**, a záró státusz: **`Implementálásra kész`**.
 
 > **Kész lifecycle:** a `tasks.md` az `Implementálásra kész` → (implementáció során `Validálásra kész`) → a validate (07) PASS után `Kész` státuszra lép. A 08 fázis már `Kész`-t vár.
 
-Ha a státusz `Implementálásra kész`, állj meg. Ne kezdj implementálni vagy analízist. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
+Ha a státusz `Implementálásra kész`, **de a fázis-záró commit hiányzik** (VCS-es projekt, `git log -1 --oneline` nem a `cycle-NN: 04-tasks` commitot mutatja) — először commitolj, csak utána zárd le a fázist.
+
+Ha a státusz `Implementálásra kész` (és a commit megvan), állj meg. Ne kezdj implementálni vagy analízist. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
 > *"A task lista kész. Folytathatjuk az 5. lépéssel (analyze — kereszt-fázisos konzisztencia ellenőrzés). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:
 > ```
 > /bs-analyze input: @specs/cycle-NN-<cycle-name>

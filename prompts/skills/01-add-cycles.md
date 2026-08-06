@@ -6,6 +6,7 @@ prerequisites:
   - "conventions.md létezik"
 output:
   - "specs/roadmap.md státusz: Kész"
+  - "specs/cycle-NN-<name>/cycle-design-input.md (üres sablon, a felhasználó tölti ki — opcionális, CD1)"
   - "specs/cycle-NN-<name>/spec-input-from-prev.md és/vagy plan-input-from-prev.md (csak ha van átadandó infó, IP1)"
 prev: bs-init-project
 next: bs-write-spec
@@ -256,13 +257,14 @@ Ha minden kérdés `[x]` és a validációs ellenőrzés átment, tedd fel a ké
 
 Ha a felhasználó megerősíti:
 - Állítsd a `specs/roadmap.md` státuszát `Kész`-re.
+- Hozd létre az **első ciklus** könyvtárát (`mkdir -p specs/cycle-01-<name>/`, ha még nem létezik) és benne a `cycle-design-input.md` sablont a *„Ciklus design input (CD1)"* szekció szerint. A többi ciklus mappáját **ne** hozd létre előre — azok a saját 01-futásukkor (B. mód) kapják meg a sajátjukat.
 - Készíts git commitot a fázis befejezéséről — **a már létrehozott `feature/cycle-01[-<name>]` branch-en** (BD4/BQ1), nem `main`-en:
   ```bash
-  git add specs/roadmap.md
+  git add specs/roadmap.md specs/cycle-01-<name>/cycle-design-input.md
   git commit -m "cycle-NN: 01-cycles"
   ```
   ahol `NN` az éppen tervezett első ciklus száma (pl. `cycle-01: 01-cycles`). **No-VCS ágon a commit kimarad** (BI8).
-- Jelezd: *"A roadmap kész. Folytathatjuk az 1. ciklus spec fázisával (02)."*
+- Jelezd: *"A roadmap kész. Folytathatjuk az 1. ciklus spec fázisával (02). Létrehoztam a `specs/cycle-01-<name>/cycle-design-input.md` fájlt — ide leírhatod a saját szavaiddal az 1. ciklus specifikációját. Kitöltése nem kötelező, de ha írsz bele, a `bs-write-spec` figyelembe fogja venni."* — **a válasz végén helyezd el a `cycle-design-input.md` kattintható linkjét.**
 
 ---
 
@@ -341,20 +343,55 @@ Ha bármelyikre "nem": javítsd vagy kérdezz rá, mielőtt hozzáfűzöd.
 3. Ha a felhasználó megerősíti (a `git switch -c` ekkor már megtörtént — lásd „Branch létrehozása"):
    - Állítsd a roadmap státuszát `Kész`-re.
    - Hozd létre a ciklus könyvtárát: `mkdir -p specs/cycle-NN-<cycle-name>/` (a **mappanév** prefix nélkül, tisztán `cycle-NN-<name>` — BD3).
+   - Hozd létre a **ciklus design input sablont** a mappában: `specs/cycle-NN-<cycle-name>/cycle-design-input.md` — lásd a lenti *„Ciklus design input (CD1)"* szekciót.
    - Készíts git commitot a fázis befejezéséről — a **ciklus feature branch-én** (BD4), nem `main`-en:
      ```bash
-     git add specs/roadmap.md
+     git add specs/roadmap.md specs/cycle-NN-<cycle-name>/cycle-design-input.md
      git commit -m "cycle-NN: 01-cycles"
      ```
-     ahol `NN` az éppen hozzáadott ciklus száma (pl. `cycle-16: 01-cycles`). **No-VCS ágon a `git switch -c` és a commit kimarad** — csak a `mkdir` + roadmap-írás történik (BI8).
-   - Jelezd a következő lépést:
+     ahol `NN` az éppen hozzáadott ciklus száma (pl. `cycle-16: 01-cycles`). **No-VCS ágon a `git switch -c` és a commit kimarad** — csak a `mkdir` + roadmap-írás + a sablon létrehozása történik (BI8).
+   - Jelezd a következő lépést — **a design input felajánlásával együtt**:
 
      > *"Cycle NN — [cím] hozzáadva. Könyvtár létrehozva: `specs/cycle-NN-<cycle-name>/`*
+     >
+     > *Létrehoztam a `specs/cycle-NN-<cycle-name>/cycle-design-input.md` fájlt. **Ide leírhatod a saját szavaiddal a ciklus specifikációját** — elvárásokat, vázlatot, példákat, bármit, ami a fejedben van. **Kitöltése nem kötelező**, üresen is folytatható a flow; de ha írsz bele, a `bs-write-spec` (02) beolvassa és a spec kiindulópontjaként figyelembe veszi. Érdemes a spec fázis indítása ELŐTT kitölteni.*
      >
      > *Következő lépés — spec írás. Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:*
      > ```
      > /bs-write-spec input: @specs/roadmap.md, ciklus: cycle-NN-<cycle-name>
      > ```"*
+     >
+     > **A válasz végén helyezd el a `cycle-design-input.md` közvetlen, kattintható linkjét** (pl. `[cycle-design-input.md](file:///abszolút/útvonal/specs/cycle-NN-name/cycle-design-input.md)`), hogy a felhasználó egy kattintással meg tudja nyitni.
+
+---
+
+## Ciklus design input (CD1) — a felhasználó saját specifikációja
+
+**Mi ez:** a ciklus mappájában létrehozott `cycle-design-input.md` egy **üres sablon a felhasználónak**. Ide írhatja le a saját szavaival, szabad formában, hogy mit szeretne a ciklusban — elvárásokat, vázlatot, példa payloadot, folyamatleírást, linkeket, korábbi jegyzeteket.
+
+**Kulcsszabályok:**
+- **A fájl a felhasználóé.** Te (01) csak a sablont hozod létre, tartalmat **nem** írsz bele. A `02-write-spec` (viselkedési tartalom) és a `03-write-plan` (technikai/eljárás-jellegű tartalom) automatikusan beolvassa, de egyik sem írja át.
+- **Kitöltése opcionális.** Ha üresen marad (csak a sablon-szöveg van benne), a 02 egy mondatban jelzi és a roadmap-bejegyzés alapján dolgozik tovább — ez nem hiba, nem megállási ok.
+- **Nem a `spec-input-from-prev.md` helyettesítője.** A `spec-input-from-prev.md`-be **te** írsz (az interjú során elhangzott, de a roadmap-be nem illő tételek, IP1); a `cycle-design-input.md`-be **a felhasználó** ír, a fázis lezárása után, saját tempójában.
+
+**A létrehozandó sablon tartalma (szó szerint, `NN` az aktuális ciklusszámra behelyettesítve — pl. `# cycle 25 design input from user`):**
+
+```md
+# cycle NN design input from user
+
+> **Ez a fájl a Tiéd.** Ide írhatod le a saját szavaiddal, hogy mit szeretnél ebben a ciklusban:
+> elvárások, viselkedés-vázlat, példa kérés/válasz, folyamatleírás, korlátok, hivatkozások, jegyzetek.
+>
+> **Kitöltése nem kötelező** — üresen hagyva a flow változatlanul működik.
+> Ha viszont írsz ide, két fázis is automatikusan beolvassa:
+> - `bs-write-spec` (02) — a **viselkedési** tartalmat, a `spec.md` kiindulópontjaként (a `roadmap.md` bejegyzése mellett);
+> - `bs-write-plan` (03) — a **technikai/eljárás-jellegű** tartalmat (parancsok, hostok, komponensek, korlátok) a `plan.md`-hez.
+>
+> Formátum nincs megkötve: folyó szöveg, felsorolás, táblázat, kódrészlet — bármi jó.
+> Ezt a fájlt egyik fázis sem írja felül.
+
+<!-- Írj ide. -->
+```
 
 ---
 
