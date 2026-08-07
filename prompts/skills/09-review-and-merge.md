@@ -93,6 +93,8 @@ Egy review-javítás **elronthat egy tesztet**, ezért a fix után **előbb újr
 
 A re-validate a `07-validate` **teljes** „Validálási lépések" szekcióját futtatja (összes teszt + Sonar + DoD — a regresszió-fogás miatt, nem célzott futtatás; RD2), de **nem** indítja a 07 saját önjavító hurkát: a fix-vezénylést itt a 09 hurka végzi (egyetlen aktív orchestrátor, egyetlen aktív próba-számláló — nincs egymásba akadó hurok).
 
+> **Egyetlen kivétel — a Sonar az első re-validate körben (RD2/a).** A teszteket mindig futtatod, de a **teljes Sonar-elemzés** kimarad, ha a 07 PASS-a óta **nem változott forrásfájl** (a 08-doc-sync tipikusan csak dokumentációt ír). Forrásváltozás nélkül új Sonar-találat nem keletkezhet, az elemzés viszont a fázis egyik legdrágább lépése. A feltétel ellenőrzése determinisztikus, lásd a 8. pontot. **Minden review-fix iteráció után a Sonar újra fut** — ott a `review-fixer` ténylegesen kódot írt.
+
 ### ⚠ Anti-„csalás" garde (RD4 — a hurok legfontosabb szabálya)
 
 **A hurok a KÓDOT igazítja a reviewer findingjához ÉS a tesztekhez — SOHA nem fordítva.** TILOS:
@@ -105,6 +107,8 @@ Ezt a szabályt a `review-fixer` is megkapja (a 06 Fix-mód garde-ja). **Ha egy 
 ### A hurok egy iterációja
 
 1. **FAIL naplózása + per-item számláló — a `failure-counter.py` szkripttel (determinisztikusan, ne kézzel).** Ugyanaz a szkript, mint a 07-ben, de a `# Review History`-t frissíti — add át a `--header "Review History"`-t és a megrekedt item(ek) pontos nevét. **Iterációnként pontosan EGY bejegyzés** (részeredményt ne naplózz külön: a közbeiktatott PASS megszakítaná az egymást követő bukások láncát):
+   > **Python-parancs (platformfüggő):** a példákban `python3` szerepel (Linux/macOS). **Windowson** a `python3` gyakran nem létezik — vagy a Microsoft Store stubja, ami megnyitja a Store-t —, ezért ott `python` vagy `py -3` a helyes hívás. Ha a `python3` „command not found" / „not recognized" hibát ad, **próbáld újra `python`-nal, majd `py -3`-mal**, ugyanazokkal a paraméterekkel. Ez nem a szkript hibája, és nem kell miatta megállni.
+
    ```bash
    python3 <platform-scripts-mappa>/failure-counter.py \
      specs/cycle-NN-<cycle-name>/code-review.md \
@@ -119,7 +123,29 @@ Ezt a szabályt a `review-fixer` is megkapja (a 06 Fix-mód garde-ja). **Ha egy 
 6. **Marker felvétele (RD7).** A `tasks.md` státuszát fordítsd `Implementálásra kész [review-loop]`-ra. A marker jelzi: fix-mód aktív → a fixer automatikusan lépteti a státuszt, megerősítés nélkül.
 7. **`review-fixer` subagent indítása.** A konkrét `Must Fix`-listával + a `code-review.md` prerequisite-tel (lásd „A fixer-subagent indítása"). Ha a fixer eszkalációs jelzést ad → ugorj a 4. pontra.
 7.a **Szerződés-integritás kapu (a 07 VD3a-jával azonos, kötelező).** A fixer visszatérése után — **még a re-validate előtt** — nézd meg `git diff`-fel, hozzányúlt-e a tesztfájlokhoz, a `spec.md`-hez, a Sonar-/lint-konfighoz, vagy a `code-review.md` findingjeihez. Ha igen: legitim kiegészítés (új teszt a findinghez) → rendben, jegyezd fel; szerződés-gyengítés vagy finding-elnémítás (assertion lazítása, `skip`, suppress-komment, finding törlése/átfogalmazása javítás nélkül) → **`git checkout -- <fájl>` visszaállítás + RD6 eszkalációs ág**, ne indíts újabb fixert ugyanarra.
-8. **Re-validate (a 07 teljes ellenőrzései).** Futtasd a `07-validate` „Validálási lépéseit" (gyors tesztek → Sonar → nehéz tesztek → **teszt-riport kapu (TR3, `report-gate-check.py`)** → DoD). **Nem** indítod a 07 saját hurkát. **A re-validate körét a `test-report/validate-decision.md`-be dokumentáld** a 07 VD9 sablonja szerint (`## Kör N`, `**Indító:** 09-review re-validate`) — így a ciklus teljes validálási története egy fájlban marad; a `code-review.md` a review-hurok naplója, nem a validálásé.
+8. **Re-validate (a 07 teljes ellenőrzései).** Futtasd a `07-validate` „Validálási lépéseit" (gyors tesztek → Sonar → nehéz tesztek → **teszt-riport kapu (TR3, `report-gate-check.py`)** → DoD). **Nem** indítod a 07 saját hurkát.
+   - **Sonar-kihagyás az első re-validate körben (RD2/a) — determinisztikus feltétel.** Csak a **hurok első** re-validate körére vonatkozik (a `review-fixer` még nem futott). Ellenőrizd:
+     ```bash
+     # a 07 PASS-ának lezáró commitja — a fázis-záró commit üzenete PONTOSAN
+     # "cycle-NN: 07-validate" (NN helyére a ciklus száma, pl. cycle-16)
+     BASE=$(git log --format=%H -1 --grep="^cycle-16: 07-validate")
+     git diff --name-only "$BASE" HEAD
+     ```
+     - **Ha a lista üres, vagy minden érintett útvonal `specs/`, `docs-generated/`, `docs/` alatti, illetve gyökér-`README.md`** → nincs forrásváltozás: a **Sonar kimarad**. A lépés-táblába: `Sonar | kihagyva — nincs forrásváltozás a 07 PASS óta (RD2/a) | —`, és írd oda a `$BASE` rövid hash-ét, hogy utólag ellenőrizhető legyen.
+     - **Bármely más útvonal szerepel** (forrás, teszt, build- vagy Sonar-konfig) → a **Sonar fut**, a szokásos módon.
+     - **Ha a `$BASE` commit nem található** (nincs VCS, squash-olt history, eltérő commit-üzenet) → **a Sonar fut**. A kihagyás csak bizonyított forrás-változatlanság mellett megengedett; bizonytalanságnál mindig a futtatás a helyes ág.
+     - **A 2. és minden további re-validate körben a Sonar mindig fut** — ott a `review-fixer` kódot módosított.
+     - **A döntést add át a `test-runner`-nek explicit** (*„Sonar: kihagyva ebben a körben"* / *„Sonar: fusson"*) — a subagent nem találgat, és rendelkezés nélkül **futtatja**. A jelentésben ilyenkor `kihagyva (a hívó kérésére)` áll.
+
+     > A kihagyott Sonar **nem FAIL és nem hiányzó bizonyíték**: a 07 PASS-a mérte, és a mért kód azóta nem változott — a bizonyíték a `test-report/validate/round-NN/sonar-report.md`-ben ott van, a 07 utolsó teljes köréből. Ne jelöld `✗`-nek, és ne vegyél fel javító-taskot miatta. A TR3 riport-kapu ettől függetlenül fut (az a teszt-riportokról szól, nem a Sonarról).
+   - **Naplózás:** **a re-validate körét a `test-report/validate-decision.md`-be dokumentáld** a 07 VD9 sablonja szerint (`## Kör N`, `**Indító:** 09-review re-validate`) — így a ciklus teljes validálási története egy fájlban marad; a `code-review.md` a review-hurok naplója, nem a validálásé.
+   - **Riport-mappa (TR5):** a re-validate köre **saját mappát kap**: `specs/cycle-NN-<cycle-name>/test-report/review/round-NN/`, ahol `NN` a **review-hurok** iterációjának sorszáma (`round-01`, `round-02`, …) — nem a `validate/` alatti számozás folytatása. Ezt az útvonalat add át a `test-runner`-nek, és ezzel hívd a kaput:
+     ```bash
+     python3 <platform-scripts-mappa>/report-gate-check.py \
+       conventions.md specs/cycle-NN-<cycle-name> \
+       --report-subdir test-report/review/round-NN
+     ```
+     A `## Kör N` blokk `**Riport-mappa:**` sorába ezt az útvonalat írd — így a `validate-decision.md`-ből egyértelmű, hogy az adott kör bizonyítéka a `review/` ág alatt van. A re-validate **mindig teljes kör**, tehát a kapu `exit 0`-ja itt kötelező feltétel. Korábbi körök (`validate/` és `review/`) mappáihoz nem nyúlsz.
    - **FAIL** (regresszió) → ez is a hurok FAIL-je: új iteráció az 1. ponttól (a regresszált teszt lesz a megrekedt item).
 9. **Re-review (reviewer subagent).** Ha a re-validate zöld, futtasd újra a `reviewer` subagentet a friss diffre, és olvasd be az új `code-review.md`-t.
    - **Tiszta** (nincs lezáratlan `Must Fix`) → a hurok konvergált: vedd le a `[review-loop]` markert (a `tasks.md` `Kész`), naplózd a `PASS`-t (`failure-counter.py ... --result PASS --header "Review History"`), egyetlen lezáró commit (RD9), majd lépj a merge előtti doc-sync ellenőrzésre (§2) és a merge-megerősítésre (§3).

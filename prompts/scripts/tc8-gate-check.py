@@ -14,8 +14,9 @@ KÍVÜL él (a `specs/roadmap.md` mellett), ezért saját kapuja van. Kilenc che
   4. `Utolsó futás` marker (TC4) — minden tételnek van-e markere, és melyik
      avult el (staleness → kérdés a `doc-sync-questions.md`-be).
   5. Kötelező riport-sor (TC9/TR3) — a 2. és 3. szekció elején ott van-e a
-     `**Kötelező riport (TR3):**` sor (a ciklus `test-report/` mappájába kerülő
-     riport-artefaktum + forrás-hivatkozás a `conventions.md`-re).
+     `**Kötelező riport (TR3):**` sor (a validálási kör mappájába —
+     `test-report/validate/round-NN/` — kerülő riport-artefaktum +
+     forrás-hivatkozás a `conventions.md`-re).
   6. Futtatható koordináták (TC11) — van-e minden receptnek `Indítás` mezője,
      van-e `Példa hívás` a végpontot érintőknek, és a 3. szekció környezeti
      előfeltételei hivatkoznak-e receptre (különben nem derül ki, HOGYAN).
@@ -589,7 +590,22 @@ def check_coordinates(lines, section_of, fenced):
     return {"status": "PASS", "filled": filled, "placeholders": placeholders}
 
 
+
+def _force_utf8_output():
+    """Windows-kompatibilitás: a konzol örökölt kódlapja (cp852 / cp1250 / cp1252)
+    nem tudja megjeleníteni a kimenet tipográfiai és ékezetes karaktereit (—, →, ő, ű),
+    és a `print()` ilyenkor `UnicodeEncodeError`-t dob. Ez azért veszélyes, mert a
+    kivétel AZUTÁN keletkezne, hogy a szkript a fájlműveletet már elvégezte: a hívó
+    ágens hibás kilépő kódot látna egy sikeres művelet után. Ezért a kimenetet
+    UTF-8-ra kapcsoljuk, hibatűrő módban (Python 3.7+; régebbin csendben kimarad)."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
 def main():
+    _force_utf8_output()
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("test_conventions", nargs="?", default="specs/test-conventions.md",
@@ -705,8 +721,9 @@ def main():
         if r["status"] == "FAIL":
             overall_pass = False
             print(f"- **FAIL** {r['section']}. szekció — hiányzik a "
-                  "`**Kötelező riport (TR3):**` sor. A ciklus `test-report/` mappájába "
-                  "kerülő riport-artefaktum nevét és a `conventions.md → ## Teszt-riportolás` "
+                  "`**Kötelező riport (TR3):**` sor. A validálási kör mappájába "
+                  "(`test-report/validate/round-NN/`) kerülő riport-artefaktum nevét és a "
+                  "`conventions.md → ## Teszt-riportolás` "
                   "forrás-hivatkozást kell tartalmaznia (TC9).")
         elif r["status"] == "WARN":
             warn_count += 1

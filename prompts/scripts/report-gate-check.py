@@ -8,11 +8,29 @@ HTML, pytest-html, JUnit XML, coverage) az egyetlen utólag megnyitható
 bizonyíték arról, mi futott le és hogyan — ezért minden ciklusban ott kell
 lennie a `specs/cycle-NN-<name>/test-report/` mappában.
 
+Hol keresi (TR5): a riportok KÖRÖNKÉNTI almappákban élnek, hogy egy önjavító
+hurok minden körének megmaradjon a saját bizonyítéka:
+
+  specs/cycle-NN-<name>/test-report/
+  ├── validate-decision.md            (a 07 naplója — nem a kapu dolga)
+  ├── implement/check-log.md          (a 06 [CHECK]-naplója — nem a kapu dolga)
+  ├── validate/round-01/ round-02/    (a 07 validálási körei)
+  └── review/round-01/                (a 09 re-validate körei)
+
+A vizsgált mappát a hívó adja meg a `--report-subdir` kapcsolóval, pl.
+`--report-subdir test-report/validate/round-02`. Az alapérték (`test-report`)
+csak visszafelé kompatibilitás a körönkénti bontás bevezetése előtti
+ciklusokhoz — új futásban MINDIG add meg a kör-mappát.
+
 Mit ellenőriz: a `conventions.md` `## Teszt-riportolás` szekciójának
-táblázatában DEKLARÁLT artefaktumok tényleg léteznek-e a ciklus
-`test-report/` mappájában, és nem üresek-e. A táblázat a single source of
-truth (a 00-init a felhasználóval együtt tölti ki) — a script nem találgat
-eszközt, csak azt kéri számon, amit a projekt maga vállalt.
+táblázatában DEKLARÁLT artefaktumok tényleg léteznek-e a megadott
+kör-mappában, és nem üresek-e. A táblázat a single source of truth (a
+00-init a felhasználóval együtt tölti ki) — a script nem találgat eszközt,
+csak azt kéri számon, amit a projekt maga vállalt.
+
+Mikor hívd: csak TELJES körben. Könnyű körben (VD10) szándékosan nem fut
+minden tesztkategória, így a teljes tábla nem is teljesíthető — ott a kapu
+kimarad (a 07 skill szabálya).
 
 A táblázat várt formája (a fejléc szövege nem számít, az OSZLOPSORREND igen):
 
@@ -25,8 +43,8 @@ A táblázat várt formája (a fejléc szövege nem számít, az OSZLOPSORREND i
   | E2E | Playwright + Allure | `npm run e2e:report` | `allure-report.html` |
   | Unit | Vitest | `npm run test:report` | `unit-report.html` |
 
-Az utolsó oszlop a ciklus `test-report/` mappájához képest relatív útvonal
-(fájl vagy mappa). A `-` / `N/A` / üres érték = nincs artefaktum ehhez a
+Az utolsó oszlop a vizsgált KÖR-MAPPÁHOZ képest relatív útvonal (fájl vagy
+mappa). A `-` / `N/A` / üres érték = nincs artefaktum ehhez a
 sorhoz (kihagyva). Ha a szekcióban `**Riport-generálás kötelező:** nem`
 szerepel, a kapu tudatos projekt-döntés alapján kihagyódik (exit 0).
 
@@ -100,13 +118,31 @@ def check_artifact(report_dir, rel):
     return True, f"ok: {target} ({target.stat().st_size // 1024} KB)"
 
 
+
+def _force_utf8_output():
+    """Windows-kompatibilitás: a konzol örökölt kódlapja (cp852 / cp1250 / cp1252)
+    nem tudja megjeleníteni a kimenet tipográfiai és ékezetes karaktereit (—, →, ő, ű),
+    és a `print()` ilyenkor `UnicodeEncodeError`-t dob. Ez azért veszélyes, mert a
+    kivétel AZUTÁN keletkezne, hogy a szkript a fájlműveletet már elvégezte: a hívó
+    ágens hibás kilépő kódot látna egy sikeres művelet után. Ezért a kimenetet
+    UTF-8-ra kapcsoljuk, hibatűrő módban (Python 3.7+; régebbin csendben kimarad)."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
 def main():
+    _force_utf8_output()
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("conventions", help="a projekt gyökerében lévő conventions.md útvonala")
     parser.add_argument("cycle_dir", help="a ciklus mappája (specs/cycle-NN-<name>)")
     parser.add_argument("--report-subdir", default="test-report",
-                        help="a riport-mappa neve a cikluson belül (alap: test-report)")
+                        help="a vizsgált kör-mappa a cikluson belül, pl. "
+                             "'test-report/validate/round-02' vagy "
+                             "'test-report/review/round-01' (TR5). Alap: 'test-report' "
+                             "— csak régi, körönkénti bontás előtti ciklusokhoz")
     args = parser.parse_args()
 
     conv = Path(args.conventions)
@@ -164,7 +200,7 @@ def main():
             print(f"  ✗ {kategoria} ({eszkoz}) → {artefakt}")
         print("A validálás NEM zárható PASS-ra. Futtasd a conventions.md "
               "`## Teszt-riportolás` táblájában megadott riport-generáló parancsot, "
-              "és másold az artefaktumot a ciklus test-report/ mappájába.")
+              f"és másold az artefaktumot ebbe a kör-mappába: {report_dir}")
         return 1
 
     print(f"\nKAPU OK — mind a {checked} deklarált riport-artefaktum megvan.")

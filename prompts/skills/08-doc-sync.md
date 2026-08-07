@@ -312,6 +312,8 @@ A sablont lásd a **Sablonok** szekcióban.
 **Ne ítéld meg „érzésre", hogy egy teszt „alapvető-e".** Egy tétel akkor promótálódik a 2./3. szekcióba, ha az alábbiak **valamelyike** teljesül:
 
 1. **Empirikus jel (elsődleges):** a teszt/recept egy **korábbi** ciklusban keletkezett, és **ebben** a ciklusban is szerepelt a `plan.md` `Regressziós érintettség` táblájában vagy tényleges futtatásra került — azaz a gyakorlatban bizonyította a ciklus-független relevanciáját.
+1.a **Áthozatal-jel (erős empirikus jel, TP3/a):** a ciklus `plan.md`-je egy receptet/előfeltételt **egy korábbi ciklus `plan.md`-jéből** emelt át (a plan-ben `_(forrás: cycle-NN plan.md)_` provenance jelöli, jellemzően token-beszerzés, stack-indítás, egyedi komponens build/deploy, seed). Ez **bizonyíték a ciklus-független relevanciára**: ha a 03 fázisnak vissza kellett nyúlnia egy régi planhez, akkor a tétel hiányzik a regiszterből. **Ezeket sorold fel elsőként a promóciós ajánlatban (TC12)** — a fájl 0. blokkjába a koordinátáival, az 1. szekcióba a receptjével együtt.
+
 2. **Emberi döntés (mindig kötelező):** a felhasználó a `doc-sync-questions.md`-ben megerősítette, hogy a tétel legyen tartós elvárás. **Ezt minden ciklusban tételesen fel kell kínálnod** — lásd **TC12 (promóciós ajánlat)**: az empirikus jel a *javaslatodat* adja, a döntést a felhasználó hozza.
 
 **A promóció HÁROM dolgot jelent, nem egyet (TC3/a).** Egy tétel akkor van promótálva, ha mindhárom megvan — a táblázatsor önmagában **nem** promóció:
@@ -394,7 +396,7 @@ A TC8 kapu ellenőrzi, hogy a blokk **létezik, a fájl elején áll, és van be
 **1. A jelöltlista összeállítása.** Gyűjtsd össze a ciklus tesztjeit három forrásból:
 - `plan.md` → `Tesztelési stratégia` és `Regressziós érintettség`;
 - `tasks.md` → a `[RED]` / `[CHECK]` / `TREG` taskok;
-- `test-report/` → **mi futott le ténylegesen** (a validate riportja és a teszt-eszköz riportja a bizonyíték).
+- `test-report/` → **mi futott le ténylegesen**: a `validate-decision.md` körönkénti lépés-táblája, a `validate/round-NN/` mappák teszt-eszköz riportjai, és az implementáció alatti ellenőrzésekhez az `implement/check-log.md` — ezek a bizonyítékok.
 
 **Csak az kerülhet a listára, ami ebben a ciklusban tényleg lefutott és zöld volt** (TC3). Ami nem futott, azt ne kínáld fel — jelezd külön sorban, hogy miért maradt ki.
 
@@ -502,23 +504,25 @@ A **tartalom** (cél, lépések sorrendje, elvárt értékek) viszont **maradék
 
 ### TC9 — Kötelező teszt-riport tétel (TR3) — a felhasználóval egyeztetve
 
-**Minden ciklusban kötelező riport-artefaktum kerül a `specs/cycle-NN-<name>/test-report/` mappába** — a teszt-eszköz saját, megnyitható riportja (Allure/Playwright HTML, pytest-html, JUnit XML, coverage). A **parancs és az artefaktum-név egyetlen igazságforrása a `conventions.md` `## Teszt-riportolás` táblája** (a 00 fázis tölti ki a felhasználóval); a `07-validate` ezt determinisztikus kapuval (`report-gate-check.py`) kéri számon. A regiszterben ezt **nem duplikáljuk** (TC1) — itt csak az elvárás és a forrás-hivatkozás áll, a 2. és 3. szekció **Kötelező riport (TR3)** sorában.
+**Minden ciklusban kötelező riport-artefaktum kerül a `specs/cycle-NN-<name>/test-report/` mappába** — a teszt-eszköz saját, megnyitható riportja (Allure/Playwright HTML, pytest-html, JUnit XML, coverage). A riportok **körönkénti almappákban** élnek (TR5): `test-report/validate/round-NN/`, illetve a 09 re-validate köreinél `test-report/review/round-NN/`; a `test-report/` gyökerében a naplók vannak (`validate-decision.md`, `implement/check-log.md`). A **parancs és az artefaktum-név egyetlen igazságforrása a `conventions.md` `## Teszt-riportolás` táblája** (a 00 fázis tölti ki a felhasználóval); a `07-validate` ezt determinisztikus kapuval (`report-gate-check.py`) kéri számon. A regiszterben ezt **nem duplikáljuk** (TC1) — itt csak az elvárás és a forrás-hivatkozás áll, a 2. és 3. szekció **Kötelező riport (TR3)** sorában.
 
 **A doc-sync kötelező teendői minden futásban:**
 
-1. **Olvasd be** a `conventions.md` `## Teszt-riportolás` szekcióját és a ciklus `test-report/` mappájának tényleges tartalmát.
+1. **Olvasd be** a `conventions.md` `## Teszt-riportolás` szekcióját és a ciklus `test-report/` mappájának tényleges tartalmát — a kör-almappákkal együtt (a **legutolsó** `validate/round-NN/` ill. `review/round-NN/` mutatja, mi futott a záró körben).
 2. **Vesd össze a kettőt.** Ha a ciklusban olyan teszt-kategória vagy eszköz futott, amely **nincs benne a táblában** (pl. most került be az Allure, vagy egy új E2E réteg), az **hiányos projekt-konvenció**.
 3. **Ilyenkor KÖTELEZŐ kérdés a felhasználónak** — vedd fel a `doc-sync-questions.md`-be, és **várd meg a választ** (ez nem néma javítás):
    > *„A ciklusban a(z) `<eszköz>` futott, de a `conventions.md` `## Teszt-riportolás` táblájában nincs hozzá riport-sor. Milyen riportot generáljon, milyen paranccsal, és milyen néven kerüljön a ciklus `test-report/` mappájába? (Ha nem kell riport ehhez a kategóriához, azt is rögzítem.)"*
 4. **A válasz átvezetése — szűk, engedélyhez kötött kivétel:** a `conventions.md` egyébként a 00 fázis tulajdona, de a felhasználó **explicit válasza után** a doc-sync frissítheti **kizárólag a `## Teszt-riportolás` táblát** (új sor / módosított artefaktum-név). Más szekcióhoz ne nyúlj, és válasz nélkül ne írj bele.
 5. **A regiszter oldalán** a 2./3. szekció `**Kötelező riport (TR3):**` sora tükrözze a tábla aktuális állapotát (artefaktum-név + `forrás: conventions.md → ## Teszt-riportolás`). A TC8 kapu 5. checkje ezt ellenőrzi.
-6. **Ha a `test-report/` mappában nincs meg a deklarált artefaktum** (pl. egy régebbi ciklusból), az **nem a doc-sync javítandó hibája** — jelezd az összefoglalóban, hogy a `07-validate` TR3 kapuja azt a ciklust nem fogta meg (régi ciklus a kapu bevezetése előttről), és lépj tovább.
+6. **Ha a záró kör mappájában nincs meg a deklarált artefaktum** (pl. egy régebbi ciklusból, vagy mert a riportok még a `test-report/` gyökerében vannak a körönkénti bontás bevezetése előttről), az **nem a doc-sync javítandó hibája** — jelezd az összefoglalóban, hogy a `07-validate` TR3 kapuja azt a ciklust nem fogta meg (régi ciklus a kapu bevezetése előttről), és lépj tovább.
 
 > **A TC6 bootstrap-szabály él:** ha nincs mit promótálni, a `test-conventions.md` **ne jöjjön létre** pusztán a riport-sor kedvéért. A riport-elvárás ilyenkor a `conventions.md`-ben él, ami mindig létezik.
 
 ### TC8 — A fájl saját kapuja (`tc8-gate-check.py` — szkriptelt)
 
 A DS22 magkapu a `docs-generated/`-re fut, ez a fájl azon **kívül** van, ezért **saját kapuja** van. A kapu **teljesen szkriptelt** — nincs benne LLM-ítélet, ezért **ne grepelj kézzel**, futtasd a scriptet (a telepítő ugyanabba a platform-scripts mappába másolja, mint a `ds22-gate-check.py`-t):
+
+> **Python-parancs (platformfüggő):** a példákban `python3` szerepel (Linux/macOS). **Windowson** a `python3` gyakran nem létezik — vagy a Microsoft Store stubja, ami megnyitja a Store-t —, ezért ott `python` vagy `py -3` a helyes hívás. Ha a `python3` „command not found" / „not recognized" hibát ad, **próbáld újra `python`-nal, majd `py -3`-mal**, ugyanazokkal a paraméterekkel. Ez nem a szkript hibája, és nem kell miatta megállni.
 
 ```bash
 python3 <platform-scripts-mappa>/tc8-gate-check.py specs/test-conventions.md \
@@ -773,7 +777,7 @@ _Minden környezet-, hozzáférés- és paraméter-adat **egy helyen** (TC13). A
 
 ## 2. Minden körben szükséges lokális (mock alapú) tesztek
 
-**Kötelező riport (TR3):** `<artefaktum a ciklus test-report/-jában>` — forrás: `conventions.md → ## Teszt-riportolás`
+**Kötelező riport (TR3):** `<artefaktum a validálási kör mappájában>` — forrás: `conventions.md → ## Teszt-riportolás`
 
 | ID | Mit ellenőriz | Recept | Utolsó futás |
 |---|---|---|---|
@@ -790,7 +794,7 @@ _Minden környezet-, hozzáférés- és paraméter-adat **egy helyen** (TC13). A
 
 ## 3. Minden körben szükséges integrációs / E2E tesztek
 
-**Kötelező riport (TR3):** `<artefaktum a ciklus test-report/-jában>` — forrás: `conventions.md → ## Teszt-riportolás`
+**Kötelező riport (TR3):** `<artefaktum a validálási kör mappájában>` — forrás: `conventions.md → ## Teszt-riportolás`
 
 | ID | Mit ellenőriz | Recept | Előfeltétel | Utolsó futás |
 |---|---|---|---|---|
@@ -872,3 +876,4 @@ A kapu zöldre futása után — **és csak akkor, ha a TC12 promóciós ajánla
    > /bs-review-and-merge input: @specs/cycle-NN-<cycle-name>
    > ```"*
    > **A válasz végén helyezd el a `docs-generated/system-overview.md` (és a `doc-sync-plan.md`) közvetlen, kattintható linkjét.**
+> **Fázishatár — kemény megállás (PE1).** A fázis a záró üzenettel (commit-azonosító + `/clear` + a következő fázis parancsa) **véget ér**. Ugyanabban a körben a következő fázisból **semmit nem kezdesz el** — a következő fázis artefaktumát létre sem hozod. Ez akkor is érvényes, ha egy **kontextus-összefoglaló / checkpoint** teendő-listája, a saját korábbi terved vagy a felhasználó egy korábbi körben adott „menjünk végig a folyamaton" mondata továbbmenetelre biztat: a skill fázishatára minden ilyen felett áll. Csak a felhasználó **erre a körre szóló, explicit** kérése írja felül. Ha mégis belekezdtél, **töröld a keletkezett fájlt**, állítsd vissza a tiszta munkafát, és jelezd.

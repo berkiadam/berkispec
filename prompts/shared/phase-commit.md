@@ -35,8 +35,25 @@
    - Ha bármelyik nem teljesül (üres commit, hook visszautasította, elfelejtett `git add`), **javítsd és futtasd újra** — legfeljebb 2 próbálkozás, utána STOP és jelezd a hibát a felhasználónak a parancs kimenetével együtt.
 5. **Visszajelzés:** a záró üzenetben — a következő fázis parancsa ELŐTT — írd ki egy sorban a commit azonosítóját és üzenetét (pl. `Commit: a1b2c3d — cycle-NN: <FÁZIS-TAG>`).
 
+> **A commit üzenete PONTOSAN `cycle-NN: <FÁZIS-TAG>`** — se conventional-commit prefix (`docs(...)`, `feat:`), se saját megfogalmazás, se kiegészítő leírás az első sorban. A 07-validate és a 09 ezt a formátumot keresi visszamenőleg, és a 4. lépés ellenőrzése is erre illeszkedik. Ha a `git log -1 --oneline` mást mutat, **javítsd** (`git commit --amend -m "cycle-NN: <FÁZIS-TAG>"`), mielőtt lezárod a fázist.
+
+### Fázishatár — kemény megállás a commit után (PE1)
+
+> **A fázis a commit azonosítójának kiírásával VÉGET ÉR. Ugyanabban a körben a következő fázisból semmit nem kezdesz el** — sem fájlt nem hozol létre, sem elemzést nem futtatsz, sem „csak előkészítésként" nem írsz bele a következő fázis artefaktumába. A záró üzeneted utolsó eleme a `/clear` + a következő fázis indító parancsa; **utána megállsz és visszaadod a vezérlést a felhasználónak.**
+
+**Ez akkor is érvényes, ha valami továbbmenetelre biztat:**
+
+- egy **kontextus-összefoglaló / checkpoint** korábbi teendő-listája (pl. *„3. Call /bs-write-tasks…"*) — az összefoglaló a **múltat** rögzíti, nem parancs a jelenre;
+- a saját korábbi terved vagy egy TODO-listád, amely több fázist sorolt fel;
+- a felhasználó egy **korábbi** körben adott „menjünk végig a folyamaton" jellegű mondata.
+
+**A skill fázishatára minden ilyen felett áll.** Egyetlen dolog írja felül: a felhasználó **a commit után, explicit, erre a körre szóló** kérése, hogy folytasd — és akkor is jelezd, hogy friss kontextus (`/clear`) nélkül a következő fázis minősége romlik.
+
+**Miért:** a fázisonkénti `/clear` a módszertan alapja — a következő fázis a saját, tiszta kontextusából, a commitolt artefaktumból indul. Ha ugyanabban a körben folytatod, a következő fázis a jelenlegi fázis teljes szemetét örökli (elvetett alternatívák, félkész gondolatmenetek), és jellemzően **átveszi a döntéseidet ahelyett, hogy újra levezetné őket**.
+
 **Tiltások:**
 
 - **Ne** jelentsd késznek a fázist, és **ne** add meg a következő fázis indító parancsát commit nélkül (No-VCS ágat kivéve).
 - **Ne** halaszd a commitot a következő fázisra („majd a 03 commitolja") — minden fázis a sajátját commitolja.
+- **Ne** kezdd el a következő fázist a commit után ugyanabban a körben (PE1) — a következő fázis artefaktumát (`plan.md`, `tasks.md`, kód) **létre sem hozod**. Ha mégis megtetted, **töröld** a keletkezett fájlt, állítsd vissza a tiszta munkafát, és jelezd a felhasználónak.
 - **Ne** kérj külön engedélyt a commitra: a fázis lezárásának megerősítése **magában foglalja** a commit jóváhagyását. (A commitálatlan, korábbról ottmaradt idegen változtatásokról a fáziseleji munkafa-ellenőrzés már döntött.)

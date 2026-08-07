@@ -47,6 +47,8 @@ Határozd meg a platform-specifikus script helyét a projekt gyökeréhez képes
 - **Cursor:** `.cursor/scripts/export-doc.py`
 - **GitHub Copilot:** `.github/scripts/export-doc.py`
 
+> **Python-parancs (platformfüggő):** a példákban `python3` szerepel (Linux/macOS). **Windowson** a `python3` gyakran nem létezik — vagy a Microsoft Store stubja, ami megnyitja a Store-t —, ezért ott `python` vagy `py -3` a helyes hívás. Ha a `python3` „command not found" / „not recognized" hibát ad, **próbáld újra `python`-nal, majd `py -3`-mal**, ugyanazokkal a paraméterekkel. Ez nem a szkript hibája, és nem kell miatta megállni.
+
 ```bash
 # paraméter nélkül (a két default doksi)
 python3 <platform-script-path>

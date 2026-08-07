@@ -125,7 +125,22 @@ def parse_rename_arg(value):
     return (old, new)
 
 
+
+def _force_utf8_output():
+    """Windows-kompatibilitás: a konzol örökölt kódlapja (cp852 / cp1250 / cp1252)
+    nem tudja megjeleníteni a kimenet tipográfiai és ékezetes karaktereit (—, →, ő, ű),
+    és a `print()` ilyenkor `UnicodeEncodeError`-t dob. Ez azért veszélyes, mert a
+    kivétel AZUTÁN keletkezne, hogy a szkript a fájlműveletet már elvégezte: a hívó
+    ágens hibás kilépő kódot látna egy sikeres művelet után. Ezért a kimenetet
+    UTF-8-ra kapcsoljuk, hibatűrő módban (Python 3.7+; régebbin csendben kimarad)."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
 def main():
+    _force_utf8_output()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("docs_dir", help="a docs-generated/ mappa útvonala")
     parser.add_argument("--rename", action="append", type=parse_rename_arg, default=[],

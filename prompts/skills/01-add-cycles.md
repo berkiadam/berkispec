@@ -361,6 +361,8 @@ Ha bármelyikre "nem": javítsd vagy kérdezz rá, mielőtt hozzáfűzöd.
      > /bs-write-spec input: @specs/roadmap.md, ciklus: cycle-NN-<cycle-name>
      > ```"*
      >
+     > **Fázishatár — kemény megállás (PE1):** a 01 fázis ezzel az üzenettel **véget ér**. Ugyanabban a körben **ne kezdj spec-írásba** (`spec.md`-t létre se hozz), akkor sem, ha egy kontextus-összefoglaló/checkpoint teendő-listája, a saját korábbi terved vagy a felhasználó egy korábbi körben adott „menjünk végig a folyamaton" mondata erre biztat. Csak a felhasználó erre a körre szóló, explicit kérése írja felül.
+     >
      > **A válasz végén helyezd el a `cycle-design-input.md` közvetlen, kattintható linkjét** (pl. `[cycle-design-input.md](file:///abszolút/útvonal/specs/cycle-NN-name/cycle-design-input.md)`), hogy a felhasználó egy kattintással meg tudja nyitni.
 
 ---

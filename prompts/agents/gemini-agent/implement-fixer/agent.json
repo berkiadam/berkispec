@@ -15,9 +15,9 @@
         "view_file",
         "list_dir",
         "Edit",
+        "write_to_file",
         "replace_file_content",
         "multi_replace_file_content",
-        "write_to_file",
         "grep_search",
         "Glob",
         "run_command"

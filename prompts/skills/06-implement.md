@@ -7,6 +7,7 @@ prerequisites:
   - "specs/cycle-NN-<name>/analyze-report.md státusz: PASS"
 output:
   - "Implementált kód"
+  - "specs/cycle-NN-<name>/test-report/implement/check-log.md — a [CHECK] futások append-only naplója (TR5)"
   - "specs/cycle-NN-<name>/tasks.md státusz: Validálásra kész"
 prev: bs-analyze
 next: bs-validate
@@ -110,6 +111,7 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
    - Futtasd le a megadott parancsot.
    - Ha hibát jelez, javítsd a csoporton belüli előző taskokat, majd futtasd újra.
    - Csak zöld `[CHECK]` után jelölhető kész (`- [x]`) a csoport — a `[RED]`/`[GREEN]` taskokat is csak ekkor zárd le.
+   - **🔴 Naplózd a `check-log.md`-be (TR5) — minden próbát, a bukottakat is.** A parancs kimenete a chatben él, a chat pedig `/clear` után nincs; enélkül a fázisból csak egy pipa marad, ami állítja a zöldet, de nem bizonyítja. Lásd a *`[CHECK]` futásnapló* szekciót.
    - **3 próba szabály:** Ha a `[CHECK]` háromszor egymás után hibával tért vissza, és a csoporton belüli javítási kísérletek sem vezettek eredményre — **állj meg**. Írd le, mit próbáltál, és jelezd a felhasználónak: *"[Tkkk] háromszor sikertelen volt. [Rövid összefoglalás a hibáról és a próbált megoldásokról.] Hogyan tovább?"*
    - **Portütközés:** Ha service indítása vagy teszt futtatása portütközéssel (address already in use) meghiúsul, ne állj meg. Keresd meg a következő szabad portot (`ss -tlnp | grep :<port>` vagy `lsof -i :<port>`), frissítsd átmenetileg az érintett konfigurációban (`docker-compose`, env fájl), és futtasd újra. Jelezd a felhasználónak melyik portot használtad helyette.
      > **⚠ ÁTMENETI MÓDOSÍTÁS — NE COMMITOLD:** a portütközés miatti config-/port-változtatás ideiglenes. A task commitja előtt ÁLLÍTSD VISSZA, vagy zárd ki a `git add`-ból (ne kerüljön a ciklus diffjébe). Csak a task tényleges kódváltozása commitolható.
@@ -122,9 +124,12 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
 
 11. **Jelöld késznek a `tasks.md`-ben:** állítsd a task checkboxát `- [x]`-re. **Ez a `tasks.md` módosítás is a commit része** — a kód és a workflow-állapot nem csúszhat szét.
 
-12. **Git commit:** A task sikeres befejezése és a csoportzáró `[CHECK]` (vagy a task saját ellenőrzése, ha nincs csoport) zöldre futása után commitáld a változtatást **az érintett forrásfájlokkal ÉS a `tasks.md`-vel együtt**:
+12. **Git commit:** A task sikeres befejezése és a csoportzáró `[CHECK]` (vagy a task saját ellenőrzése, ha nincs csoport) zöldre futása után commitáld a változtatást **az érintett forrásfájlokkal, a `tasks.md`-vel ÉS a `check-log.md`-vel együtt**:
     ```bash
-    git add <érintett fájlok> specs/cycle-NN-<cycle-name>/tasks.md && git commit -m "cycle-NN: Tkkk - <task leírása>"
+    git add <érintett fájlok> \
+            specs/cycle-NN-<cycle-name>/tasks.md \
+            specs/cycle-NN-<cycle-name>/test-report/implement/check-log.md \
+      && git commit -m "cycle-NN: Tkkk - <task leírása>"
     ```
     ahol `NN` a ciklus száma (pl. `16`), `Tkkk` a task azonosítója (pl. `T001`), a leírás pedig a task szövegének tömörített változata.
     **Példa:** `cycle-16: T001 - add initHash function to token-store`
@@ -144,6 +149,44 @@ Ha implementálás közben az alábbiak bármelyike teljesül, **STOP — állj 
 - **Egy `[CHECK]` task háromszor egymás után hibával tért vissza** (lásd 8. szabály).
 
 Minden esetben csak **egy** kérdést tegyél fel, várj a válaszra, majd folytasd.
+
+---
+
+## `[CHECK]` futásnapló (TR5) — `test-report/implement/check-log.md`
+
+> **Miért kell:** a `[CHECK]` parancsok kimenete a chatben él, a chat pedig `/clear` után nincs. Enélkül az implementációs fázisból csak egy `- [x]` pipa és egy commit-üzenet marad — mindkettő *állítja*, hogy zöld volt, de nem bizonyítja. A 07-validate ugyanezért követeli meg a bizonyítékot (TR1/TR2) és a riport-artefaktumokat (TR3); a 06-ban ennek olcsó, szöveges párja ez a napló.
+
+**Hol:** `specs/cycle-NN-<cycle-name>/test-report/implement/check-log.md`. Ha a mappa nem létezik, hozd létre. A `test-report/validate/` és `test-report/review/` almappákhoz **nem nyúlsz** — azok a 07 és a 09 bizonyítékai.
+
+**Mikor írsz bele:** **minden `[CHECK]` futás után, a bukottak után is** — nem csak a végül zöld próba után. A napló **append-only**: korábbi sort nem írsz át és nem törölsz.
+
+**Mit NEM csinálsz:** nem generálsz HTML/Allure/coverage riportot. Az a 07 dolga — a 06 záró állapotát a 07 első TELJES köre úgyis végigméri, két riport-készlet ugyanarról fölösleges duplikáció a git-diffben.
+
+### A fájl sablonja
+
+```md
+# `[CHECK]` futásnapló — cycle-NN-<cycle-name>
+
+_(Append-only. A 06-implement írja, taskonként. A 07/09 nem ír bele.)_
+
+| Idő | Task | Próba | Mód | Parancs | Eredmény |
+|---|---|---|---|---|---|
+| 2026-08-07 10:12 | T004 | 1/3 | normál | `npm test -- token-store` | ✗ 12 passed / 1 failed — `initHash returns stable hash` |
+| 2026-08-07 10:19 | T004 | 2/3 | normál | `npm test -- token-store` | ✓ 13 passed / 0 failed / 0 skipped |
+| 2026-08-07 11:40 | T041 | 1/3 | validate-loop | `npm test -- auth` | ✓ 27 passed / 0 failed / 0 skipped |
+
+## Megjegyzések
+- **T004** — átmeneti port-csere a `[CHECK]` futtatásához: 5432 → 5433 (`docker-compose.yml`); a commit előtt visszaállítva.
+```
+
+**Oszlopok:**
+- **Idő** — konkrét string (`YYYY-MM-DD HH:MM`). Shell-behelyettesítés platformfüggő: bash/zsh → `$(date '+%Y-%m-%d %H:%M')`, PowerShell → `(Get-Date -Format 'yyyy-MM-dd HH:mm')`. Ha nem tudod megállapítani, `—` is elfogadható; a többi oszlop a lényeg.
+- **Próba** — hányadik kísérlet a 3-próba szabályból (8. pont): `1/3`, `2/3`, `3/3`. Ez teszi utólag láthatóvá, hogy egy csoport nehezen ment át.
+- **Mód** — `normál` \| `validate-loop` \| `review-loop`. A fix-módban futtatott `[CHECK]`-eket **ugyanígy naplózod**, a megfelelő markerrel — így a javító körök is nyomot hagynak.
+- **Parancs** — a ténylegesen kiadott parancs **szó szerint**, nem a task szövegében szereplő idealizált változat.
+- **Eredmény** — `✓`/`✗` + a futtató darabszámai (`X passed / Y failed / Z skipped`), bukásnál a bukott teszt(ek) neve rövid hibaüzenettel. **Ha a parancs nem teszt** (build, lint, typecheck), a darabszám helyett a lényegi kimenet egy sora (pl. `0 errors`).
+
+**Megjegyzések szekció** — ide kerül minden olyan körülmény, ami a futást befolyásolta, de nem fér a táblába: átmeneti port-csere (és hogy visszaállt-e — 8. pont portütközés-szabálya), kézzel indított/leállított konténer, kihagyott ellenőrzés és annak indoka.
 
 ---
 
@@ -182,16 +225,22 @@ A README.md az implementáció része — nem utólagos dokumentáció. Akkor ke
 ## Státusz kezelés
 
 - Implementálás közben: `Implementálás folyamatban`
-- Ha minden task `[x]`: frissítsd a `tasks.md` státuszát `Validálásra kész`-re, és **commitold ezt az állapotváltozást** (a végső státusz külön legyen rögzítve):
+- Ha minden task `[x]`: frissítsd a `tasks.md` státuszát `Validálásra kész`-re, és **commitold ezt az állapotváltozást** (a végső státusz külön legyen rögzítve) — a `check-log.md` utolsó bejegyzéseivel együtt:
   ```bash
-  git add specs/cycle-NN-<cycle-name>/tasks.md && git commit -m "cycle-NN: 06-implement - kész, validálásra kész"
+  git add specs/cycle-NN-<cycle-name>/tasks.md \
+          specs/cycle-NN-<cycle-name>/test-report/implement/check-log.md \
+    && git commit -m "cycle-NN: 06-implement - kész, validálásra kész"
   ```
+  **Ellenőrzés a státuszváltás előtt:** a `check-log.md` létezik, és minden csoportzáró `[CHECK]`-hez tartozik benne legalább egy sor. Ha egy csoport `[x]`, de a naplóban nincs hozzá bejegyzés, a bizonyíték hiányzik — pótold a naplósort a tényleges futtatás alapján (ne emlékezetből: ha nem tudod, futtasd újra a `[CHECK]`-et).
 
 Ha a státusz `Validálásra kész`, állj meg. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
 > *"Az implementáció kész. Folytathatjuk a 7. lépéssel (validate). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:*
 > ```
 > /bs-validate input: @specs/cycle-NN-<cycle-name>
 > ```"*
+
+
+> **Fázishatár — kemény megállás (PE1).** A fázis a záró üzenettel (commit-azonosító + `/clear` + a következő fázis parancsa) **véget ér**. Ugyanabban a körben a következő fázisból **semmit nem kezdesz el** — a következő fázis artefaktumát létre sem hozod. Ez akkor is érvényes, ha egy **kontextus-összefoglaló / checkpoint** teendő-listája, a saját korábbi terved vagy a felhasználó egy korábbi körben adott „menjünk végig a folyamaton" mondata továbbmenetelre biztat: a skill fázishatára minden ilyen felett áll. Csak a felhasználó **erre a körre szóló, explicit** kérése írja felül. Ha mégis belekezdtél, **töröld a keletkezett fájlt**, állítsd vissza a tiszta munkafát, és jelezd.
 
 ---
 
@@ -203,13 +252,15 @@ Ha a státusz `Validálásra kész`, állj meg. Jelezd a felhasználónak a köv
 >
 > Mindkét esetben egy **konkrét hibalista** célzott javítása a feladat, nem a teljes ciklus újra-implementálása.
 
-A fix-mód egy **szűkített belépő:** a megadott teszt-/Sonar-/DoD-hibákat javítod célzottan, **nem implementálod újra a ciklust** (2.2). (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A 06 normál végrehajtási és minőségi szabályai (a `[CHECK]` zöldre futtatása, kódkomment-frissítés, deep module) a javított részekre továbbra is érvényesek.
+A fix-mód egy **szűkített belépő:** a megadott teszt-/Sonar-/DoD-hibákat javítod célzottan, **nem implementálod újra a ciklust** (2.2). (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A 06 normál végrehajtási és minőségi szabályai (a `[CHECK]` zöldre futtatása, kódkomment-frissítés, deep module) a javított részekre továbbra is érvényesek — **beleértve a `[CHECK]` futásnaplót is**: a fix-módban futtatott ellenőrzéseket ugyanúgy vezeted a `test-report/implement/check-log.md`-be, a **Mód** oszlopban `validate-loop` / `review-loop` jelöléssel. Így a javító körök `[CHECK]`-jei is nyomot hagynak, és a hurok utólag rekonstruálható.
+
+> **Amit a fix-módban NEM írsz:** a `test-report/validate/` és `test-report/review/` kör-mappákat — azok az orchestrátoré (07 / 09) és a `test-runner`-é. Te csak a `test-report/implement/check-log.md`-t bővíted (a kódon és a `tasks.md` javító-szekcióján felül).
 
 ### Bemenet
 A hívótól függően a `tasks.md` végén lévő javító-szekció elvégzetlen `[GREEN]`/`[CHECK]` taskjai, a szekció elején lévő prerequisite hivatkozásokkal együtt:
 - **validate-hurok:** `## Validációs javítások` (a 07 vette fel a konkrét teszt-/Sonar-hibákból); prerequisite:
   - `specs/cycle-NN-<cycle-name>/test-report/validate-decision.md` (a `# Validation History` a hibák részleteivel),
-  - ha Sonar hibázott: `specs/cycle-NN-<cycle-name>/test-report/sonar-report.md`.
+  - ha Sonar hibázott: **az adott kör** Sonar-riportja — `specs/cycle-NN-<cycle-name>/test-report/validate/round-NN/sonar-report.md`. A konkrét kör-számot a szekció prerequisite-hivatkozása adja meg (TR5); **ne keresgélj más körök mappájában**, és ne a `test-report/` gyökerében — ott nincs Sonar-riport.
 - **review-hurok:** `## Review javítások` (a 08 vette fel a `Must Fix` findingokból); prerequisite:
   - `specs/cycle-NN-<cycle-name>/code-review.md` (a findingok + a `# Review History`).
 - A `tasks.md` aktuális állapota (`Implementálásra kész [validate-loop]` **vagy** `[review-loop]` státusz).

@@ -10,7 +10,7 @@ inputs:
 outputs:
   - "Javított specs/cycle-NN-<name>/plan.md (státusz [analyze-loop] markerrel)"
   - "Új Knn bejegyzések a specs/cycle-NN-<name>/plan-questions.md-ben (ahol döntés kell)"
-  - "Összefoglaló az orchestrátornak: elvégzett javítások / reconciliation + felvett kérdés-azonosítók"
+  - "Összefoglaló az orchestrátornak (a kötelező `downstream-hatás:` mezővel, D11): elvégzett javítások / reconciliation + felvett kérdés-azonosítók"
 tools: ["Read", "Edit", "Write", "Grep", "Glob"]
 ---
 
@@ -31,3 +31,4 @@ Te a plan fázis (03) **Fix-mód** végrehajtója vagy, amelyet az `05-analyze` 
 - Mely `Must Fix`-eket javítottad / mely spec-változásokat vezettél át, és hogyan (egy-egy sor).
 - Milyen új `Knn` kérdéseket vettél fel a `plan-questions.md`-be (azonosítóval) — ezeket az orchestrátor teszi fel `PLAN/Knn` prefixszel.
 - A `plan.md` aktuális státusza (a `[analyze-loop]` markerrel).
+- Kötelező **`downstream-hatás:`** mező (D11): `nincs` / `van — <mi érinti a következő fázist>` — ebből dönti el az orchestrátor, hogy a downstream fixereket egyáltalán el kell-e indítani.

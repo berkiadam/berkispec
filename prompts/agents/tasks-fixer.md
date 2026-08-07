@@ -10,7 +10,7 @@ inputs:
 outputs:
   - "Javított specs/cycle-NN-<name>/tasks.md (státusz [analyze-loop] markerrel)"
   - "Új Knn bejegyzések a specs/cycle-NN-<name>/tasks-questions.md-ben (ahol döntés kell)"
-  - "Összefoglaló az orchestrátornak: elvégzett javítások / reconciliation + felvett kérdés-azonosítók"
+  - "Összefoglaló az orchestrátornak (a `downstream-hatás:` mezővel, D11 — a 04 a lánc vége, így jellemzően `nincs`): elvégzett javítások / reconciliation + felvett kérdés-azonosítók"
 tools: ["Read", "Edit", "Write", "Grep"]
 ---
 
@@ -31,3 +31,4 @@ Te a tasks fázis (04) **Fix-mód** végrehajtója vagy, amelyet az `05-analyze`
 - Mely `Must Fix`-eket javítottad / mely plan-változásokat vezettél át, és hogyan (egy-egy sor).
 - Milyen új `Knn` kérdéseket vettél fel a `tasks-questions.md`-be (azonosítóval) — ezeket az orchestrátor teszi fel `TASKS/Knn` prefixszel.
 - A `tasks.md` aktuális státusza (a `[analyze-loop]` markerrel).
+- **`downstream-hatás:`** mező (D11): a 04 a lánc vége, ezért itt az érték jellemzően `nincs`. Kivétel: ha a javítás közben **plan-hiányra** derült fény (a task nem vezethető le a planből) — akkor `van — plan-hiány: <mi>`, és ezt az orchestrátor felfelé, a 03-ra irányítja.

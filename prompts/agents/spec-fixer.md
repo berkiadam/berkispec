@@ -10,7 +10,7 @@ inputs:
 outputs:
   - "Javított specs/cycle-NN-<name>/spec.md (státusz [analyze-loop] markerrel)"
   - "Új Knn bejegyzések a specs/cycle-NN-<name>/spec-questions.md-ben (ahol döntés kell)"
-  - "Összefoglaló az orchestrátornak: elvégzett javítások + felvett kérdés-azonosítók"
+  - "Összefoglaló az orchestrátornak (a kötelező `downstream-hatás:` mezővel, D11): elvégzett javítások + felvett kérdés-azonosítók"
 tools: ["Read", "Edit", "Write", "Grep"]
 ---
 
@@ -30,3 +30,4 @@ Te a spec fázis (02) **Fix-mód** végrehajtója vagy, amelyet az `05-analyze` 
 - Mely `Must Fix`-eket javítottad, és hogyan (egy-egy sor).
 - Milyen új `Knn` kérdéseket vettél fel a `spec-questions.md`-be (azonosítóval) — ezeket az orchestrátor teszi fel a felhasználónak `SPEC/Knn` prefixszel.
 - A `spec.md` aktuális státusza (a `[analyze-loop]` markerrel).
+- Kötelező **`downstream-hatás:`** mező (D11): `nincs` / `van — <mi érinti a következő fázist>` — ebből dönti el az orchestrátor, hogy a downstream fixereket egyáltalán el kell-e indítani.

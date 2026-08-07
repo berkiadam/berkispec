@@ -6,7 +6,7 @@ prerequisites:
   - "specs/cycle-NN-<name>/tasks.md státusz: Validálásra kész"
 output:
   - "specs/cycle-NN-<name>/test-report/validate-decision.md — teljes validálási riport (körönkénti lépés-napló + # Validation History)"
-  - "specs/cycle-NN-<name>/test-report/ — a conventions.md `## Teszt-riportolás` táblája szerint kötelező riport-artefaktumok (TR3 kapu)"
+  - "specs/cycle-NN-<name>/test-report/validate/round-NN/ — körönként külön mappában a conventions.md `## Teszt-riportolás` táblája szerint kötelező riport-artefaktumok (TR3 kapu)"
   - "PASS esetén: spec.md / plan.md / tasks.md státusz: Kész"
 prev: bs-implement
 next: bs-doc-sync
@@ -61,6 +61,8 @@ A prompt bemenete a ciklus mappája (pl. `specs/cycle-NN-<cycle-name>`). A valid
 
 **Mielőtt bármit futtatnál:** ha létezik `specs/cycle-NN-<cycle-name>/test-report/validate-decision.md`, kérdezd le a napló állapotát a szkript **read-only** módjával — **ne olvasd/parse-old kézzel** (a régi, elavult bejegyzésekből téves riasztás születik):
 
+> **Python-parancs (platformfüggő):** a példákban `python3` szerepel (Linux/macOS). **Windowson** a `python3` gyakran nem létezik — vagy a Microsoft Store stubja, ami megnyitja a Store-t —, ezért ott `python` vagy `py -3` a helyes hívás. Ha a `python3` „command not found" / „not recognized" hibát ad, **próbáld újra `python`-nal, majd `py -3`-mal**, ugyanazokkal a paraméterekkel. Ez nem a szkript hibája, és nem kell miatta megállni.
+
 ```bash
 python3 <platform-scripts-mappa>/failure-counter.py \
   specs/cycle-NN-<cycle-name>/test-report/validate-decision.md --status
@@ -82,10 +84,12 @@ Ellenőrizd, hogy a ciklus implementációja teljes és helyes. A validálás h�
 
 ---
 
+> **Költség-elv (VD10/VD11/VD12):** a fázis a **bizonyítékról** és az **elfogadási feltételekről** szól. Nem kód-review (az a `09`), nem dokumentáció (az a `08`), és nem futtat mindent minden körben (lásd „Kör-típusok"). Ha valami nem a PASS/FAIL döntéshez kell, az nem ebbe a fázisba tartozik.
+
 ## Megszakított futás kezelése
 
 A validáció bármikor megszakadhat. Újraindítás (ismételt futtatás) esetén:
-1. **Idempotens futás**: Kezdd elölről a validálási lépéseket. Ha a korábbi futás naplózott már valamit a `test-report/validate-decision.md`-be, az az előző (félbeszakadt) futásnak tekintendő: **olvasd el az utolsó `## Kör N` blokkot** — ebből látod, meddig jutott (mely lépések futottak le, mi bukott, indult-e fixer). A megszakadt kört **ne írd felül**: zárd le a blokkját egy `**Megszakadt** — a futás itt szakadt meg` sorral, és az új kör új `## Kör N+1` blokkot kap.
+1. **Idempotens futás**: Kezdd elölről a validálási lépéseket — **a folytatás első köre mindig TELJES kör** (VD10), mert nem tudhatod, mi futott le épen a megszakadás előtt. Ha a korábbi futás naplózott már valamit a `test-report/validate-decision.md`-be, az az előző (félbeszakadt) futásnak tekintendő: **olvasd el az utolsó `## Kör N` blokkot** — ebből látod, meddig jutott (mely lépések futottak le, mi bukott, indult-e fixer). A megszakadt kört **ne írd felül**: zárd le a blokkját egy `**Megszakadt** — a futás itt szakadt meg` sorral, és az új kör új `## Kör N+1` blokkot kap. **A megszakadt kör riport-mappáját (`validate/round-N/`) sem törlöd és nem használod újra** — az új kör új mappát kap (`round-N+1`), hogy a részleges és a teljes bizonyíték ne keveredjen (TR5).
 2. **Beragadt erőforrások**: Ha a korábbi megszakított futásból beragadt teszt konténerek vagy folyamatok miatt portütközést tapasztalsz, lődd ki azokat, vagy keress új szabad portot a korábban leírt módon.
 3. **Duplikált taskok elkerülése**: Ha a futás FAIL-lel zárul, és javító feladatokat kell felvenned a `tasks.md` `## Validációs javítások` szekciójába, mindig ellenőrizd, hogy a konkrét teszthiba vagy Sonar javítás nem szerepel-e már elvégzetlen taskként (egy korábbi félbeszakadt validáció okán). Ha már ott van, ne vedd fel duplán.
 
@@ -101,7 +105,10 @@ A validáció bármikor megszakadhat. Újraindítás (ismételt futtatás) eset�
 ## Kontextus betöltési szabályok
 
 - Olvasd be a `spec.md` Definition of done szekciót.
-- Olvasd be a `plan.md` Tesztelési stratégia és Ellenőrzési stratégia szekciókat.
+- **A `plan.md`-t NE olvasd be a fő kontextusba (VD11).** A ciklus-specifikus futtatási igazságforrás a `test-runner` subagent bemenete — ő olvassa a plan `Tesztelési stratégia` / `Regressziós érintettség` / `E2E infrastruktúra` szekcióit, nem te. A fő ágensnek a **runner jelentése** az input. Két kivétel, mindkettő **célzott** (`Grep`, nem teljes beolvasás):
+  - plan-hiány (TR4) ellenőrzése: `grep -n "<a runner által hiányolt kulcsszó>" specs/cycle-NN-<cycle-name>/plan.md` — csak a találat környezetét nézed meg;
+  - a `Regressziós érintettség` tábla kiolvasása a záró körhöz, ha a runner nem adta vissza.
+  _Miért: a `plan.md` több száz sor, és a fő kontextusban minden további körben újraküldődik — ez a fázis egyik legnagyobb, teljesen fölösleges tokenköltsége._
 - Olvasd be a `tasks.md`-t.
 - **Olvasd be a `validate-input-from-prev.md`-t, ha létezik** — lásd a „Fázisok közötti átadás" szekciót.
 - Ne olvasd be az egész forráskódot — csak azt, ami egy konkrét ellenőrzéshez szükséges.
@@ -120,19 +127,72 @@ Minden `[ ]` tételt zárj le: vagy figyelembe vetted a validálás során (`→
 
 ---
 
+## Kör-típusok — inkrementális hurok (VD10)
+
+> **Nem minden kör teljes.** A hurok költségének nagy részét a nehéz tesztek (stack fel/le, E2E, regresszió) és a Sonar adják; ezeket **javítás után azonnal újrafuttatni pazarlás**, mert a javítás jellemzően egyetlen itemre irányult, és gyakran nem is sikerül elsőre.
+
+| Kör-típus | Mikor | Mi fut |
+|---|---|---|
+| **Teljes kör** | (a) a fázis **első** köre; (b) a **záró megerősítő** kör | 1. gyors tesztek + Sonar → 2. nehéz tesztek + regresszió → 3. DoD/tasks/riport-kapu |
+| **Könnyű kör** | minden **javítás utáni** kör, amíg zöld nem lesz | **a teljes gyors teszt-készlet** (unit/typecheck) + **kizárólag az(ok) a bukott item(ek)**, ami(k) nehéz teszt vagy Sonar volt(ak) — semmi más |
+
+**A hurok menete:**
+
+```
+1. kör      TELJES    → FAIL  → fix
+2. kör      KÖNNYŰ    → FAIL  → fix
+3. kör      KÖNNYŰ    → zöld  → NEM PASS! kötelező megerősítő kör
+4. kör      TELJES    → PASS (vagy FAIL → a hurok folytatódik)
+```
+
+**Kötelező szabályok:**
+
+1. **PASS kizárólag TELJES körből adható.** Egy zöld könnyű kör **nem** validálás — utána **azonnal** teljes megerősítő kör indul, ugyanabban a menetben, javítás nélkül. („Zöld volt a unit, biztos jó" → tilos.)
+2. **A könnyű kör is EGY kör** (VD4a): a végén pontosan egy `failure-counter.py` bejegyzés készül, ugyanazokkal az item-nevekkel. A leállási korlátok (3/5/5) változatlanul számolnak.
+3. **Ha a bukás nehéz teszt vagy Sonar volt**, azt az **egy** itemet a könnyű körben is le kell futtatni (különben nem lehet visszaigazolni a javítást) — de csak azt, nem a teljes nehéz készletet. Egyetlen E2E teszteset futtatásához a stack felhúzása is kell; ha ez nem oldható meg részlegesen (a plan szerint csak a teljes készlet futtatható), akkor **az a kör teljes lesz** — jelöld így a riportban.
+4. **A gyors készletet nem szűkítjük.** A könnyű körben a **teljes** unit/typecheck suite fut (nem csak a bukott tesztfájl) — másodpercekbe kerül, viszont elkapja, ha a javítás máshol tört el valamit. Teszt-fájl kiválogatás nem a te dolgod.
+5. **A stack életciklusa változatlan:** minden nehéz-teszt futás tiszta indítás + takarítás. Az inkrementális hurokkal ez tipikusan csak 2× történik meg egy validálásban.
+6. **A kör típusát írd ki** a `## Kör N` blokk fejlécébe: `— TELJES` vagy `— KÖNNYŰ`.
+
+---
+
 ## Validálási lépések
 
-### 0. Riport mappa előkészítése
+### 0. Riport mappa előkészítése — körönkénti bontás (TR5)
 
-Mielőtt bármit futtatnál, győződj meg róla, hogy létezik a `specs/cycle-NN-<cycle-name>/test-report/` mappa. Ha nem létezik, hozd létre — ide kerül a `validate-decision.md`, a `sonar-report.md` és minden teszt-artefakt.
+A `test-report/` mappa **két rétegre** oszlik, és ezt a szétválasztást végig tartani kell:
+
+```
+specs/cycle-NN-<cycle-name>/test-report/
+├── validate-decision.md      ← a te naplód: több körre átívelő, append-only
+├── implement/                ← a 06 check-logja (nem te írod)
+│   └── check-log.md
+├── validate/
+│   ├── round-01/             ← az 1. kör ÖSSZES artefaktuma (allure/unit/coverage/sonar-report.*)
+│   └── round-02/             ← a 2. köré — az 1. körét SOHA nem írja felül
+└── review/
+    └── round-01/             ← a 09 re-validate körei (nem te írod)
+```
+
+**Minden kör elején hozd létre a saját mappáját:** `specs/cycle-NN-<cycle-name>/test-report/validate/round-NN/`, ahol `NN` **pontosan a `validate-decision.md` `## Kör N` sorszáma**, két számjegyre nullázva (`round-01`, `round-02`, …). Ez a párosítás adja a fázis egész értelmét: a lépés-táblából olvasott bukáshoz azonnal megnyitható a hozzá tartozó riport. **Ha a mappanév és a `## Kör N` elcsúszik, a napló használhatatlan** — ellenőrizd a kör lezárásakor.
+
+- **Korábbi körök mappáit nem törlöd, nem írod felül, nem takarítod.** Minden kör megmarad, a bukottak is — épp azok a legértékesebbek a hibanyomozáshoz.
+- **A `validate-decision.md` a `test-report/` gyökerében marad** (nem kör-mappában): ez a több körre átívelő napló, a `failure-counter.py` is ide fűz.
+- **A kör-mappa útvonalát add át a `test-runner`-nek** minden hívásnál — a subagent nem találja ki, és ha nem kapja meg, visszakérdez.
 
 **A riport-artefaktumok a ciklus részei — NEM kell őket kizárni a diffből.** A `git add specs/cycle-NN-<cycle-name>/` szándékosan beveszi a `test-report/` teljes tartalmát: a teszt-eszköz saját riportja (Allure/Playwright HTML, coverage, JUnit XML) az egyetlen utólag megnyitható bizonyíték a futásról. A méret ellen az egyfájlos HTML a védekezés (`--single-file`), nem a `.gitignore`. Ha korábbi ciklusból maradt `test-report/.gitignore`, amely a riportokat kizárja, **töröld** — különben a TR3 kapu olyan fájlt keres, ami sosem kerül be a repóba.
 
-**A riportok a `conventions.md` `## Teszt-riportolás` táblája szerint kötelezők (TR3)** — a listát a `test-runner` állítja elő, és a PASS előtt determinisztikus kapu ellenőrzi (lásd „Kötelező teszt-riportok kapuja").
+**A riportok a `conventions.md` `## Teszt-riportolás` táblája szerint kötelezők (TR3)** — a tábla utolsó oszlopa **a kör-mappához képest relatív** útvonal. A listát a `test-runner` állítja elő, és a PASS előtt determinisztikus kapu ellenőrzi (lásd „Kötelező teszt-riportok kapuja").
 
 ### 1. Gyors tesztek és kódminőség ellenőrzése (`test-runner` subagent)
 
-Hívd a `test-runner` subagentet (`agents/test-runner.md`) a gyors (unit/integration) tesztek és — ha a `conventions.md` tartalmaz `## Sonar minőségellenőrzés` szekciót — a SonarQube-elemzés lefuttatására. A subagent **strukturált összefoglalót** ad vissza (lásd az agent kontraktusát) — a nyers teszt-/Sonar-logot nem kéred vissza.
+> **Körtípus (VD10):** **teljes** körben gyors tesztek **+ Sonar**. **Könnyű** körben **csak a gyors tesztek** — a Sonar kimarad, **kivéve ha a javítandó bukás maga Sonar-eredetű volt** (akkor a Sonar is fut, hiszen azt kell visszaigazolni). A Sonar teljes elemzés: a köztes körökben ugyanazt mérné újra, drágán.
+
+Hívd a `test-runner` subagentet (`agents/test-runner.md`) a gyors (unit/integration) tesztek és — a fenti körtípus-szabály szerint, ha a `conventions.md` tartalmaz `## Sonar minőségellenőrzés` szekciót — a SonarQube-elemzés lefuttatására. A subagent **strukturált összefoglalót** ad vissza (lásd az agent kontraktusát) — a nyers teszt-/Sonar-logot nem kéred vissza.
+
+> **🔴 A hívásban kötelezően add át a kör riport-mappáját** (TR5): `specs/cycle-NN-<cycle-name>/test-report/validate/round-NN/` — az aktuális `## Kör N` sorszámával. A subagent minden artefaktumot (beleértve a `sonar-report.md`/`.html`-t) ide tesz. Add át azt is, **mely kategóriákat** futtatja ebben a körben, hogy könnyű körben ne generáljon félrevezető riportot a nem futott kategóriákhoz.
+>
+> **A Sonarról külön rendelkezz** — a subagent nem találgat: ha nem mondod meg, **futtatja**. Könnyű körben tehát írd ki explicit, hogy *„Sonar: kihagyva ebben a körben"* (kivéve, ha épp Sonar-eredetű bukást igazolsz vissza — akkor *„Sonar: fusson"*). A jelentésben ilyenkor `kihagyva (a hívó kérésére)` áll, ami **nem** PASS és **nem** N/A: a kör értékelésénél ne minősítsd zöldnek, és ne is vegyél fel rá javító-taskot.
 
 **A subagent két forrásból dolgozik, semmi másból (TR4):** minden **ciklus-specifikus** technikai részletet (parancsok, URL-ek, portok, teszt-userek, token-szerzés, indítási sorrend, előfeltételek) a **`plan.md`** `Tesztelési stratégia` / `Regressziós érintettség` / `E2E infrastruktúra` szekcióiból vesz — ezért írta a 03 fázis kötelezően **önhordóra** a plant (TC1/a) —, a **projekt-szintű eszköz-információt** (futtató, mappastruktúra, riport-tábla, Sonar-parancsok) pedig a `conventions.md`-ből. A `test-conventions.md`-t **nem olvassa**, régi ciklusokból nem dolgozik, és **nem találgat**. Az indításkor **hivatkozz rá explicit**, hogy a plan a ciklus-specifikus igazságforrás.
 
@@ -150,7 +210,7 @@ Hívd a `test-runner` subagentet (`agents/test-runner.md`) a gyors (unit/integra
 3. **A lefutott tesztcsoportok eredményét ettől függetlenül naplózd** a kör riportjába — a kör FAIL, a kihagyott csoport a lépés-táblában „kihagyva — plan-hiány" sorként jelenik meg.
 
 A subagent jelentése alapján:
-- **Quality Gate PASS / N/A:** a `test-report/sonar-report.html` és `.md` riportok tájékoztató jellegű `MINOR`/`INFO` találatai nem akadályozzák a validálást.
+- **Quality Gate PASS / N/A:** a kör-mappába került `sonar-report.html` és `.md` riportok tájékoztató jellegű `MINOR`/`INFO` találatai nem akadályozzák a validálást.
 - **Quality Gate FAIL vagy bármelyik gyors teszt FAIL:** **ne indítsd el a 2. lépést (nehéz tesztek)** — a kör eredménye FAIL, lépj a naplózásra, majd a hurok FAIL ágára. A javító feladatok (`tasks.md`) felvételekor csak a `BLOCKER`, `CRITICAL` és `MAJOR` szintű Sonar-találatokat tekintsd kötelezően javítandó akadálynak (a subagent az összeset jelenti, a szűrés itt, nálad történik).
 - **Quality Gate FAIL, de nincs `BLOCKER`/`CRITICAL`/`MAJOR` találat (QG1):** a kaput nem finding, hanem **küszöb** buktatta (lefedettség, duplikáció, új kód minőségi kapuja). Ilyenkor **tilos** üres hibalistával fixert indítani — a hurok üresben forogna. Teendő:
   - Ha a `sonar-report.md`-ből egyértelmű a bukott feltétel és az **kód-oldalon javítható** (tipikusan: hiányzó teszt-lefedettség az új kódon) → vedd fel konkrét javító-taskként (pl. *„Fedd le tesztekkel a `<fájl>` új ágait — a QG coverage küszöbe X% alatt van"*), és a `--failed-item` neve a bukott feltétel legyen (pl. `Sonar QG: coverage on new code`).
@@ -158,7 +218,9 @@ A subagent jelentése alapján:
 
 ### 2. Nehéz tesztek és regressziós ellenőrzések (`test-runner` subagent)
 
-Csak akkor hívd, ha az 1. lépés PASS volt. Hívd újra a `test-runner` subagentet, most a nehéz tesztek (E2E + regresszió) lefuttatására — a `tasks.md` `TREG` jelölésű taskjai és a `plan.md` `Regressziós érintettség` táblázata alapján. A subagent felelőssége a szükséges backend szolgáltatások/konténerek elindítása, a portütközés-elhárítás és az ideiglenes erőforrások takarítása (lásd az agent kontraktusát).
+> **Körtípus (VD10):** **teljes** körben a nehéz tesztek + a **teljes** regressziós készlet fut. **Könnyű** körben ez a lépés **kimarad** — kivétel: ha a javítandó bukás maga nehéz teszt volt, akkor **kizárólag az az egy item** fut (VD10/3).
+
+Csak akkor hívd, ha az 1. lépés PASS volt. Hívd újra a `test-runner` subagentet, most a nehéz tesztek (E2E + regresszió) lefuttatására — a `tasks.md` `TREG` jelölésű taskjai és a `plan.md` `Regressziós érintettség` táblázata alapján. **Ugyanazt a kör-mappát add át, mint az 1. lépésben** (TR5) — egy körhöz egy mappa tartozik, a gyors és a nehéz tesztek artefaktumai egymás mellé kerülnek. A subagent felelőssége a szükséges backend szolgáltatások/konténerek elindítása, a portütközés-elhárítás és az ideiglenes erőforrások takarítása (lásd az agent kontraktusát).
 
 > **⚠ Átmeneti port-módosítás:** ha a subagent jelentése ideiglenes config-/port-csere kell, ellenőrizd, hogy a jelentés szerint sikeresen visszaállt-e az eredeti állapot; ha nem, állítsd vissza te (`git checkout -- <fájl>`), mielőtt a validate fázis véget ér — ez nem kerülhet be a ciklus diffjébe.
 
@@ -166,7 +228,7 @@ Csak akkor hívd, ha az 1. lépés PASS volt. Hívd újra a `test-runner` subage
 
 ### Naplózás és leállási korlátok (VD4 — determinisztikus, szkripttel)
 
-> **🔴 EGY VALIDÁLÁSI KÖR = EGY futás-bejegyzés (VD4a).** Egy kör az 1–3. lépés (gyors tesztek + Sonar → nehéz tesztek → DoD/README). A kör eredményét **a kör VÉGÉN, egyetlen `failure-counter.py` hívással** naplózod, az összes bukott itemmel együtt. **TILOS részeredményt külön naplózni** (pl. „a gyors tesztek zöldek" bejegyzést az 1. lépés után): egy közbeiktatott PASS-bejegyzés **megszakítja az egymást követő bukások láncát**, és a 3-próba leállás soha nem lépne életbe — a hurok végtelenné válik. A `1.`/`2.` lépés részeredménye a kör **lépés-táblájába** kerül (lásd „A `validate-decision.md` — teljes validálási riport"), nem a History-ba.
+> **🔴 EGY VALIDÁLÁSI KÖR = EGY futás-bejegyzés (VD4a).** Egy kör az 1–3. lépés (gyors tesztek [+ Sonar] → nehéz tesztek → DoD/tasks/riport-kapu) — **a könnyű kör is teljes értékű kör** (VD10): a végén ugyanúgy pontosan egy bejegyzés készül, ugyanazokkal az item-nevekkel. A kör eredményét **a kör VÉGÉN, egyetlen `failure-counter.py` hívással** naplózod, az összes bukott itemmel együtt. **TILOS részeredményt külön naplózni** (pl. „a gyors tesztek zöldek" bejegyzést az 1. lépés után): egy közbeiktatott PASS-bejegyzés **megszakítja az egymást követő bukások láncát**, és a 3-próba leállás soha nem lépne életbe — a hurok végtelenné válik. A `1.`/`2.` lépés részeredménye a kör **lépés-táblájába** kerül (lásd „A `validate-decision.md` — teljes validálási riport"), nem a History-ba.
 >
 > Mikor zárul a kör (mi kerül egy bejegyzésbe)?
 > - **Az 1. lépés bukott** → a kör itt véget ér (nehéz tesztek nem futnak): egy FAIL bejegyzés a gyors teszt-/Sonar-itemekkel.
@@ -174,7 +236,7 @@ Csak akkor hívd, ha az 1. lépés PASS volt. Hívd újra a `test-runner` subage
 > - **Az 1. és 2. zöld, a 3. (DoD/tasks) bukott** → egy FAIL bejegyzés a bukott `DoD-NN` azonosítókkal.
 > - **Minden zöld** → egy PASS bejegyzés, `--failed-item` nélkül.
 
-**A futás-bejegyzést és a számlálókat NE kézzel írd/számold** — a `failure-counter.py` szkript végzi (a telepítő a platform scripts-mappájába másolja: `.claude/scripts/` / `.agents/scripts/` / `.cursor/scripts/` / `.github/scripts/` / `.codex/scripts/`). A `test-runner` által **szó szerint** visszaadott bukott-item neveket add át neki (DoD-bukásnál a `DoD-NN` azonosítót — lásd a 3.A lépést):
+**A futás-bejegyzést és a számlálókat NE kézzel írd/számold** — a `failure-counter.py` szkript végzi (a telepítő a platform scripts-mappájába másolja: `.claude/scripts/` / `.agents/scripts/` / `.cursor/scripts/` / `.github/scripts/` / `.codex/scripts/`). A `test-runner` által **szó szerint** visszaadott bukott-item neveket add át neki (DoD-bukásnál a `DoD-NN` azonosítót — lásd a 3./A. lépést):
 
 ```bash
 # FAIL — minden bukott itemet külön --failed-item-ként (a test-runner szó szerinti nevein):
@@ -206,7 +268,7 @@ python3 <platform-scripts-mappa>/failure-counter.py \
 
 **`FIGYELEM:` sor a kimenetben** — a szkript jelzi, ha egy item korábban is bukott, de egy közbeeső PASS megszakította a láncot. Ez majdnem mindig azt jelenti, hogy valaki (egy korábbi futás) **részeredményt naplózott** a VD4a szabály ellenére. Ne hagyd figyelmen kívül: a napló ilyenkor is helyesen áll meg az „összes bukás" korlátnál, de a `# Validation History` félrevezető — írd a `--details`-be, hogy a lánc megszakadt.
 
-### 3. DoD és README ellenőrzések
+### 3. DoD, tasks és riport-kapu ellenőrzések
 
 #### A. Definition of done ellenőrzése
 Minden DoD ponthoz adjál egyértelmű választ: ✓ vagy ✗, egy mondatban indokolva. **A pontokra mindig a `DoD-NN` azonosítójukkal hivatkozz** (DI1) — a riportban, a naplóban és a javító-taskokban egyaránt.
@@ -218,31 +280,32 @@ Minden DoD ponthoz adjál egyértelmű választ: ✓ vagy ✗, egy mondatban ind
 #### A/2. `validate-input-from-prev.md` lezárása (IP1)
 Ha a fájl létezik, menj végig a tételein: mindegyik vagy **figyelembe vett** (`→ figyelembe vettem: <hogyan>`), vagy **explicit indokkal elvetett**. Nyitott `[ ]` tétellel a validálás nem zárható PASS-ra. Ha egy tétel a validálás során **hibát okozott** (pl. hiányzó előfeltétel miatt bukott el egy teszt), az FAIL — a szokásos hurok szerint javítandó, nem elvetéssel elintézendő.
 
-#### B. Meglévő komponens README ellenőrzése
-Ha a ciklus meglévő komponens konfigurációját (env var-ok, indítási paraméterek, külső kapcsolatok) változtatta meg: a komponens `README.md` szinkronban van-e a változásokkal? Ha nem, jelezd — a README frissítése az implement fázis lezáratlan feladata.
-
-#### C. Tasks ellenőrzése
+#### B. Tasks ellenőrzése
 Minden task `[x]` státuszban van-e? Ha van elvégzetlen task, jelezd.
 
-#### C/2. Kötelező teszt-riportok kapuja (TR3 — determinisztikus)
+#### B/2. Kötelező teszt-riportok kapuja (TR3 — determinisztikus)
 
-A `conventions.md` `## Teszt-riportolás` táblájában deklarált riport-artefaktumoknak ott kell lenniük a ciklus `test-report/` mappájában. Ezt **ne szemre nézd meg** — futtasd a kaput:
+A `conventions.md` `## Teszt-riportolás` táblájában deklarált riport-artefaktumoknak ott kell lenniük **az aktuális kör mappájában**. Ezt **ne szemre nézd meg** — futtasd a kaput, a kör-mappát átadva:
 
 ```bash
 python3 <platform-scripts-mappa>/report-gate-check.py \
-  conventions.md specs/cycle-NN-<cycle-name>
+  conventions.md specs/cycle-NN-<cycle-name> \
+  --report-subdir test-report/validate/round-NN
 ```
+
+> **🔴 A kapu csak TELJES körben fut (TR5/VD10).** Könnyű körben szándékosan nem fut minden tesztkategória, így a teljes riport-tábla **nem is teljesíthető** — a kapu ilyenkor **kimarad**, és a `## Kör N` lépés-táblájában „kihagyva — könnyű kör (VD10)" sorként jelenik meg. Ez nem lazítás: a PASS eleve csak teljes körből adható (VD10/1), és ott a kapu `exit 0`-ja **kötelező** feltétel.
+>
+> _(Korábban a kapu minden körben futott, de fix fájlnevekre — ilyenkor a könnyű kör az ELŐZŐ kör bennmaradt artefaktumát találta meg, és hamis zöldet adott. A körönkénti mappa ezt megszünteti, ezért kell a körtípus szerinti szabály.)_
 
 - **`exit 0`** → a kapu ✓ (vagy a projekt explicit nem generál riportot). Az eredményt írd be a kör riportjába.
 - **`exit 1`** → hiányzó vagy üres artefaktum. **A kör nem zárható PASS-ra**, de ez **nem kód-bug**, ezért **nem indítasz fixert**: a riport előállítása a `test-runner` dolga.
-  1. Hívd újra a `test-runner`-t **kifejezetten a hiányzó riport(ok) előállítására**, a táblában megadott paranccsal, és kérd, hogy az artefaktumot a ciklus `test-report/` mappájába tegye.
+  1. Hívd újra a `test-runner`-t **kifejezetten a hiányzó riport(ok) előállítására**, a táblában megadott paranccsal, és kérd, hogy az artefaktumot **az aktuális kör mappájába** tegye (a konkrét útvonalat add át).
   2. Futtasd újra a kaput. Ha másodszorra is bukik → **STOP + humán** a „Hol járunk" fejléccel: *„A(z) [artefaktum] riport két próbálkozásra sem jött létre a `<parancs>` paranccsal. Humán beavatkozás szükséges — hogyan tovább?"*, a szkript kimenetével együtt.
 - **`exit 2`** → a `conventions.md` `## Teszt-riportolás` szekciója hiányzik vagy kitöltetlen (placeholder maradt). Ez **projekt-konfigurációs hiány**, nem teszt-hiba: **STOP + humán**, és kérd a szekció pótlását a `00-init` szerinti tartalommal (kategória / eszköz / parancs / artefaktum, vagy explicit `**Riport-generálás kötelező:** nem` + indoklás). Magad ne találd ki a parancsot, és **ne írd át a `conventions.md`-t** — az a 00 fázis és a felhasználó közös döntése.
 
-> A kapu **minden körben** fut, nem csak az utolsóban: így a riport a bukott körökről is megmarad, és utólag látszik, mi bukott el a 2. körben.
+> A kapu **minden TELJES körben** fut, nem csak az utolsóban — és mivel minden kör a saját mappájába dolgozik, a bukott körök riportja is megmarad: utólag megnyitható, mi bukott el konkrétan a 2. körben. A könnyű körök artefaktumai (a gyors tesztek riportja) ugyanígy megmaradnak a saját mappájukban, csak a kapu nem kéri őket számon.
 
-#### D. Kódkommentek és docstringek ellenőrzése
-Ellenőrizd a módosított vagy újonnan létrehozott fájlokban lévő kommenteket és JSDoc/TSDoc leírásokat. Győződj meg róla, hogy a végrehajtott kódváltozások (pl. átnevezések, logikai módosítások) után a hozzájuk kapcsolódó kommentek is frissültek, és nem maradtak elavult (stale) vagy félrevezető megjegyzések a forráskódban.
+> **Ami szándékosan NINCS itt (VD12):** a **komponens-README-k** szinkronja a `08-doc-sync` dolga (annak explicit outputja), a **kódkommentek / JSDoc** elavulás-vizsgálata pedig a `09-review` `reviewer` ágensé — ő amúgy is végigolvassa a diffet. A 07 **nem olvassa végig a módosított fájlokat**: ez a fázis a *bizonyítékról* és az *elfogadási feltételekről* szól, nem kód-review-ról és nem dokumentációról. (Mindkettő a merge ELŐTT fut, tehát semmi nem jut ki ellenőrizetlenül.)
 
 ---
 
@@ -274,9 +337,10 @@ _(Ezt a fejlécet minden kör végén frissíted — ez az egyetlen rész, amit 
 
 ---
 
-## Kör 1 — YYYY-MM-DD HH:MM — FAIL
+## Kör 1 — YYYY-MM-DD HH:MM — TELJES — FAIL
 
 **Indító:** 07-validate első futás | önjavító hurok N. iterációja | 09-review re-validate | megszakadt futás folytatása
+**Riport-mappa:** `test-report/validate/round-01/` _(TR5 — a kör bizonyítékai; a mappanév száma = a kör száma)_
 
 ### Lépések (végrehajtási sorrendben)
 
@@ -286,7 +350,7 @@ _(Ezt a fejlécet minden kör végén frissíted — ez az egyetlen rész, amit 
 | 2 | 10:34 | test-runner — Sonar | `./scripts/sonar-report.sh` | ✓ QG PASS (MAJOR: 0, MINOR: 3) |
 | 3 | — | nehéz tesztek | **kihagyva** — az 1. lépés bukott | — |
 | 3b | — | E2E (opcionális sor) | **kihagyva** — plan-hiány (TR4): nincs leírva a Keycloak indítása | eszkaláció a 03-ra |
-| 4 | 10:35 | teszt-riport kapu (TR3) | `report-gate-check.py conventions.md specs/cycle-NN-…` | ✓ exit 0 — `allure-report.html` (412 KB), `unit-report.html` (88 KB) |
+| 4 | 10:35 | teszt-riport kapu (TR3) | `report-gate-check.py conventions.md specs/cycle-NN-… --report-subdir test-report/validate/round-01` | ✓ exit 0 — `allure-report.html` (412 KB), `unit-report.html` (88 KB) |
 | 5 | 10:35 | DoD-ellenőrzés | — | ✗ DoD-03 nem teljesül |
 | 6 | 10:36 | naplózás | `failure-counter.py --result FAIL --failed-item ...` | exit 0 — folytatható |
 
@@ -302,14 +366,13 @@ _(Ezt a fejlécet minden kör végén frissíted — ez az egyetlen rész, amit 
 | DoD-01 | ✓ | a token-csere 200-at ad a `<scope>` scope-pal |
 | DoD-03 | ✗ | a válaszból hiányzik a `correlationId` |
 
-### Teszt-riportok (TR3)
-- `report-gate-check.py` → exit 0 / 1 / 2 — a `test-report/`-ba került artefaktumok felsorolása mérettel (vagy: mi hiányzik)
+### Teszt-riportok (TR3 / TR5)
+- **Kör-mappa:** `test-report/validate/round-01/`
+- `report-gate-check.py --report-subdir test-report/validate/round-01` → exit 0 / 1 / 2 — a kör-mappába került artefaktumok felsorolása mérettel (vagy: mi hiányzik)
+- _(könnyű körben: „kapu kihagyva — könnyű kör (VD10)"; a ténylegesen legenerált gyors-teszt artefaktumokat ilyenkor is sorold fel)_
 
 ### Tasks elvégzettsége
 - Minden task `[x]`: ✓ / ✗ (ha ✗: az elvégzetlen taskok felsorolása)
-
-### Kódkommentek és dokumentáció
-- Kommentek és docstringek naprakészek: ✓ / ✗
 
 ### Javító kör (ha volt)
 
@@ -325,15 +388,22 @@ FAIL → új kör indul a javítás után. | PASS → a hurok konvergált, stát
 
 ---
 
-## Kör 2 — YYYY-MM-DD HH:MM — PASS
+## Kör 2 — YYYY-MM-DD HH:MM — KÖNNYŰ — FAIL
 
-_(ugyanaz a szerkezet; a 3. lépésnél már látszik, hogy a nehéz tesztek is lefutottak)_
+_(ugyanaz a szerkezet; a lépés-táblában a nehéz tesztek és a Sonar sora „kihagyva — könnyű kör (VD10)")_
+
+---
+
+## Kör 3 — YYYY-MM-DD HH:MM — TELJES — PASS
+
+_(megerősítő kör: minden lépés lefutott)_
 
 ---
 
 ## Összegzés
 
-- **Végeredmény:** PASS — 2 kör után
+- **Végeredmény:** PASS — 3 kör után
+- **Körök:** 3 összesen — ebből 2 teljes, 1 könnyű _(VD10 — a mérhetőség miatt kötelező sor)_
 - **Újrafuttatott elemek:** `auth.spec.ts > refresh token rotation` (2 kör), `DoD-03` (2 kör)
 - **Eszkaláció / humán beavatkozás:** nem volt
 - **Ideiglenes környezeti módosítás:** [ha volt port-csere: melyik, és visszaállt-e]
@@ -346,10 +416,11 @@ _(ezt a szekciót a failure-counter.py írja — kézzel nem szerkeszted)_
 
 1. **Végrehajtási sorrend, időbélyeggel** — a lépés-tábla mutassa, mi futott, milyen sorrendben, és **mi maradt ki, miért** (pl. a nehéz tesztek kihagyása bukott gyors tesztek után). A „kihagyva" sor ugyanolyan fontos, mint a lefutott lépés.
 2. **A `test-runner` bizonyítékai szó szerint** — a kiadott parancs és a `X passed / Y failed / Z skipped` darabszámok (TR1). Ez teszi utólag ellenőrizhetővé, hogy a PASS mögött tényleges futtatás állt.
-2.a **A teszt-eszköz saját riportja a `test-report/`-ban (TR3)** — a riport-kapu kimenete (mely artefaktumok kerültek be, mekkorák). A riport a fájl mellett, a ciklus mappájában él; a szöveges napló nem helyettesíti, a riport nem helyettesíti a naplót.
+2.a **A teszt-eszköz saját riportja a kör mappájában (TR3/TR5)** — a `## Kör N` fejlécében a `**Riport-mappa:**` sor, a lépés-táblában a kapu kimenete (mely artefaktumok kerültek be, mekkorák). A riport a napló mellett, a kör saját mappájában él; a szöveges napló nem helyettesíti, a riport nem helyettesíti a naplót. **A mappanév száma és a `## Kör N` sorszáma kötelezően egyezik** — ez teszi a bukott lépést és a hozzá tartozó bizonyítékot összepárosíthatóvá.
 3. **Az újrafuttatások láthatósága** — minden kör külön blokk, és az `## Összegzés` sorolja fel, mely elemek futottak többször (ez a „mi futott újra" kérdés válasza).
 4. **A javító kör nyoma** — mely taskokat vette fel, mit adott vissza a fixer, mi volt a szerződés-integritás kapu (VD3a) eredménye. Ha a kapu gyengítést talált, **az érintett fájl és a visszaállítás ténye is** kerüljön be.
 5. **A kör döntése egy mondatban** — miért indult új kör, vagy miért állt meg a hurok.
+6. **A kör típusa (VD10)** — a `## Kör N` fejlécben `TELJES` vagy `KÖNNYŰ`, és a lépés-táblában a kihagyott lépéseknél az indok: „kihagyva — könnyű kör (VD10)". Az `## Összegzés` **Körök** sora bontsa: hány teljes, hány könnyű. Enélkül utólag nem ellenőrizhető, hogy a PASS teljes körből származik-e.
 
 > **A 09-review re-validate körei is ide kerülnek** (`**Indító:** 09-review re-validate`), hogy a ciklus teljes validálási története egy fájlban legyen — a `code-review.md` a review-hurok naplója, nem a validálásé.
 
@@ -401,14 +472,16 @@ Ez a kapu az egyetlen hely, ahol a VD3 nem csak szándék, hanem **ellenőrzött
 5. **Marker felvétele (VD6).** A `tasks.md` státuszát fordítsd `Implementálásra kész [validate-loop]`-ra. A marker jelzi: fix-mód aktív → a fixer automatikusan lépteti a státuszt, megerősítés nélkül.
 6. **`implement-fixer` subagent indítása (VD2).** A konkrét teszt-/Sonar-hibalistával + a prerequisite riportokkal (lásd „A fixer-subagent indítása"). Ha a fixer **eszkalációs jelzést** ad vissza → ugorj a 3. pontra.
 7. **Szerződés-integritás kapu (VD3a).** A fixer visszatérése után futtasd a fenti `git diff` ellenőrzést, **mielőtt** újra validálnál. Gyengítés esetén: visszaállítás + eszkaláció (3. pont).
-8. **Újra-validálás.** Kezdd elölről a „Validálási lépéseket" (gyors tesztek → Sonar → nehéz tesztek → DoD/README). Ez egy **új kör** — a végén megint pontosan egy naplóbejegyzés készül.
-   - **PASS** (minden teszt + Sonar + DoD zöld) → a hurok konvergált, ugrás a „Státusz kezelés → PASS"-ra (itt kerül le a marker, és történik az egyetlen lezáró commit).
-   - **FAIL** → új iteráció az 1. ponttól.
+8. **Újra-validálás — KÖNNYŰ körrel (VD10).** A javítás után **nem** a teljes menet indul: a teljes gyors teszt-készlet fut, plusz az az egy item, ha a bukás nehéz teszt vagy Sonar volt. Ez egy **új kör** — a végén megint pontosan egy naplóbejegyzés készül.
+   - **FAIL** → új iteráció az 1. ponttól (megint könnyű kör).
+   - **Zöld** → **még NEM PASS.** Azonnal, javítás nélkül indíts egy **TELJES megerősítő kört** (gyors + Sonar + nehéz tesztek + regresszió + DoD). Ez is külön kör, külön naplóbejegyzéssel.
+     - a megerősítő kör **PASS** → a hurok konvergált, ugrás a „Státusz kezelés → PASS"-ra (itt kerül le a marker, és történik az egyetlen lezáró commit);
+     - a megerősítő kör **FAIL** (a javítás máshol tört el valamit, vagy a nehéz teszt bukik) → új iteráció az 1. ponttól.
 
 ### A fixer-subagent indítása (VD2)
 
 - A subagent **rendszerpromptja** az `agents/implement-fixer.md` wrapper, amely a `06-implement.md` „Fix-mód (validate-hurok belépő)" szekciójára delegál — nincs duplikált javító logika, a 06 minőségi szabályai automatikusan érvényesülnek.
-- **Bemenet:** a `tasks.md` `## Validációs javítások` elvégzetlen taskjai (a konkrét teszt-/Sonar-/DoD-hibák) + a prerequisite riportok (`validate-decision.md`, és ha Sonar bukott, `sonar-report.md`).
+- **Bemenet:** a `tasks.md` `## Validációs javítások` elvégzetlen taskjai (a konkrét teszt-/Sonar-/DoD-hibák) + a prerequisite riportok: `test-report/validate-decision.md`, és ha Sonar bukott, **az aktuális kör** `test-report/validate/round-NN/sonar-report.md`-je (a kör-számot konkrétan add meg — TR5).
 - **Kimenet:** (a) az elvégzett javítások összefoglalója (mely taskot mivel zárt le), és (b) **eszkalációs jelzés**, ha valamelyik hibát csak a teszt/DoD módosításával lehetne zöldre vinni (VD3). A subagent **nem** módosíthatja a tesztet/DoD-ot, és **nem** írja a `validate-decision.md`-t — azt te (az orchestrátor).
 
 ### Felfelé menekülő ág (VD5 — escape hatch)
@@ -480,6 +553,8 @@ A válaszod végén kötelezően helyezz el egy közvetlen, kattintható linket 
 
 Minden teszt átment (bizonyítékkal — TR1/TR2), a DoD minden pontja teljesül, minden task `[x]`, a Sonar Quality Gate PASS (vagy N/A), **a teszt-riport kapu (TR3) `exit 0`**, és a szerződés-integritás kapu (VD3a) tiszta.
 
+> **🔴 A PASS forrása kizárólag TELJES kör lehet (VD10/1).** Ha az utolsó kör **könnyű** volt (csak gyors tesztek futottak), a fenti feltételek egy része nem is mérhető — ilyenkor **nincs PASS**: indíts egy teljes megerősítő kört, és annak az eredményéből dönts. Ellenőrzés: a lezárandó `## Kör N` blokk fejlécében `— TELJES` áll, és a lépés-táblában szerepel a nehéz teszt + a Sonar (vagy `N/A` a plan szerint).
+
 Teendők:
 1. **Zárd le a kör `## Kör N` blokkját** a `validate-decision.md`-ben, és frissítsd a fejlécet + az `## Összegzés` szekciót (VD9), majd naplózz: `failure-counter.py ... --result PASS --timestamp "..."` (`--failed-item` nélkül). Ez zárja le a kört a naplóban.
 2. **Vedd le a `[validate-loop]` markert** (ha a hurok futott): a `tasks.md` státusza `Kész`-re vált — marker nélkül. Frissítsd a `plan.md` és `spec.md` státuszát is `Kész`-re.
@@ -512,7 +587,10 @@ Ha bármely teszt, a Sonar, vagy a DoD ellenőrzés hibázik, **nem** adod vissz
 [ ] 4. tasks.md → ## Validációs javítások fejezet létrehozva vagy folytatva
 [ ] 5. A fejezet elejére prerequisite hivatkozásként berakva:
         - specs/cycle-NN-<cycle-name>/test-report/validate-decision.md
-        - (ha Sonar hibázott) specs/cycle-NN-<cycle-name>/test-report/sonar-report.md
+        - (ha Sonar hibázott) az AKTUÁLIS kör Sonar-riportja, teljes útvonallal:
+          specs/cycle-NN-<cycle-name>/test-report/validate/round-NN/sonar-report.md
+          ⚠ a kör-számot írd ki konkrétan (TR5) — a fixernek az őt kiváltó kör
+            eredményét kell látnia, nem egy másikét
 [ ] 6. Konkrét javítandó tesztek / Sonar hibák / DoD-NN pontok felvéve [GREEN]
         taskokként, a csoport végén egy [CHECK] ellenőrző taskkal (duplikátum-kerülés!)
         ⚠ ha a lista ÜRES lenne (QG1 küszöb-bukás) → nem indul iteráció, lásd QG1

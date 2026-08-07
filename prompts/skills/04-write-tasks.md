@@ -108,16 +108,27 @@ Soha nem kerül bele:
 ## Task formátum
 
 ```md
-- [ ] T001 [RED]   <tesztfájl létrehozása / teszt megírása> — `path/to/test.ts`
-- [ ] T002 [GREEN] <implementáció> — `path/to/file.ts`
-- [ ] T003 [OPS]   <nem TDD lépés: build / push / deploy / kézi konfiguráció> — parancs vagy `path/to/file`
-- [ ] T004 [CHECK] Futtasd a teszteket / typecheck-et
+- [ ] T001 [RED]   <tesztfájl létrehozása / teszt megírása> — `path/to/test.ts` — plan [P-CONFIG]
+- [ ] T002 [GREEN] <implementáció> — `path/to/file.ts` — plan [P-CONFIG] (betöltő modul)
+- [ ] T003 [OPS]   <nem TDD lépés: build / push / deploy / kézi konfiguráció> — parancs vagy `path/to/file` — plan [P-DEPLOY]
+- [ ] T004 [CHECK] Futtasd a teszteket / typecheck-et — plan [P-CONFIG]
 ```
+
+### 🔴 Plan-hivatkozás minden taskon (PID1) — kötelező
+
+| Szabály | Mechanika |
+|---|---|
+| **Kötelező** | Minden task sora végén: `— plan [P-…]`. Hivatkozás nélküli task nincs. |
+| **Az ID a kulcs, nem a sorszám** | `plan [P-CONFIG]` — **ne** `plan.md § 3.1`. A sorszám elcsúszik, ha a plan bővül; az ID nem. Ha a plan-ben egy szekciónak **nincs** `[P-…]` ID-ja, az plan-hiány → `tasks-questions.md` kérdés (ne találj ki ID-t). |
+| **Egy elsődleges forrás (D)** | Pontosan **egy** ID az elsődleges. Ha egy másik szekció is releváns, az zárójelben: `— plan [P-CFGPROP] (lásd még: [P-CONFIG])`. Két egyenrangú ID egy taskon **tilos** — ha tényleg kettő kell, a task **két taskra bontandó**. |
+| **Csak végrehajtható szekcióra (E)** | Az elsődleges hivatkozás célja mindig `[P-…]`-ID-t viselő terv-szekció. **Leltárra, célra, sorrendre nem hivatkozhatsz** (ezek nem is kapnak ID-t). Ha a taskhoz nem találsz terv-szekciót, az **plan-hiány** → `tasks-questions.md`, ne pótold saját szöveggel. |
+| **Részhatókör, ha osztozol (F)** | Ha ugyanarra az ID-ra **több task** hivatkozik, mindegyik kap egy zárójeles hatókör-jelölést: `— plan [P-CONFIG] (config fájlok)` / `— plan [P-CONFIG] (betöltő modul)` / `— plan [P-CONFIG] (unit teszt)`. Enélkül az implementáló az első ilyen tasknál az **egész** szekciót megvalósítja. |
 
 - A sorszám (`T001`, `T002`, ...) szekvenciális, a végrehajtási sorrend alapján.
 - A leírás egysoros, konkrét, cselekvő igével kezdődik (pl. *Hozd létre*, *Bővítsd*, *Adj hozzá*, *Futtasd*).
 - A fájl path kötelező, ha a task fájlt érint. Ha a task parancs futtatás, a fájl path elhagyható.
 - **TDD jelölés:** teszt-írási taskot `[RED]`, a hozzá tartozó implementációs taskot `[GREEN]` prefixszel jelöld. A `[RED]` task mindig megelőzi a párját.
+  - **Kivétel — browser E2E (UI) teszt:** ott a fail-first nem elvárt (a teszt a kész felületre íródik). Ha a teszt-író task az implementáció UTÁN áll, a markere **`[GREEN]`**, nem `[RED]` — különben a marker hamis TDD-sorrendet sugall. Ha mégis `[RED]`-nek hagyod (mert tényleg fail-first), a task szövegében **egy zárójeles félmondattal indokold**.
 - **Marker minden taskon kötelező — prefix nélküli task nincs.** Indok: a prefix hiánya nem megkülönböztethető attól, hogy valaki **elfelejtette** a markert.
 - **`[OPS]` — éles határvonal:** kizárólag olyan lépés kaphatja, amely **NEM módosít repo-fájlt**, hanem a **környezetet vagy egy artefaktumot** változtatja: build, image push, deploy, kézi konfiguráció, külső erőforrás létrehozása/törlése, jóváhagyás-kérés, rollback.
   - **Ami repo-fájlt szerkeszt, az SOHA nem `[OPS]`** — az `[RED]` (teszt írása/frissítése) vagy `[GREEN]` (forrás- és konfigfájl módosítása), akkor is, ha **regressziós javításról** van szó. Egy `TREG` task, amely egy meglévő tesztfájlt frissít, `[RED]` markert kap.
@@ -125,6 +136,7 @@ Soha nem kerül bele:
 - **Ellenőrzési task:** `[CHECK]` prefix, minden logikai csoport végén kötelező — konkrét parancsot tartalmaz a plan `Ellenőrzési stratégia` szekciójából (pl. `npm test`, `npm run typecheck`). Fájl path elhagyható.
 - **Párhuzamosítható task jelölése:** ha egy task egy másikkal egyszerre elvégezhető (köztük nincs függőség), jelöld `⟂ Tkkk` suffixszel. Csak akkor jelöld, ha a párhuzamosítás valóban időt takarít meg.
   - **Példa:** `- [ ] T012 [GREEN] Implementáld a foo service-t — `src/foo.ts` ⟂ T013` — azt jelenti, hogy T012 és T013 egyszerre szerkeszthető, mert **nem ugyanazt a fájlt érintik** és nincs köztük függőség. Ha ugyanazt a fájlt érintenék, NEM jelölhető párhuzamosnak.
+  - **🔴 `[CHECK]` SOHA nem párhuzamosítható azzal a taskkal, amely az általa futtatott artefaktumot létrehozza vagy módosítja** (teszt-író `[RED]`/`[GREEN]` ⟂ a saját `[CHECK]`-je = hamis zöld: a `[CHECK]` a régi vagy hiányzó tesztfájlon fut le). Ellenőrzés a `⟂` kiírása előtt, mechanikusan: **a két task fájlhalmaza diszjunkt-e?** Ha bármelyik fájl közös — vagy az egyik task azt a fájlt/parancsot futtatja, amit a másik ír —, a `⟂` **tilos**.
 - **Sorszámozási konvenciók — `T`, `TREG`, `TLAST`:**
   - **`Tnnn`** — normál, szekvenciálisan számozott implementációs task (`T001`, `T002`, …) a logikai csoportokban.
   - **`TREGn`** — regressziós felülvizsgálati task (`TREG1`, `TREG2`, …) a kötelező „Regressziós tesztek felülvizsgálata" záró csoportban. Sorrendben, `[CHECK]` nélkül. Csak olyan fájlra, amely a plan `Regressziós érintettség` táblázatában van, de a `Tervezett módosítások`-ban nincs. **Markere `[RED]`** (meglévő tesztfájlt frissít) — **nem `[OPS]`**, mert repo-fájlt szerkeszt.
@@ -143,11 +155,15 @@ Soha nem kerül bele:
 A leírásnak tartalmaznia kell:
 - **Mit csinálni** — cselekvő ige + érintett egység neve (függvény, osztály, fájl)
 - **Melyik fájl** — a path kötelező, ha a task fájlt érint
-- **Plan szekció hivatkozás** — ha a task neve önmagában nem egyértelmű, add meg a plan érintett szekcióját: `— plan.md § <szekció>`
+- **Plan szekció hivatkozás** — **mindig kötelező**, a stabil ID-val: `— plan [P-…]` (a formátum és a szabályok fent, a *Plan-hivatkozás minden taskon* táblában)
 
 Részletet **csak akkor** adj a task leírásába, ha a plan nem tartalmazza:
 - Parancs futtatásoknál: a tényleges shell parancs (pl. `openssl genrsa -out key.pem 2048`)
-- Külső erőforrás hivatkozásnál: ha a task teszteléséhez vagy futtatásához külső erőforrás kell (tanúsítvány, API kulcs, mock adat, speciális konfiguráció), hivatkozz a `plan.md` vagy `spec.md` azon szekciójára, ahol ez megtalálható (pl. `— plan.md § Konfiguráció és build változások`). Az implementáló agentnek ne kelljen keresgélnie.
+- Külső erőforrás hivatkozásnál: ha a task teszteléséhez vagy futtatásához külső erőforrás kell (tanúsítvány, API kulcs, mock adat, speciális konfiguráció), hivatkozz a plan azon szekciójára, ahol ez megtalálható (`— plan [P-CONFIG]`). Az implementáló agentnek ne kelljen keresgélnie.
+
+> **🔴 Duplikáció-tilalom (PID1/b) — a részlet a plan-ben él.** Ha egy érték-lista, kód→kód leképezés, lokátor-stratégia vagy lépéssor **már benne van a plan-ben**, azt a taskba **nem másolod át**: a task egy sorban megmondja, mit kell tenni, és `[P-…]`-val odamutat. Két helyen tartott azonos tartalom **szétcsúszik**, és utána senki nem tudja, melyik az igaz.
+> - **Ha úgy érzed, a taskba kell a részlet, mert enélkül nem végrehajtható** → a részlet **a plan-ből hiányzik**: fix-módban (05-analyze) írd a **plan-be** (a `plan-fixer` dolga), normál flow-ban vedd fel `tasks-questions.md` kérdésként. A tasks.md **soha nem a plan pótléka**.
+> - **Kivétel — a `[CHECK]` és `[OPS]` parancsok:** ezek szó szerint a taskban állnak (az implementáló ezt futtatja), a plan-ben lévő azonos paranccsal **karakterre egyezően**.
 
 **Tömörítési elv:** amit egy fejlesztő egy mondatban el tud mondani kollégájának, az elég. A részlet a plan-ban van — ne másold át.
 
@@ -176,17 +192,31 @@ _Az implementáló agent ezeket olvassa be a végrehajtás előtt._
 
 > `[RED]` = teszt írása (bukni fog) · `[GREEN]` = implementáció (teszt zöldítése) · `[CHECK]` = ellenőrzés futtatása · `[OPS]` = nem-TDD lépés (build, deploy, kézi konfiguráció, jóváhagyás, rollback)
 
-## <Logikai csoport 1 — a plan végrehajtási sorrendje alapján>
+## <Logikai csoport 1 — a plan végrehajtási sorrendje alapján> — plan [P-CONFIG], [P-REDIS]
 
-- [ ] T001 [RED]   ...
-- [ ] T002 [GREEN] ...
-- [ ] T003 [CHECK] Futtasd: `npm test -- path/to/test.ts`
+- [ ] T001 [RED]   ... — plan [P-CONFIG] (unit teszt)
+- [ ] T002 [GREEN] ... — plan [P-CONFIG] (betöltő modul)
+- [ ] T003 [CHECK] Futtasd: `npm test -- path/to/test.ts` — plan [P-CONFIG]
 
-## <Logikai csoport 2>
+## <Logikai csoport 2> — plan [P-ROUTING]
 
-- [ ] T004 ...
-- [ ] T005 [CHECK] Futtasd: `npm run typecheck`
+- [ ] T004 ... — plan [P-ROUTING]
+- [ ] T005 [CHECK] Futtasd: `npm run typecheck` — plan [P-ROUTING]
+
+## Plan-lefedettség (fordított tábla)
+
+_Minden `[P-…]` ID-t viselő plan-szekció szerepel itt, a hozzá tartozó taskokkal._
+
+| Plan szekció (ID + cím) | Taskok | Csoport |
+|---|---|---|
+| `[P-CONFIG]` Konfigurációs rendszer | T001, T002, T003 | 1 |
+| `[P-ROUTING]` Dinamikus routing | T004, T005 | 2 |
+| `[P-DOCS-ONLY]` … | — (nincs task: <indok>) | — |
 ```
+
+**A csoport-fejléc plan-hivatkozása (B) kötelező:** minden `## <csoport>` cím végén ott vannak a csoport által lefedett plan-ID-k. Ez teszi emberi szemmel egy pillantás alatt követhetővé, hogy melyik terv-fejezet hol valósul meg — a taskok ugyanis **végrehajtási sorrend** szerint csoportosulnak, nem a plan tagolása szerint, így egy plan-szekció **több csoportba is szóródhat** (pl. `[P-CONFIG]` teszt-írása az 1., implementációja a 3. csoportban).
+
+**A `Plan-lefedettség` tábla (C) kötelező, és a lista LEZÁRÁSAKOR készül** — akkor, amikor már minden task megvan. Nem külön munka: végigmész a plan `[P-…]` szekcióin, és mindegyikhez kigyűjtöd a rá hivatkozó task-azonosítókat. **Minden ID-nak szerepelnie kell**: ha egy plan-szekcióhoz nem tartozik task, a sor akkor is bekerül, `—` és **egy mondatos indok** (pl. „csak ellenőrzési stratégia, a 07 futtatja"). Indok nélküli üres sor = lefedettségi rés.
 
 A csoportok a plan végrehajtási sorrendjének szakaszait tükrözik. Minden csoport önállóan elvégezhető és ellenőrizhető. Minden csoportnak van legalább egy `[CHECK]` taskja a végén.
 
@@ -259,6 +289,13 @@ Menj végig a következő csoportokon sorban. Minden csoportot önállóan pipá
 ### A) Plan lefedettség
 
 - A Prerequisite dokumentumok listája tartalmazza a `plan.md`-t és minden `Reviewed` schema artifaktot?
+- **Plan-hivatkozás minden taskon (PID1):** minden task sora `— plan [P-…]`-val végződik, **pontosan egy** elsődleges ID-val (a második zárójelben, „lásd még"-ként)?
+- **Az ID-k LÉTEZNEK a planben:** vesd össze a használt ID-kat a plan címsoraival (`grep -o '\[P-[A-Z0-9-]*\]' plan.md`) — nincs kitalált vagy elgépelt ID, és **sorszámos hivatkozás** (`§ 3.1`) sem maradt benne?
+- **Nincs leltár-szekcióra mutató hivatkozás:** minden elsődleges hivatkozás `[P-…]`-ID-t viselő **végrehajtható** terv-szekcióra mutat. Ha egy taskhoz nem találtál ilyet, `tasks-questions.md` kérdés lett belőle (nem saját szöveggel pótoltad)?
+- **Részhatókör-jelölés:** ahol **több task** hivatkozik ugyanarra az ID-ra, mindegyiken ott van a zárójeles hatókör (`(config fájlok)`, `(betöltő modul)`, `(unit teszt)`)?
+- **Csoport-fejlécek:** minden `## <logikai csoport>` cím végén ott vannak a csoport által lefedett plan-ID-k?
+- **`Plan-lefedettség` tábla teljes:** a plan **minden** `[P-…]` szekciója szerepel a táblában — vagy taskokkal, vagy `—` + egy mondatos indokkal? Nincs ID a planben, ami a táblából kimaradt, és nincs a táblában olyan ID, ami a planben nem létezik?
+- **Duplikáció-tilalom (PID1/b):** nincs olyan task, amely a plan érték-listáját, kód→kód leképezését vagy lépéssorát **átmásolva** tartalmazza (a `[CHECK]`/`[OPS]` parancsok kivételével, azok karakterre egyeznek a plan-belivel)?
 - **Plan `Tervezett módosítások` lefedettség:** menj végig fájlonként — minden fájl kapott legalább egy taskot?
 - **Plan `Ellenőrzési stratégia` lefedettség:** menj végig a plan `Ellenőrzési stratégia` szekciójának minden parancsán — mindegyik megjelent `[CHECK]` taskként valamelyik csoportban?
 - **Regressziós érintettség lefedve:** a plan `Regressziós érintettség` táblázatának **minden sora megjelent-e taskként** — vagy `TREG` taskként a záró csoportban, **vagy** (ha a fájl a plan `Tervezett módosítások` szekciójában is szerepel) **normál `Tnnn` taskként**? A `TREG` **definíció szerint csak azokra a fájlokra jár, amelyek a `Tervezett módosítások`-ban NINCSENEK** — ami ott van, azt ne duplikáld `TREG`-ként. Ha a plan azt mondja, nincs érintettség, ez a csoport hiányozhat.
@@ -287,6 +324,9 @@ Menj végig a következő csoportokon sorban. Minden csoportot önállóan pipá
 - **`[CHECK]` relevanciája:** a csoport záró `[CHECK]` taskja az adott csoport módosításait ellenőrzi — ne futtass más szekció tesztjeit egy csoport záróellenőrzéseként. Ha a csoport módosított kódjához nincs önálló egységteszt (pl. proxy konfiguráció, mock szerver route), typecheck vagy build check elegendő helyette.
 - **Parancsok helyessége:** Minden bash parancs (különösen a `[CHECK]` taskokban szereplő `cd` parancsok utáni relatív útvonalak) valós és helyes? A `../../` típusú útvonalak gyakran kiugranak a projekt gyökeréből, kerüld a túlzott visszalépést, ellenőrizd az útvonal logikáját!
 - **Regresszió futtatás nincs a tasks-ban:** ellenőrizd, hogy a tasks lista nem tartalmaz regressziós teszteket FUTTATÓ `[CHECK]` taskot — az a validate fázis feladata.
+- **`[CHECK]` parancs ↔ `conventions.md` riport-kapcsolók:** nyisd meg a `conventions.md` `## Teszt-riportolás` tábláját, és vesd össze **soronként** minden `[CHECK]` parancsával. Ha az adott teszt-szintre kötelező riport-kapcsoló van előírva (pl. `--alluredir=allure-results`, `--reporter=…`, `--junitxml=…`), az **szerepeljen a parancsban**. Hiányzó kapcsoló → a 07 fázis riport-kapuja (TR3) bukik el a ciklus végén.
+- **`⟂` párhuzamosítás validálva:** minden `⟂ Tkkk` jelölésnél a két task **fájlhalmaza diszjunkt**, és egyik sem futtatja azt, amit a másik ír. `[CHECK]` **soha** nem párhuzamos a saját tesztjét író/módosító taskkal (hamis zöld). Ha nem tudod eldönteni, **vedd le a `⟂`-t** — a szekvenciális futás sosem hibás.
+- **Browser E2E marker:** ha egy UI/browser E2E teszt-író task az implementáció UTÁN áll, a markere `[GREEN]` (vagy `[RED]` + zárójeles indoklás) — nincs indoklás nélküli, sorrendben implementáció utáni `[RED]`.
 
 ### D) Task granularitás és előkészítés
 
@@ -390,6 +430,18 @@ A fix-mód egy **szűkített belépő:** a megadott `Must Fix` megállapítások
 
 A `Must Fix`-et, amihez **valódi döntés** kell (jellemzően ha a plan hiányosságát jelzi), **ne találd ki** — vedd fel új `Knn`-ként a `tasks-questions.md` végére, és **ne kérdezd közvetlenül a felhasználót** (fix-módban nincs interaktív csatornád). A kérdezést az orchestrátor (`05-analyze`) végzi, a user-felé `TASKS/Knn` prefixszel. (Ez a fix-mód megfelelője a fenti „Megállási szabályok"-nak: normál módban STOP + jelzés, fix-módban kérdés-gyűjtés a `tasks-questions.md`-be.)
 
+### Amit fix-módban is KÖTELEZŐ megtartani (PID1)
+
+Új vagy módosított task felvételekor a hivatkozási rend nem sérülhet — a hurok leggyakoribb csendes rombolása épp ez:
+
+- **minden új task kap `— plan [P-…]` hivatkozást** (egy elsődleges ID; ha több task osztozik egy ID-n, részhatókör-jelöléssel);
+- **a `Plan-lefedettség` táblát frissítsd** az új taskokkal — nem maradhat a régi állapotban;
+- **a csoport-fejléc plan-ID listáját** egészítsd ki, ha új szekciót fedő task került a csoportba;
+- ha a plan-fixer **új `[P-…]` szekciót** hozott létre, ahhoz kell hivatkozó task (vagy indokolt sor a táblában);
+- **plan-ID-t soha nem találsz ki**: ha a taskhoz nem tudsz létező ID-t rendelni, az `tasks-questions.md` kérdés.
+
+_(A mechanikus kapu — `analyze-gate-check.py` — ezeket a következő körben úgyis kimutatja; itt olcsóbb helyesen csinálni.)_
+
 ### Státusz (auto, `[analyze-loop]` marker)
 A hurok a `tasks.md` státuszát `[analyze-loop]` markerrel nyitotta vissza (pl. `Piszkozat [analyze-loop]`). Amíg a marker jelen van, **automatikusan** lépteted a státuszt, megerősítés-kérés nélkül:
 - van nyitott `[ ]` kérdés a `tasks-questions.md`-ben → marad `Piszkozat [analyze-loop]`;
@@ -400,3 +452,4 @@ A marker fel- és levételét az orchestrátor kezeli; te csak a státusz-érté
 ### Visszatérési összefoglaló (az orchestrátornak)
 Adj vissza tömör összefoglalót: (a) mely `Must Fix`-eket / plan-változásokat vezettél át és hogyan, (b) milyen új `Knn` kérdéseket vettél fel a `tasks-questions.md`-be (azonosítóval). A `tasks.md`-t és a `tasks-questions.md`-t te írod; az `analyze-report.md`-t **nem** — az az orchestrátoré.
 
+- **`downstream-hatás:`** (D11) — kötelező mező: `nincs`, vagy `van — <mi változott, ami a következő fázist érinti>`. Ebből dönti el az orchestrátor, hogy kell-e egyáltalán elindítani a downstream fixereket. **Bizonytalanság esetén `van`**, a konkrét ok megnevezésével — a puszta „biztos, ami biztos” viszont nem ok.

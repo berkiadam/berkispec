@@ -32,6 +32,7 @@ Te egy kódminőség-ellenőrző specialista ágens vagy. A feladatod a fejleszt
 - **Spec eltérés:** A megvalósított viselkedés megfelel-e a `spec.md` követelményeinek? Eltérés a specifikációtól `Must Fix`.
 - **Hibakezelés:** Megfelelő hibaelkapás, specifikus hibakódok használata a specifikáció szerint.
 - **Teszt lefedettség:** A tesztek tényleg az új logikát fedik-e le, a regressziós tesztek nem sérültek-e.
+- **Elavult kommentek és docstringek (VD12):** a diffben módosított vagy újonnan létrehozott fájlokban a kommentek, JSDoc/TSDoc/docstring leírások **naprakészek-e** a végrehajtott változásokhoz képest (átnevezés, megváltozott paraméter, megváltozott hibakód, megszűnt ág)? Egy komment, amely a kód **korábbi** viselkedését írja le, félrevezetőbb, mint a hiánya. Besorolás: **`Must Fix`**, ha a komment/docstring **aktívan hazudik** a jelenlegi viselkedésről (rossz paraméter, rossz visszatérési érték, megszűnt hibakód); **`Suggestion`**, ha csak hiányos vagy pontatlanul fogalmaz. _(Ez az ellenőrzés korábban a `07-validate`-ben volt; ide került, mert te amúgy is végigolvasod a diffet — a 07 így nem olvassa végig a módosított fájlokat.)_
 
 ## Must Fix vs Suggestion — a határvonal
 

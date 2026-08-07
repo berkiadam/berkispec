@@ -6,7 +6,7 @@ called_by: ["skills/07-validate.md"]
 inputs:
   - "A konkrét teszt-/Sonar-/DoD-hibalista (a tasks.md ## Validációs javítások taskjai), a szekció prerequisite hivatkozásaival"
   - "specs/cycle-NN-<name>/test-report/validate-decision.md (# Validation History)"
-  - "specs/cycle-NN-<name>/test-report/sonar-report.md (ha Sonar hibázott)"
+  - "specs/cycle-NN-<name>/test-report/validate/round-NN/sonar-report.md (ha Sonar hibázott — a kör-mappa konkrét útvonalát az orchestrátor adja meg a prerequisite hivatkozásban)"
   - "specs/cycle-NN-<name>/tasks.md"
 outputs:
   - "Javított forráskód + lezárt ## Validációs javítások taskok (tasks.md, státusz [validate-loop] markerrel)"
