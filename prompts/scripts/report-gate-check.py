@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """TR3 kapu — a ciklus `test-report/` mappájában kötelező teszt-riportok
-determinisztikus ellenőrzése (07-validate, 09-review re-validate).
+determinisztikus ellenőrzése (07-validate).
 
 Miért kell: a teszt-futtatás eredménye a chatben él, a chat pedig `/clear`
 után nincs. A projekt teszt-eszközének SAJÁT riportja (Allure, Playwright
@@ -12,10 +12,9 @@ Hol keresi (TR5): a riportok KÖRÖNKÉNTI almappákban élnek, hogy egy önjav�
 hurok minden körének megmaradjon a saját bizonyítéka:
 
   specs/cycle-NN-<name>/test-report/
-  ├── validate-decision.md            (a 07 naplója — nem a kapu dolga)
+  ├── validation-report.md            (a 07 naplója — nem a kapu dolga)
   ├── implement/check-log.md          (a 06 [CHECK]-naplója — nem a kapu dolga)
   ├── validate/round-01/ round-02/    (a 07 validálási körei)
-  └── review/round-01/                (a 09 re-validate körei)
 
 A vizsgált mappát a hívó adja meg a `--report-subdir` kapcsolóval, pl.
 `--report-subdir test-report/validate/round-02`. Az alapérték (`test-report`)

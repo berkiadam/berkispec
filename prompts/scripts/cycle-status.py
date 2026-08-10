@@ -97,10 +97,15 @@ def analyze_cycle(cycle_path):
     spec_file = cycle_path / "spec.md"
     tasks_file = cycle_path / "tasks.md"
     analyze_file = cycle_path / "analyze-report.md"
-    validate_file_1 = cycle_path / "test-report/bs-validate-decision.md"
-    validate_file_2 = cycle_path / "test-report/validate-decision.md"
+    # az aktuális név a validation-report.md; a két korábbi név visszafelé kompatibilitásból marad
+    validate_file_1 = cycle_path / "test-report/validation-report.md"
+    validate_file_2 = cycle_path / "test-report/bs-validate-decision.md"
+    validate_file_3 = cycle_path / "test-report/validate-decision.md"
     doc_sync_file = cycle_path / "doc-sync-plan.md"
-    review_file = cycle_path / "code-review.md"
+    # a review a 07-validate 4. lépése (RV1) — a jelentés a test-report/ alatt él;
+    # a ciklus gyökerében lévő régi útvonal visszafelé kompatibilitásból marad
+    review_file = cycle_path / "test-report/code-review.md"
+    review_file_legacy = cycle_path / "code-review.md"
 
     if is_full_flow:
         # --- FULL FLOW (00-09) ---
@@ -162,26 +167,35 @@ def analyze_cycle(cycle_path):
         else:
             phases.append(("Megvalósítás (kód írás)", "MÉG NEM FUTOTT"))
 
-        # 6. Validálás
-        val_file = validate_file_1 if validate_file_1.exists() else validate_file_2
+        # 6. Validálás (tesztek + kódreview — RV1)
+        val_file = next((f for f in (validate_file_1, validate_file_2, validate_file_3)
+                         if f.exists()), validate_file_1)
         if val_file.exists() or (tasks_status == "kész"):
             if tasks_status == "kész":
-                phases.append(("Validálás (test-report)", "KÉSZ"))
+                phases.append(("Validálás + review (test-report)", "KÉSZ"))
             else:
                 try:
                     with open(val_file, 'r', encoding='utf-8') as f:
                         val_content = f.read()
-                    if "PASS" in val_content:
-                        phases.append(("Validálás (test-report)", "KÉSZ"))
+                    review_open = False
+                    for rf in (review_file, review_file_legacy):
+                        if rf.exists():
+                            try:
+                                review_open = "- [ ]" in rf.read_text(encoding='utf-8')
+                            except Exception:
+                                review_open = False
+                            break
+                    if "PASS" in val_content and not review_open:
+                        phases.append(("Validálás + review (test-report)", "KÉSZ"))
                     else:
-                        phases.append(("Validálás (test-report)", "FOLYAMATBAN"))
+                        phases.append(("Validálás + review (test-report)", "FOLYAMATBAN"))
                 except Exception:
-                    phases.append(("Validálás (test-report)", "FOLYAMATBAN"))
+                    phases.append(("Validálás + review (test-report)", "FOLYAMATBAN"))
         else:
             if tasks_status == "validálásra kész":
-                phases.append(("Validálás (test-report)", "FOLYAMATBAN"))
+                phases.append(("Validálás + review (test-report)", "FOLYAMATBAN"))
             else:
-                phases.append(("Validálás (test-report)", "MÉG NEM FUTOTT"))
+                phases.append(("Validálás + review (test-report)", "MÉG NEM FUTOTT"))
 
         # 7. Doc-sync
         if doc_sync_file.exists():
@@ -198,14 +212,13 @@ def analyze_cycle(cycle_path):
         else:
             phases.append(("Dokumentáció (doc-sync-plan.md)", "MÉG NEM FUTOTT"))
 
-        # 8. Review és Merge
-        if review_file.exists() or (tasks_status == "kész" and doc_sync_file.exists()):
-            phases.append(("Kód-review & Merge", "KÉSZ"))
+        # 8. Merge
+        if tasks_status == "kész" and doc_sync_file.exists():
+            phases.append(("Merge", "KÉSZ"))
+        elif tasks_status == "kész":
+            phases.append(("Merge", "FOLYAMATBAN"))
         else:
-            if tasks_status == "kész":
-                phases.append(("Kód-review & Merge", "FOLYAMATBAN"))
-            else:
-                phases.append(("Kód-review & Merge", "MÉG NEM FUTOTT"))
+            phases.append(("Merge", "MÉG NEM FUTOTT"))
 
     else:
         # --- SIMPLIFIED (LIGHTWEIGHT) FLOW ---

@@ -58,7 +58,7 @@ AGENT_MODEL_KEYS = {
 # Cursor subagent `readonly: true` — CSAK azok az agentek, amelyek biztosan
 # SEMMIT nem írnak (a prózájuk is kimondja: „Read-only vagy"): tisztán a hívó
 # skillnek adnak vissza megállapítást/összefoglalót, fájlt nem hoznak létre.
-# FIGYELEM: a tool-lista nem megbízható jelzés — a `reviewer` (code-review.md)
+# FIGYELEM: a tool-lista nem megbízható jelzés — a `reviewer` (test-report/code-review.md)
 # és a `test-runner` (report-mappa/config) Bash-en keresztül ÍR, hiába nincs a
 # tool-listájukban Edit/Write; ezért ők NINCSENEK itt. Téves readonly=true
 # megtörné őket.
@@ -157,6 +157,33 @@ def copy_helper_scripts(src_dir, scripts_dest):
 # a `prompts/shared/<fájl>` tartalmát ILLESZTI BE (build-time include), így a
 # telepített SKILL.md önmagában teljes. A megosztott fájl elején lévő
 # magyarázó HTML-kommentet (forrás-jegyzet) nem visszük át.
+# ── A `<platform-scripts-mappa>` helyőrző feloldása (BD15) ────────────────────
+# A skillek helper-szkripteket hívnak (`failure-counter.py`, `run-tests.py`,
+# `round-log.py`, …), de a szkriptek platformonként MÁS mappába települnek.
+# Ha a helyőrző a telepített SKILL.md-ben marad, az ágensnek ki kell találnia az
+# útvonalat — egy gyengébb modell ilyenkor rossz helyre nyúl, vagy köröket
+# pazarol a kereséssel. Ezért a telepítő a KONKRÉT, projektgyökérhez képest
+# relatív útvonalra cseréli, platformonként.
+SCRIPTS_DIR_BY_PLATFORM = {
+    "claude": ".claude/scripts",
+    "antigravity": ".agents/scripts",
+    "codex": ".codex/scripts",
+    "copilot": ".github/scripts",
+    "cursor": ".cursor/scripts",
+}
+_SCRIPTS_DIR_PLACEHOLDER = "<platform-scripts-mappa>"
+
+
+def substitute_scripts_dir(content, platform):
+    """A `<platform-scripts-mappa>` helyőrző cseréje a platform tényleges
+    scripts-mappájára. Ismeretlen platformnál változatlanul hagyja (a skill
+    szövege ilyenkor is értelmes marad)."""
+    target = SCRIPTS_DIR_BY_PLATFORM.get(platform)
+    if not target:
+        return content
+    return content.replace(_SCRIPTS_DIR_PLACEHOLDER, target)
+
+
 _INCLUDE_MARKER_RE = re.compile(r'[ \t]*<!--\s*INCLUDE:\s*(?P<path>[^\s]+?)\s*-->[ \t]*')
 _shared_include_cache = {}
 
@@ -289,14 +316,16 @@ def inject_cursor_agent(content, model, effort, readonly=False):
 # esetben inert, a legrosszabb esetben félrevezető (nem létező képességet sugall).
 # A modellváltás KIZÁRÓLAG az agentek/subagentek szintjén hat megbízhatóan (Claude
 # subagent model/effort, Codex TOML model/model_reasoning_effort) — ott marad meg.
-def write_markdown_skill(skill_file, skills_dest, src_dir=None):
+def write_markdown_skill(skill_file, skills_dest, src_dir=None, platform=None):
     """Skill másolása modell-injektálás NÉLKÜL a <skills_dest>/bs-<stem>/SKILL.md alá.
     A `<!-- INCLUDE:shared/... -->` markerek build-time inline-olódnak (BD14),
-    ha a `src_dir` meg van adva."""
+    ha a `src_dir` meg van adva; a `<platform-scripts-mappa>` helyőrző a platform
+    tényleges scripts-mappájára cserélődik (BD15)."""
     with open(skill_file, 'r', encoding='utf-8') as f:
         content = f.read()
     if src_dir is not None:
         content = inline_shared_includes(content, src_dir)
+    content = substitute_scripts_dir(content, platform)
     skill_dest_dir = skills_dest / f"bs-{skill_file.stem}"
     skill_dest_dir.mkdir(parents=True, exist_ok=True)
     with open(skill_dest_dir / "SKILL.md", 'w', encoding='utf-8') as f:
@@ -388,6 +417,11 @@ def process_codex(src_dir, dest_path, models):
 
         with open(agent_file, 'r', encoding='utf-8') as f:
             content = f.read()
+        # A subagent-promptok is kaphatnak `<!-- INCLUDE:shared/... -->` markert
+        # (BD14) — pl. a közös anti-„teszt-csalás" garde, amit a fixereknek szó
+        # szerint ugyanúgy kell látniuk, mint az orchestrátornak.
+        content = inline_shared_includes(content, src_dir)
+        content = substitute_scripts_dir(content, "codex")
 
         name, role, description, body = _split_agent_markdown(content)
         agent_name = name or stem
@@ -405,7 +439,7 @@ def process_codex(src_dir, dest_path, models):
     skills_dest.mkdir(parents=True, exist_ok=True)
 
     for skill_file in skills_src.glob("*.md"):
-        write_markdown_skill(skill_file, skills_dest, src_dir)
+        write_markdown_skill(skill_file, skills_dest, src_dir, "codex")
 
     # 3. Helper scripts → .codex/scripts/
     scripts_dest = dest_path / ".codex/scripts"
@@ -447,7 +481,8 @@ def process_antigravity(src_dir, dest_path, models):
             sections = data["customAgentSpec"]["customAgent"]["systemPromptSections"]
             for section in sections:
                 if section.get("title") == "Instructions":
-                    content = section.get("content", "")
+                    content = inline_shared_includes(section.get("content", ""), src_dir)
+                    content = substitute_scripts_dir(content, "antigravity")
                     section["content"] = _build_alert(model, "Antigravity", effort) + content
         except KeyError:
             pass
@@ -463,7 +498,7 @@ def process_antigravity(src_dir, dest_path, models):
     skills_dest.mkdir(parents=True, exist_ok=True)
     
     for skill_file in skills_src.glob("*.md"):
-        write_markdown_skill(skill_file, skills_dest, src_dir)
+        write_markdown_skill(skill_file, skills_dest, src_dir, "antigravity")
 
     # 3. Process helper scripts
     scripts_dest = dest_path / ".agents/scripts"
@@ -483,6 +518,11 @@ def process_claude(src_dir, dest_path, models):
         effort = get_effort(models, "claude", agent_file.name)
         with open(agent_file, 'r', encoding='utf-8') as f:
             content = f.read()
+        # A subagent-promptok is kaphatnak `<!-- INCLUDE:shared/... -->` markert
+        # (BD14) — pl. a közös anti-„teszt-csalás" garde, amit a fixereknek szó
+        # szerint ugyanúgy kell látniuk, mint az orchestrátornak.
+        content = inline_shared_includes(content, src_dir)
+        content = substitute_scripts_dir(content, "claude")
 
         new_content = inject_markdown_model(content, model, "Claude Code", effort)
 
@@ -494,7 +534,7 @@ def process_claude(src_dir, dest_path, models):
     skills_dest.mkdir(parents=True, exist_ok=True)
     
     for skill_file in skills_src.glob("*.md"):
-        write_markdown_skill(skill_file, skills_dest, src_dir)
+        write_markdown_skill(skill_file, skills_dest, src_dir, "claude")
 
     # 3. Process helper scripts
     scripts_dest = dest_path / ".claude/scripts"
@@ -516,6 +556,11 @@ def process_copilot(src_dir, dest_path, models):
 
         with open(agent_file, 'r', encoding='utf-8') as f:
             content = f.read()
+        # A subagent-promptok is kaphatnak `<!-- INCLUDE:shared/... -->` markert
+        # (BD14) — pl. a közös anti-„teszt-csalás" garde, amit a fixereknek szó
+        # szerint ugyanúgy kell látniuk, mint az orchestrátornak.
+        content = inline_shared_includes(content, src_dir)
+        content = substitute_scripts_dir(content, "copilot")
 
         new_content = inject_markdown_model(content, model, "Copilot", effort)
 
@@ -538,6 +583,7 @@ def process_copilot(src_dir, dest_path, models):
 
         # Build-time include-inline-olás (BD14) — a Copilot is teljes SKILL-t kap.
         content = inline_shared_includes(content, src_dir)
+        content = substitute_scripts_dir(content, "copilot")
 
         with open(instructions_dest / f"bs-{clean_name}.instructions.md", 'w', encoding='utf-8') as f:
             f.write(content)
@@ -563,6 +609,11 @@ def process_cursor(src_dir, dest_path, models):
 
         with open(agent_file, 'r', encoding='utf-8') as f:
             content = f.read()
+        # A subagent-promptok is kaphatnak `<!-- INCLUDE:shared/... -->` markert
+        # (BD14) — pl. a közös anti-„teszt-csalás" garde, amit a fixereknek szó
+        # szerint ugyanúgy kell látniuk, mint az orchestrátornak.
+        content = inline_shared_includes(content, src_dir)
+        content = substitute_scripts_dir(content, "cursor")
 
         new_content = inject_cursor_agent(content, model, effort, readonly)
 
@@ -574,7 +625,7 @@ def process_cursor(src_dir, dest_path, models):
     skills_dest.mkdir(parents=True, exist_ok=True)
 
     for skill_file in skills_src.glob("*.md"):
-        write_markdown_skill(skill_file, skills_dest, src_dir)
+        write_markdown_skill(skill_file, skills_dest, src_dir, "cursor")
 
     # 3. Process helper scripts
     scripts_dest = dest_path / ".cursor/scripts"

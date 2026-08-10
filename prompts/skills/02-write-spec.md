@@ -18,11 +18,7 @@ shared:
   - "shared/phase-commit.md"
 ---
 # 02 — Spec írás
-## Kontextus ellenőrzés
-
-Ha azt detektálod, hogy ennek a fázisnak a futtatása most indul (ez az első prompt a fázisban), de a kontextus nem „friss” (azaz a beszélgetési előzmények tartalmaznak korábbi fázisokból vagy futásokból származó üzeneteket), akkor kérdezz rá a felhasználónál:
-> *„Úgy tűnik, hogy a fázis indításakor a kontextus nem teljesen friss. Szándékosan nem futtattál `/clear`-t az új fázis megkezdése előtt (a tokenekkel való spórolás érdekében)?”*
-Várd meg a felhasználó válaszát, mielőtt folytatnád a fázis futtatását.
+<!-- INCLUDE:shared/context-check.md -->
 
 ---
 
@@ -219,9 +215,13 @@ _Mi sülhet el rosszul? Milyen feltételezéseken alapul a spec? Elfogadott POC 
 
 _Ellenőrizhető, pipálható feltételek. Minden pont legyen konkrét és egyértelműen eldönthető (igen/nem)._
 
-- [ ] DoD-01 — [az ellenőrizhető feltétel]
-- [ ] DoD-02 — [az ellenőrizhető feltétel]
+- [ ] **DoD-01** — [az ellenőrizhető feltétel]
+      · _bizonyíték:_ `[tesztnév | cmd: <parancs> | manual: <mit ellenőrzünk kézzel>]`
+- [ ] **DoD-02** — [az ellenőrizhető feltétel]
+      · _bizonyíték:_ `[…]`
 \`\`\`
+
+> **A bizonyíték-mező (DI2) — erősen ajánlott.** Minden DoD-ponthoz nevezd meg, **mi bizonyítja** a teljesülését: egy **tesztnév** (a `plan.md` teszt-specifikációjából), egy **`cmd:` parancs**, vagy — ha tényleg csak kézzel ellenőrizhető — `manual: <mit>`. A `07-validate` a `dod-check.py`-jal **gépi join**-nal értékeli ki ezeket a kör futási eredményeivel: bizonyítékkal bíró pontnál nincs szükség LLM-ítéletre, és nem fordulhat elő emlékezetből adott ✓. Bizonyíték nélküli pont nem hiba, de a 07 `?`-lel jelöli, és kézi ítéletet kér rá — ha sok ilyen van, az a spec ellenőrizhetőségének gyengeségét jelzi. *(A bizonyíték itt **viselkedés-szintű megnevezés**, nem tesztfájl-útvonal vagy futtatási parancs-részlet — a spec/plan határvonal érvényes marad; a `cmd:` alak is csak akkor indokolt, ha nincs hozzá teszteset.)*
 
 > **A `DoD-NN` azonosító kötelező és stabil (DI1).** Minden DoD-pont saját, sorfolytonos azonosítót kap (`DoD-01`, `DoD-02`, …), és ez az azonosító **soha nem változik meg** a ciklus során — a `07-validate` ezzel a névvel naplózza a bukott DoD-pontokat a `# Validation History`-ba, és ezen a néven számolja a 3-próba leállást. Ha egy pont utólag beszúrásra kerül, a következő szabad számot kapja (ne számozd újra a listát); ha egy pont törlődik, a száma nem használható újra. Parafrazeált vagy azonosító nélküli DoD-pontnál a hurok leállító-mechanizmusa csendben elromlik.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Determinisztikus futás-napló + per-item bukás-számláló a 07-validate
-(`# Validation History`) és a 09-review (`# Review History`) önjavító
+(`# Validation History`) és a 05-analyze (`# Hurok-napló`) önjavító
 hurkaihoz.
 
 A fő ágens eddig kézzel parse-olta a History-t és inkrementálta a
@@ -126,7 +126,7 @@ def main():
     _force_utf8_output()
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("history_file", help="a napló fájl útvonala (validate-decision.md vagy code-review.md)")
+    parser.add_argument("history_file", help="a napló fájl útvonala (validation-report.md vagy code-review.md)")
     parser.add_argument("--result", choices=["PASS", "FAIL"],
                         help="a mostani VALIDÁLÁSI KÖR eredménye (kötelező, ha nem --status)")
     parser.add_argument("--failed-item", action="append", default=[], metavar="NÉV",
@@ -135,7 +135,7 @@ def main():
     parser.add_argument("--timestamp", metavar="YYYY-MM-DD HH:MM",
                         help="a futás időbélyege (a hívó adja meg — a szkript nem olvas rendszeridőt a determinizmus végett); kötelező, ha nem --status")
     parser.add_argument("--header", default="Validation History",
-                        help="a napló szekció címe (alap: 'Validation History'; a 09-nél 'Review History')")
+                        help="a napló szekció címe (alap: 'Validation History')")
     parser.add_argument("--threshold", type=int, default=3,
                         help="per-item egymást követő bukás küszöb (alap: 3)")
     parser.add_argument("--max-item-total", type=int, default=5,
@@ -208,7 +208,8 @@ def main():
     new_entry = "\n".join(lines)
     updated = existing.rstrip() + "\n" + new_entry + "\n"
     try:
-        path.write_text(updated, encoding="utf-8")
+        with open(path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(updated)
     except OSError as exc:
         print(f"HIBA: a napló nem írható ({exc}).", file=sys.stderr)
         return 1

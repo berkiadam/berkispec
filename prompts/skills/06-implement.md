@@ -15,11 +15,7 @@ subagents:
   - "agents/researcher.md"
 ---
 # 06 — Implementálás
-## Kontextus ellenőrzés
-
-Ha azt detektálod, hogy ennek a fázisnak a futtatása most indul (ez az első prompt a fázisban), de a kontextus nem „friss” (azaz a beszélgetési előzmények tartalmaznak korábbi fázisokból vagy futásokból származó üzeneteket), akkor kérdezz rá a felhasználónál:
-> *„Úgy tűnik, hogy a fázis indításakor a kontextus nem teljesen friss. Szándékosan nem futtattál `/clear`-t az új fázis megkezdése előtt (a tokenekkel való spórolás érdekében)?”*
-Várd meg a felhasználó válaszát, mielőtt folytatnád a fázis futtatását.
+<!-- INCLUDE:shared/context-check.md -->
 
 ---
 
@@ -50,7 +46,7 @@ Implementáld a `tasks.md` taskjait sorban, egyenként.
 
 **Folytatás megszakított futás után:** az implementáció bármikor félbeszakadhat — akár az első task közepén is, mielőtt bármit pipáltak volna. Mindig ellenőrizd a tényleges kód állapotát, ne csak a jelöléseket.
 
-**Két forrásból érkezhet visszalépés ide:** (a) a 07-validate FAIL ágáról (`## Validációs javítások` taskok a `tasks.md` végén), vagy (b) a 09-review-and-merge FAIL ágáról (`## Review javítások` taskok + `code-review.md`). Mindkét esetben a `tasks.md` végén lévő új taskok az elvégzendők; a 09 esetén olvasd be a `code-review.md`-t is (lásd a Kontextus betöltési szabályok és a Végrehajtási szabályok 2. pontját). Az alábbi döntési fa ugyanúgy érvényes — a kód tényleges állapotából indulj ki.
+**Két forrásból érkezhet visszalépés ide — mindkettő a 07-validate FAIL ágáról:** (a) teszt-/Sonar-/DoD-hiba (`## Validációs javítások` taskok a `tasks.md` végén), vagy (b) kódreview-finding (`## Review javítások` taskok + `test-report/code-review.md`). Mindkét esetben a `tasks.md` végén lévő új taskok az elvégzendők; a review-ágon olvasd be a `test-report/code-review.md`-t is (lásd a Kontextus betöltési szabályok és a Végrehajtási szabályok 2. pontját). Az alábbi döntési fa ugyanúgy érvényes — a kód tényleges állapotából indulj ki.
 
 Döntési fa a folytatáshoz — **ebben a sorrendben**:
 
@@ -73,7 +69,7 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
 ## Kontextus betöltési szabályok
 
 - Implementálás megkezdése előtt olvasd be a `tasks.md`-t, majd a benne felsorolt **Prerequisite dokumentumokat**. Ezek tartalmazzák a függvényszignatúrákat, interfészeket, hibakezelési logikát.
-- **Review visszacsatolás:** Ha a `tasks.md` tartalmaz review-ból származó javítási feladatokat (vagy a folyamat a 09-es review & merge fázisból lépett vissza ide), olvasd be a `specs/cycle-NN-<cycle-name>/code-review.md` fájlt is, hogy megértsd a javítások kontextusát és elvárásait.
+- **Review visszacsatolás:** Ha a `tasks.md` tartalmaz review-ból származó javítási feladatokat (a 07 review-kapuja `Must Fix`-et talált), olvasd be a `specs/cycle-NN-<cycle-name>/test-report/code-review.md` fájlt is, hogy megértsd a javítások kontextusát és elvárásait.
 - Minden tasknál **csak az adott taskban megnevezett forrásfájlokat** olvasd be — és csak a releváns részeiket. A task logikai kontextusa a Prerequisite dokumentumokban van.
 - Ne olvasd be a spec-et.
 - **Forrás lokalizálás**: ha a task komponenst vagy függvényt nevez meg, de a pontos fájl/sor nem ismert — hívd a `researcher` subagentet (`agents/researcher.md`, Mód B) a kereséshez. A subagent visszaadja a path-t és a releváns sorokat, nem a teljes fájlt.
@@ -95,7 +91,7 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
 
 1. Vedd a következő elvégzetlen taskot (`- [ ]`).
 
-2. **Visszalépés kódellenőrzésből (08):** Ha a ciklus sikertelen kódellenőrzés (08) miatt került vissza ide, a `tasks.md` végén lévő új feladatokat a `code-review.md` kritikus észrevételei alapján végezd el. A javítások után a záró `[CHECK]` feladatok újbóli futtatása és commitolása kötelező.
+2. **Visszalépés kódreview-ból (07):** Ha a ciklus a 07 review-kapujának `Must Fix` findingjai miatt került vissza ide, a `tasks.md` végén lévő új feladatokat a `test-report/code-review.md` kritikus észrevételei alapján végezd el. A javítások után a záró `[CHECK]` feladatok újbóli futtatása és commitolása kötelező.
 
 3. **Fejezet-szintű előfeltétel ellenőrzés:** A `tasks.md`-ben a fejezetek `##` szintű blokkokra tagolódnak. (Ha egy task nem esik egyetlen `##` blokkba sem — pl. a lista elején áll fejezetcím nélkül —, kezeld önálló, előfeltétel nélküli taskként, és folytasd a 4. ponttal.) Ha a kiválasztott task az adott fejezet (adott `##` blokk) első elvégzetlen taskja (vagyis a fejezeten belül ez az első `- [ ]`): keresd meg a fejezet fejlécét a `tasks.md`-ben, és nézd meg, hogy közvetlenül alatta van-e `> **Gépi előfeltétel:**` blokk. Ha van: olvasd el a feltételeket, és döntsd el, hogy teljesülnek-e. Ha nem teljesülnek: állj meg, és jelezd a felhasználónak pontosan, mit kell beállítani: *„A(z) [fejezet neve] fejezet megkezdéséhez a következő feltételeknek kell teljesülniük: [feltételek]. Teljesülnek-e ezek?"* — várj a válaszra, mielőtt egyetlen taskot is elkezdenél a fejezetből.
 
@@ -182,7 +178,7 @@ _(Append-only. A 06-implement írja, taskonként. A 07/09 nem ír bele.)_
 **Oszlopok:**
 - **Idő** — konkrét string (`YYYY-MM-DD HH:MM`). Shell-behelyettesítés platformfüggő: bash/zsh → `$(date '+%Y-%m-%d %H:%M')`, PowerShell → `(Get-Date -Format 'yyyy-MM-dd HH:mm')`. Ha nem tudod megállapítani, `—` is elfogadható; a többi oszlop a lényeg.
 - **Próba** — hányadik kísérlet a 3-próba szabályból (8. pont): `1/3`, `2/3`, `3/3`. Ez teszi utólag láthatóvá, hogy egy csoport nehezen ment át.
-- **Mód** — `normál` \| `validate-loop` \| `review-loop`. A fix-módban futtatott `[CHECK]`-eket **ugyanígy naplózod**, a megfelelő markerrel — így a javító körök is nyomot hagynak.
+- **Mód** — `normál` \| `validate-loop` (a 07 önjavító hurka — teszt- és review-javítás egyaránt). A fix-módban futtatott `[CHECK]`-eket **ugyanígy naplózod**, a megfelelő markerrel — így a javító körök is nyomot hagynak.
 - **Parancs** — a ténylegesen kiadott parancs **szó szerint**, nem a task szövegében szereplő idealizált változat.
 - **Eredmény** — `✓`/`✗` + a futtató darabszámai (`X passed / Y failed / Z skipped`), bukásnál a bukott teszt(ek) neve rövid hibaüzenettel. **Ha a parancs nem teszt** (build, lint, typecheck), a darabszám helyett a lényegi kimenet egy sora (pl. `0 errors`).
 
@@ -244,38 +240,38 @@ Ha a státusz `Validálásra kész`, állj meg. Jelezd a felhasználónak a köv
 
 ---
 
-## Fix-mód (validate- és review-hurok belépő)
+## Fix-mód (a 07 önjavító hurkának belépője)
 
-> **Mikor aktív:** ezt a szekciót egy önjavító hurok indítja egy fixer-wrapperen keresztül — **nem** a normál implementáció. Két hívó van, azonos mechanikával, csak a bemeneti szekció és a marker más:
-> - **validate-hurok (07):** `agents/implement-fixer.md` → bemenet a `tasks.md` `## Validációs javítások` taskjai (teszt-/Sonar-/DoD-hibák), marker `[validate-loop]`;
-> - **review-hurok (08):** `agents/review-fixer.md` → bemenet a `tasks.md` `## Review javítások` taskjai (a `code-review.md` `Must Fix` findingjai), marker `[review-loop]`.
+> **Mikor aktív:** ezt a szekciót a `07-validate` önjavító hurka indítja egy fixer-wrapperen keresztül — **nem** a normál implementáció. Két wrapper van, azonos mechanikával és **azonos markerrel** (`[validate-loop]`), csak a bemeneti szekció más:
+> - **teszt-/Sonar-/DoD-hiba:** `agents/implement-fixer.md` → bemenet a `tasks.md` `## Validációs javítások` taskjai;
+> - **kódreview-finding:** `agents/review-fixer.md` → bemenet a `tasks.md` `## Review javítások` taskjai (a `test-report/code-review.md` `MF-NN` findingjai).
 >
 > Mindkét esetben egy **konkrét hibalista** célzott javítása a feladat, nem a teljes ciklus újra-implementálása.
 
-A fix-mód egy **szűkített belépő:** a megadott teszt-/Sonar-/DoD-hibákat javítod célzottan, **nem implementálod újra a ciklust** (2.2). (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A 06 normál végrehajtási és minőségi szabályai (a `[CHECK]` zöldre futtatása, kódkomment-frissítés, deep module) a javított részekre továbbra is érvényesek — **beleértve a `[CHECK]` futásnaplót is**: a fix-módban futtatott ellenőrzéseket ugyanúgy vezeted a `test-report/implement/check-log.md`-be, a **Mód** oszlopban `validate-loop` / `review-loop` jelöléssel. Így a javító körök `[CHECK]`-jei is nyomot hagynak, és a hurok utólag rekonstruálható.
+A fix-mód egy **szűkített belépő:** a megadott teszt-/Sonar-/DoD-hibákat javítod célzottan, **nem implementálod újra a ciklust** (2.2). (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A 06 normál végrehajtási és minőségi szabályai (a `[CHECK]` zöldre futtatása, kódkomment-frissítés, deep module) a javított részekre továbbra is érvényesek — **beleértve a `[CHECK]` futásnaplót is**: a fix-módban futtatott ellenőrzéseket ugyanúgy vezeted a `test-report/implement/check-log.md`-be, a **Mód** oszlopban `validate-loop` jelöléssel. Így a javító körök `[CHECK]`-jei is nyomot hagynak, és a hurok utólag rekonstruálható.
 
-> **Amit a fix-módban NEM írsz:** a `test-report/validate/` és `test-report/review/` kör-mappákat — azok az orchestrátoré (07 / 09) és a `test-runner`-é. Te csak a `test-report/implement/check-log.md`-t bővíted (a kódon és a `tasks.md` javító-szekcióján felül).
+> **Amit a fix-módban NEM írsz:** a `test-report/validate/` kör-mappákat — azok az orchestrátoré (07) és a `test-runner`-é. Te csak a `test-report/implement/check-log.md`-t bővíted (a kódon és a `tasks.md` javító-szekcióján felül).
 
 ### Bemenet
 A hívótól függően a `tasks.md` végén lévő javító-szekció elvégzetlen `[GREEN]`/`[CHECK]` taskjai, a szekció elején lévő prerequisite hivatkozásokkal együtt:
-- **validate-hurok:** `## Validációs javítások` (a 07 vette fel a konkrét teszt-/Sonar-hibákból); prerequisite:
-  - `specs/cycle-NN-<cycle-name>/test-report/validate-decision.md` (a `# Validation History` a hibák részleteivel),
+- **teszt-/Sonar-/DoD-ág:** `## Validációs javítások` (a 07 vette fel a konkrét teszt-/Sonar-hibákból); prerequisite:
+  - `specs/cycle-NN-<cycle-name>/test-report/validation-report.md` (a `# Validation History` a hibák részleteivel),
   - ha Sonar hibázott: **az adott kör** Sonar-riportja — `specs/cycle-NN-<cycle-name>/test-report/validate/round-NN/sonar-report.md`. A konkrét kör-számot a szekció prerequisite-hivatkozása adja meg (TR5); **ne keresgélj más körök mappájában**, és ne a `test-report/` gyökerében — ott nincs Sonar-riport.
-- **review-hurok:** `## Review javítások` (a 08 vette fel a `Must Fix` findingokból); prerequisite:
-  - `specs/cycle-NN-<cycle-name>/code-review.md` (a findingok + a `# Review History`).
-- A `tasks.md` aktuális állapota (`Implementálásra kész [validate-loop]` **vagy** `[review-loop]` státusz).
+- **review-ág:** `## Review javítások` (a 07 vette fel a `Must Fix` findingokból); prerequisite:
+  - `specs/cycle-NN-<cycle-name>/test-report/code-review.md` (a findingok `MF-NN` azonosítóval).
+- A `tasks.md` aktuális állapota (`Implementálásra kész [validate-loop]` státusz).
 
 ### Fix-mód ↔ normál implement elhatárolása (2.2)
 - **Fókusz:** kizárólag az aktív javító-szekció taskjai (`## Validációs javítások` VAGY `## Review javítások`) — a konkrét megbukott tesztek / Sonar-hibák / nem teljesült DoD-pontok / `Must Fix` findingok javítása.
 - **Nem teljes újra-implementáció:** a már zöld, lezárt taskokat (`[x]`) ne futtasd újra és ne írd át. Csak a hibalistára dolgozol.
 - A 06 már ismeri mindkét belépést (lásd „Két forrásból érkezhet visszalépés ide" — a `## Validációs javítások` és a `## Review javítások` ág); a fix-mód erre épül, nem duplikálja.
 
-### Státusz (auto, `[validate-loop]` / `[review-loop]` marker)
-A hurok a `tasks.md` státuszát a saját markerével nyitotta vissza (`Implementálásra kész [validate-loop]` a 07-ből, illetve `Implementálásra kész [review-loop]` a 09-ből). Amíg a marker jelen van, **automatikusan** lépteted a státuszt, megerősítés-kérés nélkül (eltérően a normál „megerősítés a státuszváltás előtt" szabálytól) — a markert végig megtartva:
-- javítás közben: `Implementálás folyamatban [<aktív-loop>]`;
-- ha az aktív javító-szekció minden taskja `[x]` és a csoportzáró `[CHECK]` zöld: `Validálásra kész [<aktív-loop>]`.
+### Státusz (auto, `[validate-loop]` marker)
+A hurok a `tasks.md` státuszát a markerével nyitotta vissza (`Implementálásra kész [validate-loop]`) — ugyanez a marker a teszt- és a review-javításnál is. Amíg a marker jelen van, **automatikusan** lépteted a státuszt, megerősítés-kérés nélkül (eltérően a normál „megerősítés a státuszváltás előtt" szabálytól) — a markert végig megtartva:
+- javítás közben: `Implementálás folyamatban [validate-loop]`;
+- ha az aktív javító-szekció minden taskja `[x]` és a csoportzáró `[CHECK]` zöld: `Validálásra kész [validate-loop]`.
 
-A marker fel- és levételét az orchestrátor (`07-validate` ill. `09-review-and-merge`) kezeli; te csak a státusz-értéket lépteted.
+A marker fel- és levételét az orchestrátor (`07-validate`) kezeli; te csak a státusz-értéket lépteted.
 
 ### ⚠ Anti-„csalás" garde (VD3 / RD4 — kötelező)
 
@@ -286,14 +282,14 @@ A marker fel- és levételét az orchestrátor (`07-validate` ill. `09-review-an
 - teszt `skip`/`xfail`/kikommentezése/törlése;
 - hardcode-olt „elvárt" érték, amely csak a tesztet zöldíti, de a valós viselkedést nem valósítja meg;
 - a `spec.md` Definition of done pont leszállítása vagy átfogalmazása, hogy könnyebben teljesüljön;
-- **(review-hurok, RD4)** a `Must Fix` finding **kozmetikai elnémítása** a gyökérok javítása nélkül (lint-suppress komment, a kifogásolt kód álcázása), vagy a `code-review.md` finding törlése/átfogalmazása javítás nélkül.
+- **(review-ág, VD3)** a `Must Fix` finding **kozmetikai elnémítása** a gyökérok javítása nélkül (lint-suppress komment, a kifogásolt kód álcázása), vagy a `test-report/code-review.md` finding törlése/átfogalmazása javítás nélkül.
 
-**Ha úgy ítéled meg, hogy egy hibát CSAK a szerződés (teszt/DoD/spec) megváltoztatásával vagy a finding elnémításával lehetne zöldre/tisztára vinni** — az **nem kód-fix**. **STOP**: ne nyúlj a szerződéshez, hanem add vissza az orchestrátornak a visszatérési összefoglalóban **eszkalációs jelzéssel** (lásd lent). Ez a felfelé menekülő ág bemenete — validate-hurokból a 07 VD5, review-hurokból a 09 RD6 (a tervezési/szerződés-kérdést a 03/02 fázisban kell rendezni, nem itt).
+**Ha úgy ítéled meg, hogy egy hibát CSAK a szerződés (teszt/DoD/spec) megváltoztatásával vagy a finding elnémításával lehetne zöldre/tisztára vinni** — az **nem kód-fix**. **STOP**: ne nyúlj a szerződéshez, hanem add vissza az orchestrátornak a visszatérési összefoglalóban **eszkalációs jelzéssel** (lásd lent). Ez a felfelé menekülő ág bemenete — a 07 VD5 ága (a tervezési/szerződés-kérdést a 03/02 fázisban kell rendezni, nem itt).
 
 ### Visszatérési összefoglaló (az orchestrátornak)
-A futásod végén adj tömör összefoglalót a hívó orchestrátornak (`07-validate` vagy `09-review-and-merge`):
+A futásod végén adj tömör összefoglalót a hívó orchestrátornak (`07-validate`):
 - **Elvégzett javítások:** mely javító-taskokat zártad le, és hogyan (hibánként/findingonként egy sor) — milyen kódváltozással lett zöld/kész.
 - **Eszkalációs jelzés (ha van):** ha valamelyik hibát csak a szerződés (teszt/DoD/spec) módosításával vagy a finding elnémításával lehetne zöldre/tisztára vinni (VD3/RD4 tiltja) → jelezd egyértelműen: *„ESZKALÁCIÓ: [item] tervezési/szerződés-hibának tűnik — csak a szerződés módosításával vagy a finding elnémításával lenne zöld; nem javítottam."* Add meg, miért.
-- **A `tasks.md` aktuális státusza** (a `[validate-loop]` / `[review-loop]` markerrel).
+- **A `tasks.md` aktuális státusza** (a `[validate-loop]` markerrel).
 
-A kódot és a `tasks.md` aktív javító-szekcióját (`## Validációs javítások` / `## Review javítások`) te írod; a `validate-decision.md`-t és a `code-review.md`-t **nem** — azok az orchestrátoré.
+A kódot és a `tasks.md` aktív javító-szekcióját (`## Validációs javítások` / `## Review javítások`) te írod; a `validation-report.md`-t és a `test-report/code-review.md`-t **nem** — azok az orchestrátoré.

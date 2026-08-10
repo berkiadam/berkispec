@@ -13,11 +13,7 @@ shared:
   - "shared/git-preflight.md"
 ---
 # 00 — Projekt inicializálás
-## Kontextus ellenőrzés
-
-Ha azt detektálod, hogy ennek a fázisnak a futtatása most indul (ez az első prompt a fázisban), de a kontextus nem „friss” (azaz a beszélgetési előzmények tartalmaznak korábbi fázisokból vagy futásokból származó üzeneteket), akkor kérdezz rá a felhasználónál:
-> *„Úgy tűnik, hogy a fázis indításakor a kontextus nem teljesen friss. Szándékosan nem futtattál `/clear`-t az új fázis megkezdése előtt (a tokenekkel való spórolás érdekében)?”*
-Várd meg a felhasználó válaszát, mielőtt folytatnád a fázis futtatását.
+<!-- INCLUDE:shared/context-check.md -->
 
 ---
 
@@ -219,7 +215,7 @@ _Az alábbiak **ajánlott default-ok** modern, korszerű eszközökkel (lokális
 
 _**Kötelező szekció (TR3).** Minden ciklus `specs/cycle-NN-<name>/test-report/` mappájába be kell kerülnie a projekt teszt-eszközének **saját, megnyitható riportjának** (Allure HTML, Playwright HTML, pytest-html, JUnit XML, coverage-riport stb.) — a chat `/clear` után nincs, a riport az egyetlen utólag ellenőrizhető bizonyíték. Ezt a táblázatot a `07-validate` **determinisztikus kapuval** (`report-gate-check.py`) kéri számon: hiányzó artefaktum → a validálás nem zárható PASS-ra. Az oszlopsorrend kötött._
 
-_**Hova kerülnek (TR5):** a riportok nem közvetlenül a `test-report/` gyökerébe, hanem **körönkénti almappákba** mennek — `test-report/validate/round-01/`, `round-02/`, … a validálási körökhöz, `test-report/review/round-NN/` a 09-review re-validate köreihez. Így egy önjavító hurok minden körének megmarad a saját bizonyítéka, és a `validate-decision.md` lépés-táblájában jelzett bukáshoz megnyitható a hozzá tartozó riport. **A táblázat utolsó oszlopa a KÖR-MAPPÁHOZ képest relatív útvonal** (fájl vagy mappa) — a kör-mappát a hívó fázis adja át a `test-runner`-nek és a kapunak (`--report-subdir`)._
+_**Hova kerülnek (TR5):** a riportok nem közvetlenül a `test-report/` gyökerébe, hanem **körönkénti almappákba** mennek — `test-report/validate/round-01/`, `round-02/`, … a validálási körökhöz (a review a 07 körének 4. lépése, nem kap külön mappát). Így egy önjavító hurok minden körének megmarad a saját bizonyítéka, és a `validation-report.md` lépés-táblájában jelzett bukáshoz megnyitható a hozzá tartozó riport. **A táblázat utolsó oszlopa a KÖR-MAPPÁHOZ képest relatív útvonal** (fájl vagy mappa) — a kör-mappát a hívó fázis adja át a `test-runner`-nek és a kapunak (`--report-subdir`)._
 
 **Riport-generálás kötelező:** igen
 
@@ -266,7 +262,9 @@ _(Hagyd ki ezt a szekciót, ha a projekt nem használ SonarQube-ot.)_
   - Java (Maven): `mvn sonar:sonar -Dsonar.host.url=http://localhost:9000 -Dsonar.token=<token>`
   - _(további nyelvek: scanner parancsot a projekt struktúrájához igazítva tölts ki)_
 - **Projekt kulcs (`sonar.projectKey`):** _töltsd ki a projekt azonosítójával_
-- **Quality Gate elvárás:** PASSED — a `07-validate` fázisban blokkol, amíg nem teljesül
+- **Sonar host URL:** `http://localhost:9000` _(a `sonar-gate.py` innen kérdezi le a Quality Gate-et az API-n)_
+- **Token env-változó:** `SONAR_TOKEN` _(a tokent SOHA ne írd ide — csak a változó nevét; a `sonar-gate.py` a `SONAR_HOST_URL` / `SONAR_PROJECT_KEY` / `SONAR_TOKEN` env-változókat is elfogadja)_
+- **Quality Gate elvárás:** PASSED — a `07-validate` fázisban blokkol, amíg nem teljesül. A kaput a `sonar-gate.py` értékeli az API-ból (QG státusz + bukott feltételek + BLOCKER/CRITICAL/MAJOR findingek), nem a riport LLM-es elolvasásával
 - **Sonar riport helye:** a validálási kör mappája — `specs/cycle-NN-<cycle-name>/test-report/validate/round-NN/sonar-report.md` (+ `.html`); automatikusan generálódik a validálás során, körönként külön (TR5)
 
 ## Kockázatok és ismert korlátok

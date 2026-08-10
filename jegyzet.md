@@ -31,3 +31,22 @@
 - fontos, hogy kell hivatkozott fájlok szekció. 
 
 - fontos, hogy újra és újra fel kell tenni a kérdést új kontextust-ban, hogy mit változtatnál és pontosítanál rajta, amíg nem jut el odáig hogy semmit. 
+
+
+----------------------------------------
+
+
+
+
+
+KÉne egy bs-prepar-plan fázis: 
+- data-model md-t is csinált, amiben felsorolta az enum-okat, bármit ami modell és központ
+- test-convension ciklus szinten, ahov bemásolja azösszes 
+
+
+bs-manual-test-summar: 
+
+- implementáció végén adjon egy manuális teszt javaslatot: (ez egy új )
+  - mit hogy kell elindítani
+  - és milyen hívást adjon
+  - és milyen eredményt vársz

@@ -19,11 +19,7 @@ scripts:
   - "scripts/analyze-gate-check.py"
 ---
 # 05 — Analyze (kereszt-fázisos konzisztencia ellenőrzés + önjavító hurok)
-## Kontextus ellenőrzés
-
-Ha azt detektálod, hogy ennek a fázisnak a futtatása most indul (ez az első prompt a fázisban), de a kontextus nem „friss” (azaz a beszélgetési előzmények tartalmaznak korábbi fázisokból vagy futásokból származó üzeneteket), akkor kérdezz rá a felhasználónál:
-> *„Úgy tűnik, hogy a fázis indításakor a kontextus nem teljesen friss. Szándékosan nem futtattál `/clear`-t az új fázis megkezdése előtt (a tokenekkel való spórolás érdekében)?”*
-Várd meg a felhasználó válaszát, mielőtt folytatnád a fázis futtatását.
+<!-- INCLUDE:shared/context-check.md -->
 
 ---
 
@@ -156,7 +152,7 @@ Minden megállapítás **Must Fix** vagy **Suggestion**:
 
 A gépiesen eldönthető ellenőrzéseket **nem az `analyzer` subagent végzi**, hanem egy szkript — determinisztikusan, olcsón, hamis riasztás nélkül:
 
-> **Python-parancs (platformfüggő):** a példákban `python3` szerepel (Linux/macOS). **Windowson** a `python3` gyakran nem létezik — vagy a Microsoft Store stubja, ami megnyitja a Store-t —, ezért ott `python` vagy `py -3` a helyes hívás. Ha a `python3` „command not found" / „not recognized" hibát ad, **próbáld újra `python`-nal, majd `py -3`-mal**, ugyanazokkal a paraméterekkel. Ez nem a szkript hibája, és nem kell miatta megállni.
+<!-- INCLUDE:shared/python-cmd.md -->
 
 ```bash
 python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-name>

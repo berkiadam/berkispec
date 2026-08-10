@@ -13,16 +13,12 @@ output:
   - "specs/cycle-NN-<name>/doc-sync-plan.md (a végrehajtás és a folytatás horgonya)"
   - "specs/cycle-NN-<name>/doc-sync-questions.md (ha merül fel döntési pont / kapu-bukás)"
 prev: bs-validate
-next: bs-review-and-merge
+next: bs-merge
 subagents:
   - "agents/doc-sync-planner.md"
 ---
 # 08 — Dokumentáció szinkron (doc-sync)
-## Kontextus ellenőrzés
-
-Ha azt detektálod, hogy ennek a fázisnak a futtatása most indul (ez az első prompt a fázisban), de a kontextus nem „friss” (azaz a beszélgetési előzmények tartalmaznak korábbi fázisokból vagy futásokból származó üzeneteket), akkor kérdezz rá a felhasználónál:
-> *„Úgy tűnik, hogy a fázis indításakor a kontextus nem teljesen friss. Szándékosan nem futtattál `/clear`-t az új fázis megkezdése előtt (a tokenekkel való spórolás érdekében)?”*
-Várd meg a felhasználó válaszát, mielőtt folytatnád a fázis futtatását.
+<!-- INCLUDE:shared/context-check.md -->
 
 ---
 
@@ -396,7 +392,7 @@ A TC8 kapu ellenőrzi, hogy a blokk **létezik, a fájl elején áll, és van be
 **1. A jelöltlista összeállítása.** Gyűjtsd össze a ciklus tesztjeit három forrásból:
 - `plan.md` → `Tesztelési stratégia` és `Regressziós érintettség`;
 - `tasks.md` → a `[RED]` / `[CHECK]` / `TREG` taskok;
-- `test-report/` → **mi futott le ténylegesen**: a `validate-decision.md` körönkénti lépés-táblája, a `validate/round-NN/` mappák teszt-eszköz riportjai, és az implementáció alatti ellenőrzésekhez az `implement/check-log.md` — ezek a bizonyítékok.
+- `test-report/` → **mi futott le ténylegesen**: a `validation-report.md` körönkénti lépés-táblája, a `validate/round-NN/` mappák teszt-eszköz riportjai, és az implementáció alatti ellenőrzésekhez az `implement/check-log.md` — ezek a bizonyítékok.
 
 **Csak az kerülhet a listára, ami ebben a ciklusban tényleg lefutott és zöld volt** (TC3). Ami nem futott, azt ne kínáld fel — jelezd külön sorban, hogy miért maradt ki.
 
@@ -504,7 +500,7 @@ A **tartalom** (cél, lépések sorrendje, elvárt értékek) viszont **maradék
 
 ### TC9 — Kötelező teszt-riport tétel (TR3) — a felhasználóval egyeztetve
 
-**Minden ciklusban kötelező riport-artefaktum kerül a `specs/cycle-NN-<name>/test-report/` mappába** — a teszt-eszköz saját, megnyitható riportja (Allure/Playwright HTML, pytest-html, JUnit XML, coverage). A riportok **körönkénti almappákban** élnek (TR5): `test-report/validate/round-NN/`, illetve a 09 re-validate köreinél `test-report/review/round-NN/`; a `test-report/` gyökerében a naplók vannak (`validate-decision.md`, `implement/check-log.md`). A **parancs és az artefaktum-név egyetlen igazságforrása a `conventions.md` `## Teszt-riportolás` táblája** (a 00 fázis tölti ki a felhasználóval); a `07-validate` ezt determinisztikus kapuval (`report-gate-check.py`) kéri számon. A regiszterben ezt **nem duplikáljuk** (TC1) — itt csak az elvárás és a forrás-hivatkozás áll, a 2. és 3. szekció **Kötelező riport (TR3)** sorában.
+**Minden ciklusban kötelező riport-artefaktum kerül a `specs/cycle-NN-<name>/test-report/` mappába** — a teszt-eszköz saját, megnyitható riportja (Allure/Playwright HTML, pytest-html, JUnit XML, coverage). A riportok **körönkénti almappákban** élnek (TR5): `test-report/validate/round-NN/`, illetve a 09 re-validate köreinél `test-report/review/round-NN/`; a `test-report/` gyökerében a naplók vannak (`validation-report.md`, `implement/check-log.md`). A **parancs és az artefaktum-név egyetlen igazságforrása a `conventions.md` `## Teszt-riportolás` táblája** (a 00 fázis tölti ki a felhasználóval); a `07-validate` ezt determinisztikus kapuval (`report-gate-check.py`) kéri számon. A regiszterben ezt **nem duplikáljuk** (TC1) — itt csak az elvárás és a forrás-hivatkozás áll, a 2. és 3. szekció **Kötelező riport (TR3)** sorában.
 
 **A doc-sync kötelező teendői minden futásban:**
 
@@ -522,7 +518,7 @@ A **tartalom** (cél, lépések sorrendje, elvárt értékek) viszont **maradék
 
 A DS22 magkapu a `docs-generated/`-re fut, ez a fájl azon **kívül** van, ezért **saját kapuja** van. A kapu **teljesen szkriptelt** — nincs benne LLM-ítélet, ezért **ne grepelj kézzel**, futtasd a scriptet (a telepítő ugyanabba a platform-scripts mappába másolja, mint a `ds22-gate-check.py`-t):
 
-> **Python-parancs (platformfüggő):** a példákban `python3` szerepel (Linux/macOS). **Windowson** a `python3` gyakran nem létezik — vagy a Microsoft Store stubja, ami megnyitja a Store-t —, ezért ott `python` vagy `py -3` a helyes hívás. Ha a `python3` „command not found" / „not recognized" hibát ad, **próbáld újra `python`-nal, majd `py -3`-mal**, ugyanazokkal a paraméterekkel. Ez nem a szkript hibája, és nem kell miatta megállni.
+<!-- INCLUDE:shared/python-cmd.md -->
 
 ```bash
 python3 <platform-scripts-mappa>/tc8-gate-check.py specs/test-conventions.md \
@@ -873,7 +869,7 @@ A kapu zöldre futása után — **és csak akkor, ha a TC12 promóciós ajánla
 2. **Jelezd a felhasználónak a következő lépést:**
    > *"A dokumentáció szinkronban van a megvalósult rendszerrel, a konzisztencia-kapu zöld. Folytathatjuk a 9. lépéssel: review & merge (09). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:*
    > ```
-   > /bs-review-and-merge input: @specs/cycle-NN-<cycle-name>
+   > /bs-merge input: @specs/cycle-NN-<cycle-name>
    > ```"*
    > **A válasz végén helyezd el a `docs-generated/system-overview.md` (és a `doc-sync-plan.md`) közvetlen, kattintható linkjét.**
 > **Fázishatár — kemény megállás (PE1).** A fázis a záró üzenettel (commit-azonosító + `/clear` + a következő fázis parancsa) **véget ér**. Ugyanabban a körben a következő fázisból **semmit nem kezdesz el** — a következő fázis artefaktumát létre sem hozod. Ez akkor is érvényes, ha egy **kontextus-összefoglaló / checkpoint** teendő-listája, a saját korábbi terved vagy a felhasználó egy korábbi körben adott „menjünk végig a folyamaton" mondata továbbmenetelre biztat: a skill fázishatára minden ilyen felett áll. Csak a felhasználó **erre a körre szóló, explicit** kérése írja felül. Ha mégis belekezdtél, **töröld a keletkezett fájlt**, állítsd vissza a tiszta munkafát, és jelezd.
