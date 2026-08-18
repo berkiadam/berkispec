@@ -89,6 +89,19 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
 
 ## Végrehajtási szabályok
 
+> **Folytonosság — a taskok között NINCS megállás (IM1).** Ez a fázis **egy futásban** dolgozza fel a task listát: egy task lezárása (pipa + `check-log` bejegyzés + commit) **nem** a fázis vége, és **nem** a válaszod vége. A commit után **azonnal vedd a következő elvégzetlen taskot ugyanabban a körben** — ne add vissza a szót a felhasználónak, ne kérdezz rá, hogy folytathatod-e.
+>
+> **A megállás kimerítő listája** — csak ezek állítják meg a fázist:
+> 1. teljesült egy *Megállási szabály* (lásd a szekciót);
+> 2. a fejezet `> **Gépi előfeltétel:**` blokkja nem teljesül (3. pont);
+> 3. a task infrastruktúra-függőnek tűnik, és rá kell kérdezni (4. pont);
+> 4. a `[CHECK]` háromszor bukott (3-próba szabály, 8. pont);
+> 5. **minden** task `[x]`, és jön a *Státusz kezelés* záró üzenete.
+>
+> Bármi más — köztük „a task elkészült és commitolva van" — **folytatás**, nem megállás. A haladásról szóló egysoros jelzés (13. pont) a válaszod **közepén** van, nem a végén.
+>
+> _Megjegyzés a keretrendszer konvenciójáról:_ a „**A válasz végén helyezd el a … kattintható linkjét**" mondat a többi fázisban **megállás-jelző** (kérdés vagy fázis-vég). Ezért ebben a fázisban **taskonként szándékosan nem szerepel** — a `tasks.md` linkje a fázis záró üzenetébe tartozik.
+
 1. Vedd a következő elvégzetlen taskot (`- [ ]`).
 
 2. **Visszalépés kódreview-ból (07):** Ha a ciklus a 07 review-kapujának `Must Fix` findingjai miatt került vissza ide, a `tasks.md` végén lévő új feladatokat a `test-report/code-review.md` kritikus észrevételei alapján végezd el. A javítások után a záró `[CHECK]` feladatok újbóli futtatása és commitolása kötelező.
@@ -96,6 +109,7 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
 3. **Fejezet-szintű előfeltétel ellenőrzés:** A `tasks.md`-ben a fejezetek `##` szintű blokkokra tagolódnak. (Ha egy task nem esik egyetlen `##` blokkba sem — pl. a lista elején áll fejezetcím nélkül —, kezeld önálló, előfeltétel nélküli taskként, és folytasd a 4. ponttal.) Ha a kiválasztott task az adott fejezet (adott `##` blokk) első elvégzetlen taskja (vagyis a fejezeten belül ez az első `- [ ]`): keresd meg a fejezet fejlécét a `tasks.md`-ben, és nézd meg, hogy közvetlenül alatta van-e `> **Gépi előfeltétel:**` blokk. Ha van: olvasd el a feltételeket, és döntsd el, hogy teljesülnek-e. Ha nem teljesülnek: állj meg, és jelezd a felhasználónak pontosan, mit kell beállítani: *„A(z) [fejezet neve] fejezet megkezdéséhez a következő feltételeknek kell teljesülniük: [feltételek]. Teljesülnek-e ezek?"* — várj a válaszra, mielőtt egyetlen taskot is elkezdenél a fejezetből.
 
 4. **Mielőtt elkezdenéd: döntsd el, hogy a task elvégezhető-e most.** Egy task halasztott lehet, ha: teljes futó stacket igényel (konténerek, valódi Keycloak, E2E infrastruktúra), vagy a csoport összes többi taskja is elvégzetlen és mind hasonló jellegű. Ha a task halasztottnak tűnik, ne próbáld meg végrehajtani — kérdezz rá: *"[Tkkk] infrastruktúra-függő tasknak tűnik (pl. E2E, konténer, valódi Keycloak). Fut a stack, vagy keressem meg a következő elvégezhető implementációs taskot?"*
+   > **Szűk kapu (IM1):** ez a kérdés **megállítja a fázist**, ezért csak akkor tedd fel, ha a task szövege **explicit** futó stacket / külső infrastruktúrát követel (konténer, deploy, valódi IdP, böngésző-E2E), **és** a rendelkezésre állását nem tudod magad ellenőrizni (pl. health check paranccsal). Kódolási, teszt-írási, konfigurációs és `[CHECK]`-parancs taskoknál **ne kérdezz — végezd el**. Ha ellenőrizni tudod (health check), **először ellenőrizd**, és csak bukás esetén kérdezz.
 
 5. Olvasd be a task által érintett fájlokat.
 
@@ -131,7 +145,7 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
     **Példa:** `cycle-16: T001 - add initHash function to token-store`
     A `[RED]` és `[GREEN]` állapotokat is külön commitold.
 
-13. Jelezd a felhasználónak melyik task készült el, és lépj a következő taskra. **A válasz végén helyezz el egy közvetlen, kattintható markdown linket a `tasks.md`-re.**
+13. **Haladásjelzés, majd AZONNAL tovább.** Írj **egy rövid sort** arról, melyik task készült el (pl. `T004 kész — token-store initHash + unit teszt zöld (commit a1b2c3d)`), és **ugyanabban a körben** folytasd az 1. ponttól a következő elvégzetlen taskkal. Ez a sor **haladás-napló, nem záró válasz**: ne fűzz hozzá linket, összefoglalót vagy „folytathatom?" kérdést (lásd a *Folytonosság* szabályt, IM1).
 
 ---
 
@@ -234,6 +248,7 @@ Ha a státusz `Validálásra kész`, állj meg. Jelezd a felhasználónak a köv
 > ```
 > /bs-validate input: @specs/cycle-NN-<cycle-name>
 > ```"*
+> **A válasz végén helyezd el a `tasks.md` és a `check-log.md` közvetlen, kattintható linkjét** — a fázis egyetlen megállás-jelzője ez (IM1).
 
 
 > **Fázishatár — kemény megállás (PE1).** A fázis a záró üzenettel (commit-azonosító + `/clear` + a következő fázis parancsa) **véget ér**. Ugyanabban a körben a következő fázisból **semmit nem kezdesz el** — a következő fázis artefaktumát létre sem hozod. Ez akkor is érvényes, ha egy **kontextus-összefoglaló / checkpoint** teendő-listája, a saját korábbi terved vagy a felhasználó egy korábbi körben adott „menjünk végig a folyamaton" mondata továbbmenetelre biztat: a skill fázishatára minden ilyen felett áll. Csak a felhasználó **erre a körre szóló, explicit** kérése írja felül. Ha mégis belekezdtél, **töröld a keletkezett fájlt**, állítsd vissza a tiszta munkafát, és jelezd.

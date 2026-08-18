@@ -79,6 +79,8 @@ A skill **csak két fájlt nevez meg kötelezőként**, amelyet a doc-sync akkor
 
 **A `docs-generated/`-en kívül egy további fájl gazdája a doc-sync:** a **`specs/test-conventions.md`** (a `specs/roadmap.md` mellett, **nem** a `docs-generated/`-ben). Ez a mappa-bejárás (DS11) és a DS22 mappa-index halmaz-egyezés **hatókörén kívül** van — saját szabályai vannak, lásd „A `specs/test-conventions.md` karbantartása (TC1–TC11)".
 
+> **Határvonal a `conventions.md`-hez (TC1/c) — amit a doc-sync NEM ír.** A projekt gyökerében lévő `conventions.md` a `00-init-project` tulajdona, és **determinisztikus kapuk olvassák**: a `## Teszt-riportolás` (riport-artefaktumok, `**Artefaktum-útvonal alapja:**`, riport-generáló parancsok) a TR3 kapué, a `## Sonar` a Quality Gate-é. Ezekhez a doc-sync **nem nyúl**. A `test-conventions.md`-be a **receptek és koordináták** kerülnek (hogyan indul a stack, milyen hívás, milyen teszt-user) — a **riport-útvonalak nem**. Ha egy ciklus a riport-struktúrát alakítja át, azt a `conventions.md`-ben kell átvezetni, a ciklus saját taskjával (GC1, lásd `03-write-plan`) — a `test-conventions.md` frissítése ezt nem helyettesíti, és a doc-sync sem pótolja.
+
 ---
 
 ## Forrás-grounding — forrás-hierarchia (DS19)

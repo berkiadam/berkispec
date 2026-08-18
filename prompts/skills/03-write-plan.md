@@ -12,10 +12,14 @@ prev: bs-write-spec
 next: bs-write-tasks
 subagents:
   - "agents/researcher.md"
+scripts:
+  - "scripts/analyze-gate-check.py"
 shared:
   - "shared/input-from-prev.md"
   - "shared/artifact-voice.md"
   - "shared/phase-commit.md"
+  - "shared/quality-check-plan.md"
+  - "shared/fix-mode-plan.md"
 ---
 # 03 — Plan írás
 <!-- INCLUDE:shared/context-check.md -->
@@ -39,17 +43,20 @@ Ez a folyamat **3. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · **3-plan
 | Teszt eszköz | A `conventions.md`-re hivatkozz, ne ismételd a konkrét tool-nevet. |
 | Teszt-receptek | A `specs/test-conventions.md`-ből **maradéktalanul, önhordóan** átemelve (TC1/a) — hivatkozás nem elég, a receptet **fizikailag be kell másolni**. |
 | Szekció-ID | Minden végrehajtható terv-szekció címében stabil `[P-…]` azonosító (PID1) — a `tasks.md` erre hivatkozik, nem sorszámra. Kiadott ID soha nem változik. |
-| Scope-kapu | Minden plan-képességhez spec-forrás (követelmény/`DoD-NN`) — `Fordított lefedettség` tábla (SC1); ami nincs, az vissza a 02-be vagy `Out of scope`. |
+| Scope-kapu | Minden plan-képességhez spec-forrás (követelmény/`DoD-NN`) — `Fordított lefedettség` tábla (SC1), az első oszlopban a szekció `[P-…]` azonosítójával; ami nincs, az vissza a 02-be vagy `Out of scope`. |
 | Környezet-felkészítés | A teszt előfeltételei (token-beszerzés, stack-indítás + health check, egyedi komponens build/deploy/rollback, seed) **szó szerinti parancsként** a plan-ben (TP3); ami korábbi ciklusban épült ki és nincs a regiszterben, azt onnan hozod át (TP3/a). |
 | Spec-tesztek átemelése | A spec **minden** tesztesete és `DoD-NN` pontja leképződik plan-tesztesetre (TP1), a kötelező `Spec-lefedettség` táblával — a részlet nem halasztható a 04-re vagy az implementációra. |
 | Fázis-átadás | `plan-input-from-prev.md` beolvasva és lezárva; a nem ide tartozó infó a `tasks-`/`validate-input-from-prev.md`-be (IP1). |
 | Design input | `cycle-design-input.md` (a felhasználó saját ciklus-leírása) **automatikusan beolvasva** — a technikai/eljárás-jellegű tartalma a planbe kerül; a fájlt nem írod át (CD1). |
 | **Önhordóság** | A `plan.md` **mindent** tartalmaz, ami a fejlesztéshez/teszteléshez kell — a 04 és a `test-runner` **csak ezt** olvassa, a spec-et nem. |
+| Kapu-konfiguráció | Ha a ciklus olyat változtat, amit egy determinisztikus kapu a `conventions.md`-ből olvas (riport-artefaktumok/útvonal-alap, Sonar, teszt-parancsok, portok, merge-stratégia), a `conventions.md` frissítése **a ciklus része**: tervezd meg, és legyen rá task (GC1). |
+| Útvonalak | Kód- és fájl-hivatkozás **a repó gyökeréhez képest relatív** (`src/app.ts:42`), dokumentum-link a fájl saját könyvtárához képest (`./spec.md`); abszolút útvonal és `file://` tilos (RP1). |
+| Csonkítás-mentesség | A spec **kidolgozott** artefaktumai (OpenAPI, teljes payload, hibamátrix, többlépéses teszt-forgatókönyv) **szó szerint, hiánytalanul** kerülnek át (KX3) — az irány bővítés és pontosítás, nem összevonás. |
 | Hivatkozás-feloldás | Scriptre/tesztre/API-ra hivatkozó bemenetet **fel kell oldani**: a konkrét parancs, URL, payload a plan-be kerül, nem az utalás. |
 | Teszt-lépések | Minden integrációs/E2E teszt **lépésről lépésre** kifejtve (ige, végpont, fejléc, body, elvárt válasz) — „a cycle-XX mintájára" tilos. |
 | Validációs ciklusok | Minden nagy szekció után célzott ellenőrzés, mielőtt továbblépsz. |
 | Spec kritika | Aktív checklist minden komponensre; **hiányosság** → vissza a 02 fázisba, **túlnyúlás** (koordináta a spec-ben) → átemelve a planbe (KX tükre). |
-| Lezárás | Minőségellenőrzés + **Lezárási kapu (TP2, 12 pont, kipipálva kiírva)** + Constitution Check (SK4) + user megerősítés → `Task írásra kész`, commit. |
+| Lezárás | Minőségellenőrzés + **Lezárási kapu (TP2, 12 pont, kipipálva kiírva)** + Constitution Check (SK4) + **mechanikus kapu** (`analyze-gate-check.py --plan-only`, M) + user megerősítés → `Task írásra kész`, commit. |
 
 ---
 
@@ -200,13 +207,55 @@ Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Kn
 - **Kis, célzott forrás** (egy script, egy env-minta, egy compose fájl): olvasd be **közvetlenül**.
 - **Nagy vagy szétszórt forrás** (kódbázis-keresés kulcsszóra, sok tesztfájl átnézése): a `researcher` subagentet indítsd (`agents/researcher.md`) — **de a kérésben explicit kérj literál értékeket**: *„add vissza szó szerint a parancsokat / az URL-t / a teljes JSON payloadot, ne összefoglalót"*. A researcher alapból tömörít; itt a **pontosság elsőbbséget élvez a tömörséggel szemben**.
 - **Kövesd a láncot:** ha a script egy másik scriptre vagy `.env` fájlra hivatkozik, addig menj, amíg konkrét értéket nem kapsz. **Kivétel:** valódi titok (klaszter-, registry-, VPN-, IAM-credential) — ott **állj meg és pointert írj** (TC5), ne az értéket.
-- **Ne másold be a teljes fájlt:** csak a végrehajtáshoz szükséges részt (parancsok, koordináták, séma, paraméterek). A plan terv, nem archívum.
+- **Ne másold be a teljes REPÓ-FÁJLT:** egy forrásfájlból/scriptből csak a végrehajtáshoz szükséges részt (parancsok, koordináták, séma, paraméterek) emeld át — a plan terv, nem archívum. **Ez a szabály a repó forrásfájljaira vonatkozik, NEM a spec-ből származó kidolgozott artefaktumokra** (OpenAPI, payload, hibamátrix, teszt-forgatókönyv): azokat teljes egészében át kell vinni, lásd `KX3`.
 - **Ne parafrazeálj:** a parancsot és a JSON-t **szó szerint** vidd át. Egy „nagyjából ilyen" payload rosszabb, mint a semmi, mert hibás bizalmat kelt.
 - **Jelöld a forrást:** a beemelt érték mellé `_(forrás: keycloak/docker/build.sh)_` — így később kiderül, ha a forrás elmozdult a plan-ben rögzített másolattól.
 
 **Mikor kötelező ezt lefuttatni:** minden olyan bemeneti tételnél (spec, `plan-input-from-prev.md`, `test-conventions.md`, roadmap), amely **eljárásra, scriptre, konfigurációs állományra, külső API-ra vagy meglévő tesztre hivatkozik**. Ez **különösen** igaz korai ciklusban, amikor a `specs/test-conventions.md` még nem létezik: ilyenkor a recept-adatok egyetlen forrása a **meglévő kód és teszt** — keresd meg őket, ne a bemenet szövegére hagyatkozz.
 
 > **A hurok bezárása:** amit így felderítesz (parancsok, koordináták, payload-sémák), az pontosan az, aminek a ciklus végén a `08-doc-sync` révén be kell kerülnie a `specs/test-conventions.md`-be — a konkrét koordináták a 0. blokkba, a receptek az 1. szekcióba (TC3/TC13) — hogy a következő ciklus már ne derítse fel újra.
+
+---
+
+<!-- INCLUDE:shared/conventions-change.md -->
+
+---
+
+## Kidolgozott spec-artefaktum átemelése — szó szerint, csonkítás nélkül (KX3)
+
+> **Ez a `Hivatkozás-feloldás` ELLENTÉTES esete, és a másik leggyakoribb hiba ebben a fázisban.** Az előző szekció arról szól, amikor a bemenet **túl absztrakt** (hivatkozik valamire ahelyett, hogy tartalmazná) — akkor fel kell oldani. Ez a szekció arról szól, amikor a bemenet **már teljesen kidolgozott**: a `spec.md` tartalmaz egy kész OpenAPI-leírót, egy komplett request/response payloadot, egy hibamátrixot vagy egy tízlépéses, elvárt eredményekkel ellátott teszt-forgatókönyvet. Ilyenkor az ágens hajlamos **„tervvé absztrahálni"**: összevonja a lépéseket, a payloadot mezőnév-felsorolásra cseréli, a leírót „a spec részletesen definiálja" mondattal helyettesíti. **Ez adatvesztés, nem tervezés.**
+
+**A szabály (a 02 `KX2` szabályának tükre):** ha a spec (vagy a `cycle-design-input.md`, a `*-input-from-prev.md`, egy korábbi ciklus planje) egy artefaktumot **már kidolgozva ad meg**, azt a plan-be **szó szerint, teljes egészében** kell átvinni. **Az irány bővítés és pontosítás — összevonás és elhagyás nem.**
+
+**Mire vonatkozik kötelezően (a lista jellege a lényeg, nem a hossza):**
+
+| Artefaktum a spec-ben | Hogyan kerül a plan-be |
+|---|---|
+| OpenAPI / JSON Schema / Avro / proto / GraphQL részlet | **változatlan blokként**, minden mezővel, típussal, `required`-del, példával |
+| request/response payload | **teljes JSON-ként**, minden kötelező és opcionális mezővel — nem mezőnév-felsorolásként |
+| hibamátrix (státusz + `errorCode` + body) | **teljes táblaként**, minden sorral — nem „a hibakezelés a spec szerint" |
+| többlépéses teszt-forgatókönyv (①…②…③, elvárt eredményekkel) | **minden lépés, minden köztes ellenőrzés és minden elvárt eredmény** — a lépések nem vonhatók össze |
+| cache-kulcs séma / DB DDL / migrációs script | szó szerint, teljes kulcs- és mező-listával |
+| konfigurációs minta (`.env`, compose-részlet, YAML) | szó szerint, minden kulccsal |
+
+**Amit szabad — és kell:**
+- a **szimbolikus koordinátákat konkrét értékre** cserélni (`{PUBLIC_BASE_URL}` → tényleges URL) — ez a `Hivatkozás-feloldás` szabálya, tehát **bővítés**;
+- **hozzátenni**, ami a plan szintje: teszteset-azonosító (`TC-XX-01`), teszt-szint, futtatási parancs, fixture, környezet-felkészítés;
+- **kifejteni** a hiányos lépést (hiányzó köztes ellenőrzés, meg nem adott elvárt eredmény);
+- **átrendezni**, ha a sorrend nem végrehajtható (a nem triviális átrendezést jelezd).
+
+**Amit tilos:**
+- ❌ lépéseket **összevonni** vagy „a folyamat végigfut" típusú összefoglalóra cserélni;
+- ❌ payloadot **mezőnév-felsorolásra**, táblát **prózára** cserélni;
+- ❌ **hivatkozni** rá: *„lásd a `spec.md` Teszt specifikáció szekcióját"*, *„a spec részletesen leírja"*, *„a többi eset hasonlóan"*, *„…stb."*;
+- ❌ **példát elhagyni** azzal, hogy „a séma önmagában elég".
+
+**Önellenőrzés (mérhető):** a plan megfelelő szekciója **nem lehet rövidebb**, mint a spec forrás-szekciója. Ha rövidebb lett, az **bizonyítandó**, nem magától értetődő: nevezd meg, mi került át máshova (pl. külön `Schema Artifaktumok` bejegyzésbe), vagy pótold. A `05-analyze` mechanikus kapuja ezt gépiesen is méri (`V1`/`V2` check): a spec kód-blokkjainak tartalmát keresi a plan-ben, és összeveti a két teszt-szekció terjedelmét.
+
+> **A három félreérthető szabály, ami emiatt szokott ütközni — a feloldás:**
+> - *„A plan terv, nem archívum"* (lásd `Hivatkozás-feloldás`) a **repó forrásfájljaira** vonatkozik: egy 2000 soros scriptből csak a végrehajtáshoz szükséges rész kell. A **spec-ből származó szerződés-artefaktumokra nem vonatkozik** — azok teljes egészében a plan tartalmához tartoznak.
+> - *„A spec absztrakciós szintjét fel kell oldani, nem reprodukálni"* az **absztrakciós szintre** igaz, nem a **tartalomra**: a szimbolikus koordinátát konkréttá kell tenni, de a részletességet megőrizni (sőt növelni).
+> - A `05-analyze` **duplikáció-kategóriája** (1.) **nem** vonatkozik a spec → plan szó szerinti átemelésre: az nem redundancia, hanem a kötelező önhordóság. Duplikáció az, ha ugyanaz a döntés a plan-en **belül** kétszer szerepel, vagy ha a tasks.md újra leírja a plan teszteset-lépéseit.
 
 ---
 
@@ -250,6 +299,8 @@ A `specs/cycle-NN-<cycle-name>/cycle-design-input.md` a **felhasználó saját, 
 - Olvasd be a ciklus `spec.md`-jét.
 - Ha létezik `cycle-design-input.md`: olvasd be (CD1) — a felhasználó saját ciklus-leírása, a technikai része a plan bemenete.
 - Ha létezik `plan-questions.md`: olvasd be.
+> **Melyik regiszter mit tud (TC1/c):** a **riport-artefaktumok, az útvonal-alapjuk és a riport-generáló parancsok** a projekt `conventions.md` `## Teszt-riportolás` szekciójában élnek — **azt olvassa a 07 TR3 kapuja**. A `specs/test-conventions.md` a **receptek és koordináták** regisztere. Ha a ciklus a riport-struktúrát vagy a riport-parancsot változtatja, a `conventions.md`-t kell átvezetni (GC1) — a `test-conventions.md` frissítése nem helyettesíti.
+
 - **Visszatérő teszt-elvárások és receptek (TC1) — `specs/test-conventions.md`:** ha létezik, olvasd be **teljes egészében** (a 0. blokkot és mindhárom szekciót). Ez a `08-doc-sync` által karbantartott regiszter: **0. blokk = Koordináták** (környezetek, URL-ek/portok, health endpointok, teszt-userek, kliensek, scope-ok, paraméterek, env-pointerek — **minden konkrét érték egy helyen**), 1. szekció = recept-regiszter (komponens-koordináták, indítás, példa hívások, build/deploy parancsok), 2. szekció = minden körben szükséges lokális (mock alapú) tesztek, 3. szekció = minden körben szükséges integrációs/E2E tesztek. **Guard:** ha a fájl nem létezik (korai ciklus), ne állj meg és ne hozd létre — egy mondatban jelezd, és a `plan-questions.md` K01 kérdését a meglévő tesztelési infrastruktúra alapján tedd fel.
 
   > **🔴 A `plan.md` ÖNHORDÓ (TC1/a — kötelező).** A `run-tests.py` szkript a `plan.md` **gépi futtatási tábláját** olvassa, a `test-runner` subagent (fallback) pedig a `test-conventions.md`-t **nem olvassa** — kizárólag a `plan.md` `Tesztelési stratégia` és `Regressziós érintettség` szekcióit. Ezért **minden tesztelési feladatot maradéktalanul át kell emelni a `plan.md`-be**, kiegészítve a 0. blokk és az 1. szekció **összes** hozzá tartozó adatával: teszt-userek és jelszavaik, URL-ek, portok, namespace/pod, image-név, registry-cél, paraméterek, **példa hívások (`curl`)**, build/push/restart parancsok, előfeltételek és futási sorrend.
@@ -321,6 +372,8 @@ _Fájlonként, függvény/osztály szinten: mi változik és miért. Nem kód, h
 - _az interfész változást, ha van (új paraméter, új return type, új export)_
 - _új fájl esetén a fő exportált egységek nevét_
 - _meglévő fájl esetén az érintett kódrészlet helye (pl. `src/file.ts:14–25`) navigációs célként, ha a forrásfájlt beolvastad_
+
+> **Útvonal-formátum (RP1) — itt a leggyakoribb elrontása.** A kód- és fájl-hivatkozás **a repó gyökeréhez képest relatív**: `src/token-store.ts`, `apps/web/src/index.ts:42`. **Nem** a `plan.md` mappájához képest (`../../src/...`), **nem** abszolút (`/home/...`, `C:\...`), és **nem** `file://` link. Indok: a parancsok a repó gyökerében futnak, és a `05-analyze` kapuja is oda oldja fel a horgonyokat — egy `../../` alakú hivatkozás ott feloldhatatlan. A **dokumentum-linkek** (pl. `[spec.md](./spec.md)`) viszont a fájl saját könyvtárához képest relatívak, hogy kattinthatók legyenek. A részletes szabály a fázis minőségellenőrzésében van.
 
 _Ha ez a szintű részletesség nem érhető el a spec alapján, olvasd be az érintett forrásfájl releváns részét._
 
@@ -469,7 +522,9 @@ _Minden plan-képességnek **vissza kell vezethetőnek lennie** a specre. Sorold
 
 | Plan-képesség / szekció | Spec-forrás (követelmény vagy `DoD-NN`) |
 |---|---|
-| _§3.2 Redis sentinel/cluster + TLS_ | _DoD-02b_ |
+| _`[P-REDIS]` Redis sentinel/cluster + TLS_ | _DoD-02_ |
+
+_**Az első oszlop viselje a szekció `[P-…]` azonosítóját** (nem sorszámot, nem puszta címet), a második pedig a `DoD-NN` azonosítót, ahol az a spec-forrás. Ezen a két oszlopon fut a `05-analyze` mechanikus kapujának lefedettségi lánca (`DoD-NN → [P-…] → task`): ha a sor csak szabad szöveget tartalmaz (`§3.2 …`), a lánc gépiesen nem zárható, és a kapu `S3` megállapítást ad. Ha egy képességhez tartozó szekciónak nincs `[P-…]` azonosítója, az a PID1 hiánya — előbb adj neki ID-t._
 
 _**Ha egy sorhoz nincs spec-forrás, három lehetőség van — negyedik nincs:**_
 1. _**vissza a 02-be:** a képesség kell → kérj rá DoD-pontot (jelezd a felhasználónak, mi hiányzik; a spec-et magad nem írod);_
@@ -501,7 +556,7 @@ _Izolált tesztek: függőségektől elszigetelt üzleti logika, függvények, o
 > **🔴 A SPEC TESZTESETEIT ÁT KELL HOZNI (TP1) — nem a `tasks.md` és nem az implementáló dolga.** A spec `Teszt specifikáció` szekciójában és a `Definition of done`-ban leírt esetek **nem** „túl részletesek a plan-hez": pontosan ide tartoznak, mert a `test-runner` **kizárólag a `plan.md`-t olvassa** — a spec-et nem, a `test-conventions.md`-t nem, a `tasks.md`-t nem. Ami itt nem szerepel, azt **senki nem fogja lefuttatni**.
 >
 > - **Mindegyik spec-eset megjelenik** a fenti `Spec-lefedettség` táblában és **kifejtve** a megfelelő teszt-szint alatt (unit tábla / integrációs vagy E2E lépéslista).
-> - **A spec absztrakciós szintjét fel kell oldani, nem reprodukálni:** a spec szimbolikus koordinátái (`{PUBLIC_BASE_URL}`) mellé itt kerül a **konkrét érték**, a viselkedés-leíráshoz a **konkrét HTTP ige, végpont, fejléc, request body és elvárt válasz** (lásd „Hivatkozás-feloldás").
+> - **A spec absztrakciós SZINTJÉT kell feloldani — a TARTALMÁT megőrizni (KX3):** a spec szimbolikus koordinátái (`{PUBLIC_BASE_URL}`) mellé itt kerül a **konkrét érték**, a viselkedés-leíráshoz a **konkrét HTTP ige, végpont, fejléc, request body és elvárt válasz** (lásd „Hivatkozás-feloldás"). A részletesség ilyenkor **növekszik, soha nem csökken**: a spec kidolgozott blokkjai (OpenAPI, teljes payload, hibamátrix, többlépéses forgatókönyv) **szó szerint, csonkítás nélkül** kerülnek át.
 > - **A `test-conventions.md` receptjeit fizikailag be kell másolni (TC1/a):** az `R01`/`I03` típusú **hivatkozás önmagában nem elég** — a recept parancsai, URL-jei, payloadjai szó szerint ide kerülnek. A tétel ID-t megtarthatod **a bemásolt tartalom mellett**, nyomkövetésként.
 > - **Ne halaszd a részletet a 04-re.** A `tasks.md` a plan tesztesetére **hivatkozik** (`TC-XX-E-01`), nem újra leírja — tehát ha itt hiányzik, ott sem lesz meg.
 
@@ -725,124 +780,7 @@ Minden esetben csak **egy** kérdést tegyél fel egyszerre — várd meg a vál
 
 ---
 
-## Minőségellenőrzés — plan lezárása előtt
-
-Mielőtt \`Task írásra kész\` státuszra váltasz, tedd fel magadnak:
-
-- **🔴 ÖNHORDÓSÁG-LELTÁR — menj végig tételesen.** Minden sorra vagy „megvan, konkrétan", vagy „erre a ciklusra nem értelmezhető" a válasz. „Majd az implementáló kitalálja" **nem** elfogadható válasz:
-
-  | # | Kell-e a plan-ben? | Ellenőrzés |
-  |---|---|---|
-  | 1 | érintett fájlok **teljes útvonala** | nincs „a megfelelő modulban" jellegű utalás |
-  | 2 | függvény-/osztálynevek, **szignatúrák, interfészváltozás** | a hívó oldal is tudja, mit hív és mit kap |
-  | 3 | adatszerkezetek **konkrét mezőkkel**, példa request/response | nem csak mezőnevek felsorolása — **tényleges payload** |
-  | 4 | hibaágak: feltétel → státusz + errorCode + body | minden spec-beli hibaesethez van megfelelője |
-  | 5 | konfiguráció: env-változó **neve ÉS értéke**, hol állítódik | nincs „konfigurálandó" önmagában |
-  | 6 | külső integráció: URL, port, realm/kliens/scope, teszt-user, példa `curl` | a hívás **átmásolható és lefuttatható** |
-  | 7 | futtatható parancsok **szó szerint** (build, deploy, indítás, teszt) | nincs „futtasd a `build.sh`-t" jellegű utalás |
-  | 8 | végrehajtási sorrend + előfeltételek | mi mitől függ, mi kell előtte |
-  | 9 | migráció és rollback, ha sémaváltozás van | — |
-  | 10 | regressziós érintettség | a plan `Regressziós érintettség` táblája kitöltve vagy explicit „nincs" |
-
-- **Artefaktum-hang (AV1)?** — Nincs a plan-ben skill-hangú meta-utasítás (`🔴`, `[!CAUTION]`, „Tilos…", „kötelező…", „menj végig…")? Ami szabályból származik, az **döntésként** szerepel (pl. „az image tagje futásonként egyedi: `v1-<UTC időbélyeg>`"), az indoklás pedig a `Kockázatok és döntési pontok` szekcióban.
-- **🔴 Eldöntetlen alternatíva tilalma.** A plan **nem tartalmazhat választást**: nincs benne „`X` **vagy** `Y`", „esetleg", „vagy az új …", két port/URL/azonosító ugyanarra a dologra, két lehetséges elvárt válasz. A terv **végrehajtási utasítás**, nem mérlegelés — ha valóban két opció van, az **`plan-questions.md` kérdés**, és a plan csak a **döntött**, konkrét változattal zárható le. (Tipikus előfordulás: teszt-azonosítók `data-testid` értékei, mock-portok, régi/új elemnevek átnevezéskor.)
-- **Hivatkozott script/fájl létezik vagy tervezve van?** — Menj végig **minden** fájlon és scripten, amit a plan futtatni akar (`Ellenőrzési stratégia` parancsai, teszt-lépések, E2E indítás, `[CHECK]` jellegű ellenőrzések): mindegyik vagy **már létezik a repóban**, vagy szerepel a `Tervezett módosítások` közt **új fájlként**. Egy futtatandó, de sehol nem létrehozott script biztos bukás a végrehajtáskor.
-  - **Belépési pont egyezése:** az ellenőrző parancs által futtatott **állomány** és a `Teszt specifikáció`-ban tervezett **teszt-artefaktum** ugyanaz legyen. Tipikus hiba: a terv egy `..._test.py` fájlt hoz létre, az ellenőrző parancs viszont egy `....sh` wrappert futtat, amit senki nem tervez meg — ilyenkor vagy a wrappert is fel kell venni a `Tervezett módosítások` közé (a projekt konvenciója szerinti névvel), vagy a parancsnak közvetlenül a megtervezett fájlt kell hívnia. **A kettő nem lóghat külön.**
-- **Ígért teszt ↔ teszteset ↔ végrehajtási sorrend konzisztencia.** Ha a plan **bárhol szövegesen tesztelést ígér** — jellemzően a `Kockázatok és döntési pontok` „kezelés" mondataiban (pl. *„a fallback logikát egységteszttel igazoljuk"*) —, akkor annak (a) van konkrét **tesztesete** a `Teszt specifikáció`-ban, és (b) megjelenik a **`Végrehajtási sorrend`**-ben is. Ígéret teszteset nélkül lefedettségi rés.
-- **Kereszt-dokumentum konzisztencia.** Ugyanaz az erőforrás **mindenhol ugyanazzal** az URL-lel, porttal, azonosítóval és útvonallal szerepel — a plan-en belül **és** a spec-hez képest is. Ha egy útvonal/host a spec-ben és a plan-ben eltér (vagy a plan két helyén más), az **egyikük hibás**: állítsd meg magad, és tisztázd (`plan-questions.md`), ne hagyd, hogy egy `[CHECK]` később bukjon el rajta.
-- **`docs-generated/` nincs a tervezett módosítások közt? (DS4)** — A generált doksik a 08-doc-sync tulajdonai; ha bekerültek, töröld őket a `Tervezett módosítások`-ból. **Meglévő** komponens README-je szintén nem tervezhető be (az is a 08 dolga) — **csak új komponens első README-je** kerülhet ide.
-- **Osztott környezetet érintő destruktív művelet teljes? (jóváhagyás + immutable azonosító + rollback)** — Ha a terv közös klasztert/registryt/adatbázist módosít, mindhárom megvan? Felülírt image-tag vagy konfiguráció esetén **nincs mihez visszaállni** — ez blokkoló hiányosság.
-- **🔴 Minden integrációs és E2E tesztnél szerepel a lépésenkénti híváslánc?** — Menj végig **tesztesetenként**: minden lépésnél ott van a HTTP ige, a teljes végpont, a fejlécek (az `Authorization` típusa is), a **konkrét request body**, az elvárt státusz és a kulcs válasz-mezők? Browser E2E-nél a felhasználói interakció **és** a hozzá tartozó hálózati hívás **és** a látható eredmény? **Ha bárhol csak utalás van korábbi ciklusra, meglévő tesztfájlra vagy a spec szekvenciadiagramjára, a minőségellenőrzés SIKERTELEN** — fejtsd ki a lépéseket, majd futtasd újra.
-- **Hivatkozás-feloldás megtörtént?** — Nincs a plan-ben olyan mondat, amely **scriptre, eljárásra, meglévő tesztre vagy külső API-ra hivatkozik** anélkül, hogy a belőle szükséges konkrétumot (parancs, URL, payload-séma, paraméter) kiírná? Ha a bemenet magas absztrakciós szinten fogalmazott, **te lementél a forrásig**?
-- **Önteszt:** *„Ha valaki csak a `plan.md`-t és a `tasks.md`-t kapja meg — spec, kódbázis-ismeret és a beszélgetés nélkül —, le tudja fejleszteni és tesztelni?"* Ha bármelyik ponton vissza kellene kérdeznie vagy találgatnia, a plan hiányos.
-- **Nincs tiltott megfogalmazás?** — „lásd a spec-et", „a szokásos módon", „a megfelelő végpontra", „futtasd a `build.sh`-t", „a korábbi ciklus paramétereivel", `<ide jön …>`, `TODO`.
-- Hiányzik még valami a plan-ből?
-- Van bármi, ami nem egyértelmű vagy kétértelmű?
-- A végrehajtási sorrend valóban függőségek alapján rendezett?
-- Minden érintett fájl szerepel a tervezett módosításokban?
-- **Dokumentációk frissítése:** Minden, a változtatások által érintett leírás, README és diagram (pl. `.drawio` fájl) fel van-e tüntetve a tervezett módosítások között?
-- **Kommentek és docstringek:** A tervezett módosítások figyelembe veszik-e a forráskódban lévő kommentek és leírások frissítését az új elnevezéseknek/működésnek megfelelően?
-- **Fájl elérési utak formátuma:** Minden fájl elérési útja és linkje a fájl aktuális könyvtárához képest relatív útvonal legyen (a mappa mélységének megfelelő számú visszalépéssel a projekt gyökeréig, pl. `../../apps/legacy-login/config/users.json`)? Abszolút útvonalak vagy `file://` sémájú linkek sehol nem szerepelhetnek a dokumentációban.
-- A `Teszt specifikáció` szekció tartalmaz teszteseteket minden érintett komponenshez?
-- **Szekció-ID-k (PID1):** minden végrehajtható terv-szekció visel egyedi `[P-…]` ID-t, a korábbiak változatlanok, leltár-szekció nem kapott ID-t?
-- **Scope-kapu (SC1):** a `Fordított lefedettség` tábla kitöltve, minden plan-képességnek van spec-forrása (vagy Out of scope / kérdés)?
-- **Konfiguráció-életút (KF1):** minden új/módosított paraméterhez van sor a táblában, **minden futtatási módra** kitöltve (lokális, teszt, konténer/compose, dev deploy) + a „ha hiányzik" viselkedés?
-- **Horgony-verifikáció:** minden `fájl:hely` és „ez a szimbólum/asszertáció ott van" állítás Grep/Read-del visszaigazolva?
-- **Érték-józanság:** portok, időegységek, URL-séma↔port, verziók, útvonalak átnézve (tipikus elgépelés: `433` a `443` helyett)?
-- **A tesztek futtathatók a plan-ből egyedül? (TP3)** — Benne van a **token-beszerzés** teljes hívása (a konkrét teszt-userrel, a kinyerendő mezővel), a **stack indítása** (parancs + health check + takarítás), az **egyedi komponens** build–push–deploy–ellenőrzés–**rollback** lánca, a **seed** és a **hálózati előfeltétel** — mindez futtatható parancsként, sorrendben? Ha egy előfeltétel egy **korábbi ciklusban** épült ki és nincs a `test-conventions.md`-ben, áthoztad a korábbi ciklus planjéből (TP3/a)?
-- **A spec tesztesetei átjöttek? (TP1)** — A `Spec-lefedettség` tábla kitöltve, és a spec `Teszt specifikáció` minden esete + minden `DoD-NN` pont leképződik legalább egy plan-tesztesetre (vagy indoklással szerepel)? A spec szimbolikus koordinátái mellé bekerült a **konkrét érték**, a viselkedés-leírás mellé a **konkrét hívás** (ige, végpont, fejléc, body, elvárt válasz)? Ami itt kimarad, az a validáláskor nem fut le.
-- **A `cycle-design-input.md` feldolgozva? (CD1)** — Ha a fájl létezik és van benne érdemi tartalom, beolvastad, és minden technikai/eljárás-jellegű tételének van követhető sorsa: **szó szerint, önhordóan** beépült a `plan.md`-be (nem hivatkozásként!), vagy átkerült a `tasks-`/`validate-input-from-prev.md`-be, vagy `Knn` kérdés lett, vagy a 02-be visszairányított spec-hiányosság. A fájlt **nem** írtad át?
-- **A `plan-input-from-prev.md` minden tétele lezárva? (IP1)** — Ha a fájl létezik, nem maradhat benne `[ ]` tétel: mindegyik vagy beépült a `plan.md`-be (a megjegyzés mutatja, hova), vagy explicit indokkal elvetett.
-- **A plan-ből kihagyott, de értékes infó át lett adva? (IP1)** — Task-szintű előkészítő lépés a `tasks-input-from-prev.md`-be, validálás-specifikus futtatási előfeltétel a `validate-input-from-prev.md`-be került?
-- **A plan önhordó a beemelt teszt-receptekre (TC1/a)?** — Nincs olyan tesztelési lépés, amely a `specs/test-conventions.md` beolvasása nélkül nem végrehajtható (a `test-runner` azt a fájlt nem olvassa). Nincs placeholder, nincs adat helyett hivatkozás.
-- Minden teszteset Elvárt kimenet oszlopa tartalmaz HTTP státuszt és errorCode-ot (ahol a spec hibamátrixa definiálja)?
-- A unit tesztek a végrehajtási sorrendben az implementáció ELŐTT szerepelnek?
-- Minden szükséges schema artifact azonosítva és a táblázatban szerepel?
-- **Adatbázis módosítások:** Ha a ciklus sémaváltozást/új entitást hoz be, meg van-e tervezve és dokumentálva a migrációs és rollback (visszaállítási) forgatókönyv?
-- Minden schema artifact státusza `Reviewed`? (Ha van `Review Required`, a plan nem zárható le.)
-- **Constitution Check (SK4):** minden plan-döntés (tech stack, naming, struktúra, teszt eszköz, merge stratégia, biztonság) összhangban van a `conventions.md`-vel?
-  - **Kis eltérés** (pl. egy elnevezés finomítása): vedd fel a `plan-questions.md`-be, és kérdezz rá a felhasználótól.
-  - **Súlyos eltérés** (alapvetően ütközik a konvenciókkal): **STOP**, vissza a `02` vagy `00` fázishoz a konvenció felülvizsgálatára.
-
-Ha bármelyikre nem teljesül a feltétel (vagy hiányzik valami), egészítsd ki a plan-t, mielőtt lezárod.
-
----
-
-## Lezárási kapu — teszt-önhordóság, környezet-felkészítés és scope (TP2)
-
-> **Ezt a tizenkét pontot a `Task írásra kész` státusz ELŐTT, tételesen le kell futtatnod, és a válaszodban ki kell írnod a kipipált listát.** Nem „érzésre" — minden pontnál nevezd meg, **hol** teljesül (szekció, `TC-ID`), vagy hogy miért nem értelmezhető ebben a ciklusban. **Egyetlen `[ ]` maradék esetén a plan nem zárható le** — javítsd, és futtasd újra a listát.
-
-```
-[ ] 1. A `Spec-lefedettség` tábla kitöltve: a spec `Teszt specifikáció` MINDEN esete
-       és MINDEN `DoD-NN` pontja legalább egy plan-tesztesetre képződik le (vagy
-       indoklással szerepel). Nincs kihagyott sor.
-[ ] 2. A `specs/test-conventions.md` minden érintett receptjét (RXX/IXX) FIZIKAILAG
-       bemásoltam (parancsok, URL-ek, payloadok, credential-pointerek) — nem csak
-       hivatkozom rájuk. A plan a test-conventions.md nélkül is végrehajtható.
-[ ] 3. Minden integrációs és E2E teszteset lépésről lépésre tartalmazza: HTTP ige ·
-       teljes végpont · fejlécek (az Authorization TÍPUSÁVAL) · konkrét request body ·
-       elvárt HTTP státusz · kulcs válasz-mezők. Browser E2E-nél: interakció +
-       hálózati hívás + látható eredmény.
-[ ] 4. Minden hibaághoz szerepel a HTTP státusz, az errorCode (ahol a spec
-       hibamátrixa definiálja) és a response body mintája.
-[ ] 5. Nincs a teszt-szekcióban hivatkozás a lépések HELYÉN: „a cycle-XX mintájára",
-       „mint a meglévő tesztben", „a spec szekvenciadiagramja szerint", „a szokásos
-       fejlécekkel".
-[ ] 6. Minden teszteset futtatható belépési pontja (script/tesztfájl) létezik a
-       repóban VAGY szerepel a `Tervezett módosítások` közt új fájlként, és az
-       `Ellenőrzési stratégia` parancsa pontosan ezt hívja.
-[ ] 7. KÖRNYEZET-FELKÉSZÍTÉS (TP3): a plan tartalmazza szó szerinti parancsként a
-       token-beszerzést (user és S2S külön, ha kell), a stack indítását +
-       health checket + leállítást, az egyedi komponens (plugin/SPI/custom image)
-       build–push–deploy–ellenőrzés–rollback láncát, a seedet és a hálózati
-       előfeltételeket — a végrehajtási sorrendjükkel együtt.
-[ ] 8. Amit a teszt futtatása igényel, de sem a `test-conventions.md`-ben, sem ebben
-       a planben nincs meg, azt a KORÁBBI CIKLUS planjéből áthoztam (TP3/a,
-       researcher subagenttel, literál értékekkel, provenance-szal) — vagy
-       `plan-questions.md` kérdés lett belőle. Nincs „ezt az előző ciklusban már
-       megcsináltuk" típusú néma előfeltétel.
-[ ] 9. SCOPE-KAPU (SC1): a `Fordított lefedettség` tábla kitöltve — minden
-       plan-képességhez van spec-forrás (követelmény vagy DoD-NN), vagy explicit
-       Out of scope, vagy nyitott kérdés. Spec-forrás nélküli képesség nincs.
-[ ] 10. HORGONY-VERIFIKÁCIÓ: minden konkrét `fájl:hely` / „ez a szimbólum ebben a
-       fájlban van" / „ez az asszertáció ebben a tesztfájlban van" állítást
-       Grep/Read paranccsal VISSZAIGAZOLTAM. Emlékezetből vagy analógiából írt
-       attribúció nincs.
-[ ] 11. ÉRTÉK-JÓZANSÁG: átnéztem a plan MINDEN konkrét értékét — portok
-       (80/443/8080/8443/6379/5432 elgépelés: `433`, `44`, `8O80`), időegység
-       (ms vs s), URL-séma ↔ port egyezés (`https://` ↔ 443), verzió/tag,
-       fájlútvonal. Ami gyanús, azt a forrásból ellenőriztem.
-[ ] 12. SZEKCIÓ-ID (PID1): minden végrehajtható terv-szekció címe visel egyedi
-       `[P-…]` azonosítót, és a korábban már kiadott ID-k VÁLTOZATLANOK (fix-módban
-       különösen: ID átnevezése tilos, mert a tasks.md rá hivatkozik). Leltár- és
-       összefoglaló szekció NEM kapott ID-t.
-```
-
-**Az önteszt a 7–8. ponthoz:** *„Friss gépen, csak ezt a plant olvasva lefut a teszt?"* — ha bárhol azt kellene mondani, hogy „ezt már felhúztuk korábban", a plan hiányos: a `test-runner` minden futásnál a nulláról indul, és a korábbi ciklusok planjeit nem olvassa.
-
-**Miért kapu ez, és nem checklist-sor:** a tapasztalat szerint a leggyakoribb 03-hiba nem a rossz terv, hanem az, hogy a **spec tesztesetei egyszerűen nem jutnak el a plan-be** — az ágens „túl részletesnek" ítéli őket a tervhez, és a 04-re vagy az implementációra hagyja. Csakhogy a `test-runner` sem a spec-et, sem a `test-conventions.md`-t nem olvassa: ami itt kimarad, az a validáláskor **nem fut le**, és a hiány csak a 07-ben derül ki, plan-hiányként (TR4) — a teljes ciklust visszadobva ide.
-
----
+<!-- INCLUDE:shared/quality-check-plan.md -->
 
 ## Státusz kezelés
 
@@ -852,9 +790,30 @@ Ha bármelyikre nem teljesül a feltétel (vagy hiányzik valami), egészítsd k
 
 > **Kész lifecycle:** a `plan.md` a `Task írásra kész` után a ciklus végén — amikor a validate (07) PASS lezárja a ciklust — `Kész` státuszra lép. A 08 fázis már `Kész`-t vár. Ezt az átmenetet a 07 végzi, itt nem.
 
+
+### Mechanikus kapu a lezárás előtt (M)
+
+A `05-analyze` determinisztikus kapujának **plan-oldali fele itt is lefut** — a lezárás előtt (a `tasks.md` még nem létezik, ezért `--plan-only`):
+
+<!-- INCLUDE:shared/python-cmd.md -->
+
+```bash
+python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-name> --plan-only
+```
+
+**Mit fed le ebben a módban:** `[P-…]` azonosítók formátuma és egyedisége (P1), a kötelező plan-táblák megléte (S1), a `Fordított lefedettség` sorainak `[P-…]` azonosítója (S3), minden `DoD-NN` visszavezethetősége plan-képességre (C1), a `Spec-lefedettség` TP1-teljessége (C3), a `Konfiguráció-életút` üres cellái (C4), a plan `path:sor` horgonyai (A2/A2b), az artefaktum-hang kemény padlója (A3) és a `DoD-NN` azonosítók a specben (D1/D2). A task-oldal a `04` lezárásakor fut.
+
+- **`0`** → folytatható a lezárás.
+- **`1`** → **nincs státuszváltás.** A `célfázis: 03` tételeket **most javítsd**, majd futtasd újra a kaput; a `célfázis: 02` tételeket a *Spec kritika* / *Megállási szabályok* szerint irányítsd vissza a 02-be — a spec-et magad nem írod.
+- **`2`** → használati hiba → jelezd, ne találgass.
+
+> **Miért itt (M):** ezek a hibák eddig a `05-analyze` első körében derültek ki, két fázissal később — ott egy fixer-subagent és egy analyzer-kör kellett hozzájuk. Itt egy szkriptfutás és egy célzott javítás.
+
+
 Ha a felhasználó megerősíti:
 - Állítsd a `plan.md` státuszát `Task írásra kész`-re.
 - **A státuszváltás előtt futtasd le a *Lezárási kapu (TP2)* tizenkét pontját**, és a kipipált listát írd ki a válaszodban. Bármely `[ ]` esetén nincs státuszváltás.
+- **A státuszváltás előtt a *Mechanikus kapu* (lásd fent) is `0`-t adott.**
 - **Azonnal commitolj** a lenti *Fázis-záró commit* szerint (`<FÁZIS-TAG>` = `03-plan`). Megerősítés → státuszírás → commit: ez egyetlen lépéssor, ne szakítsd meg.
 
 <!-- INCLUDE:shared/phase-commit.md -->
@@ -871,38 +830,4 @@ Ha a státusz \`Task írásra kész\` (és a commit megvan), állj meg. **Ne kez
 
 ---
 
-## Fix-mód (analyze-hurok belépő)
-
-> **Mikor aktív:** ezt a szekciót az `05-analyze` önjavító hurka indítja az `agents/plan-fixer.md` wrapperen keresztül — **nem** a normál plan-írás. A bemenet egy konkrét `Must Fix` lista, nem teljes újrafutás.
-
-A fix-mód egy **szűkített belépő:** a megadott `Must Fix` megállapításokat javítod célzottan, **nem írod újra az egész plant**. A `*-input-from-prev.md` fájlokat fix-módban **teljesen figyelmen kívül hagyod** (sem nem olvasod, sem nem írod) — IP1/6. (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A normál flow minőségi kapui (minőségellenőrzés + Constitution Check) a javított részekre továbbra is érvényesek.
-
-> **Szekció-ID-k fix-módban (PID1):** a meglévő `[P-…]` azonosítókat **nem nevezed át és nem törlöd** — a `tasks.md` rájuk hivatkozik, egy átnevezés az összes érintett taskot elszakítja a tervétől. Új szekció beszúrásakor **új ID**; szekció törlésekor jelezd az orchestrátornak, hogy a rá hivatkozó taskokat a 04 fixernek is rendeznie kell.
-
-### Két belépési alak
-1. **Közvetlen javítás:** a `Must Fix` megállapítás a plant érinti (a célfázis 03) — célzottan javítod.
-2. **Downstream re-deriválás (reconciliation):** a hurok feljebb (02, spec) javított, és a plant a megváltozott spec-hez kell **összehangolni**. Ez **célzott reconciliation, nem teljes újraírás:** csak a megváltozott spec-szakaszokhoz tartozó plan-részeket igazítod, a lezárt `plan-questions.md` döntéseket **megőrzöd**.
-
-### Bemenet
-- A planre szűrt `Must Fix` lista (kategória + leírás + `fájl:hely`), vagy reconciliation esetén a megváltozott upstream (spec) összefoglalója.
-- A `plan.md` és a `plan-questions.md` aktuális állapota.
-
-### Auto-javítható vs kérdezni kell (a határvonal)
-
-| Magától javítsd (auto) | Kérdésbe tedd (`plan-questions.md` új `Knn`) |
-|---|---|
-| Lefedettségi/komponens-leképezés pontosítása, naming-egységesítés, tervezési duplikáció összevonása, spec-változás átvezetése a planbe | Megfigyelhető viselkedést érintő technikai döntés (HTTP kód, retry policy, response mező), meghatározatlan komponens technológiai alapdöntése, spec-ellentmondás |
-
-A `Must Fix`-et, amihez **valódi döntés** kell, **ne találd ki** — vedd fel új `Knn`-ként a `plan-questions.md` végére, és **ne kérdezd közvetlenül a felhasználót** (fix-módban nincs interaktív csatornád). A kérdezést az orchestrátor (`05-analyze`) végzi. (Lásd a fenti „Ne találd ki magad — hol a határ?" szabályt — fix-módban is ugyanaz a határvonal.)
-
-### Státusz (auto, `[analyze-loop]` marker)
-A hurok a `plan.md` státuszát `[analyze-loop]` markerrel nyitotta vissza (pl. `Piszkozat [analyze-loop]`). Amíg a marker jelen van, **automatikusan** lépteted a státuszt, megerősítés-kérés nélkül:
-- van nyitott `[ ]` kérdés a `plan-questions.md`-ben → `Nyitott kérdések vannak [analyze-loop]`;
-- minden kérdés `[x]`, minden szekció rendben, minden schema artifact `Reviewed`, a célzott javítás kész → `Task írásra kész [analyze-loop]`.
-
-A marker fel- és levételét az orchestrátor kezeli; te csak a státusz-értéket lépteted.
-
-### Visszatérési összefoglaló (az orchestrátornak)
-Adj vissza tömör összefoglalót: (a) mely `Must Fix`-eket / spec-változásokat vezettél át és hogyan, (b) milyen új `Knn` kérdéseket vettél fel a `plan-questions.md`-be (azonosítóval). A `plan.md`-t és a `plan-questions.md`-t te írod; az `analyze-report.md`-t **nem** — az az orchestrátoré.
-
-- **`downstream-hatás:`** (D11) — kötelező mező: `nincs`, vagy `van — <mi változott, ami a következő fázist érinti>`. Ebből dönti el az orchestrátor, hogy kell-e egyáltalán elindítani a downstream fixereket. **Bizonytalanság esetén `van`**, a konkrét ok megnevezésével — a puszta „biztos, ami biztos” viszont nem ok.
+<!-- INCLUDE:shared/fix-mode-plan.md -->

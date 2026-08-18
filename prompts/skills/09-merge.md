@@ -22,7 +22,7 @@ Spec driven development-ben fejlesztünk szoftvert. A fejlesztés ciklusokra van
 
 Ez a folyamat **9. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan · 4-tasks · 5-analyze · 6-implement · 7-validate (tesztek + review) · 8-doc-sync · **9-merge ←**.
 
-> **A kódreview NEM ebben a fázisban van (RV1).** A `reviewer` subagent és a review önjavító hurka a **`07-validate`** fázisba került: ott a review a teljes kör 4. lépése, és a findingok ugyanabba a hurokba, ugyanazokba a leállási korlátokba futnak be, mint a teszthibák. Mire idejutsz, a review már tiszta — ez a fázis **kizárólag a beolvasztásról** szól.
+> **A kódreview NEM ebben a fázisban van (RV1).** A `reviewer` subagent és a review önjavító hurka a **`07-validate`** fázisba került: ott a review a teljes kör 2. lépése (a statikus réteg fele, a Sonar mellett), és a findingok ugyanabba a hurokba, ugyanazokba a leállási korlátokba futnak be, mint a teszthibák. Mire idejutsz, a review már tiszta — ez a fázis **kizárólag a beolvasztásról** szól.
 
 ---
 

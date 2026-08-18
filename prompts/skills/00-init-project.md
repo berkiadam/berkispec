@@ -215,9 +215,14 @@ _Az alábbiak **ajánlott default-ok** modern, korszerű eszközökkel (lokális
 
 _**Kötelező szekció (TR3).** Minden ciklus `specs/cycle-NN-<name>/test-report/` mappájába be kell kerülnie a projekt teszt-eszközének **saját, megnyitható riportjának** (Allure HTML, Playwright HTML, pytest-html, JUnit XML, coverage-riport stb.) — a chat `/clear` után nincs, a riport az egyetlen utólag ellenőrizhető bizonyíték. Ezt a táblázatot a `07-validate` **determinisztikus kapuval** (`report-gate-check.py`) kéri számon: hiányzó artefaktum → a validálás nem zárható PASS-ra. Az oszlopsorrend kötött._
 
-_**Hova kerülnek (TR5):** a riportok nem közvetlenül a `test-report/` gyökerébe, hanem **körönkénti almappákba** mennek — `test-report/validate/round-01/`, `round-02/`, … a validálási körökhöz (a review a 07 körének 4. lépése, nem kap külön mappát). Így egy önjavító hurok minden körének megmarad a saját bizonyítéka, és a `validation-report.md` lépés-táblájában jelzett bukáshoz megnyitható a hozzá tartozó riport. **A táblázat utolsó oszlopa a KÖR-MAPPÁHOZ képest relatív útvonal** (fájl vagy mappa) — a kör-mappát a hívó fázis adja át a `test-runner`-nek és a kapunak (`--report-subdir`)._
+_**Hova kerülnek (TR5):** a riportok nem közvetlenül a `test-report/` gyökerébe, hanem **körönkénti almappákba** mennek — `test-report/validate/round-01/`, `round-02/`, … a validálási körökhöz (a review a 07 körének 2. lépése, nem kap külön mappát). Így egy önjavító hurok minden körének megmarad a saját bizonyítéka, és a `validation-report.md` lépés-táblájában jelzett bukáshoz megnyitható a hozzá tartozó riport. **A táblázat utolsó oszlopa a KÖR-MAPPÁHOZ képest relatív útvonal** (fájl vagy mappa) — a kör-mappát a hívó fázis adja át a `test-runner`-nek és a kapunak (`--report-subdir`)._
 
 **Riport-generálás kötelező:** igen
+**Artefaktum-útvonal alapja:** kör-mappa
+
+_**A jelölő kötelező (TR5/b).** Az utolsó oszlop jelentése 2026-08-07-én megváltozott (`test-report/` gyökér → **kör-mappa**), a formátuma viszont nem — egy régi tábla ezért csendben félreértelmeződne. A `report-gate-check.py` a jelölő hiányában **nem találgat**: `exit 2` + a pótlandó sor. Elfogadott érték: `kör-mappa` (mai séma) vagy `test-report` (régi, flat séma — ilyenkor a kapu a `test-report/` gyökérhez oldja fel az útvonalakat). Meglévő projekt migrációja: írd be a jelölőt a valós sémával, és ha a ciklus most tér át a mai sémára, a `conventions.md` átírása **a ciklus része** (lásd a 03 „Kapu-konfiguráció együtt mozog" szabályát)._
+
+_**Határvonal a `specs/test-conventions.md`-hez (TC1/c):** ide, a `conventions.md`-be tartoznak a **riport-artefaktumok, az útvonal-alapjuk és a riport-generáló parancsok** — ezt olvassa a TR3 kapu. A `specs/test-conventions.md`-be tartoznak a **teszt-receptek és koordináták** (hogyan indul a stack, milyen hívás, milyen teszt-user), amit a 08-doc-sync tart karban. Riport-layout vagy riport-parancs változik → **`conventions.md`**; „hogyan fut / mi kell hozzá" változik → **`test-conventions.md`**; ha mindkettő → **mindkettő**. A kettő összekeverése a leggyakoribb forrása annak, hogy a 07 kapuja a régi helyen keres._
 
 | Teszt-kategória | Eszköz | Riport-generáló parancs | Artefaktum a kör-mappában |
 |---|---|---|---|
@@ -303,6 +308,7 @@ Ha a 00 fázis félbeszakadt és új sessionban folytatódik:
 Mielőtt lezárod, ellenőrizd:
 1. Minden szekció kitöltött (nincs üresen hagyott pre-fill placeholder)?
 2. A Teszt keretrendszer a fejlesztővel egyeztetett (nem csak a default maradt megerősítés nélkül)?
+2.a/b **Ki van töltve az `**Artefaktum-útvonal alapja:**` mező (TR5/b)?** — új projektben `kör-mappa`. Enélkül a `07-validate` TR3 kapuja `exit 2`-vel megáll.
 2.a **A `## Teszt-riportolás` szekció valós adatokkal kitöltött (TR3)?** — a táblázatban tényleges riport-generáló parancsok és artefaktum-nevek állnak, **vagy** a `**Riport-generálás kötelező:**` mező `nem` + indoklás. Sablon-placeholder (`<parancs>`, `<a választott futtató>`) nem maradhat benne: a `07-validate` kapuja ezt a táblát olvassa, és placeholder mellett minden ciklus bukna.
 3. A Merge stratégia kitöltött, és az access validáció **sikeresen lefutott** (vagy a fejlesztő explicit lokális merge-et választott)?
 4. A portok, env változók és Sonar (ha van) szekciók a projekt valóságát tükrözik?

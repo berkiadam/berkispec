@@ -10,6 +10,7 @@ prev: bs-write-tasks
 next: bs-implement
 subagents:
   - "agents/analyzer.md"
+  - "agents/analyzer-exec.md"
   - "agents/spec-fixer.md"
   - "agents/plan-fixer.md"
   - "agents/tasks-fixer.md"
@@ -35,11 +36,11 @@ Ez a folyamat **5. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 |---|---|
 | Előfeltétel | `tasks.md` = `Implementálásra kész`, `conventions.md` létezik, tiszta munkafa. |
 | Szereped | **Orchestrátor (read-only):** te magad tervezési dokumentumot nem szerkesztesz — vezényelsz, riportot írsz, kérdezel, státuszt fordítasz. |
-| Mechanikus kapu | Minden futás előtt `analyze-gate-check.py` (plan-ID ↔ task-hivatkozás, marker, `⟂`, `DoD-NN`, kötelező táblák) — a találatai `Must Fix`-ek a szkript által adott célfázissal. |
-| Analyzer subagent | A read-only kereszt-vizsgálatot a `agents/analyzer.md` subagent végzi; te a megállapítás-listáját értékeled. |
+| Mechanikus kapu | Minden futás előtt `analyze-gate-check.py` (plan-ID ↔ task-hivatkozás, marker, `⟂`, `DoD-NN`, kötelező táblák, **futtatott artefaktumok, plan-horgonyok, artefaktum-hang**) — a `Must Fix` találatai a szkript célfázisával mennek a hurokba, a `## Leltár` blokkja pedig az `analyzer` bemenete (AG3). |
+| Analyzer subagentek | A read-only kereszt-vizsgálatot **két párhuzamos** subagent végzi: `agents/analyzer.md` (1–5. kategória) és `agents/analyzer-exec.md` (6. kategória, végrehajthatóság) — te a két megállapítás-listát fésülöd össze (E). |
 | Fixer-subagentek | A javítást a `agents/{spec,plan,tasks}-fixer.md` wrapperek végzik (= 02/03/04 fázis Fix-módja); ők írják a tervezési dokumentumokat. |
 | Eredmény | `analyze-report.md` PASS vagy FAIL, súlyossági besorolással + Hurok-napló. |
-| Delta + sweep | A 2. futástól az analyzer **delta módban** dolgozik (előző Must Fix lista + `git diff`); a PASS **kizárólag a záró teljes sweepből** adható (D10). A downstream re-deriválás **feltételes** (D11). |
+| Egy analyzer-futás / iteráció | Az analyzer futása **mindig teljes**; a 2. futástól megkapja az előző `Must Fix` listát (verifikáció) és a `git diff`-et (navigáció) — de nem szűkíti rá magát (D10). A downstream re-deriválás **feltételes** (D11). |
 | FAIL | **Önjavító hurok indul:** legkorábbi érintett célfázis → fixer-subagent → downstream re-deriválás (`02→03→04`) → újra-analyze, amíg PASS — `max X = 3` iterációval. |
 | Kérdés-megállás | Ha a fixer nyitott kérdést jelentett: az orchestrátor (te) kérdezed a felhasználót `FÁZIS/Knn` fejléccel, beírod a választ, újraindítod a fixert — a hurok **folytatódik** (nem hiba). |
 | PASS | Tovább a 06-implement fázisra. Commit: a hurok végén egyetlen `cycle-NN: 05-analyze`. |
@@ -75,7 +76,7 @@ A `05-analyze` egy **vezénylő** fázis. Két dolgot tarts észben végig:
 
 ## Folytatás megszakított futás után
 
-**A folytatás első analyze-futása mindig TELJES** (nem delta) — nem tudhatod, hol szakadt meg a javítás, és mihez képest lenne értelmes a diff. A mechanikus kapu (0. lépés) is fut.
+**A folytatás első analyze-futása verifikációs lista NÉLKÜL indul** — nem tudhatod, hol szakadt meg a javítás, így nincs értelmes „előző kör". A futás — mint mindig — teljes, és a mechanikus kapu (0. lépés) is fut.
 
 Az analyze **diagnózisa** read-only, de a hurok már módosíthatta a tervezési dokumentumokat. A folytatást a `[analyze-loop]` státusz-marker, a `*-questions.md` nyitott kérdései és az `analyze-report.md` Hurok-naplója együtt teszi rekonstruálhatóvá. Döntési fa — **ebben a sorrendben**:
 
@@ -115,7 +116,7 @@ Ellenőrizd, hogy a ciklus tervezési dokumentumai (`spec.md`, `plan.md`, `tasks
 
 A diagnózis **5 kategóriában** keres problémát (a `analyzer` subagent végzi):
 
-1. **Duplikációk** — ismétlődő követelmények a spec/plan/tasks között (ugyanaz a viselkedés többször, redundáns task).
+1. **Duplikációk** — ugyanaz a döntés a plan-en belül többször; a `tasks.md` újra leírja a plan teszteset-lépéseit; redundáns task. **A spec kidolgozott artefaktumának szó szerinti átvétele a plan-be NEM duplikáció** (KX3) — az a kötelező önhordóság.
 2. **Ambiguitás** — vágy fogalmak, hiányzó mérőszámok, nem mérhető elfogadási feltétel.
 3. **Alulspecifikáció** — hiányzó elfogadási feltétel, meghatározatlan komponens, taskhoz nem rendelhető plan-szekció.
 4. **Konvenció-ütközések** — a `conventions.md`-vel szembeni eltérés (tech stack, naming, teszt eszköz, merge stratégia, struktúra).
@@ -125,9 +126,12 @@ A diagnózis **5 kategóriában** keres problémát (a `analyzer` subagent végz
 
 ## Kontextus betöltési szabályok
 
-- A kereszt-vizsgálat sok fájl együttes olvasását igényli — **kötelező az `agents/analyzer.md` subagent indítása**. A subagent beolvassa a `spec.md` + `plan.md` + `tasks.md` + `conventions.md` négyest, elvégzi a **6 kategóriás** vizsgálatot (az utolsó, „végrehajthatóság és artefaktum-tulajdon" kategóriához **célzottan a repóban is ellenőriz létezést** — `Glob`/`Read`, nem audit), és **kizárólag a strukturált megállapítás-listát adja vissza** (a nyers fájltartalom nem terheli a fő kontextust).
-- A subagent rendszerpromptja: olvasd be a `prompts/agents/analyzer.md`-t, és ezzel definiáld az `analyzer` subagentet.
-- A subagent kimenetét te értékeled, és ez alapján döntesz PASS / FAIL-ról.
+- A kereszt-vizsgálat sok fájl együttes olvasását igényli — **kötelező a két diagnózis-subagent indítása, egyetlen üzenetben, párhuzamosan** (E): `agents/analyzer.md` (1–5. kategória, a `spec.md` + `plan.md` + `tasks.md` + `conventions.md` négyesen) és `agents/analyzer-exec.md` (6. kategória, a `plan.md` + `tasks.md` + a kapu leltára hármasból). Mindkettő **kizárólag a strukturált megállapítás-listát adja vissza** (a nyers fájltartalom nem terheli a fő kontextust).
+- A rendszerpromptjuk: olvasd be a `prompts/agents/analyzer.md`-t és a `prompts/agents/analyzer-exec.md`-t, és ezekkel definiáld a két subagentet.
+- **Add át a kapu kimenetének megfelelő blokkját mindkét subagentnek, szó szerint:**
+  - `analyzer-exec` → a **`## Leltár`** (`[ARTEFAKTUM]` / `[HORGONY]` / `[HANG-GYANÚ]` / `[TESZT-ÍGÉRET]` / `[DESZTRUKTÍV]`, AG3): ez váltja ki a repó- és dokumentum-felderítést, ami a 6. kategória fő költsége volt;
+  - `analyzer` → a **`## Lefedettségi mátrix (generált)`** (AG4): a `DoD-NN → [P-…] → task` lánc készen, hogy ne vezesse le újra.
+- A két subagent kimenetét te fésülöd össze (lásd „A két analyzer-subagent"), és ez alapján döntesz PASS / FAIL-ról.
 - A javító fixer-subagenteket szintén Task tool subagent-ként indítod, a saját wrapper-promptjukkal (`agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`) — lásd „Az önjavító hurok".
 - **A `*-input-from-prev.md` fájlok (IP1) is bemenetek:** a subagent beolvassa a ciklus mappájában lévő `spec-`/`plan-`/`tasks-input-from-prev.md` fájlokat (amelyik létezik), és **nyitott `[ ]` tételt lefedettségi hiányként** jelez. Indoklás: egy nyitott tétel azt jelenti, hogy egy korábbi fázis átadott egy információt, amit a fogyasztó fázis se be nem épített, se el nem vetett — ez ugyanolyan rés, mint egy task nélküli követelmény.
 
@@ -158,14 +162,21 @@ A gépiesen eldönthető ellenőrzéseket **nem az `analyzer` subagent végzi**,
 python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-name>
 ```
 
-**Mit fed le:** plan-ID formátum/egyediség (P1), task→plan hivatkozás megléte (P2), nem létező ID-ra hivatkozás (P3), ID task nélkül (P4), sorszámos hivatkozás (P5), marker minden taskon (T1), `[OPS]` repo-fájlon (T2), státusz-frissítő task (T3), `⟂` szimmetria (T4), `DoD-NN` hiány/duplikáció (D1), `DoD-NNb` alakú utólagos azonosító (D2), kötelező táblák megléte (S1/S2).
+_(A projekt gyökeréből futtatva a `--repo-root .` és a `--conventions conventions.md` alapérték jó. Ha a `conventions.md` máshol van, add meg: `--conventions <útvonal>` — enélkül a `G1` kapu-konfiguráció check kimarad.)_
+
+**Mit fed le:** plan-ID formátum/egyediség (P1), task→plan hivatkozás megléte (P2), nem létező ID-ra hivatkozás (P3), ID task nélkül (P4), sorszámos hivatkozás (P5), marker minden taskon (T1), `[OPS]` repo-fájlon (T2), státusz-frissítő task (T3), `⟂` szimmetria (T4), `DoD-NN` hiány/duplikáció (D1), `DoD-NNb` alakú utólagos azonosító (D2), kötelező táblák megléte (S1/S2) — **és a 6. kategória gépies rétege (AG3):** futtatott artefaktum létezése / létrehozó task (A1 = 6.a), plan-`path:sor` horgony feloldása (A2 = 6.g fájl-szintje), horgony-sorszám érvényessége (A2b, javaslat), artefaktum-hang kemény padlója (A3 = 6.h `🔴`/„Tilos", javaslat) — **továbbá:** a spec kidolgozott artefaktumainak átvétele (`V1`) és a teszt-szekciók terjedelme (`V2`, KX3), az útvonal-formátum (`R1`, RP1) és a horgony-formátum (`A2c`, javaslat), valamint a **kapu-konfiguráció együtt mozgása** (`G1`, GC1: a ciklus a riport-struktúrát érinti, de a `conventions.md` `## Teszt-riportolás` táblája nem mozdul → a 07 TR3 kapuja a régi helyen keresne).
+
+**A kimenet három blokkja:**
+- **`## Must Fix`** — soronként `[kód] (célfázis: NN) üzenet`. Mindegyik `Must Fix`, a szkript célfázisával — vedd fel őket az `analyze-report.md` listájába **szó szerint**. Ezeket ne kérdőjelezd meg és ne értékeld újra: gépi ellenőrzés eredményei.
+- **`## Javaslatok`** — nem blokkolnak, nem indítanak hurkot; a riport `Suggestions` szekciójába kerülnek.
+- **`## Leltár`** — **nem megállapítás, hanem az `analyzer` BEMENETE.** A horgonyzott sorok szövegét, a futtatott artefaktumok állapotát és az ítéletet igénylő hang-találatokat tartalmazza. **Add át szó szerint az `analyzer` subagentnek** — ettől nem kell a repóban `Grep`/`Glob` köröket futtatnia (ez a 6. kategória fő költsége volt).
 
 **Kilépő kód:**
-- **`0`** → nincs mechanikus megállapítás; indítsd az `analyzer` subagentet a szemantikai kategóriákra.
-- **`1`** → a kimenet soronként `[kód] (célfázis: NN) üzenet` formátumú. **Mindegyik `Must Fix`**, a szkript által megadott célfázissal — vedd fel őket az `analyze-report.md` `Must Fix` listájába **szó szerint**, és az `analyzer` szemantikai megállapításaival együtt kezeld a hurokban. Ezeket ne kérdőjelezd meg és ne értékeld újra: gépi ellenőrzés eredményei.
+- **`0`** → nincs blokkoló mechanikus megállapítás (javaslat és leltár lehet a kimenetben); indítsd az `analyzer` subagentet a szemantikai kategóriákra, a leltárral együtt.
+- **`1`** → van `Must Fix`; ugyanígy indítsd az analyzert, és a két megállapítás-listát együtt kezeld a hurokban.
 - **`2`** → használati hiba (hiányzó ciklusmappa vagy dokumentum) → STOP, jelezd a felhasználónak.
 
-**A kapu minden iterációban fut** (a javítás után is), és a delta-analyze mellett is teljes — így a mechanikus regresszió nem tud átcsúszni.
+**A kapu minden iterációban fut** (a javítás után is) — így a mechanikus regresszió nem tud átcsúszni.
 
 > **Az `analyzer` ezekre már nem kap külön feladatot.** Ha mégis ilyen megállapítást ad vissza, az duplikátum: a szkript kimenete az irányadó.
 
@@ -181,6 +192,7 @@ Egy olcsóbb LLM-nek konkrét célt kell adni, nem „vissza a megfelelő fázis
 | Ambiguitás | 03 (technikai döntés), 02 (viselkedési — ritka) | ahol a fogalmat tisztázni kell |
 | Alulspecifikáció | 03 (meghatározatlan komponens), 02 (hiányzó elfogadási feltétel) | a hiányzó döntés szintjére |
 | Konvenció-ütközés | 03 (enyhe), 00 (súlyos — `conventions.md` felülvizsgálat) | összhangban az SK4 logikájával |
+| Konvenció-ütközés, ahol a ciklus **szándékosan** változtat konvenciót (GC1) | **03** — a plan tervezze meg a `conventions.md` frissítését (+ **04** a taskra) | a döntés már megvan; ez végrehajtás, nem konvenció-felülvizsgálat, tehát nem megy vissza a `00`-ra |
 | Lefedettségi hiány | 04 (követelmény ↔ task újrarendelés) | a task lista a hiányos |
 | Lefedettségi hiány — nyitott `*-input-from-prev.md` tétel (IP1) | a **fogyasztó** fázis (02 / 03 / 04 a fájl szerint) | ott maradt ki az átadott infó beépítése |
 | Plan-hivatkozás hibája (PID1): hiányzó / nem létező `[P-…]` / sorszámos hivatkozás / `[P-…]`-hoz nincs task | **04** | a `tasks.md` hivatkozásai romlottak el |
@@ -190,6 +202,9 @@ Egy olcsóbb LLM-nek konkrét célt kell adni, nem „vissza a megfelelő fázis
 | Spec-teszteset nem képződött le plan-tesztesetre (TP1) / hiányzó környezet-felkészítés (TP3) | **03** | a `test-runner` csak a plant olvassa |
 | Kötelező tábla hiánya (`Spec-lefedettség`, `Fordított lefedettség` → 03; `Plan-lefedettség` → 04) | a tábla gazdája | a kimaradt tábla = kihagyott kapu |
 | Hiányzó/duplikált `DoD-NN` azonosító | **02** | a 07 per-item számlálója erre épül |
+| Kidolgozott spec-artefaktum csonkítva / összevonva a plan-ben (KX3 — `V1`/`V2` vagy szemantikai) | **03** | a `test-runner` a spec-et nem olvassa: ami itt kimarad, nem fut le |
+| Útvonal-formátum (RP1 — `R1`) | a dokumentum gazdája: **02 / 03 / 04** | abszolút/gép-specifikus útvonal más gépen és CI-ben értelmetlen |
+| Kapu-konfiguráció nem mozog a struktúrával (GC1 — `G1`) | **03** (+ **04** a taskra) | a `conventions.md`-t olvasó kapu (TR3, Sonar) a régi értékkel futna → a 07 bukik |
 
 **Legkorábbi érintett fázis nyer:** ha több kategória is FAIL és különböző célfázisokra mutat, a hurok a **legkorábbi érintett fázisra** ugrik (02 < 03 < 04), majd onnan deriválja le újra a downstream fázisokat — különben a későbbi fázisok hibás alapra épülnének. (Súlyos konvenció-ütközés `00`-ra mutat: ez emberi döntést igényel a `conventions.md` szintjén — ilyenkor a hurok megáll és kérdez, nem javít automatikusan.)
 
@@ -205,35 +220,59 @@ FAIL esetén **nem** adod vissza egyszerűen a vezérlést a felhasználónak. H
 2. **Státusz-marker felvétele.** A célfázistól lefelé minden érintett dokumentum státuszát fordítsd a fázis-megfelelő nem-kész állapotra `[analyze-loop]` markerrel (pl. `Piszkozat [analyze-loop]`). A marker jelzi: fix-mód aktív → a fixerek automatikusan léptetik a státuszt (lásd D7), és megszakítás után jelzi, hogy a doksit a hurok nyitotta vissza.
 3. **Fixer-subagent indítása** a célfázishoz tartozó wrapperrel (lásd „Fixer-subagent indítása").
 4. **Kérdés-megállás kezelése.** Ha a fixer az összefoglalójában nyitott kérdéseket jelentett (új `Knn` bejegyzések a `*-questions.md`-ben): tedd fel őket a felhasználónak **egyesével**, fázis-fejléccel (lásd „Fázis-fejléces kérdésformátum"), vezesd át a választ a `*-questions.md`-be (`[x]` + döntés), majd **indítsd újra ugyanazt a fixert** a most már megválaszolt kérdéssel. Ez nem számít új analyze-iterációnak.
+4.a **„Változott-e egyáltalán?" őrszem — N.** A fixer visszatérése után futtasd: `git diff --stat -- specs/cycle-NN-<cycle-name>/`.
+   - **Ha a diff üres**, és a fixer **nem** vett fel új `Knn` kérdést sem, akkor a dokumentumok változatlanok — a következő analyzer-kör **bizonyosan ugyanazt a `Must Fix` listát** adná. Ilyenkor **ne indíts analyzer-futást**: állj meg, és kérdezd meg a felhasználót, hogyan folytassa (kézi javítás / a `Must Fix` tétel elvetése / a `conventions.md` felülvizsgálata) — a fázis-fejléces kérdésformátummal. Jegyezd fel a Hurok-naplóba: `a fixer nem hajtott végre változtatást`.
+   - **Ha a diff nem üres** (vagy van új kérdés) → tovább a 4.b pontra.
+
+
+4.b **Mechanikus visszacsatolás a fixer után — G.** Amint a fixer visszatért (és a kérdései meg vannak válaszolva), **futtasd le a mechanikus kaput** (0. lépés) — még az analyzer előtt.
+   - **Csak mechanikus `Must Fix` van** (P/T/S/A/C/D kódok, tehát kizárólag a kapu kimenete) → **küldd vissza ugyanannak a fixernek** a kapu tételeit, szó szerint. Ez **nem új iteráció**, és **nem indít analyzer-futást**: a hurokszámláló nem nő.
+   - **Nincs mechanikus `Must Fix`** → tovább az 5. pontra.
+   - **Korlát:** ugyanezt a visszacsatolást **legfeljebb kétszer** futtasd egy iterációban. Ha a fixer harmadszorra is mechanikusan hibás dokumentumot ad vissza, kezeld normál iterációként (az 5. ponttól tovább), és a Hurok-naplóban jegyezd fel: `fixer mechanikus regressziója nem konvergált`.
+
+
 5. **Downstream re-deriválás — FELTÉTELESEN (D11).** A felfelé javítás után a célfázis alatti fázisokat kell összehangolni (`02 → 03 → 04`) — **de csak akkor, ha a javításnak van downstream hatása.**
    - A fixer visszatérési összefoglalója kötelezően tartalmaz egy **`downstream-hatás:`** mezőt (lásd „Fixer-subagent indítása"): `nincs`, vagy `van — <mi változott, ami a következő fázist érinti>`.
    - **`nincs`** (tipikusan: megfogalmazás-pontosítás, duplikátum-összevonás, artefaktum-hang javítása, elgépelés) → **a downstream fixereket NE indítsd el.** Egy felesleges plan- vagy tasks-fixer futás teljes dokumentum-beolvasással jár, és új hibát is bevihet.
    - **`van`** → indítsd a downstream fixert, és **add át neki a `downstream-hatás` szövegét** — ez a reconciliation hatóköre. Ez **célzott reconciliation, nem teljes újraírás**: a lezárt `*-questions.md` döntéseket megőrzi.
    - Ha a fixer nem adta meg a mezőt, **kérdezd vissza tőle** egy mondatban — ne tippelj, és ne futtasd el „biztos, ami biztos" alapon a teljes láncot.
-6. **Újra-analyze — DELTA módban (D10).** Előbb futtasd a **mechanikus kaput** (0. lépés — mindig teljes), majd indítsd az `analyzer` subagentet **delta bemenettel**:
-   - **az előző kör `Must Fix` listája** (amit javítani kellett), és
-   - **a tervezési dokumentumok változása**: `git diff -- specs/cycle-NN-<cycle-name>/` (a hurok alatt nincs commit, tehát a diff a hurok teljes változását mutatja).
+   - **Minden downstream fixer után is fut a 4.b mechanikus visszacsatolás** — a `tasks.md` hivatkozási rendjét jellemzően épp a reconciliation rontja el.
+6. **Újra-analyze — EGY teljes kör, KÉT PÁRHUZAMOS subagenttel (D10/E).** Előbb futtasd a **mechanikus kaput** (0. lépés), majd indítsd az `analyzer` és az `analyzer-exec` subagentet **egyetlen üzenetben, párhuzamosan** (lásd „A két analyzer-subagent"). Mindkettő **egyszer** fut, teljes módban, és két extra bemenetet kap:
+   - **az előző kör `Must Fix` listája** — az analyzer jelentésének **első blokkja** tételenként igazolja, hogy megoldódott-e;
+   - **a tervezési dokumentumok változása**: `git diff -- specs/cycle-NN-<cycle-name>/` (a hurok alatt nincs commit, tehát a diff a hurok teljes változását mutatja) — ez **navigáció**: a megváltozott szakaszokat nézze meg először, mert ott a legvalószínűbb az új rés. A vizsgálat hatóköre viszont a **teljes dokumentum** marad.
 
-   A delta-analyzer feladata kettő: **(a) igazolja**, hogy a `Must Fix` tételek tényleg megoldódtak, és **(b) a megváltozott szekciókra fókuszáltan** keressen új ellentmondást (a változás új rést nyithatott a nem változott részekhez képest). A hat kategória szemantikai része érvényes, de **csak a diff által érintett tartalomra**.
-   - **Még van `Must Fix`** → új iteráció az 1. ponttól, a hurokszámláló +1.
-   - **Nincs több `Must Fix`** → **még NEM PASS**: jön a **záró teljes sweep** (7. pont).
-
-7. **Záró teljes sweep — a PASS egyetlen forrása (D10).** Javítás nélkül indíts egy **teljes** `analyzer` futást (mind a hat kategória, a teljes dokumentumokon, delta nélkül) + a mechanikus kaput.
+   Az eredmény alapján:
    - **Nincs `Must Fix`** → a hurok konvergált, ugrás a „Státusz kezelés → PASS"-ra (itt kerül le a marker és történik az egyetlen commit).
-   - **Van `Must Fix`** → új iteráció az 1. ponttól, a hurokszámláló +1. *(Ez normális: épp ezért van a sweep — a cycle-25-nél is a második teljes futás hozta elő a két lefedettségi rést.)*
+   - **Van `Must Fix`** → új iteráció az 1. ponttól, a hurokszámláló +1.
 
-   **Az első analyze-futás is teljes** (nincs mihez képest delta). A `max X` szempontjából a delta-analyze és a záró sweep **együtt egy iteráció**.
+   > **A `PASS` kizárólag teljes analyzer-futásból adható** — a `git diff` a fókuszt adja, nem a hatókört.
+
+### A két analyzer-subagent (E) — párhuzamos indítás és összefésülés
+
+A diagnózist **két subagent** végzi, egymástól független hatókörrel. **Egyetlen üzenetben indítsd őket, hogy párhuzamosan futhassanak** — a fázis eltelt ideje így a kettő közül a lassabbé, nem az összegük.
+
+| Subagent | Hatókör | Bemenete |
+|---|---|---|
+| `agents/analyzer.md` | **1–5. kategória** (duplikáció, ambiguitás, alulspecifikáció, konvenció-ütközés, lefedettség **tartalmi** ítélete) | `spec.md` + `plan.md` + `tasks.md` + `conventions.md` + átadó fájlok + `cycle-design-input.md` + a kapu **generált mátrixa** |
+| `agents/analyzer-exec.md` | **6. kategória** (prózában ígért teszt, artefaktum-tulajdon, destruktív művelet, horgony-szimbólum, artefaktum-hang) | `plan.md` + `tasks.md` + a kapu **`## Leltár`** blokkja |
+
+**Az összefésülés a te dolgod:**
+1. A két `Must Fix` listát és a kapu `Must Fix` listáját **egy listába** fűzöd, majd a **legkorábbi érintett célfázist** ebből az egyesített listából határozod meg.
+2. **Duplikátum-szűrés:** ha ugyanarra a `fájl:hely`-re mindkét subagent adott megállapítást, a **specifikusabbat** tartsd meg (jellemzően az `analyzer-exec` végrehajthatósági tételét), és a másikat ne vidd tovább a fixernek.
+3. A riport `Végrehajthatósági leltár` szekciója az `analyzer-exec` kimenetéből jön, a `Lefedettségi mátrix` a **kapuból** (lásd lent), az `Érintett DoD-sorok` mindkettőből.
+4. **Ha az egyik subagent hibára fut vagy nem ad értelmezhető listát**, ne minősítsd PASS-nak a kört: indítsd újra azt az egyet (ez nem új iteráció).
 
 ### Fixer-subagent indítása
 
-- A fixer-subagent **rendszerpromptja** a célfázis fixer-wrappere: `agents/spec-fixer.md` (02), `agents/plan-fixer.md` (03), `agents/tasks-fixer.md` (04). A wrapper a megfelelő skill **Fix-mód** szekciójára delegál — nincs duplikált javító logika, és a fázis saját minőségi kapui automatikusan érvényesülnek.
+- A fixer-subagent **rendszerpromptja** a célfázis fixer-wrappere: `agents/spec-fixer.md` (02), `agents/plan-fixer.md` (03), `agents/tasks-fixer.md` (04). A wrapper **tartalmazza** a fázis Fix-mód szekcióját és a fázis minőségi kapuját (közös forrásból, build-time beemelve) — nincs duplikált javító logika, és a fázis saját kapui automatikusan érvényesülnek.
+- **A fixer nem olvas fázis-skillt (D13).** A wrapperben minden szabály benne van; ha egy fixer mégis a skill beolvasását jelenti be, az hiba (a teljes fázis újrafuttatására csábít egy célzott javítás helyett).
 - **Bemenet** a subagentnek: a célfázisra szűrt `Must Fix` lista (kategória + leírás + `fájl:hely`) + a célfázis dokumentumai.
 - **Kimenet** a subagenttől: (a) az elvégzett (mechanikus) javítások összefoglalója, (b) a **`downstream-hatás:`** mező (`nincs` / `van — <mi érinti a következő fázist>`, D11), és (c) a `*-questions.md`-be felvett **új** kérdések azonosítói — azoké a pontoké, amelyekhez valódi döntés kell. A subagent **nem kérdez közvetlenül a felhasználótól** (nincs interaktív csatornája); csak gyűjt és visszaad. A kérdezés a te dolgod (D2).
 
 ### `max X` hurokszámláló + leállás
 
 - **Alapérték: `max X = 3`.**
-- **`X` egysége: a teljes analyze-újrafutások száma.** Egy `FAIL → fix → re-deriv → re-analyze` ciklus = **1** iteráció. A követő-kérdések miatti fixer-újraindítások és az egyes downstream fixer-hívások **nem** növelik `X`-et.
+- **`X` egysége: a teljes analyze-újrafutások száma.** Egy `FAIL → fix → re-deriv → re-analyze` ciklus = **1** iteráció, és **egy** analyzer-futás. A követő-kérdések miatti fixer-újraindítások és az egyes downstream fixer-hívások **nem** növelik `X`-et.
 - **Két, egymástól független kilépési feltétel:**
   1. **Nyitott kérdés** → a hurok megáll, kérdez; a user válaszol; a hurok **folytatódik** (ez nem hiba, és nem fogyaszt iterációt).
   2. **`max X` elérve konvergencia nélkül** → a hurok feladja (lásd „Státusz kezelés → FAIL").
@@ -300,33 +339,41 @@ _Egy-két mondat: konzisztens-e a négyes, vagy hol van a baj, és hogyan zárul
 
 ## Végrehajthatósági leltár (6. kategória)
 
-_Az `analyzer` subagent kimenetéből átvéve. **Kötelező szekció** — ha hiányzik, a PASS nem fogadható el._
+_Az `analyzer` subagent kimenetéből átvéve; a `(kapu)` jelölésű mezők a mechanikus kapu eredményéből. **Kötelező szekció** — ha hiányzik, a PASS nem fogadható el._
 
-**Futtatott artefaktumok:** <fájl → létezik / létrehozó task Tnnn / HIÁNYZIK>
+**Futtatott artefaktumok (kapu, A1):** <rendben / HIÁNYZIK: ...>
 **Prózában ígért tesztek:** <ígéret → teszteset + task / HIÁNYZIK>
 **Artefaktum-tulajdon:** <rendben / a planben szerepel: ...>
-**Státusz-frissítő task:** <nincs / Tnnn>
-**Marker-helyesség:** <rendben / téves [OPS]: ...>
+**Státusz-frissítő task (kapu, T3):** <nincs / Tnnn>
+**Marker-helyesség (kapu, T1/T2):** <rendben / téves [OPS]: ...>
 **Destruktív műveletek:** <jóváhagyás + immutable azonosító + rollback megvan / hiányzik: ...>
-**Horgony-feloldás:** <feloldható / nem oldható fel: ...>
-**Artefaktum-hang:** <rendben / skill-hangú meta-utasítás maradt: ...>
+**Horgony-feloldás (kapu A2 + szimbólum-ítélet):** <feloldható / nem oldható fel: ...>
+**Artefaktum-hang (kapu A3 + címzett-ítélet):** <rendben / skill-hangú meta-utasítás maradt: ...>
 
 ## Lefedettségi mátrix (követelmény ↔ task)
 
-_**Mikor töltöd ki (D12):** a két mátrix a **záró teljes sweep** eredményéből készül, egyszer — a köztes iterációk nem generálják újra (gépiesen újraszámolható tartalom, a köztes állapotot a Hurok-napló őrzi). Ha a hurok `max X`-nél feladja, a mátrixokat az utolsó rendelkezésre álló állapotból töltsd ki, és jelöld: „(feladáskori állapot)"._
+_**Honnan jön (K/AG4):** ezt a mátrixot a **mechanikus kapu generálja** (`## Lefedettségi mátrix (generált)` blokk), és te **szó szerint** fűzöd ide — nem az LLM vezeti le újra. A `Lefedve (gépi)` oszlop kizárólag a `DoD-NN → [P-…] → task` **lánc meglétét** jelenti._
+_**Két javítást te végzel a beillesztett táblán:**_
+1. _ha az `analyzer` egy `✓` sorra **tartalmi** hiányt jelentett (`Érintett DoD-sorok`), írd át `✗`-re, és a `Megjegyzés` oszlopba a `Must Fix` rövid hivatkozását;_
+2. _ugyanez, ha az `analyzer-exec` jelezte, hogy a sor taskja **nem fut le** (végrehajthatósági `Must Fix`)._
 
-| Spec követelmény | Plan szekció (`[P-…]`) | Task(ok) | Lefedve |
-|---|---|---|---|
-| ... | `[P-CONFIG]` | T0xx | ✓ / ✗ |
+_**Mikor (D12):** a végleges tábla a **konvergáló (utolsó, `Must Fix` nélküli) kör** kapu-kimenetéből kerül a riportba, egyszer. Ha a hurok `max X`-nél feladja, az utolsó rendelkezésre álló kapu-kimenetet illeszd be, és jelöld: „(feladáskori állapot)"._
+
+| DoD | Plan szekció (`[P-…]`) | Task(ok) | Lefedve | Megjegyzés |
+|---|---|---|---|---|
+| `DoD-01` | `[P-CONFIG]` | T001, T002 | ✓ / ✗ | <a tartalmi/végrehajthatósági Must Fix hivatkozása, ha ✗> |
+
+**`DoD-NN`-en túli követelmények** (az `analyzer` 5. kategóriájából — a generált mátrix ezeket nem látja):
+- <spec-követelmény task nélkül> _(vagy: „nincs ilyen")_
 
 ## Plan-szekció ↔ task (PID1)
 
-_A plan MINDEN `[P-…]` azonosítója szerepel; a „nincs task" sor indoklással érvényes._
+_A plan MINDEN `[P-…]` azonosítója szerepel; a „nincs task" sor indoklással érvényes. **Ezt a táblát is a mechanikus kapu generálja** (`## Plan-szekció ↔ task (generált — PID1)`) — szó szerint fűzd ide._
 
 | Plan szekció (ID) | Hivatkozó taskok | Rendben |
 |---|---|---|
 | `[P-CONFIG]` | T001, T002, T003 | ✓ |
-| `[P-XYZ]` | — (indok: ...) | ✓ / ✗ |
+| `[P-XYZ]` | — (a `Plan-lefedettség` tábla indokolja) | ✓ / ✗ |
 
 _Eltérések, amiket itt kell kimutatni: ID task nélkül · task nem létező ID-ra · sorszámos hivatkozás `[P-…]` helyett · végrehajtható plan-szekció ID nélkül._
 
@@ -350,14 +397,14 @@ _Iterációnkénti audit-nyom — a megszakítás-utáni folytatás horgonya._
 
 ## Minőségellenőrzés — a jelentés lezárása előtt
 
-Menj végig, mind a **6** kategória ténylegesen lefutott-e (az `analyzer` subagent kimenetében). **A 6. kategóriánál külön ellenőrizd, hogy a subagent visszaadta-e a „Végrehajthatósági leltárt"** — enélkül a PASS nem fogadható el, mert épp azok a hibák maradnának rejtve, amelyeket a lefedettségi mátrix szerkezetileg nem lát:
+Menj végig, mind a **6** kategória ténylegesen lefutott-e (az 1–5. az `analyzer`, a 6. az `analyzer-exec` kimenetében — **mindkettő megjött-e egyáltalán**). **A 6. kategóriánál külön ellenőrizd, hogy a subagent visszaadta-e a „Végrehajthatósági leltárt"** — enélkül a PASS nem fogadható el, mert épp azok a hibák maradnának rejtve, amelyeket a lefedettségi mátrix szerkezetileg nem lát:
 
 1. **Duplikáció** — átnézve spec/plan/tasks redundanciára?
 2. **Ambiguitás** — minden elfogadási feltétel mérhető/eldönthető?
 3. **Alulspecifikáció** — minden komponens és feltétel meghatározott?
 4. **Konvenció-ütközés** — minden tervezési döntés egyezik a `conventions.md`-vel?
-5. **Lefedettség** — a lefedettségi mátrix minden spec-követelményt és minden taskot tartalmaz?
-6. **Végrehajthatóság és artefaktum-tulajdon** — a subagent visszaadta a *Végrehajthatósági leltárt* (lásd fent), és a **mechanikus kapu** (`analyze-gate-check.py`) is lefutott ebben a körben?
+5. **Lefedettség** — a kapu generált mátrixa bekerült a riportba, és az `analyzer` tartalmi ítélete (`Érintett DoD-sorok` + `DoD-NN`-en túli követelmények) át van vezetve rajta?
+6. **Végrehajthatóság és artefaktum-tulajdon** — az `analyzer-exec` visszaadta a *Végrehajthatósági leltárt* (lásd fent), a **mechanikus kapu** (`analyze-gate-check.py`) lefutott ebben a körben, és a kapu blokkjait át is adtad a két subagentnek (AG3/AG4)?
 
 Ha bármelyik kategória nem futott le, ne zárd le a jelentést. Ha a hurok futott, ellenőrizd azt is, hogy a **Hurok-napló** minden iterációt tartalmaz.
 

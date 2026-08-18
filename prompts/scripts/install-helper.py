@@ -54,6 +54,11 @@ AGENT_MODEL_KEYS = {
     "10-cycle-status": "research_agent",
     "analyzer": "deep_reasoning_agent",
 }
+# Az `analyzer-exec` (6. kategória: végrehajthatóság) SZÁNDÉKOSAN nincs a deep
+# tieren: a mechanikus kapu leltára KÉSZEN adja neki a jelölteket (artefaktumok,
+# horgonyok, teszt-ígéretek, destruktív műveletek), tehát nem felfedez, hanem egy
+# behatárolt listát ítél meg — ez a `default` tier munkája. A felfedező, hosszú
+# dokumentumos szintézis maradt az `analyzer`-nél.
 
 # Cursor subagent `readonly: true` — CSAK azok az agentek, amelyek biztosan
 # SEMMIT nem írnak (a prózájuk is kimondja: „Read-only vagy"): tisztán a hívó
@@ -62,7 +67,7 @@ AGENT_MODEL_KEYS = {
 # és a `test-runner` (report-mappa/config) Bash-en keresztül ÍR, hiába nincs a
 # tool-listájukban Edit/Write; ezért ők NINCSENEK itt. Téves readonly=true
 # megtörné őket.
-READONLY_AGENTS = {"analyzer", "researcher", "doc-sync-planner"}
+READONLY_AGENTS = {"analyzer", "analyzer-exec", "researcher", "doc-sync-planner"}
 
 # A models.json szerkezete (platformonként):
 #
@@ -144,7 +149,8 @@ def copy_helper_scripts(src_dir, scripts_dest):
     scripts_dest.mkdir(parents=True, exist_ok=True)
     scripts_src_dir = Path(src_dir) / "prompts/scripts"
     for script_src in sorted(scripts_src_dir.glob("*.py")):
-        if script_src.name == "install-helper.py":
+        # A repó-karbantartó szkriptek nem a célprojekt eszközei
+        if script_src.name in ("install-helper.py", "sync-gemini-agents.py"):
             continue
         script_dest = scripts_dest / script_src.name
         shutil.copy(script_src, script_dest)
@@ -202,16 +208,27 @@ def _read_shared_include(src_dir, rel_path):
     _shared_include_cache[key] = text
     return text
 
-def inline_shared_includes(content, src_dir):
+_MAX_INCLUDE_DEPTH = 5
+
+def inline_shared_includes(content, src_dir, _depth=0):
     """A skill törzsében lévő `<!-- INCLUDE:shared/... -->` markereket a
     hivatkozott fájl tartalmára cseréli. Ha egy marker fájlja nem található,
-    a markert érintetlenül hagyja (a telepítés nem törik meg)."""
+    a markert érintetlenül hagyja (a telepítés nem törik meg).
+
+    A behelyezett fájl maga is tartalmazhat INCLUDE markert (BD14/b) — ezt
+    rekurzívan oldjuk fel, `_MAX_INCLUDE_DEPTH` mélységig. Erre a fix-mód
+    fájloknak van szüksége: a `shared/fix-mode-*.md` beemeli a hozzá tartozó
+    `shared/quality-check-*.md`-t, hogy a fixer-subagent prompt önmagában
+    teljes legyen, és ne kelljen a teljes fázis-skillt beolvasnia."""
+    if _depth >= _MAX_INCLUDE_DEPTH:
+        return content
     def _repl(match):
         rel_path = match.group('path')
         try:
-            return _read_shared_include(src_dir, rel_path)
+            included = _read_shared_include(src_dir, rel_path)
         except OSError:
             return match.group(0)
+        return inline_shared_includes(included, src_dir, _depth + 1)
     return _INCLUDE_MARKER_RE.sub(_repl, content)
 
 def _build_alert(model, platform_name, effort=None):

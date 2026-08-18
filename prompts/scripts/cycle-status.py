@@ -102,7 +102,7 @@ def analyze_cycle(cycle_path):
     validate_file_2 = cycle_path / "test-report/bs-validate-decision.md"
     validate_file_3 = cycle_path / "test-report/validate-decision.md"
     doc_sync_file = cycle_path / "doc-sync-plan.md"
-    # a review a 07-validate 4. lépése (RV1) — a jelentés a test-report/ alatt él;
+    # a review a 07-validate 2. lépése (RV1) — a jelentés a test-report/ alatt él;
     # a ciklus gyökerében lévő régi útvonal visszafelé kompatibilitásból marad
     review_file = cycle_path / "test-report/code-review.md"
     review_file_legacy = cycle_path / "code-review.md"

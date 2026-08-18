@@ -37,7 +37,7 @@ A táblázat várt formája (a fejléc szövege nem számít, az OSZLOPSORREND i
 
   **Riport-generálás kötelező:** igen
 
-  | Teszt-kategória | Eszköz | Riport-generáló parancs | Artefaktum a test-report/-ban |
+  | Teszt-kategória | Eszköz | Riport-generáló parancs | Artefaktum a kör-mappában |
   |---|---|---|---|
   | E2E | Playwright + Allure | `npm run e2e:report` | `allure-report.html` |
   | Unit | Vitest | `npm run test:report` | `unit-report.html` |
@@ -46,6 +46,19 @@ Az utolsó oszlop a vizsgált KÖR-MAPPÁHOZ képest relatív útvonal (fájl va
 mappa). A `-` / `N/A` / üres érték = nincs artefaktum ehhez a
 sorhoz (kihagyva). Ha a szekcióban `**Riport-generálás kötelező:** nem`
 szerepel, a kapu tudatos projekt-döntés alapján kihagyódik (exit 0).
+
+MIGRÁCIÓS ŐR (TR5/b) — az utolsó oszlop JELENTÉSE 2026-08-07-én megváltozott:
+korábban a ciklus `test-report/` gyökeréhez, ma a KÖR-MAPPÁHOZ képest relatív.
+A formátum nem változott, ezért egy régi tábla csendben félreértelmeződik. Emiatt
+a szekcióban KÖTELEZŐ egy jelölő, ami kimondja, mihez képest relatív az oszlop:
+
+  **Artefaktum-útvonal alapja:** kör-mappa        ← mai (TR5) séma
+  **Artefaktum-útvonal alapja:** test-report      ← régi, flat séma (támogatott)
+
+Ha a jelölő hiányzik, a kapu NEM találgat: exit 2, és kiírja a pótlandó sort.
+Ha `test-report`, a kapu a ciklus `test-report/` mappájához oldja fel az
+útvonalakat (a `--report-subdir` ilyenkor csak tájékoztató) — így egy régi
+projekt a migráció előtt sem kap hamis bukást.
 
 Kilépő kód: 0 = minden deklarált artefaktum megvan (vagy a kapu kihagyva)
             1 = hiányzó vagy üres artefaktum → a validálás NEM zárható PASS-ra
@@ -62,6 +75,9 @@ SECTION_RE = re.compile(r"^##\s+Teszt-riportolás\s*$", re.IGNORECASE)
 NEXT_SECTION_RE = re.compile(r"^##\s+")
 REQUIRED_FLAG_RE = re.compile(r"\*\*Riport-generálás kötelező:\*\*\s*(\w+)", re.IGNORECASE)
 SEPARATOR_ROW_RE = re.compile(r"^\|[\s:|-]+\|$")
+PATH_BASE_RE = re.compile(r"\*\*Artefaktum-útvonal alapja:\*\*\s*([\w-]+)", re.IGNORECASE)
+BASE_ROUND = {"kör-mappa", "kor-mappa", "körmappa", "round", "kör"}
+BASE_FLAT = {"test-report", "testreport", "flat", "gyökér", "gyoker"}
 EMPTY_VALUES = {"", "-", "–", "—", "n/a", "na", "nincs"}
 
 
@@ -165,6 +181,34 @@ def main():
         print("A kapu kihagyva: a conventions.md szerint a riport-generálás "
               "nem kötelező ebben a projektben (tudatos döntés).")
         return 0
+
+    base = PATH_BASE_RE.search("\n".join(section))
+    base_value = base.group(1).lower() if base else None
+    if base_value is None:
+        print(
+            "HIBA (TR5/b migrációs őr): a `## Teszt-riportolás` szekcióból hiányzik az\n"
+            "  **Artefaktum-útvonal alapja:** mező.\n\n"
+            "Az utolsó oszlop jelentése 2026-08-07-én megváltozott (test-report/ gyökér →\n"
+            "kör-mappa), a formátum viszont nem — ezért a kapu nem találgat. Írd be a\n"
+            f"`{conv}` `## Teszt-riportolás` szekciójába a **Riport-generálás kötelező:**\n"
+            "mező mellé az alábbiak közül a helyeset:\n\n"
+            "  **Artefaktum-útvonal alapja:** kör-mappa     (mai séma: test-report/validate/round-NN/)\n"
+            "  **Artefaktum-útvonal alapja:** test-report    (régi, flat séma)\n\n"
+            "Ha a ciklus most tér át a mai sémára, a `conventions.md` frissítése a ciklus\n"
+            "része (kell rá task) — lásd a 03-write-plan „Kapu-konfiguráció együtt mozog\" szabályát.",
+            file=sys.stderr,
+        )
+        return 2
+    if base_value in BASE_FLAT:
+        args.report_subdir = "test-report"
+        print("MEGJEGYZÉS: a conventions.md a RÉGI, flat sémát deklarálja "
+              "(`Artefaktum-útvonal alapja: test-report`) — a kapu a ciklus "
+              "`test-report/` mappájához oldja fel az útvonalakat, a --report-subdir "
+              "értékét figyelmen kívül hagyja.")
+    elif base_value not in BASE_ROUND:
+        print(f"HIBA: ismeretlen `Artefaktum-útvonal alapja:` érték: `{base_value}`. "
+              f"Elfogadott: `kör-mappa` vagy `test-report`.", file=sys.stderr)
+        return 2
 
     rows = parse_rows(section)
     if not rows:
