@@ -35,7 +35,7 @@ A `analyze-gate-check.py` minden futás előtt lefut. Az alábbiakkal **ne fogla
 - futtatott artefaktum létezése / létrehozó task (**A1** = 6.a), plan-horgony fájl-szintje és sorszáma (**A2/A2b** = 6.g fájl-szint), artefaktum-hang kemény padlója (**A3** = 6.h `🔴`/„Tilos");
 - marker minden taskon és téves `[OPS]` (**T1/T2** = 6.e), státusz-frissítő task (**T3** = 6.d);
 - task-határon átnyúló shell-változó (**C5**) — a rollback-csapda gépies fele;
-- a `DoD-NN → [P-…] → task` lefedettségi lánc (**C1/C2/C3/S3**) és a `Konfiguráció-életút` üres cellái (**C4**).
+- a `DoD-NN → [P-…] → task` lefedettségi lánc (**C1/C2/C3/S3**), a `Konfiguráció-életút` üres cellái (**C4**) és a `Környezeti koordináták` placeholderei/üres cellái (**C6**).
 
 ## A te checkjeid
 

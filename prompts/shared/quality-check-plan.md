@@ -19,6 +19,7 @@ Mielőtt \`Task írásra kész\` státuszra váltasz, tedd fel magadnak:
   | 9 | migráció és rollback, ha sémaváltozás van | — |
   | 10 | regressziós érintettség | a plan `Regressziós érintettség` táblája kitöltve vagy explicit „nincs" |
 
+- **🔴 Környezeti koordináták szekció kész? (KO1)** — A `Környezeti koordináták` szekció **létezik és ki van töltve**: (a) minden komponensnél base URL, port(ok), health endpoint, **szó szerinti indító és leállító parancs**, repo-útvonal/image; (b) minden szükséges REST hívásnál ige + teljes URL + fejlécek + **konkrét request body** + elvárt válasz + a kinyerendő mező, a **token-beszerzést is beleértve**, másolható `curl` példával; (c) **minden teszt- és API-user felsorolva a jelszavával/credentialjével** (dev-hatókörű érték konkrétan, klaszter/registry/VPN/IAM/éles credential **pointerként**, TC5); (d) minden további fejlesztéshez/teszteléshez kellő paraméter (azonosítók, scope, client-id, namespace, timeout); (e) a hálózati/hozzáférési előfeltételek. **Placeholder és üres cella tilos** — ami hiányzik vagy elavult, az `Knn` kérdés a `plan-questions.md`-ben; ami nem értelmezhető, ott `—` áll. Ha egy koordináta a spec-ben, a `test-conventions.md`-ben vagy a beszélgetésben szerepel, de itt nem, a minőségellenőrzés **SIKERTELEN**.
 - **Artefaktum-hang (AV1)?** — Nincs a plan-ben skill-hangú meta-utasítás (`🔴`, `[!CAUTION]`, „Tilos…", „kötelező…", „menj végig…")? Ami szabályból származik, az **döntésként** szerepel (pl. „az image tagje futásonként egyedi: `v1-<UTC időbélyeg>`"), az indoklás pedig a `Kockázatok és döntési pontok` szekcióban.
 - **🔴 Eldöntetlen alternatíva tilalma.** A plan **nem tartalmazhat választást**: nincs benne „`X` **vagy** `Y`", „esetleg", „vagy az új …", két port/URL/azonosító ugyanarra a dologra, két lehetséges elvárt válasz. A terv **végrehajtási utasítás**, nem mérlegelés — ha valóban két opció van, az **`plan-questions.md` kérdés**, és a plan csak a **döntött**, konkrét változattal zárható le. (Tipikus előfordulás: teszt-azonosítók `data-testid` értékei, mock-portok, régi/új elemnevek átnevezéskor.)
 - **Hivatkozott script/fájl létezik vagy tervezve van?** — Menj végig **minden** fájlon és scripten, amit a plan futtatni akar (`Ellenőrzési stratégia` parancsai, teszt-lépések, E2E indítás, `[CHECK]` jellegű ellenőrzések): mindegyik vagy **már létezik a repóban**, vagy szerepel a `Tervezett módosítások` közt **új fájlként**. Egy futtatandó, de sehol nem létrehozott script biztos bukás a végrehajtáskor.
@@ -67,7 +68,7 @@ Ha bármelyikre nem teljesül a feltétel (vagy hiányzik valami), egészítsd k
 
 ## Lezárási kapu — teszt-önhordóság, környezet-felkészítés és scope (TP2)
 
-> **Ezt a tizenkét pontot a `Task írásra kész` státusz ELŐTT, tételesen le kell futtatnod, és a válaszodban ki kell írnod a kipipált listát.** Nem „érzésre" — minden pontnál nevezd meg, **hol** teljesül (szekció, `TC-ID`), vagy hogy miért nem értelmezhető ebben a ciklusban. **Egyetlen `[ ]` maradék esetén a plan nem zárható le** — javítsd, és futtasd újra a listát.
+> **Ezt a listát (a `/`-jelű alpontokkal együtt) a `Task írásra kész` státusz ELŐTT, tételesen le kell futtatnod, és a válaszodban ki kell írnod a kipipált listát.** Nem „érzésre" — minden pontnál nevezd meg, **hol** teljesül (szekció, `TC-ID`), vagy hogy miért nem értelmezhető ebben a ciklusban. **Egyetlen `[ ]` maradék esetén a plan nem zárható le** — javítsd, és futtasd újra a listát.
 
 ```
 [ ] 1. A `Spec-lefedettség` tábla kitöltve: a spec `Teszt specifikáció` MINDEN esete
@@ -93,6 +94,16 @@ Ha bármelyikre nem teljesül a feltétel (vagy hiányzik valami), egészítsd k
        health checket + leállítást, az egyedi komponens (plugin/SPI/custom image)
        build–push–deploy–ellenőrzés–rollback láncát, a seedet és a hálózati
        előfeltételeket — a végrehajtási sorrendjükkel együtt.
+[ ] 7/b. KO1 — KÖRNYEZETI KOORDINÁTÁK: a `Környezeti koordináták` szekció megvan
+       és hiánytalan: MINDEN komponens base URL-je, portja(i), health endpointja,
+       szó szerinti indító és leállító parancsa; MINDEN szükséges REST hívás
+       példája (ige · teljes URL · fejlécek · konkrét body · elvárt válasz ·
+       kinyert érték), a token-beszerzést is beleértve; MINDEN teszt- és API-user
+       a JELSZAVÁVAL/credentialjével (dev-hatókörű érték konkrétan, klaszter/
+       registry/VPN/IAM/éles credential pointerként — TC5); minden további
+       paraméter (azonosítók, scope, client-id, namespace, timeout); a hálózati
+       és hozzáférési előfeltételek. Placeholder és üres cella nincs; ami nem
+       értelmezhető, ott `—` áll. Az `analyze-gate-check.py` `C6` checkje 0.
 [ ] 8. Amit a teszt futtatása igényel, de sem a `test-conventions.md`-ben, sem ebben
        a planben nincs meg, azt a KORÁBBI CIKLUS planjéből áthoztam (TP3/a,
        researcher subagenttel, literál értékekkel, provenance-szal) — vagy

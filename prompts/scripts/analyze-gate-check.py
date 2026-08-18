@@ -23,7 +23,8 @@ Mit ellenőriz:
   T4  `⟂` szimmetria                 — `T012 ⟂ T013`, de `T013` nem hivatkozik vissza
   D1  `DoD-NN` azonosítók            — hiányzó vagy duplikált azonosító a specben
   D2  `DoD-NNb` alakú azonosító      — utólagos beszúrás betűs utótaggal (DI1 megsértése)
-  S1  kötelező plan-táblák           — `Spec-lefedettség`, `Fordított lefedettség`
+  S1  kötelező plan-táblák           — `Spec-lefedettség`, `Fordított lefedettség`,
+                                       `Környezeti koordináták` (KO1)
   S2  kötelező tasks-tábla           — `Plan-lefedettség`
   A1  futtatott artefaktum (6.a)     — a `[CHECK]`/`[OPS]` taskok és a plan
                                        `Ellenőrzési stratégia` parancsai által
@@ -45,6 +46,8 @@ Mit ellenőriz:
                                        `Spec-lefedettség` táblájában?
   C4  KF1                             — a `Konfiguráció-életút` táblában nincs
                                        üres cella?
+  C6  KO1                             — a `Környezeti koordináták` szekcióban
+                                       nincs placeholder és nincs üres cella?
   C5  task-határon átnyúló shell-változó — `VAR=` az egyik taskban, `$VAR` egy
                                        másikban: külön shell, üres változó,
                                        érvénytelen deploy/rollback (6.f)
@@ -115,6 +118,7 @@ STATUS_TASK_RE = re.compile(
 REQUIRED_PLAN_TABLES = [
     ("Spec-lefedettség", "03", "a spec tesztesetei és DoD-pontjai leképezésének táblája (TP1)"),
     ("Fordított lefedettség", "03", "a plan-képességek spec-forrásának táblája (SC1)"),
+    ("Környezeti koordináták", "03", "a ciklus konkrét koordinátái: URL-ek, portok, indító parancsok, példa REST hívások, teszt-/API-userek jelszóval, paraméterek (KO1)"),
 ]
 REQUIRED_TASKS_TABLES = [
     ("Plan-lefedettség", "04", "a plan-szekció → task fordított tábla (PID1)"),
@@ -752,6 +756,42 @@ def check_config_lifecycle(plan_text, f):
             f.add("C4", "03", f"a `Konfiguráció-életút` tábla `{param}` sorában {len(empty)} üres cella van (KF1) — az üres cella hiányzó terv: a paraméter valamelyik futtatási módban nem ér el a processzhez")
 
 
+KO1_PLACEHOLDER_RE = re.compile(
+    r"<[^>\n]*(?:ide\s+j|TODO|todo|kitölt|megadni|érték|url|URL|jelszó|password)[^>\n]*>"
+    r"|(?<![\w-])(?:TODO|TBD|FIXME|XXX)(?![\w-])"
+    r"|(?<![\w-])(?:pl\.\s*)?<\.\.\.>"
+)
+
+
+def check_env_coordinates(plan_text, f):
+    """C6 (KO1) — a `Környezeti koordináták` szekció a plan önhordóságának
+    alapja: itt él minden konkrét érték (URL, port, indító parancs, példa REST
+    hívás, teszt-user + jelszó, paraméter). Két gépies hibája van: placeholder
+    az érték helyén, és üres táblacella. Mindkettő azt jelenti, hogy a 04 és a
+    `test-runner` egy hiányzó adattal fut neki — ezért blokkol."""
+    body = section_body(plan_text, "Környezeti koordináták")
+    if not body.strip():
+        return  # a szekció teljes hiányát az S1 jelezte
+    for m in KO1_PLACEHOLDER_RE.finditer(body):
+        f.add("C6", "03", f"a `Környezeti koordináták` szekcióban placeholder áll konkrét érték helyett: `{m.group(0)}` (KO1) — a hiányzó adat `plan-questions.md` kérdés, nem placeholder")
+    seen_separator = False
+    for line in body.splitlines():
+        if not TABLE_ROW_RE.match(line):
+            seen_separator = False
+            continue
+        if SEPARATOR_ROW_RE.match(line):
+            seen_separator = True
+            continue
+        if not seen_separator:
+            continue  # fejlécsor
+        cells = [c.strip() for c in TABLE_ROW_RE.match(line).group(1).split("|")]
+        if all(PLACEHOLDER_CELL_RE.match(c) or not c for c in cells):
+            continue  # sablon-/példasor
+        empty = [i for i, c in enumerate(cells) if not c]
+        if empty:
+            f.add("C6", "03", f"a `Környezeti koordináták` tábla `{cells[0] or '(üres sor)'}` sorában {len(empty)} üres cella van (KO1) — ami erre a ciklusra nem értelmezhető, oda `—` kerül, üresen nem hagyható")
+
+
 def check_rollback_state(tasks_text, f):
     """C5 — task-határon átnyúló shell-változó. Ha az egyik task állítja be
     (`VAR=…`), egy másik pedig felhasználja (`$VAR`), akkor a második task
@@ -1105,6 +1145,7 @@ def main():
     check_dod(spec_text, f)
     check_required_tables(plan_text, REQUIRED_PLAN_TABLES, f, "plan.md")
     check_config_lifecycle(plan_text, f)
+    check_env_coordinates(plan_text, f)
 
     if not args.plan_only:
         referenced = check_task_references(tasks_text, known_ids, f)

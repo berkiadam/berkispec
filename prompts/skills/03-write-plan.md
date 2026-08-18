@@ -48,6 +48,7 @@ Ez a folyamat **3. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · **3-plan
 | Spec-tesztek átemelése | A spec **minden** tesztesete és `DoD-NN` pontja leképződik plan-tesztesetre (TP1), a kötelező `Spec-lefedettség` táblával — a részlet nem halasztható a 04-re vagy az implementációra. |
 | Fázis-átadás | `plan-input-from-prev.md` beolvasva és lezárva; a nem ide tartozó infó a `tasks-`/`validate-input-from-prev.md`-be (IP1). |
 | Design input | `cycle-design-input.md` (a felhasználó saját ciklus-leírása) **automatikusan beolvasva** — a technikai/eljárás-jellegű tartalma a planbe kerül; a fájlt nem írod át (CD1). |
+| Környezeti koordináták | Kötelező `Környezeti koordináták` (KO1) szekció: komponens-URL-ek/portok, indító parancsok, példa REST hívások, teszt-/API-userek jelszóval, minden paraméter — konkrét értékkel, placeholder és üres cella nélkül. |
 | **Önhordóság** | A `plan.md` **mindent** tartalmaz, ami a fejlesztéshez/teszteléshez kell — a 04 és a `test-runner` **csak ezt** olvassa, a spec-et nem. |
 | Kapu-konfiguráció | Ha a ciklus olyat változtat, amit egy determinisztikus kapu a `conventions.md`-ből olvas (riport-artefaktumok/útvonal-alap, Sonar, teszt-parancsok, portok, merge-stratégia), a `conventions.md` frissítése **a ciklus része**: tervezd meg, és legyen rá task (GC1). |
 | Útvonalak | Kód- és fájl-hivatkozás **a repó gyökeréhez képest relatív** (`src/app.ts:42`), dokumentum-link a fájl saját könyvtárához képest (`./spec.md`); abszolút útvonal és `file://` tilos (RP1). |
@@ -56,7 +57,7 @@ Ez a folyamat **3. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · **3-plan
 | Teszt-lépések | Minden integrációs/E2E teszt **lépésről lépésre** kifejtve (ige, végpont, fejléc, body, elvárt válasz) — „a cycle-XX mintájára" tilos. |
 | Validációs ciklusok | Minden nagy szekció után célzott ellenőrzés, mielőtt továbblépsz. |
 | Spec kritika | Aktív checklist minden komponensre; **hiányosság** → vissza a 02 fázisba, **túlnyúlás** (koordináta a spec-ben) → átemelve a planbe (KX tükre). |
-| Lezárás | Minőségellenőrzés + **Lezárási kapu (TP2, 12 pont, kipipálva kiírva)** + Constitution Check (SK4) + **mechanikus kapu** (`analyze-gate-check.py --plan-only`, M) + user megerősítés → `Task írásra kész`, commit. |
+| Lezárás | Minőségellenőrzés + **Lezárási kapu (TP2, kipipálva kiírva)** + Constitution Check (SK4) + **mechanikus kapu** (`analyze-gate-check.py --plan-only`, M) + user megerősítés → `Task írásra kész`, commit. |
 
 ---
 
@@ -213,7 +214,7 @@ Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Kn
 
 **Mikor kötelező ezt lefuttatni:** minden olyan bemeneti tételnél (spec, `plan-input-from-prev.md`, `test-conventions.md`, roadmap), amely **eljárásra, scriptre, konfigurációs állományra, külső API-ra vagy meglévő tesztre hivatkozik**. Ez **különösen** igaz korai ciklusban, amikor a `specs/test-conventions.md` még nem létezik: ilyenkor a recept-adatok egyetlen forrása a **meglévő kód és teszt** — keresd meg őket, ne a bemenet szövegére hagyatkozz.
 
-> **A hurok bezárása:** amit így felderítesz (parancsok, koordináták, payload-sémák), az pontosan az, aminek a ciklus végén a `08-doc-sync` révén be kell kerülnie a `specs/test-conventions.md`-be — a konkrét koordináták a 0. blokkba, a receptek az 1. szekcióba (TC3/TC13) — hogy a következő ciklus már ne derítse fel újra.
+> **A hurok bezárása:** amit így felderítesz (parancsok, koordináták, payload-sémák), az a `Környezeti koordináták` (KO1) szekcióba kerül — és pontosan az, aminek a ciklus végén a `08-doc-sync` révén be kell kerülnie a `specs/test-conventions.md`-be — a konkrét koordináták a 0. blokkba, a receptek az 1. szekcióba (TC3/TC13) — hogy a következő ciklus már ne derítse fel újra.
 
 ---
 
@@ -344,7 +345,7 @@ A `specs/cycle-NN-<cycle-name>/cycle-design-input.md` a **felhasználó saját, 
 |---|---|
 | **Formátum** | `[P-<NÉV>]` — nagybetűs, kötőjeles, 1–2 szó, a szekció tartalmára utal. Sorszám **nem** része (`[P-3-1]` tilos). |
 | **Ki kap ID-t** | **Csak végrehajtható terv-szekció:** a `Tervezett módosítások` és a `Teszt specifikáció` / `Tesztelési stratégia` alszekciói — ahol az van leírva, **mit kell csinálni**. |
-| **Ki NEM kap** | `Cél és megközelítés`, `Érintett komponensek` (leltár), `Végrehajtási sorrend`, `Kockázatok`, `Új függőségek`, IP1-szekciók. Ezek **nem lehetnek** task-hivatkozás célpontjai (E). |
+| **Ki NEM kap** | `Cél és megközelítés`, `Érintett komponensek` (leltár), `Környezeti koordináták` (leltár), `Végrehajtási sorrend`, `Kockázatok`, `Új függőségek`, IP1-szekciók. Ezek **nem lehetnek** task-hivatkozás célpontjai (E). |
 | **Egyediség** | Egy ID egyszer szerepelhet a plan-ben. |
 | **Stabilitás** | Egy kiadott ID **soha nem változik** — akkor sem, ha a szekció sorszáma eltolódik, átnevezed, vagy a fejezet átkerül máshova. Törölt szekció ID-ja **nem használható újra**. Új szekció (pl. az analyze-hurok szúrta be) **új ID-t** kap. |
 | **Miért** | A `tasks.md` sorszám helyett ID-re hivatkozik. Ha egy javítás beszúr egy `§3.10`-et, a sorszámok elcsúsznak, és a taskok **némán rossz szekcióra mutatnak** — az ID ezt kizárja. |
@@ -363,6 +364,55 @@ _Egy bekezdés: mit valósítunk meg és hogyan. Nem ismétli a spec célkitűz�
 ## Érintett komponensek
 
 _Felsorolás: melyik fájl / komponens változik, milyen jellegű változás (új fájl, bővítés, módosítás)._
+
+## Környezeti koordináták (KO1)
+
+_**Kötelező szekció — a `plan.md` önhordóságának alapja.** Ide kerül **minden konkrét érték**, ami a ciklus fejlesztéséhez és teszteléséhez kell, feloldva: komponens-URL-ek és portok, indító parancsok, példa REST hívások, teszt- és API-userek jelszóval, minden paraméter. Ez a `specs/test-conventions.md` **0. blokkjának ciklus-szintű megfelelője** — de nem hivatkozás rá, hanem a ciklusban tényleg használt értékek **szó szerint**._
+
+_**Szabályok:** placeholder **tilos** (`<TODO>`, `<ide jön a jelszó>`, `TBD`) — ami hiányzik vagy elavult, az `plan-questions.md` kérdés, nem placeholder. Üres cella **tilos**; ami erre a ciklusra nem értelmezhető, oda `—` kerül. Hivatkozás nem helyettesíti az adatot („lásd a spec-et", „a szokásos teszt-user"). Titok-szabály (TC5): dev-hatókörű teszt-user, mock-credential és lokális jelszó **konkrét értékkel** ide kerül; klaszter-, registry-, VPN-, IAM- és éles credential **soha** — helyette pointer (hol tárolják, ki adja ki)._
+
+### Komponensek és elérhetőségek
+
+| Komponens | Repo-útvonal / image | Base URL | Port(ok) | Health endpoint | Indítás (szó szerinti parancs) | Leállítás / takarítás |
+|---|---|---|---|---|---|---|
+| `tmp-service` | `services/tmp/`, `registry.example/tmp:v1-<UTC>` | `http://localhost:8081` | 8081 (HTTP), 5005 (debug) | `GET /actuator/health` → `200` | `docker compose -f docker-compose.e2e.yml up -d tmp-service` | `docker compose -f docker-compose.e2e.yml down -v` |
+
+### REST hívások — másolható példák
+
+_Minden olyan hívásból, amit a fejlesztés vagy a teszt használ: **ige, teljes URL, fejlécek, konkrét request body minden kötelező mezővel, elvárt válasz, a válaszból kinyerendő mező**. A token-beszerzés (user és S2S külön, ha mindkettő kell) itt is kötelező — nem elég, hogy „van login helper"._
+
+| Hívás | Ige + végpont | Fejlécek | Request body | Elvárt válasz | Kinyert érték |
+|---|---|---|---|---|---|
+| user token | `POST http://localhost:9090/api/v13/login/token` | `Content-Type: application/json` | `{"userId":"test-user","password":"Test123!"}` | `200`, `{"token":"…"}` | `$JWE` ← `.token` |
+
+\`\`\`bash
+# user token
+JWE=$(curl -sS -X POST 'http://localhost:9090/api/v13/login/token' \
+  -H 'Content-Type: application/json' \
+  -d '{"userId":"test-user","password":"Test123!"}' | jq -r '.token')
+
+# cache init
+curl -sS -X POST 'http://localhost:8081/init-hash' \
+  -H "Authorization: Bearer $JWE" -H 'Content-Type: application/json' \
+  -d '{"productType":"LOAN","channelType":"MOBILBANK"}'
+\`\`\`
+
+### Teszt- és API-userek
+
+| User / kliens | Jelszó / credential | Hol érvényes | Szerep / scope / client-id | Mire használjuk |
+|---|---|---|---|---|
+| `test-user` | `Test123!` | lokális mock login (`http://localhost:9090`) | `retail` | E2E bejelentkezés |
+| `tmp-s2s` | pointer: `Vault kv/dev/tmp` (TC5 — a titok nem kerül a plan-be) | dev klaszter | `client_credentials`, scope `tmp.write` | S2S token |
+
+### Egyéb paraméterek
+
+| Paraméter | Érték | Hol / mikor kell |
+|---|---|---|
+| `appId` / `buildId` / `processName` | `42` / `7` / `loan-onboarding` | a folyamatindító hívás útvonal-paraméterei |
+
+### Hálózati és hozzáférési előfeltételek
+
+_VPN, proxy, `oc login` / kubeconfig, namespace, registry-belépés: mi kell, milyen sorrendben, és **pointer** a credentialre (TC5) — soha nem a titok._
 
 ## Tervezett módosítások
 
@@ -774,7 +824,7 @@ Ha plan írása közben az alábbiak bármelyike teljesül, **STOP — állj meg
 
 - **Kockázat feloldáshoz user döntés kell**: egy kockázat nem kezelhető a spec alapján önállóan. → Egy kérdés, válasz, folytatás.
 
-- **A lezárási kapu (TP2) bármely pontja `[ ]`**: a spec valamelyik tesztesete/DoD-pontja nem képződött le plan-tesztesetre, egy `test-conventions` recept csak hivatkozásként szerepel, egy integrációs/E2E lépés nincs kifejtve, vagy hiányzik egy környezet-felkészítési előfeltétel (token-beszerzés, stack-indítás, egyedi komponens deploy — TP3). → **Ne zárd le a plant.** Pótold a hiányt, majd futtasd újra a tizenkét pontot. Ez nem „finomítás a 04-ben": a `test-runner` csak a `plan.md`-t látja.
+- **A lezárási kapu (TP2) bármely pontja `[ ]`**: a spec valamelyik tesztesete/DoD-pontja nem képződött le plan-tesztesetre, egy `test-conventions` recept csak hivatkozásként szerepel, egy integrációs/E2E lépés nincs kifejtve, vagy hiányzik egy környezet-felkészítési előfeltétel (token-beszerzés, stack-indítás, egyedi komponens deploy — TP3). → **Ne zárd le a plant.** Pótold a hiányt, majd futtasd újra a kapu minden pontját. Ez nem „finomítás a 04-ben": a `test-runner` csak a `plan.md`-t látja.
 
 Minden esetben csak **egy** kérdést tegyél fel egyszerre — várd meg a választ, pipáld ki a kérdést (`- [x] Knn → [döntés]`), majd lépj a következőre.
 
@@ -801,7 +851,7 @@ A `05-analyze` determinisztikus kapujának **plan-oldali fele itt is lefut** —
 python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-name> --plan-only
 ```
 
-**Mit fed le ebben a módban:** `[P-…]` azonosítók formátuma és egyedisége (P1), a kötelező plan-táblák megléte (S1), a `Fordított lefedettség` sorainak `[P-…]` azonosítója (S3), minden `DoD-NN` visszavezethetősége plan-képességre (C1), a `Spec-lefedettség` TP1-teljessége (C3), a `Konfiguráció-életút` üres cellái (C4), a plan `path:sor` horgonyai (A2/A2b), az artefaktum-hang kemény padlója (A3) és a `DoD-NN` azonosítók a specben (D1/D2). A task-oldal a `04` lezárásakor fut.
+**Mit fed le ebben a módban:** `[P-…]` azonosítók formátuma és egyedisége (P1), a kötelező plan-táblák megléte (S1), a `Fordított lefedettség` sorainak `[P-…]` azonosítója (S3), minden `DoD-NN` visszavezethetősége plan-képességre (C1), a `Spec-lefedettség` TP1-teljessége (C3), a `Konfiguráció-életút` üres cellái (C4), a `Környezeti koordináták` placeholderei és üres cellái (C6, KO1), a plan `path:sor` horgonyai (A2/A2b), az artefaktum-hang kemény padlója (A3) és a `DoD-NN` azonosítók a specben (D1/D2). A task-oldal a `04` lezárásakor fut.
 
 - **`0`** → folytatható a lezárás.
 - **`1`** → **nincs státuszváltás.** A `célfázis: 03` tételeket **most javítsd**, majd futtasd újra a kaput; a `célfázis: 02` tételeket a *Spec kritika* / *Megállási szabályok* szerint irányítsd vissza a 02-be — a spec-et magad nem írod.
@@ -812,7 +862,7 @@ python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-nam
 
 Ha a felhasználó megerősíti:
 - Állítsd a `plan.md` státuszát `Task írásra kész`-re.
-- **A státuszváltás előtt futtasd le a *Lezárási kapu (TP2)* tizenkét pontját**, és a kipipált listát írd ki a válaszodban. Bármely `[ ]` esetén nincs státuszváltás.
+- **A státuszváltás előtt futtasd le a *Lezárási kapu (TP2)* minden pontját**, és a kipipált listát írd ki a válaszodban. Bármely `[ ]` esetén nincs státuszváltás.
 - **A státuszváltás előtt a *Mechanikus kapu* (lásd fent) is `0`-t adott.**
 - **Azonnal commitolj** a lenti *Fázis-záró commit* szerint (`<FÁZIS-TAG>` = `03-plan`). Megerősítés → státuszírás → commit: ez egyetlen lépéssor, ne szakítsd meg.
 
