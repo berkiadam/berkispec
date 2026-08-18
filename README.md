@@ -222,6 +222,7 @@ berkispec/                            # repo gyökér
     │   ├── context-check.md          # fázis-indító kontextus-ellenőrzés (friss-e a kontextus, futott-e `/clear`); minden fázis-skill hivatkozza
     │   ├── python-cmd.md             # platformfüggő Python-hívás jegyzete (`python3` / `python` / `py -3`); a szkriptet hívó skillek hivatkozzák
     │   ├── git-preflight.md          # közös git-preflight (no-VCS kapu, munkafa-ellenőrzés, branch-nyitó preflight); a telepítő a hivatkozó skillekbe beágyazza
+    │   ├── parallel-cycles.md        # párhuzamos ciklusok (PW1/PW2): a 01–05 tervezési ablak worktree-ben, a 06 előtti kapu; a 01 és a 06 hivatkozza
     │   ├── input-from-prev.md        # közös fázis-átadás leírás (*-input-from-prev.md, IP1); a 01/02/03/04/07 hivatkozza
     │   ├── conventions-change.md     # GC1: mikor/hogyan módosíthat egy ciklus a conventions.md-n, és melyik kapu melyik szekciót olvassa; a 03 skill + a 03 minőségi kapuja beemeli
     │   ├── path-format.md            # útvonal-konvenció (RP1): kód-hivatkozás a repó gyökeréhez, dokumentum-link a fájl könyvtárához relatív; a 02/03/04 minőségi kapuja beemeli
@@ -1045,6 +1046,37 @@ Minden fejlesztési ciklus **külön git branch-en** fut, és a branch **a `01-a
 - **No-VCS ág (BD11):** ha a `conventions.md` szerint nincs (és nem is lesz) verziókezelő, **minden git-lépés kimarad** minden fázisban — csak a `specs/cycle-NN-<name>/` mappa és a `roadmap.md` készül, branch/commit/merge nélkül.
 
 A branch-nyitó fázisok (`00`, `01`) közös git-előkészítését (no-VCS kapu, munkafa-ellenőrzés, friss/tiszta `main` + resume-felismerés) egyetlen megosztott leírás rögzíti — `prompts/shared/git-preflight.md` —, amelyet a telepítő **build-time inline** beágyaz a `00` és `01` skillek telepített változatába, így nincs duplikáció, és a telepített SKILL önmagában teljes (BD13/BD14). A **`02`** csak a `01`-ben létrehozott branch meglétét ellenőrzi, a **`09`** a merge-nél vált branch-et; a **`03`–`08`** fázisoknak csak rövid munkafa-ellenőrzésük van, branch-logika nélkül (fölösleges token-költség elkerülése).
+
+### Párhuzamos ciklusok — tervezési ablak worktree-vel (PW1/PW2, BD16)
+
+Két ciklus **párhuzamosan is haladhat**, külön `git worktree`-ben, külön agens-munkamenetben — de csak a **tervezési sávban**. A `06`–`09` szakasz **egyszálú**: a `06` a forrásfát írja (valódi merge-konfliktus), a `07` közös futtatási erőforrást fogyaszt (portok, dev deploy, registry-tag, közös DB/IdP), a `08` garantáltan ütköző fájlokat ír (`docs-generated/`, `specs/test-conventions.md`), a `09` pedig a `main`-t igényli.
+
+| Fázis | Párhuzamos? |
+|---|---|
+| `01`–`05` (ciklus, spec, plan, tasks, analyze) | **igen** — csak a `specs/cycle-NN-<name>/` mappát írják |
+| `06`–`09` (implementálás, validálás, doc-sync, merge) | **nem** — `PW1`: egyszerre egy ciklus lehet ebben a szakaszban |
+
+**Indítás** (a `main` a fő worktree-ben marad, nem kell átváltani):
+
+```bash
+git fetch origin
+git worktree add ../<projekt>-cNN -b feature/cycle-NN-<name> origin/main
+# a második terminálban: cd ../<projekt>-cNN, majd /bs-write-spec input: cycleNN
+```
+
+A linked worktree a **teljes fát** megkapja a branchének állapotában, saját HEAD-del és indexszel: a két agens munkafa-ellenőrzése nem látja egymást, és a másik ciklus `specs/cycle-MM-*/` mappája **meg sem jelenik**, amíg az nincs merge-elve. Épp ezért scanneli a ciklusszámozás a branch-neveket (BQ2), nem az `ls specs/`-et. A `node_modules/`/`target/`/build-cache untracked, tehát worktree-nként külön — lemezköltség, de teljes build-izoláció.
+
+**`PW2` — határátlépés a `06` előtt (a `06` kapuja kikényszeríti):** (1) a másik ciklus merge-elve, (2) **visszaköltözés a fő worktree-be** (`git worktree remove`, majd ott `git switch feature/cycle-NN-<name>`), így a `06`–`09` pontosan úgy fut, mint egyszálú munkában, (3) **az `05-analyze` újrafuttatása** — ez maga hozza be a friss fő branch-et (BR1, lásd lent) és azon validál. A `06` csak `PASS` után nyílik; a felhasználónak és az ágensnek külön rebase-lépést nem kell csinálnia.
+
+### Friss alap az analyze előtt (BR1)
+
+Az `05-analyze` értéke abból jön, hogy a tervet a **tényleges** kódbázishoz méri (horgonyok `path:sor`, futtatott artefaktumok létezése, plan↔kód konzisztencia). Ezért a fázis előfeltétele ellenőrzi, hogy a fő branch előrement-e a ciklus ágának elágazása óta (`git log $(git merge-base HEAD origin/main)..origin/main`) — és **csak akkor** hozza be (rebase, ha a branch nincs pusholva; merge, ha PR nyitva van rá), külön engedélykérés nélkül, konfliktus esetén STOP-pal. Ha a lista üres — a párhuzamos ablakban ez a normál eset, mert a másik ciklus még nincs merge-elve —, a fázis **nem nyúl a branch előzményéhez**: az `05` az önjavító hurokban többször is lefuthat, és a fölösleges előzmény-átírás pusholt ágon force-push-t provokálna. Így az `05` lesz az **alap-konzisztencia kapuja**: a `06` PW2-kapuja nem külön rebase-t ír elő, hanem friss `05` `PASS`-t. A `09` `W2` lépése ugyanezt a mechanikát futtatja a merge előtt.
+
+A szabály egyetlen helyen él — `prompts/shared/parallel-cycles.md` —, és build-time inline-olódik a `01` (ismertetés) és a `06` (kapu) skillbe. A `09` ehhez két determinisztikus ellenőrzést ad: **`W1`** (linked worktree-ben a `git switch main` megtagadva → STOP, visszaköltözés) és **`W3`** (a ciklus ága worktree-ben kicsekkolva → `git worktree remove` a `git branch -D` előtt).
+
+### Integrációs frissítés a merge előtt (W2)
+
+A `09` a merge-megerősítés **előtt** ellenőrzi, hogy a fő branch előrement-e a ciklus ágának elágazása óta (`git log $(git merge-base HEAD origin/main)..origin/main`). Ha igen, a `07` zöld tesztjei és a `08` doksija **elavult alapon** készültek, tehát a merge egy soha nem tesztelt kombinációt hozna létre. Ilyenkor a fázis behozza a fő branch-et a ciklus ágába (rebase vagy merge, a push/PR-állapot szerint), majd a változás jellege szerint irányít: **forrás/teszt változott → vissza a `07`-re**, **generált doksi / `conventions.md` / `test-conventions.md` változott → vissza a `08`-ra** (a generált tartalmat nem kézzel oldjuk fel, hanem újragenerálja a `08`). Ez a kapu **worktree nélkül is** működik és hasznos: eddig a `09` akkor is merge-elt, ha a `main` közben előrement.
 
 ### Fázis-záró commit (PC1)
 

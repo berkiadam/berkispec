@@ -34,6 +34,17 @@ Ez a folyamat **9. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 
 2. **Munkafa-ellenőrzés (csak VCS esetén):** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e most vagy folytassam — várj a válaszra. A ciklus **saját feature branch-én** dolgozol; a fő branch-re váltás majd a Merge lépésben, felhasználói megerősítés után történik (RD8) — itt ne válts. (No-VCS projektben kimarad.)
 
+2.b **Worktree-helyzet (W1 — csak VCS esetén):** a `09` a fő branch-re vált, ezért **a `main`-t tartalmazó worktree-ben kell futnia**. Ellenőrizd:
+
+   ```bash
+   git worktree list
+   git rev-parse --git-common-dir     # ha nem `.git`, linked worktree-ben vagyunk
+   ```
+
+   - **Egyetlen worktree** → nincs teendő, a lenti Merge lépés változatlanul jó.
+   - **Linked worktree-ben vagyunk** (a párhuzamos tervezési ablakból ottmaradt ciklus-worktree) → **STOP.** A `git switch main` itt megtagadva lesz („already used by worktree"). A `06`–`09` szakasz a **fő** worktree-ben fut: a ciklust oda kell visszaköltöztetni (`git worktree remove ../<ciklus-worktree>`, majd a fő worktree-ben `git switch feature/cycle-NN-<cycle-name>`), és onnan folytatni. A commitálatlan tartalmat előbb commitold — `--force`-ot **ne** használj.
+   - **Van egy MÁSIK worktree `cycle-*` branch-en** → az egy párhuzamosan tervezett ciklus. Ez a merge-et **nem** blokkolja (a másik ciklus a `05`-ig van), de a merge után szólj: a másik ciklusnak a `06` előtt be kell hoznia a friss `main`-t és újra kell futtatnia az `05`-öt (PW2).
+
 3. **Státusz-kapu:** a validate fázis (07) PASS esetén mindhárom fájl státuszát `Kész`-re állítja. Ellenőrizd:
    - `tasks.md` státusza: `Kész` — és **nincs rajta `[validate-loop]` marker** (a marker megrekedt hurkot jelent)
    - `plan.md` státusza: `Kész`
@@ -50,6 +61,7 @@ Ez a folyamat **9. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 ## Feladatod
 
 1. **Merge előtti doc-sync ellenőrzés:** ha a `08-doc-sync` lezárása óta változott kód, futtasd újra a doc-syncet a végső kódra, és csak zöld DS22 kapu után folytasd.
+1.b **Integrációs frissítés (W2):** ha a fő branch előrement a ciklus ága óta, hozd be (rebase vagy merge), és a változás jellege szerint irányíts vissza a `07`-re vagy a `08`-ra — soha ne merge-elj nem tesztelt kombinációt.
 2. **Merge végrehajtása** a `conventions.md` Merge stratégiája szerint (lokális squash vagy PR), **kötelező felhasználói megerősítés után** (RD8) — a merge soha nem automatikus.
 3. **Roadmap lezárása** és a következő ciklus indító promptjának megadása.
 
@@ -77,6 +89,34 @@ Normál esetben a `07 → 08 → 09` sorrend már konzisztens doksit ad: a revie
 3. A doc-sync lefutása után térj vissza ide, és csak ezután kérj merge-megerősítést.
 
 **Tilos** itt bármilyen kód-findingot gyártani vagy a doc-syncet review-vá alakítani: kód → a `07` review-kapuja; doksi → `doc-sync-plan.md` / `doc-sync-questions.md` + DS22 kapu.
+
+---
+
+## 1.b Integrációs frissítés — előrement-e a fő branch? (W2)
+
+A `07` zöld tesztjei és a `08` doksija **azon az alapon** készültek, ahonnan a ciklus ága elágazott. Ha a fő branch időközben előrement (másik ciklus merge-elődött, hotfix érkezett), akkor a merge egy **soha nem tesztelt kombinációt** hozna létre. Ezért a merge-megerősítés előtt:
+
+```bash
+git fetch origin
+git log --oneline $(git merge-base HEAD origin/main)..origin/main
+```
+
+_Remote nélküli (csak lokális) repóban az `origin/main` helyett a lokális `main`-nel dolgozz, `git fetch` nélkül. A `main` helyére a `conventions.md` `## Git és branching konvenciók` **Fő branch** mezője kerül._
+
+- **Üres lista** → a ciklus ága a fő branch tetején áll, folytasd a Merge lépéssel.
+- **Nem üres** → be kell hozni a fő branch-et a ciklus ágába, **majd újravalidálni**:
+
+1. **Behozás** (ugyanaz a mechanika, mint az `05` BR1 lépése). A választás nem ízlés kérdése:
+   - a branch **nincs pusholva / nincs rá PR** (`git rev-parse --verify origin/feature/cycle-NN-<cycle-name>` hibát ad) → `git rebase origin/main` (lineáris előzmény; a `cycle-NN: <fázis>` commit-üzenetek megmaradnak, tehát a `git log --grep` alapú keresések működnek),
+   - a branch **pusholva van vagy PR nyitva** → `git merge origin/main` a ciklus ágba (a rebase force-push-t igényelne egy review alatt lévő ágon).
+   - Ütközés esetén a lenti *Merge conflict kezelése* szabályai érvényesek — a generált doksit (`docs-generated/`) és a `specs/test-conventions.md`-t **ne** kézzel oldd fel: azokat a `08` újrafuttatása állítja helyre.
+2. **Újravalidálás a behozott alap szerint.** A behozás ELŐTT jegyezd fel a ciklus ágának csúcsát (`PRE=$(git rev-parse HEAD)`), utána nézd meg, mi jött be: `git diff --name-only "$PRE" HEAD`. A találatok jellege szerint:
+   - **forráskód vagy teszt változott** → **STOP**, vissza a `07`-re (tesztek + review a friss alapon). A `07` PASS-a után térj vissza ide.
+   - **csak `docs-generated/`, `conventions.md` vagy `specs/test-conventions.md` változott** → **STOP**, vissza a `08`-ra (a generált doksi újragenerálása). Zöld DS22 kapu után térj vissza ide.
+   - **csak más ciklusok `specs/cycle-MM-*/` mappái változtak** → nincs teendő, folytasd a Merge lépéssel.
+3. Csak ezután kérj merge-megerősítést.
+
+**Ne kérj engedélyt a behozásra külön** (a ciklus saját ágán dolgozol, ez nem destruktív) — de a `07`/`08` visszairányítást **mindig jelezd**, mert az fázisváltás.
 
 ---
 
@@ -109,6 +149,8 @@ git commit -m "cycle-NN: 09-merge - <cím>" -m "<cél és megközelítés a plan
 # 4. A lokális ciklus ág törlése
 git branch -D feature/cycle-NN-<cycle-name>
 ```
+
+> **W3 — ha a ciklus ága még ki van csekkolva egy worktree-ben**, a `git branch -D` megtagadja („used by worktree"). Ilyenkor előbb `git worktree remove <útvonal>` (commitálatlan tartalom esetén előbb commit, `--force` nélkül), és csak utána töröld a branch-et. Elhagyott bejegyzést a `git worktree prune` rendez.
 
 ### B) GitHub / Bitbucket / GitLab (PR)
 

@@ -35,6 +35,7 @@ Ez a folyamat **5. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 | Szekció | Egy mondatban |
 |---|---|
 | Előfeltétel | `tasks.md` = `Implementálásra kész`, `conventions.md` létezik, tiszta munkafa. |
+| Friss alap (BR1) | Ha a fő branch előrement a ciklus ága óta, a fázis **behozza** (rebase / merge a push-állapot szerint) az analyze ELŐTT — különben elavult fán validálna. Ha nem ment előre, az előzményhez nem nyúl. |
 | Szereped | **Orchestrátor (read-only):** te magad tervezési dokumentumot nem szerkesztesz — vezényelsz, riportot írsz, kérdezel, státuszt fordítasz. |
 | Mechanikus kapu | Minden futás előtt `analyze-gate-check.py` (plan-ID ↔ task-hivatkozás, marker, `⟂`, `DoD-NN`, kötelező táblák, **futtatott artefaktumok, plan-horgonyok, artefaktum-hang**) — a `Must Fix` találatai a szkript célfázisával mennek a hurokba, a `## Leltár` blokkja pedig az `analyzer` bemenete (AG3). |
 | Analyzer subagentek | A read-only kereszt-vizsgálatot **két párhuzamos** subagent végzi: `agents/analyzer.md` (1–5. kategória) és `agents/analyzer-exec.md` (6. kategória, végrehajthatóság) — te a két megállapítás-listát fésülöd össze (E). |
@@ -71,6 +72,26 @@ A `05-analyze` egy **vezénylő** fázis. Két dolgot tarts észben végig:
    - Listázd ki az érintett fájlokat.
    - Jelezd: *"Az analízis hurok módosíthatja a tervezési dokumentumokat; a tiszta munkafa megkönnyíti a visszakövetést."*
    - Kérdezd meg: *"Commitáljam ezeket most, vagy folytassam?"* — egy kérdés, várj a válaszra, majd folytasd. (No-VCS projektben kimarad.)
+
+4. **🔴 Friss alap (BR1 — csak VCS esetén, feltételes):** az analyze értéke abból jön, hogy a tervet a **tényleges** kódbázishoz méri (horgonyok `path:sor`, futtatott artefaktumok létezése, plan↔kód konzisztencia). Ha a fő branch időközben előrement (másik ciklus merge-elődött, hotfix érkezett), akkor egy elavult fán validálnál — a zöld eredmény hamis. Ellenőrizd:
+
+   ```bash
+   git fetch origin
+   git log --oneline $(git merge-base HEAD origin/main)..origin/main
+   ```
+
+   _Remote nélküli (csak lokális) repóban az `origin/main` helyett a lokális `main`-nel dolgozz, `git fetch` nélkül. A `main` helyére a `conventions.md` `## Git és branching konvenciók` **Fő branch** mezője kerül._
+
+   - **Üres lista** → nincs teendő, folytasd. (A párhuzamos tervezési ablakban ez a normál eset: amíg a másik ciklus nincs merge-elve, a fő branch nem mozdul.)
+   - **Nem üres** → hozd be a fő branch-et a ciklus ágába **az analyze ELŐTT**:
+     - a branch **nincs pusholva / nincs rá PR** (`git rev-parse --verify origin/feature/cycle-NN-<cycle-name>` hibát ad) → `git rebase origin/main`,
+     - a branch **pusholva van vagy PR nyitva** → `git merge origin/main` (a rebase force-push-t igényelne).
+
+     Egy sorban jelezd, mit hoztál be (`git log --oneline` a behozott commitokról) — **külön engedélyt ne kérj**, a ciklus saját ágán dolgozol, ez nem destruktív. **Konfliktus esetén STOP**: listázd az ütköző fájlokat, és kérj döntést; a generált doksit (`docs-generated/`) és a `specs/test-conventions.md`-t **ne** kézzel oldd fel — az a `08` dolga.
+
+   > **Ne rebase-elj feltétel nélkül.** Ha a fenti lista üres, a branch előzményéhez **nem nyúlsz** — az analyze önjavító hurokban többször is lefuthat, és a fölösleges előzmény-átírás pusholt ágon force-push-t provokálna.
+
+   **Miért itt:** ez a fázis az **alap-konzisztencia kapuja**. A `06` párhuzamos-ciklus kapuja (PW2) ezért nem külön rebase-lépést ír elő, hanem azt, hogy a `06` előtt legyen **friss `05` `PASS`** — a behozást maga az `05` végzi el.
 
 ---
 

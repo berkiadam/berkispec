@@ -13,6 +13,8 @@ prev: bs-analyze
 next: bs-validate
 subagents:
   - "agents/researcher.md"
+shared:
+  - "shared/parallel-cycles.md"
 ---
 # 06 — Implementálás
 <!-- INCLUDE:shared/context-check.md -->
@@ -35,6 +37,23 @@ Ez a folyamat **6. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
    - Listázd ki az érintett fájlokat.
    - Jelezd: *"Az implementáció előtt érdemes ezeket commitálni — ha félremegy az implementáció, egy `git reset --hard` visszaállítja a kiindulóállapotot."*
    - Kérdezd meg: *"Commitáljam ezeket most?"* — Ha igen: commitáld a változtatásokat, majd folytasd. Ha nem: folytasd commit nélkül. (No-VCS projektben kimarad.)
+
+3. **🔴 Párhuzamos-ciklus kapu (PW1/PW2 — csak VCS esetén):** a `06` az első fázis, amely a **forrásfát** írja, ezért az implementációs sáv **egyszálú**. A tervezés párhuzamosan mehet több ciklusban (külön worktree), az implementáció nem. Futtasd:
+
+   ```bash
+   git worktree list
+   git rev-parse --git-common-dir
+   git fetch origin && git log --oneline $(git merge-base HEAD origin/main)..origin/main
+   ```
+
+   _Remote nélküli (csak lokális) repóban az `origin/main` helyett a lokális `main`-nel dolgozz, `git fetch` nélkül._
+
+   - **Ha van másik worktree `cycle-*` branch-en** → **STOP.** Egy másik ciklus még nyitott: vagy azt kell végigvinni a `09`-ig, vagy ezt a ciklust kell megvárni. Ne kezdj implementálni, és ne javasolj `--force`-os megkerülést.
+   - **Ha linked worktree-ben vagyunk** (a `git rev-parse --git-common-dir` nem `.git`) → **STOP.** A `06`–`09` a **fő** worktree-ben fut (ott lakik a `main`, amit a `09` igényel). A visszaköltözés lépéssorát lásd a *Párhuzamos ciklusok* blokk PW2/3. pontjában.
+   - **Ha a `main` előrement** a ciklus ágának elágazása óta (a `git log` nem üres) → **STOP.** Az `analyze-report.md` `PASS`-a a **régi** alapon készült. Futtasd újra az `05-analyze`-t (`/bs-analyze input: @specs/cycle-NN-<cycle-name>`) — az hozza be a friss fő branch-et (BR1) és validál rajta. `PASS` után térj vissza ide; magad ne rebase-elj.
+   - **Egyébként** (egyetlen worktree, friss alap) → folytasd.
+
+<!-- INCLUDE:shared/parallel-cycles.md -->
 
 ---
 

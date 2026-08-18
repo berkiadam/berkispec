@@ -36,6 +36,19 @@ A cél, hogy friss `main`-ről (a `conventions.md` `## Git és branching konvenc
    - **feature branch-en vagyunk** → hasonlítsd össze a branch nevét az **aktuális ciklus várt branch-nevével** (a `roadmap.md` folyamatban lévő ciklus-blokkjából / a ciklus mappanevéből):
      - **Egyezik** → ez egy **resume**; a branch már létezik. **Nincs teendő** — folytasd ezen a branch-en, `git switch -c`-t **NE** futtass, és **ne** figyelmeztess.
      - **Nem egyezik** → **csak ekkor** szólj a felhasználónak: a jelenlegi branch-et érdemes lehet **merge-elni vagy PR-t feladni rá** a `## Merge stratégia` szerint, **mielőtt elhagyja**; majd kérd meg, hogy **váltson `main`-re** (a váltást ő végzi az esetleges nyitott munka miatt). Várj, amíg rendezi.
+1.b **Párhuzamos ciklus / worktree (PW1):** ha a felhasználó **egy másik ciklus mellett, párhuzamosan** indít tervezést (a `06`–`09` szakasz egy másik ciklusban fut), akkor ez a fázis **linked `git worktree`-ben** dolgozik, és a `main`-re **nem** kell (nem is lehet) átállni — az a fő worktree-ben van kicsekkolva, a git a második kicsekkolást megtagadja. Ismerd fel:
+
+   ```bash
+   git worktree list                 # melyik könyvtár melyik branch-en áll
+   git rev-parse --git-common-dir    # ha nem `.git`, akkor linked worktree-ben vagyunk
+   ```
+
+   - **Linked worktree-ben vagyunk, és a branch már a ciklus branch-e** → ez **resume**: a worktree-t és a branch-et a felhasználó már létrehozta (`git worktree add -b feature/cycle-NN-<name> ../<dir> origin/main`). `git switch`-et és `git pull`-t **NE** futtass, a lenti 2. pontot ugord át — a leágazás már friss `origin/main`-ről történt.
+   - **A `main` egy másik worktree-ben van kicsekkolva, de itt még nem a ciklus branch-én állunk** → ne próbálj `main`-re váltani. Kérd meg a felhasználót, hogy a párhuzamos munkához hozza létre a ciklus worktree-jét (`git fetch origin && git worktree add ../<projekt>-cNN -b feature/cycle-NN-<name> origin/main`), és onnan indítsa újra a fázist.
+   - **Egyetlen worktree van** → a normál út következik (2. pont).
+
+   A párhuzamosság határa (a tervezési ablak és a `06` előtti kapu) a *Párhuzamos ciklusok* blokkban van leírva — a `06` nem indul, amíg egy másik ciklus worktree-je nyitva van.
+
 2. **Friss és tiszta `main` (BQ4):** ha `main`-en vagyunk, a leágazás **előtt**:
    - Ellenőrizd, van-e commitálatlan tartalom **vagy** nem-pusholt lokális commit (pl. `git status --short` + `git status -sb` ahead-jelzés, ill. `git log --branches --not --remotes`).
    - **Ha van** → **ne** húzz `git pull`-t; kérd meg a felhasználót, hogy kezelje le (commit/push/stash), és várj, amíg a `main` tiszta.

@@ -14,6 +14,7 @@ subagents:
   - "agents/researcher.md"
 shared:
   - "shared/git-preflight.md"
+  - "shared/parallel-cycles.md"
   - "shared/input-from-prev.md"
 ---
 # 01 — Ciklusok kezelése
@@ -33,6 +34,8 @@ Ez a folyamat **1. fázisa (0–9)**: 0-init · **1-ciklusok ←** · 2-spec · 
 2. **Git-preflight (közös leírás):** a 01 **branch-nyitó** fázis — a *teljes* preflight vonatkozik rá (no-VCS kapu + munkafa-ellenőrzés + branch-nyitó preflight: friss, tiszta `main`, illetve resume-felismerés). A tényleges `git switch -c`-t **nem** itt futtatod, hanem a ciklusszám + név meghatározása UTÁN, az adott mód (A/B/C) lezárásában (BD5).
 
 <!-- INCLUDE:shared/git-preflight.md -->
+
+<!-- INCLUDE:shared/parallel-cycles.md -->
 
 > **Branch = ciklus (BD1–BD3).** A ciklus-branch **itt, a 01 fázisban** jön létre `main`-ről (nem a 06-ban), és a 02+ fázisok már ezen dolgoznak. A No-VCS ágon (a `conventions.md` szerint nincs verziókezelő) minden git-lépést kihagysz: csak a `specs/cycle-NN-<name>/` mappa és a roadmap készül el (BI8).
 
