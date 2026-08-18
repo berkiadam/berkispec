@@ -87,7 +87,14 @@ A `05-analyze` egy **vezénylő** fázis. Két dolgot tarts észben végig:
      - a branch **nincs pusholva / nincs rá PR** (`git rev-parse --verify origin/feature/cycle-NN-<cycle-name>` hibát ad) → `git rebase origin/main`,
      - a branch **pusholva van vagy PR nyitva** → `git merge origin/main` (a rebase force-push-t igényelne).
 
-     Egy sorban jelezd, mit hoztál be (`git log --oneline` a behozott commitokról) — **külön engedélyt ne kérj**, a ciklus saját ágán dolgozol, ez nem destruktív. **Konfliktus esetén STOP**: listázd az ütköző fájlokat, és kérj döntést; a generált doksit (`docs-generated/`) és a `specs/test-conventions.md`-t **ne** kézzel oldd fel — az a `08` dolga.
+     A behozás **előtt** jegyezd fel a ciklus ágának csúcsát (`PRE=$(git rev-parse HEAD)`). Egy sorban jelezd, mit hoztál be (`git log --oneline` a behozott commitokról) — **külön engedélyt ne kérj**, a ciklus saját ágán dolgozol, ez nem destruktív. **Konfliktus esetén STOP**: listázd az ütköző fájlokat, és kérj döntést; a generált doksit (`docs-generated/`) és a `specs/test-conventions.md`-t **ne** kézzel oldd fel — az a `08` dolga.
+
+   - **A behozás után állítsd elő a REBASE-FÁJLLISTÁT (BR1/a):**
+     ```bash
+     git diff --name-only "$PRE" HEAD -- . ':(exclude)specs/*'
+     ```
+     Ez a másik ciklusból/hotfixből érkezett **forrás-, teszt- és konfigfájlok** listája. Ha nem üres, **mindkét analyzer-subagent bemenetébe** be kell kerülnie (lásd *„A két analyzer-subagent"* → **Rebase-fájllista**). Ha üres (csak más ciklusok `specs/` mappái jöttek be), nincs teendő.
+     _Fájllistát adj át, **ne a teljes diffet** — a subagent a szükséges részleteket maga olvassa be (AG3)._
 
    > **Ne rebase-elj feltétel nélkül.** Ha a fenti lista üres, a branch előzményéhez **nem nyúlsz** — az analyze önjavító hurokban többször is lefuthat, és a fölösleges előzmény-átírás pusholt ágon force-push-t provokálna.
 
@@ -277,6 +284,14 @@ A diagnózist **két subagent** végzi, egymástól független hatókörrel. **E
 | `agents/analyzer.md` | **1–5. kategória** (duplikáció, ambiguitás, alulspecifikáció, konvenció-ütközés, lefedettség **tartalmi** ítélete) | `spec.md` + `plan.md` + `tasks.md` + `conventions.md` + átadó fájlok + `cycle-design-input.md` + a kapu **generált mátrixa** |
 | `agents/analyzer-exec.md` | **6. kategória** (prózában ígért teszt, artefaktum-tulajdon, destruktív művelet, horgony-szimbólum, artefaktum-hang) | `plan.md` + `tasks.md` + a kapu **`## Leltár`** blokkja |
 
+_Mindkét subagent bemenete kiegészül a **rebase-fájllistával**, ha a BR1 behozta a fő branch-et (lásd lent)._
+
+**Rebase-fájllista (BR1/a) — csak ha a BR1 behozott valamit.** Ilyenkor a **forrásfa** változott, nem a tervezési dokumentumok: az analyzer a saját `git diff`-navigációjából (D10) erről semmit nem lát. Ezért add át **mindkét** subagentnek a fájllistát, ezzel a felszólítással:
+
+> *„Az alábbi fájlok a fő branch behozásával (rebase/merge) érkeztek a ciklus ágába, egy másik ciklus vagy hotfix eredményeként: `<fájllista>`. Nézd meg célzottan, hogy a `plan.md` és a `tasks.md` rájuk mutató hivatkozásai, horgonyai, szignatúra- és interfész-feltevései **állnak-e még** (átnevezett vagy áthelyezett szimbólum, megváltozott paraméterlista, eltűnt export, módosult konfigkulcs). A vizsgálat hatóköre ettől NEM szűkül — ez fókusz, nem hatókör."*
+
+A fájllista **fókusz, nem szűkítés** (ugyanaz az elv, mint a dokumentum-diffnél, D10): a `PASS` továbbra is kizárólag teljes analyzer-futásból adható. A behozott változásokból eredő elcsúszás a szokásos úton megy tovább — `Must Fix` → legkorábbi célfázis → fixer —, **külön „rebase-javító kör" nincs**: az önjavító hurok maga a javító kör.
+
 **Az összefésülés a te dolgod:**
 1. A két `Must Fix` listát és a kapu `Must Fix` listáját **egy listába** fűzöd, majd a **legkorábbi érintett célfázist** ebből az egyesített listából határozod meg.
 2. **Duplikátum-szűrés:** ha ugyanarra a `fájl:hely`-re mindkét subagent adott megállapítást, a **specifikusabbat** tartsd meg (jellemzően az `analyzer-exec` végrehajthatósági tételét), és a másikat ne vidd tovább a fixernek.
@@ -345,6 +360,7 @@ Hozd létre / frissítsd a `specs/cycle-NN-<cycle-name>/analyze-report.md` fájl
 **Státusz:** PASS | FAIL
 **Futás:** YYYY-MM-DD HH:MM
 **Hurok:** <iterációk száma> / <max X> (PASS | feladva)
+**Validált alap:** `<fő branch neve>@<SHA>` · ciklus ág: `<branch>@<SHA>` (BR1: `behozva` | `nem volt szükséges`)
 
 ## Összefoglaló
 
@@ -428,6 +444,8 @@ Menj végig, mind a **6** kategória ténylegesen lefutott-e (az 1–5. az `anal
 6. **Végrehajthatóság és artefaktum-tulajdon** — az `analyzer-exec` visszaadta a *Végrehajthatósági leltárt* (lásd fent), a **mechanikus kapu** (`analyze-gate-check.py`) lefutott ebben a körben, és a kapu blokkjait át is adtad a két subagentnek (AG3/AG4)?
 
 Ha bármelyik kategória nem futott le, ne zárd le a jelentést. Ha a hurok futott, ellenőrizd azt is, hogy a **Hurok-napló** minden iterációt tartalmaz.
+
+**A `Validált alap` mező kitöltve? (BR1)** — a riport fejlécében szerepel a fő branch neve és SHA-ja (`git rev-parse origin/main`), a ciklus ágának csúcsa (`git rev-parse HEAD`), és hogy a BR1 hozott-e be valamit. Ezt a `06` és a `09` **összeveti a saját futásakori állapottal**: ha időközben előrement a fő branch, az `analyze-report.md` `PASS`-a elavult alapon készült. Placeholder vagy hiányzó mező esetén a jelentés nem zárható le. (No-VCS projektben a mező értéke `—`.)
 
 ---
 

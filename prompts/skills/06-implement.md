@@ -50,7 +50,7 @@ Ez a folyamat **6. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 
    - **Ha van másik worktree `cycle-*` branch-en** → **STOP.** Egy másik ciklus még nyitott: vagy azt kell végigvinni a `09`-ig, vagy ezt a ciklust kell megvárni. Ne kezdj implementálni, és ne javasolj `--force`-os megkerülést.
    - **Ha linked worktree-ben vagyunk** (a `git rev-parse --git-common-dir` nem `.git`) → **STOP.** A `06`–`09` a **fő** worktree-ben fut (ott lakik a `main`, amit a `09` igényel). A visszaköltözés lépéssorát lásd a *Párhuzamos ciklusok* blokk PW2/3. pontjában.
-   - **Ha a `main` előrement** a ciklus ágának elágazása óta (a `git log` nem üres) → **STOP.** Az `analyze-report.md` `PASS`-a a **régi** alapon készült. Futtasd újra az `05-analyze`-t (`/bs-analyze input: @specs/cycle-NN-<cycle-name>`) — az hozza be a friss fő branch-et (BR1) és validál rajta. `PASS` után térj vissza ide; magad ne rebase-elj.
+   - **Ha a `main` előrement** a ciklus ágának elágazása óta (a `git log` nem üres), **vagy** ha az `analyze-report.md` **`Validált alap`** mezőjében szereplő fő branch SHA nem egyezik a jelenlegivel (`git rev-parse origin/main`) → **STOP.** Az `analyze-report.md` `PASS`-a a **régi** alapon készült. Futtasd újra az `05-analyze`-t (`/bs-analyze input: @specs/cycle-NN-<cycle-name>`) — az hozza be a friss fő branch-et (BR1) és validál rajta. `PASS` után térj vissza ide; magad ne rebase-elj.
    - **Egyébként** (egyetlen worktree, friss alap) → folytasd.
 
 <!-- INCLUDE:shared/parallel-cycles.md -->

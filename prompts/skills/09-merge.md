@@ -103,7 +103,7 @@ git log --oneline $(git merge-base HEAD origin/main)..origin/main
 
 _Remote nélküli (csak lokális) repóban az `origin/main` helyett a lokális `main`-nel dolgozz, `git fetch` nélkül. A `main` helyére a `conventions.md` `## Git és branching konvenciók` **Fő branch** mezője kerül._
 
-- **Üres lista** → a ciklus ága a fő branch tetején áll, folytasd a Merge lépéssel.
+- **Üres lista** → a ciklus ága a fő branch tetején áll, folytasd a Merge lépéssel. _(Kereszt-ellenőrzés: az `analyze-report.md` **`Validált alap`** mezőjének fő branch SHA-ja is ezt mutatja-e — ha nem, az `05` egy régebbi alapon zárult, és a lenti újravalidálási szabály érvényes.)_
 - **Nem üres** → be kell hozni a fő branch-et a ciklus ágába, **majd újravalidálni**:
 
 1. **Behozás** (ugyanaz a mechanika, mint az `05` BR1 lépése). A választás nem ízlés kérdése:
