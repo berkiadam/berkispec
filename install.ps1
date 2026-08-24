@@ -61,10 +61,9 @@ function Save-History {
     }
 }
 
-$AGENTS_SRC_DIR = Join-Path $SCRIPT_DIR "prompts/agents"
-$AGENTS_GEMINI_SRC = Join-Path $SCRIPT_DIR "prompts/agents/gemini-agent"
-$SKILLS_SRC = Join-Path $SCRIPT_DIR "prompts/skills"
-
+# A prompt-forrásmappákat NEM itt oldjuk fel: a nyelvenkénti fát
+# (`prompts/skills-<lang>` stb.) az install-helper.py `_lang_subdir()`-je
+# választja ki. Korábban itt három változó állt, de egyik sem volt használatban.
 # Globális állapot változók
 $PROJECT_PATH = ""
 $PLATFORM_CHOICE = "" # "antigravity" vagy "claude" vagy "copilot" vagy "cursor"

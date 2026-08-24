@@ -34,9 +34,9 @@ readonly SCRIPT_DIR
 
 readonly HISTORY_FILE="${SCRIPT_DIR}/history"
 
-readonly AGENTS_SRC_DIR="${SCRIPT_DIR}/prompts/agents"
-readonly AGENTS_GEMINI_SRC="${SCRIPT_DIR}/prompts/agents/gemini-agent"
-readonly SKILLS_SRC="${SCRIPT_DIR}/prompts/skills"
+# A prompt-forrásmappákat NEM itt oldjuk fel: a nyelvenkénti fát
+# (`prompts/skills-<lang>` stb.) az install-helper.py `_lang_subdir()`-je
+# választja ki. Korábban itt három konstans állt, de egyik sem volt használatban.
 
 # Globális állapot változók
 PROJECT_PATH=""

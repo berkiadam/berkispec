@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""A `prompts/agents/gemini-agent/<név>/agent.json` fájlok `Instructions`
-szekciójának szinkronizálása a `prompts/agents/<név>.md` prompt törzsével.
+"""A `prompts/agents-<lang>/gemini-agent/<név>/agent.json` fájlok `Instructions`
+szekciójának szinkronizálása a `prompts/agents-<lang>/<név>.md` prompt törzsével.
 
 Miért kell: az Antigravity/Gemini platform agent.json sémát vár, ezért a
 subagent-promptok ott JSON-ba ágyazva élnek. Ez a beágyazott szöveg a `.md`
@@ -28,14 +28,8 @@ def md_body(path):
     return FRONTMATTER_RE.sub("", path.read_text(encoding="utf-8"), count=1).strip() + "\n"
 
 
-def main():
-    parser = argparse.ArgumentParser(description="gemini agent.json ↔ agents/*.md szinkron")
-    parser.add_argument("--check", action="store_true", help="csak ellenőrzés, írás nélkül")
-    parser.add_argument("--root", default=Path(__file__).resolve().parents[2],
-                        help="a repó gyökere (alap: a szkript helyéből számolva)")
-    args = parser.parse_args()
-
-    agents_dir = Path(args.root) / "prompts/agents"
+def sync_tree(agents_dir, check):
+    """Egy prompt-nyelvi agent-fa szinkronja. Visszaadja az eltérések listáját."""
     gemini_dir = agents_dir / "gemini-agent"
     drift = []
 
@@ -63,7 +57,7 @@ def main():
                 }
             },
         }
-        if not args.check:
+        if not check:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(json.dumps(skeleton, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         drift.append(f"{md_path.stem} (új agent.json)")
@@ -91,14 +85,39 @@ def main():
             if section.get("content", "").strip() == want.strip():
                 continue
             drift.append(agent_dir.name)
-            if not args.check:
+            if not check:
                 section["content"] = want
                 json_path.write_text(
                     json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
                 )
 
+    return drift
+
+
+def main():
+    parser = argparse.ArgumentParser(description="gemini agent.json ↔ agents-<lang>/*.md szinkron")
+    parser.add_argument("--check", action="store_true", help="csak ellenőrzés, írás nélkül")
+    parser.add_argument("--root", default=Path(__file__).resolve().parents[2],
+                        help="a repó gyökere (alap: a szkript helyéből számolva)")
+    args = parser.parse_args()
+
+    # MINDEN prompt-nyelvi fát egymás után futtatunk (`prompts/agents-hu`,
+    # `prompts/agents-en`, …), így egy futás mindkét nyelvet szinkronban tartja,
+    # és a `--check` egyszerre ellenőriz mindent. Nincs `--prompt-lang` flag:
+    # a féloldalas futtatás pont azt a csendes elcsúszást engedné meg, amit ez a
+    # kapu meg akar fogni.
+    trees = sorted(d for d in (Path(args.root) / "prompts").glob("agents-*") if d.is_dir())
+    if not trees:
+        print("HIBA: nincs egyetlen prompts/agents-<lang> fa sem", file=sys.stderr)
+        return 1
+
+    drift = []
+    for agents_dir in trees:
+        drift += [f"{agents_dir.name}/{name}" for name in sync_tree(agents_dir, args.check)]
+
     if not drift:
-        print("GEMINI-SYNC: minden agent.json szinkronban a .md prompttal")
+        names = ", ".join(d.name for d in trees)
+        print(f"GEMINI-SYNC: minden agent.json szinkronban a .md prompttal ({names})")
         return 0
     verb = "eltér" if args.check else "frissítve"
     print(f"GEMINI-SYNC: {len(drift)} agent {verb}: {', '.join(drift)}")

@@ -147,11 +147,16 @@ def get_effort(models, platform, filename):
 # külön bővíteni.
 # ── Nyelvi tengelyek (két független beállítás) ─────────────────────────────
 # `PROMPT_LANG`  — a PROMPT nyelve: melyik forrás-fából telepítünk
-#                  (`prompts/skills` = hu, `prompts/skills-en` = en).
+#                  (`prompts/skills-hu` = hu, `prompts/skills-en` = en).
+#                  MINDKÉT nyelv prefixelt mappában él — nincs kitüntetett,
+#                  suffix nélküli fa (LG5).
+
 #                  BUILD-TIME beállítás: a telepítés után nyomtalan, semmi
 #                  runtime-nak nem kell tudnia róla.
 # `PROJECT_LANG` — a PROJEKT nyelve: a `<!-- INCLUDE:lang/... -->` markerek
-#                  feloldását választja (`prompts/shared/lang/<lang>/`).
+#                  feloldását választja (`prompts/lang/<lang>/`). Ez a mappa
+#                  szándékosan NEM a `shared-<L>/` alatt van: nem a
+#                  prompt-nyelvvel mozog, tehát ott duplikáció lenne.
 #                  Ide tartozik minden, ami a projektbe kerül vagy a
 #                  felhasználóhoz szól: szó szerint kimondandó mondatok,
 #                  fájlba írt sablonok, státusz-kulcsszavak. RUNTIME
@@ -165,10 +170,12 @@ PROJECT_LANG = "hu"
 SUPPORTED_LANGS = ("hu", "en")
 
 # A `hu` a kanonikus forrás-fa; az `en` változat külön mappában él. A `hu`
-# esetén szándékosan a suffix NÉLKÜLI nevet adjuk vissza, hogy a meglévő
-# telepítés byte-azonos maradjon.
+# TELJES SZIMMETRIA (LG5): mindkét nyelv prefixelt mappában él
+# (`skills-hu` / `skills-en`), nincs kitüntetett, suffix nélküli fa. Az
+# aszimmetria csendes hibát szülne: egy `skills/`-be írt javítás úgy néznének
+# ki, mintha nyelvfüggetlen lenne.
 def _lang_subdir(base, lang):
-    return base if lang == "hu" else f"{base}-{lang}"
+    return f"{base}-{lang}"
 
 def skills_src_dir(src_dir):
     """A prompt-nyelv szerinti skill-forrásmappa."""
@@ -194,7 +201,7 @@ def copy_helper_scripts(src_dir, scripts_dest):
 # A skillek `<!-- INCLUDE:shared/<fájl> -->` markert tartalmazhatnak. Mivel a
 # skillek platformonként eltérő helyre települnek, egy relatív hivatkozás
 # futásidőben nem oldódna fel egységesen — ezért a telepítő a marker helyére
-# a `prompts/shared/<fájl>` tartalmát ILLESZTI BE (build-time include), így a
+# a `prompts/shared-<PROMPT_LANG>/<fájl>` tartalmát ILLESZTI BE (build-time include), így a
 # telepített SKILL.md önmagában teljes. A megosztott fájl elején lévő
 # magyarázó HTML-kommentet (forrás-jegyzet) nem visszük át.
 # ── A `<platform-scripts-mappa>` helyőrző feloldása (BD15) ────────────────────
@@ -232,9 +239,9 @@ _lang_fallback_warned = set()
 def _resolve_include_path(src_dir, rel_path):
     """A marker útvonalát fizikai fájlra oldja fel.
 
-    - `shared/<f>`  → `prompts/shared/<f>` — nyelvfüggetlen (instrukciós blokk,
+    - `shared/<f>`  → `prompts/shared-<PROMPT_LANG>/<f>` — a PROMPT-nyelvvel mozog (instrukciós blokk,
       a prompt-nyelvvel együtt mozog, mert a hivatkozó fa is nyelvi).
-    - `lang/<f>`    → `prompts/shared/lang/<PROJECT_LANG>/<f>` — PROJEKT-nyelvű
+    - `lang/<f>`    → `prompts/lang/<PROJECT_LANG>/<f>` — PROJEKT-nyelvű
       blokk: kimondandó mondatok, fájlba írt sablonok, státusz-kulcsszavak.
 
     Ha a projekt-nyelvi változat még nem létezik (a kétnyelvűsítés fázisos),
@@ -243,22 +250,26 @@ def _resolve_include_path(src_dir, rel_path):
     """
     if rel_path.startswith("lang/"):
         name = rel_path[len("lang/"):]
-        primary = Path(src_dir) / "prompts/shared/lang" / PROJECT_LANG / name
+        primary = Path(src_dir) / "prompts/lang" / PROJECT_LANG / name
         if primary.exists() or PROJECT_LANG == "hu":
             return primary
-        fallback = Path(src_dir) / "prompts/shared/lang/hu" / name
+        fallback = Path(src_dir) / "prompts/lang/hu" / name
         if fallback.exists() and name not in _lang_fallback_warned:
             _lang_fallback_warned.add(name)
             print(f"  FIGYELEM: a(z) '{name}' projekt-nyelvi blokk nincs meg "
                   f"'{PROJECT_LANG}' nyelven — magyar változat kerül be.")
         return fallback
+    if rel_path.startswith("shared/"):
+        name = rel_path[len("shared/"):]
+        return Path(src_dir) / "prompts" / _lang_subdir("shared", PROMPT_LANG) / name
     return Path(src_dir) / "prompts" / rel_path
 
 def _read_shared_include(src_dir, rel_path):
     """Beolvassa és cache-eli a marker által hivatkozott blokk tartalmát, a
     vezető magyarázó HTML-kommentet levágva. A cache kulcsa tartalmazza a
-    projekt-nyelvet, mert a `lang/` markerek feloldása attól függ."""
-    key = (str(src_dir), rel_path, PROJECT_LANG)
+    projekt-nyelvet ÉS a prompt-nyelvet, mert a `lang/` markerek feloldása az
+    egyiktől, a `shared/` markereké a másiktól függ."""
+    key = (str(src_dir), rel_path, PROMPT_LANG, PROJECT_LANG)
     if key in _shared_include_cache:
         return _shared_include_cache[key]
     include_path = _resolve_include_path(src_dir, rel_path)
