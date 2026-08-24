@@ -768,10 +768,133 @@ Magyar idézetsorok (`>` + `„`) és fájlba írt sablon-fence-ek darabszáma:
 > többsoros idézet, az artefaktum-szekció fejléc, és a szövegközi user-facing string. A valós
 > szám ennek a duplája is lehet.
 
-- [ ] **9.3 — Pontos leltár fájlonként.** Minden skill/agent/shared fájlon menj végig, és a 9.1
+- [x] **9.3 — Pontos leltár fájlonként.** Minden skill/agent/shared fájlon menj végig, és a 9.1
   osztályozás szerint készíts jelöltlistát. **Ezt írd be IDE**, fájlonként pipálható listaként —
   ez a folytatás horgonya, ha a munka több sessionra oszlik. A leltár készítése önmagában is
   komoly munkamenet; ne siettesd, és ne helyettesítsd greppel (ítéletet kíván).
+
+#### A leltár jelölései
+
+| Jel | Osztály | Hova megy |
+|---|---|---|
+| **K** | **kiemelési** jelölt — összefüggő blokk (idézet, sablon-fence) | `lang/<L>/<fájl>.md#<horgony>` + INCLUDE marker (9.4) |
+| **T** | **token**-jelölt — szövegközi literál (szekciónév, státusz) | `<sec:…>` / `<secname:…>` / `<status:…>` helyben (9.7, LG32) |
+| **—** | nincs jelölt | a fájl teljes egészében prompt-nyelvi |
+
+A **T** oszlopban csak a **kulcs-jelölteket** soroljuk fel, nem az összes előfordulást — a
+darabszámokat a 9.7.2 tartja. Ahol egy T-literál a `status-keys.json`-ban **még nem szereplő**
+kulcsot igényel, ott **`(új kulcs)`** jelölés áll: ezeket a 9.7.1 kulcskészletébe fel kell venni.
+
+#### 9.3.1 `shared-hu/` — 17 fájl · **leltár KÉSZ**
+
+| ✓ | Fájl | K (kiemelési jelölt) | T (token-jelölt kulcsok) |
+|---|---|---|---|
+| [x] | `artifact-voice.md` | — | `Kockázatok és döntési pontok`, `Kockázatok` |
+| [x] | `context-check.md` | **25. sor** — a „kontextus nem friss" kérdés, szó szerint kimondandó → `#kontextus-nem-friss` | — |
+| [x] | `conventions-change.md` | — | `## Teszt-riportolás`, `## Sonar`, `## Teszt eszközök`, `## Merge stratégia`, `## Portok`, `## Env változók` *(mind `conventions.md`-fejléc, új kulcs)*, `Tervezett módosítások`, `Cél és megközelítés` (új kulcs) |
+| [x] | `fix-mode-implement.md` | — | `## Validációs javítások`, `## Review javítások`, `Implementálásra kész`, `Implementálás folyamatban` (új kulcs), `Validálásra kész`, `Definition of done`, a `check-log.md` **`Mód`** oszlopfejléce (új kulcs) |
+| [x] | `fix-mode-plan.md` | — | `Piszkozat`, `Nyitott kérdések vannak`, `Task írásra kész` |
+| [x] | `fix-mode-spec.md` | — | `Piszkozat`, `Nyitott kérdések vannak`, `Tervezésre kész` |
+| [x] | `fix-mode-tasks.md` | — | `Piszkozat`, `Implementálásra kész`, `Plan-lefedettség` |
+| [x] | `git-preflight.md` | **28. sor** — *„Commitáljam ezeket most, vagy folytassam?"* → `#commit-vagy-folytas` | `## Git és branching konvenciók`, `## Merge stratégia`, `Fő branch` (új kulcs), `Branch-elnevezési stratégia` (új kulcs), **és a 20. sor no-VCS flag-mondata** („NINCS verziókezelő…") — ezt a `00` írja a `conventions.md`-be, tehát illesztő literál (új kulcs) |
+| [x] | `input-from-prev.md` | **30–36. sor** — a tétel-formátum ` ```md ` fence (fájlba írt sablon) → `#tetel-formatum` | `Tervezett módosítások` *(a sablonon belül — ott **literál** marad)* |
+| [x] | `parallel-cycles.md` | — | — |
+| [x] | `path-format.md` | — | — |
+| [x] | `phase-commit.md` | — | — *(a `cycle-NN: <FÁZIS-TAG>` commit-üzenet és a `Commit: <sha> — …` visszajelzés nyelv-semleges: azonosító + fázis-tag)* |
+| [x] | `python-cmd.md` | — | — |
+| [x] | `quality-check-plan.md` | **73–138. sor** — a „Lezárási kapu" checklist-fence. **⚠ Ítéleti jelölt:** a 71. sor kimondja, hogy a listát *„a válaszodban ki kell írnod"* → felhasználói képernyőre kerül, tehát a 9.1 címzett-tesztje szerint projekt-nyelvi. **Feszültség az LG27-tel** (nyelv-jelölés nélküli fence = fordítható) — itt a címzett-teszt az erősebb; a döntést a 9.4 előtt rögzítsd. → `#lezarasi-kapu` | `Task írásra kész`, `Környezeti koordináták`, `Tervezett módosítások`, `Ellenőrzési stratégia`, `Teszt specifikáció`, `Spec-lefedettség`, `Fordított lefedettség`, `Konfiguráció-életút`, `Regressziós érintettség` (új kulcs), `Kockázatok és döntési pontok`, `Végrehajtási sorrend` (új kulcs), `Out of scope` |
+| [x] | `quality-check-spec.md` | — | `Definition of done`, `Out of scope`, `Hivatkozott fájlok`, `Kockázatok`, `Teszt specifikáció`, `Komponensek és viselkedés` |
+| [x] | `quality-check-tasks.md` | — | `Plan-lefedettség`, `Tervezett módosítások`, `Ellenőrzési stratégia`, `Regressziós érintettség`, `Kockázatok`, `## Teszt-riportolás`, `Out of scope` |
+| [x] | `questions-tasks.md` | **9–15. sor** — a `tasks-questions.md` csontváza ` ```md ` fence-ben → `#struktura` | `Implementálásra kész`, `Piszkozat` |
+
+**A shared pass három átvihető tanulsága** (a 9.1-et pontosítja, a további fájlokra is áll):
+
+1. **Az ágens→orchestrátor üzenet PROMPT-nyelvi.** A `fix-mode-*` visszatérési összefoglalói, a
+   `downstream-hatás:` mező (`nincs` / `van — …`) és a `fix-mode-implement.md` 56. sorának
+   *„ESZKALÁCIÓ: …"* mondata **nem** kerül a projektbe és **nem** a felhasználóhoz szól: két
+   prompt-nyelvi fájl közötti szerződés, tehát a prompt-nyelvvel mozog. **Nem jelölt.**
+2. **Az illusztratív ❌/✅ példapár prompt-nyelvi** (9.1), **akkor is**, ha artefaktum-mondatot
+   idéz (`artifact-voice.md` 21–24. sor): a példa az ágens tanítására szolgál, nem másolódik be.
+3. **A `conventions.md` fejlécei is T-jelöltek.** A 9.1 „artefaktum-szekció fejléce" kategóriája
+   nem szűkül a ciklus-artefaktumokra: a `conventions.md` a **projekt** fájlja, a fejléceit
+   kapu-script olvassa (10.2/a), tehát ugyanaz az osztály.
+
+#### 9.3.2 `agents-hu/` — 11 fájl · **leltár KÉSZ**
+
+> **A frontmatter `description:` / `role:` NEM tartozik ide** — azt a 8. szakasz már elvégezte
+> (`lang/<L>/descriptions.json`, LG15/LG26). Az `inputs:` / `outputs:` / `called_by:` listák
+> prompt-nyelviek (nem telepített felület, csak forrás-metaadat) — **nem jelöltek**.
+
+| ✓ | Fájl | K (kiemelési jelölt) | T (token-jelölt kulcsok) |
+|---|---|---|---|
+| [x] | `test-runner.md` | — *(a 124–151. sor Output-fence a hívó skillnek szóló visszatérési formátum → prompt-nyelvi, 1. tanulság; ugyanígy a 101–107. sor `EX1` blokk)* | `## Teszt-riportolás`, `## Sonar minőségellenőrzés`, `Teszt keretrendszer`, `Teszt struktúra` *(mind `conventions.md`, új kulcs)*, `Tesztelési stratégia`, `Regressziós érintettség`, `E2E infrastruktúra` (új kulcs), `### Gépi futtatási tábla` (új kulcs), `Kész` |
+| [x] | `analyzer.md` | — *(109–124. sor: a prompt kimondja, „ne írj fájlt" → a lista a skillnek megy)* | `## Lefedettségi mátrix (generált)` (új kulcs), `Lefedve (gépi)` (új kulcs), `Spec-lefedettség`, `Fordított lefedettség`, `Konfiguráció-életút`, `Környezeti koordináták`, `Komponensek és viselkedés`, `Teszt specifikáció`, `Tervezett módosítások`, `Out of scope` |
+| [x] | `analyzer-exec.md` | — *(86–102. sor: ugyanaz, agent→skill)* | `## Leltár` (új kulcs) **és a leltár-sor markerei**: `[ARTEFAKTUM]`, `[HORGONY]`, `[HANG-GYANÚ]`, `[TESZT-ÍGÉRET]`, `[DESZTRUKTÍV]` — ezeket az `analyze-gate-check.py` **generálja** és az agent **illeszti**, tehát (a)+(b) osztály, mind új kulcs; továbbá `Kockázatok és döntési pontok`, `Teszt specifikáció`, `Tervezett módosítások`, `Érintett komponensek` (új kulcs), `Konfiguráció-életút`, `Környezeti koordináták`, `Kockázatok` |
+| [x] | `doc-sync-planner.md` | — *(92–131. sor: a fő ágensnek visszaadott terv-struktúra; a `Csereszöveg` blokkok tartalma **dinamikus**, nem sablon)* | `## Projekt referenciák` (új kulcs), a `docs-generated/` fejléc-mezők: `Lefedve`, `Utolsó frissítés`, `Generátor/scope` (új kulcs), `Utolsó futás: cycle-NN`, `Csereszöveg` (új kulcs), a művelet-címkék `reconciliation` / `új` / `nincs teendő` — ezek a `doc-sync-plan.md`-be kerülnek (új kulcs), `Regressziós érintettség`, `Teszt specifikáció`, `Tesztelési stratégia`, `E2E infrastruktúra` |
+| [x] | `reviewer.md` | **59–74. sor** — a `code-review.md` teljes csontváza ` ```md ` fence-ben. **Ez valódi K:** projekt-artefaktumba íródik, és a 07 gépiesen parszolja → `#code-review-formatum`. **84. sor** — a lezárás-jelölés (`- [x] **MF-01** — … ✅ javítva`) szintén artefaktum-formátum → ugyanabba a horgonyba vagy `#lezaras-jeloles` | `## Összefoglaló`, `## Kritikus javítandók (Must Fix)`, `## Javasolt fejlesztések (Suggestions)` (új kulcs), a `„Nincs."` üres-szekció literál (78. sor, új kulcs), `✅ javítva` (új kulcs) |
+| [x] | `researcher.md` | — *(55–65. sor Output-fence: a hívó skillnek adott válasz-formátum, nem fájl → prompt-nyelvi)* | `Komponensek és viselkedés`, `Hivatkozott fájlok`, `Tervezett módosítások` |
+| [x] | `review-fixer.md` | — *(a 35. sor `ESZKALÁCIÓ:` és a 47. sor `FUTTATÁS BLOKKOLVA (EX1)` mondata orchestrátornak szól → 1. tanulság)* | `## Review javítások`, `## Validációs javítások` |
+| [x] | `implement-fixer.md` | — *(ua. — 33. és 45. sor)* | `## Validációs javítások` |
+| [x] | `tasks-fixer.md` | — | `Piszkozat`, `Implementálásra kész` *(a jelöltek túlnyomó része a beemelt `shared-hu/` fájlokban van — ott már leltározva)* |
+| [x] | `plan-fixer.md` | — | *(mind a beemelt `shared-hu/fix-mode-plan.md` + `quality-check-plan.md`-ben)* |
+| [x] | `spec-fixer.md` | — | *(mind a beemelt `shared-hu/fix-mode-spec.md` + `quality-check-spec.md`-ben)* |
+
+**Az agent pass két új tanulsága:**
+
+4. **A kapu-script által GENERÁLT sor-markerek is T-jelöltek.** Az `analyzer-exec` bemenete a
+   `## Leltár` blokk `[ARTEFAKTUM]` / `[HORGONY]` / `[HANG-GYANÚ]` / `[TESZT-ÍGÉRET]` /
+   `[DESZTRUKTÍV]` soraival: a szkript **írja** (10.2/b), az agent **illeszti** (10.2/a).
+   Ha a szkript angolra fordul, de a prompt magyarul keresi (vagy fordítva), az agent
+   **csendben nem talál semmit** — nem hibázik, csak üres marad. Ez a 10.2 leltár **hiányzó
+   tétele**: vedd fel a 9.7.1 kulcskészletbe.
+5. **A `docs-generated/` fejléc-mezői (`Lefedve`, `Utolsó frissítés`, `Generátor/scope`) és a
+   `doc-sync-plan.md` művelet-címkéi** ugyanígy projekt-nyelviek, és a 10.2-ben sem szerepelnek.
+
+#### 9.3.3 `skills-hu/` — 14 fájl · **leltár KÉSZ**
+
+> **Két visszatérő minta, amit a leltár készítése közben rögzítettünk** (mindkettő ítéleti, és
+> mindkettő sokat spórol):
+> - **A „Folytatás megszakított futás után" fence-ek (nyelv-jelölés nélkül) NEM K-jelöltek.** Ezek
+>   az ágensnek szóló döntési fák (`00`:286–298, `02`:259–269, `03`:133–143, `05`:111–135) —
+>   prompt-nyelviek, LG27 szerint fordulnak. A bennük álló státusz-literálok viszont **T**-jelöltek.
+> - **A „Váz" ↔ „Kész példa" párokban csak a VÁZ K-jelölt** (`08-doc-sync`). A „Kész példa"
+>   illusztráció, a 9.1 szerint prompt-nyelvi — nem másolódik fájlba.
+
+| ✓ | Fájl | K (kiemelési jelölt — sor) | T (token-jelölt kulcsok) |
+|---|---|---|---|
+| [x] | `00-init-project.md` | **82–278** — a teljes `conventions.md` **sablon** (a legnagyobb egyedi blokk a repóban; két beágyazott fence: 184/192) → `#conventions-sablon`. **A kérdés-mondatok** (45, 46, 47, 48, 55 … ~16 db, `*„…"*` alakban, bullet közepén): user-facing → soronkénti inline INCLUDE. **333+** — a záró jelzés. *(286–298: prompt-nyelvi, lásd fent)* | a `conventions.md` **összes `##` fejléce** (a sablonon belül literál marad, a prózában token): `## Projekt áttekintés`, `## Tech stack`, `## Projekt referenciák`, `## Projekt struktúra`, `## Fejlesztési módszertan`, `## Git és branching konvenciók`, `## Merge stratégia`, `## Teszt struktúra`, `## Teszt keretrendszer`, `## Teszt-riportolás`, `## Naming konvenciók`, `## Portok és service-ek`, `## Környezeti változók`, `## Sonar minőségellenőrzés`, `## Kockázatok és ismert korlátok` (mind új kulcs); mező-nevek: `Alapértelmezett flow`, `Fő branch`, `Branch-elnevezési stratégia`, `Verziókezelő`, `Artefaktum-útvonal alapja`, `Riport-generálás kötelező`, `kör-mappa` / `test-report` jelölő-értékek (mind új kulcs); a **no-VCS flag-mondat** („NINCS verziókezelő (se GIT, se más), és nem is lesz.") |
+| [x] | `01-add-cycles.md` | **190–217** (roadmap ciklus-blokk sablon), **317–329**, **386–401** (`cycle-design-input.md` sablon) → három horgony. **Kérdés/jelzés-mondatok:** 90, 101, 104, 259, 270, 281, 286, 292, 297, 347, 360, 436, 461. *(50–60 és 64–79: prompt-nyelvi döntési fa/példa)* | `Kész`, `Piszkozat`, `Folyamatban` |
+| [x] | `02-write-spec.md` | **304–310** — `spec-questions.md` csontváza → `#spec-questions-struktura`. **Kérdés/jelzés:** 35, 326, 343. *(a 77–84. sori ✅/❌ tábla és a 279–287. sori példa-kérdések **illusztratívak** — nem jelöltek)* | `Tervezésre kész`, `Nyitott kérdések vannak`, `Piszkozat`, `Kész`, `Teszt specifikáció`, `Komponensek és viselkedés`, `Hivatkozott fájlok`, `Out of scope`, `Kockázatok`, `Definition of done`, `Regressziós érintettség` |
+| [x] | `03-write-plan.md` | **159–165** — `plan-questions.md` csontváza → `#plan-questions-struktura`. **Kérdés/jelzés:** 117, 184, 876. *(338–342: `[P-…]` példa-címsorok → illusztratív; 133–143: döntési fa)* | a plan `##`/`###` fejlécei: `Tervezett módosítások`, `Teszt specifikáció`, `Tesztelési stratégia`, `Ellenőrzési stratégia`, `Környezeti koordináták`, `Konfiguráció-életút`, `Spec-lefedettség`, `Fordított lefedettség`, `Regressziós érintettség`, `Kockázatok és döntési pontok`, `Végrehajtási sorrend`, `E2E infrastruktúra`, `### Gépi futtatási tábla`, `Érintett komponensek`, `Cél és megközelítés`; státuszok: `Task írásra kész`, `Piszkozat`, `Nyitott kérdések vannak`; `Reviewed` / `Review Required` schema-státusz (angol literál — **döntést kíván**, lásd lent) |
+| [x] | `04-write-tasks.md` | **111–116**, **182–216** (a `tasks.md` csoport/task sablonja — a legnagyobb itt), **234–239**, **265–269** → négy horgony. **Kérdés/jelzés:** 37, 324, 339. *(244–261: prompt-nyelvi)* | `Implementálásra kész`, `Task írásra kész`, `Plan-lefedettség`, `Tervezett módosítások`, `Ellenőrzési stratégia`, `Regressziós érintettség`, a záró csoportok nevei: `Regressziós tesztek felülvizsgálata`, `Dokumentáció` (új kulcs). **A `[RED]`/`[GREEN]`/`[CHECK]`/`[OPS]`/`TREG`/`TLAST`/`⟂` markerek NEM jelöltek** — azonosító-jellegűek, angolul maradnak (13.1) |
+| [x] | `05-analyze.md` | **357–431** — az `analyze-report.md` teljes struktúrája → `#analyze-report-struktura`. **Kérdés/jelzés:** 65, 466–467. *(111–135: döntési fa; **291: az `analyzer` subagentnek átadott fókusz-üzenet → prompt-nyelvi**, 1. tanulság)* | `## Lefedettségi mátrix (generált)`, `Lefedve (gépi)`, `## Leltár` + a leltár-markerek (lásd 9.3.2/4. tanulság), `Validált alap`, `Hurok-napló` (új kulcs), `Összefoglaló`, státuszok: `Piszkozat`, `Tervezésre kész`, `Task írásra kész`, `Implementálásra kész` |
+| [x] | `06-implement.md` | **196–209**, **226–232** — a `check-log.md` sablonjai → két horgony. **Kérdés/jelzés:** 38, 39, 266. *(72–84: prompt-nyelvi)* | `Implementálásra kész`, `Implementálás folyamatban`, `Validálásra kész`, `Kész`, a `check-log.md` oszlopfejlécei (köztük `Mód`), `## Validációs javítások`, `## Review javítások` |
+| [x] | `07-validate.md` | **525–619** — a `validation-report.md` teljes sablonja (a második legnagyobb blokk) → `#validation-report-sablon`. **764–768** — a `[VALIDATE · … · próba 3/3]` **user-facing** megállás-prefix → `#megallas-prefix`. **Kérdés/jelzés:** 49, 792, 840. *(162–167, 186–196, 802–832: ágensnek szóló ábra/checklist → prompt-nyelvi)* | `## Kör N`, `# Validation History`, `## Összegzés`, `### Lépések`, `### Bukott elemek`, `### A kör döntése`, `### Kódreview (RV1)`, `### Megjegyzések` *(a `round-log.py` írja — 10.2/b)*, `## Validációs javítások`, `## Review javítások`, `## Teszt-riportolás`, `Kész`, `Validálásra kész`, `Implementálásra kész`, a riport fejléc-mezői (`Jelenlegi státusz`, `Körök száma`, `Utolsó frissítés`) és értékeik (`folyamatban`, `eszkalálva`, `megállt`) — új kulcsok |
+| [x] | `08-doc-sync.md` | **Vázak (K):** 410–422, 425–434 (`Nem promótált jelöltek` napló), 465–474 (recept-blokk), 611–617 (`doc-sync-questions.md`), 644–647, 649–653 *(vegyes: a 649–653 „Kész példa" — kizárandó)*, 658–660, 665–671, 683–701, 706–708, 710–716, 721–757 (`test-conventions.md` teljes váza), 823–829 → **~10 horgony**. **Kérdés/jelzés:** 55, 872–873. **A „Kész példa" fence-ek (673–679, 771–816, 833–842, 847–849, 851–856) NEM K-jelöltek** | `## 0. Koordináták`, `## Lezárt eltérések`, `Utolsó frissítés: cycle-NN`, `Utolsó futás: cycle-NN`, `Utolsó felülvizsgálat`, `Gazda`, `Lefedve`, `Generátor/scope`, `**Indítás:**`, `**Példa hívás:**`, `Cél` / `Előfeltétel` / `Lépések` / `Elvárt eredmény`, `Hatókör` + `lokális` / `osztott-remote` értékek, `Kötelező riport (TR3)`, a `doc-sync-plan.md` művelet-címkéi (`reconciliation` / `új` / `nincs teendő`), `## DS22 Réteg 1 …`, `## Összesített státusz: …`, `## TC8 kapu …` — **túlnyomó részt új kulcs**; ez a fájl adja a `status-keys.json` `sections` szeletének nagyját |
+| [x] | `09-merge.md` | **Kérdés/jelzés:** 31, 130–131, 184–195 (a záró üzenet, a következő ciklus indító parancsaival) | `## Merge stratégia`, `## Git és branching konvenciók`, `Fő branch`, `Szolgáltató` (új kulcs), `Kész`, `Validálásra kész`, `Piszkozat`, `Kritikus javítandók (Must Fix)`, `Validált alap`, a roadmap lezárás-jelölése (`✅` / `(kész)` — új kulcs) |
+| [x] | `brainstorm.md` | **205–258** — a brainstorm munkafájl teljes csontváza → `#munkafajl-csontvaz`. **Kérdés:** 87 (`.gitignore` felajánlás) | `Folyamatban`, `Lezárva` (a munkafájl státuszai — új kulcs), `Státusz:`, `Utolsó frissítés`, `Indult` (új kulcs), és a munkafájl szekciónevei, ahol a próza rájuk hivatkozik (132, 140, 145, 157, 165, 185): `## 2. Feltárt tények`, `## 3. Alternatívák és trade-offok`, `## 4. Döntések`, `## 5. Nyitott kérdések`, `## 6. Javasolt ciklus-vágás`, `## 7. Napló` (mind új kulcs) |
+| [x] | `cycle-status.md` | — | — *(a TUI státusz-szavai — `Kész`/`Folyamatban`/`KÉSZ`/`KÉSZ*`/`FOLYAMATBAN`/`MÉG NEM FUTOTT` — **csak a `description`-ben** vannak, azt a 8. szakasz kezeli; a `cycle-status.py` oldalán a 10.2/a leltár)* |
+| [x] | `export-doc.md` | **79** — a `.gitignore` felajánló kérdés | `Lefedve` (a 20. sorban idézett fejléc-mező: `Lefedve: cycle-NN-ig · v3`) |
+| [x] | `quick-flow.md` | **31** — a flow-váltás javaslata (user-facing). *(a 73–80. sori `mermaid` fence: ábra a promptban, nem fájlba írt — **nem** jelölt; LG27 szerint a `mermaid` infostring a byte-azonos listán van)* | `Must Fix`, `Suggestion` |
+
+**A skill pass három tanulsága / nyitott pontja:**
+
+6. **A `00-init-project.md` `conventions.md`-sablonja a projekt-nyelvi felület GERINCE.** Ez az
+   egyetlen blokk adja a `status-keys.json` `sections` kulcsainak nagy részét, és minden más
+   fájl erre a fejléc-készletre hivatkozik. **A 9.4-et ezzel a fájllal kezdd**, és a 9.7.1
+   kulcskészletet ebből vezesd le — így a többi fájl leltára már kész kulcsokra hivatkozik.
+7. **⚠ NYITOTT: a `Reviewed` / `Review Required` schema-státusz.** Ma **angol** literál egy
+   egyébként magyar artefaktumban (`plan.md`). Projekt-nyelvi (a plan-be íródik, és a
+   `quality-check-plan.md` illeszt rá), de a `hu` értéke már ma is angol. **Javaslat:** vedd fel
+   a `status-keys.json`-ba `hu` = `en` = `Reviewed` értékkel — így a szerződés egy helyen van,
+   és a `hu` byte-azonos marad (LG9). Ugyanez áll a `Must Fix` / `Suggestion` párra.
+8. **Két tartalmi hiba, amit a leltár felszínre hozott — NE javítsd itt (9.4 fegyelem), de
+   jegyezd fel:**
+   - a `cycle-status.md` 40. sora a `shared-hu/python-cmd.md` szövegét **szó szerint
+     duplikálja** az INCLUDE marker helyett;
+   - a `spec-questions.md` / `plan-questions.md` / `tasks-questions.md` csontváza **három helyen**
+     él (`02`:304–310, `03`:159–165, `shared-hu/questions-tasks.md`:9–15) — a kiemeléskor ez
+     **egyetlen** `lang/<L>/` horgonyba vonható, de az már tartalmi változás: külön kör.
 
 - [ ] **9.4 — Kiemelés fájlonként.** Minden fájlra:
   1. a jelölt blokkok átmozgatása a `prompts/lang/hu/<fájlnév>.md`-be `## <horgony>`
@@ -801,6 +924,14 @@ az információt arról, milyen nyelven kell írni.
 - [ ] **9.5.4 — Az agentek se maradjanak ki.** A `reviewer`, `analyzer`, `analyzer-exec`,
   `doc-sync-planner` és a fixerek **artefaktumba írnak** (`code-review.md`, `analyze-report.md`,
   riportok), tehát nekik is kell.
+
+- [ ] **9.5.5 — A BEDRÓTOZOTT nyelv-mondatok kivezetése (a 9.3 leltár találata).** A
+  `quick-flow.md` **70. sora** ma szó szerint kimondja: *„A ciklus-dokumentumok … nyelve a
+  projekt konvenciójához igazodva **magyar**"*. Ez a 9.5 blokk **konkurens, hardcode-olt
+  változata**: `EN` prompt + `EN` projekt esetén az `en` fába lefordítva („Hungarian") **aktívan
+  hazudna**, és pont az a hibaosztály, ami ellen a 9.5 készül. Ezért: a mondat **kikerül**, a
+  helyére a 9.5.3 `output-language` INCLUDE lép. Grepeld végig a többi fájlt is ugyanerre a
+  mintára (`nyelve`, `magyarul`, `magyar`), mielőtt a 9.6-ra lépsz.
 
 - [ ] **9.6 — A `lang/en/` blokkok.** A `lang/hu/` kész fájljainak fordítása `lang/en/`-be,
   **azonos fájlnevekkel és azonos horgonyokkal**. A státusz-kulcsszavak és az artefaktum-szekció
