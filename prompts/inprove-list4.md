@@ -690,6 +690,19 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
   - a paritás-kapu (11.4) ellenőrzi, hogy a `descriptions.json` kulcskészlete **pontosan** a fa
     `name` mezőinek halmaza, mindkét nyelven.
 
+- [x] **8.8 — A SOR KÖZEPÉN álló marker whitespace-helyes (a 9.4 előfeltétele).** A 8.1
+  buktató-jegyzete („a markereket mindig önálló sorba tedd") **stílusszabály marad**, de nem
+  tartható a 9.4-ben: a 9.3 leltár szerint a user-facing, szó szerint kimondandó mondatok
+  (~69 db) **felsorolás-pontok KÖZEPÉN** állnak, körülöttük instrukcióval — ott a marker
+  szükségszerűen sor közepére kerül, és a régi regex elnyelte volna az előtte lévő szóközt.
+  Ezért a `lead` / `trail` whitespace **külön csoportba** került, és a `_marker_is_standalone()`
+  dönti el, melyik viselkedés jár:
+  - a **saját sorát kitöltő** marker esetén a behúzás és a sorvégi szóköz eltűnik (a mai,
+    blokk-szintű viselkedés — változatlan);
+  - a **sor közepén / elején / végén** álló marker esetén a whitespace **megmarad**.
+  *(Mind a négy eset tesztelve. A 16.1 keret byte-azonos maradt — ma egyetlen inline marker
+  sincs a fában, tehát a változás a jelenlegi kimenetet nem érinti.)*
+
 - [x] **8.7 — A skill-írás egységesítése (a 8.6 hibaosztály megszüntetése).** A `description`
   behelyettesítés az a harmadik dolog, amit két helyen kell elvégezni (az INCLUDE-feloldás és a
   `substitute_scripts_dir` után) — ez előbb-utóbb elcsúszik. **Emeld ki egy közös

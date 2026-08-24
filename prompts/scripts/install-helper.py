@@ -232,7 +232,16 @@ def substitute_scripts_dir(content, platform):
     return content.replace(_SCRIPTS_DIR_PLACEHOLDER, target)
 
 
-_INCLUDE_MARKER_RE = re.compile(r'[ \t]*<!--\s*INCLUDE:\s*(?P<path>[^\s]+?)\s*-->[ \t]*')
+# A marker körüli vízszintes whitespace KÜLÖN csoportban van, mert kétféleképpen
+# kell bánni vele (lásd `_marker_is_standalone`):
+#   - a saját sorában álló marker esetén a behúzás és a sorvégi szóköz ELTŰNIK a
+#     beillesztett blokkal együtt (ez a 8.1 óta a normál, blokk-szintű eset);
+#   - a SOR KÖZEPÉN álló markernél viszont meg kell ŐRIZNI, különben a marker
+#     elnyeli az előtte lévő szóközt (`A: <!-- … -->` → `A:<blokk>`). Erre a 9.4
+#     kiemelésnek van szüksége: a user-facing, szó szerint kimondandó mondatok
+#     jellemzően egy felsorolás-pont KÖZEPÉN állnak, körülöttük instrukcióval.
+_INCLUDE_MARKER_RE = re.compile(
+    r'(?P<lead>[ \t]*)<!--\s*INCLUDE:\s*(?P<path>[^\s]+?)\s*-->(?P<trail>[ \t]*)')
 _shared_include_cache = {}
 
 _lang_fallback_warned = set()
@@ -443,6 +452,17 @@ def prepare_agent_content(agent_file, src_dir, platform):
 
 _MAX_INCLUDE_DEPTH = 5
 
+def _marker_is_standalone(match):
+    """Igaz, ha a marker (a körülötte lévő vízszintes whitespace-szel együtt) a
+    saját sorát tölti ki — tehát sem előtte, sem utána nincs más tartalom a
+    sorban. Csak ilyenkor szabad a whitespace-t elnyelni."""
+    text = match.string
+    before = text.rfind("\n", 0, match.start()) + 1
+    after = text.find("\n", match.end())
+    if after == -1:
+        after = len(text)
+    return not text[before:match.start()].strip() and not text[match.end():after].strip()
+
 def inline_shared_includes(content, src_dir, _depth=0):
     """A skill törzsében lévő `<!-- INCLUDE:shared/... -->` markereket a
     hivatkozott fájl tartalmára cseréli. Ha egy marker fájlja nem található,
@@ -461,7 +481,10 @@ def inline_shared_includes(content, src_dir, _depth=0):
             included = _read_shared_include(src_dir, rel_path)
         except OSError:
             return match.group(0)
-        return inline_shared_includes(included, src_dir, _depth + 1)
+        resolved = inline_shared_includes(included, src_dir, _depth + 1)
+        if _marker_is_standalone(match):
+            return resolved
+        return match.group('lead') + resolved + match.group('trail')
     return _INCLUDE_MARKER_RE.sub(_repl, content)
 
 def _build_alert(model, platform_name, effort=None):
