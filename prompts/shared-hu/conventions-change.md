@@ -9,15 +9,15 @@ A `conventions.md` a **projekt** szintű igazságforrás, és a `00-init-project
 
 | `conventions.md` szekció | Ki olvassa | Mi romlik el, ha nem mozog vele |
 |---|---|---|
-| `## Teszt-riportolás` (artefaktumok, útvonal-alap, riport-parancsok) | `report-gate-check.py` (TR3, 07) | a kapu a régi útvonalon keresi a riportot → FAIL |
+| `## <sec:cv_test_reporting>` (artefaktumok, útvonal-alap, riport-parancsok) | `report-gate-check.py` (TR3, 07) | a kapu a régi útvonalon keresi a riportot → FAIL |
 | `## Sonar` (projekt-kulcs, küszöbök, riport helye) | `sonar-gate.py` (07) | Quality Gate-ellenőrzés hibás projektre/küszöbre fut |
-| `## Teszt eszközök` / teszt-parancsok | `run-tests.py`, `test-runner` (07) | nem létező parancsot futtat |
-| `## Merge stratégia` | `09-merge` | a merge-ág rossz úton próbálkozik |
-| `## Portok`, `## Env változók` | 06/07 futtatás | a teszt más konfigurációval fut, mint a fejlesztés |
+| `## <sec:cv_test_tools>` / teszt-parancsok | `run-tests.py`, `test-runner` (07) | nem létező parancsot futtat |
+| `## <sec:cv_merge_strategy>` | `09-merge` | a merge-ág rossz úton próbálkozik |
+| `## <sec:cv_ports>`, `## <sec:cv_env_vars_short>` | 06/07 futtatás | a teszt más konfigurációval fut, mint a fejlesztés |
 
 **Hogyan módosít egy ciklus konvenciót — a négy feltétel:**
-1. **Explicit döntés,** nem melléktermék: a `spec.md`-ben legyen rá `DoD-NN` pont (vagy legalább a plan `Cél és megközelítés` szekciójában kimondott döntés), hogy a ciklus a konvenciót is megváltoztatja.
-2. **A plan tervezi:** a `conventions.md` érintett szekciója szerepel a `Tervezett módosítások`-ban, a **konkrét új tartalommal** (nem „frissítjük a konvenciókat" jelleggel).
+1. **Explicit döntés,** nem melléktermék: a `spec.md`-ben legyen rá `DoD-NN` pont (vagy legalább a plan `<sec:goal_and_approach>` szekciójában kimondott döntés), hogy a ciklus a konvenciót is megváltoztatja.
+2. **A plan tervezi:** a `conventions.md` érintett szekciója szerepel a `<sec:planned_changes>`-ban, a **konkrét új tartalommal** (nem „frissítjük a konvenciókat" jelleggel).
 3. **Van rá task:** a `tasks.md`-ben külön task szerkeszti a `conventions.md`-t. A marker `[GREEN]` (repo-fájlt módosít), **nem** `[OPS]`.
 4. **A kapu ugyanebben a ciklusban újra fut:** a 07 TELJES köre a frissített `conventions.md`-vel validál — így a változás bizonyítottan működik, nem a következő ciklusra hagyott adósság.
 

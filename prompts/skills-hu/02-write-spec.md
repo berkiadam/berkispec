@@ -3,9 +3,9 @@ phase: 02
 name: bs-write-spec
 description: "berkispec - 02. Használd egy ciklus indításakor (Phase 02) a roadmap alapján, a funkcionális/üzleti követelmények specifikálásához. A ciklus git branch-én dolgozik (a branch a 01 fázisban jött létre 'main'-ről), és létrehozza a 'spec.md'-t ('Tervezésre kész') + a 'spec-questions.md'-t. Előfeltétel: 'specs/roadmap.md' státusz 'Kész'."
 prerequisites:
-  - "specs/roadmap.md státusz: Kész"
+  - "specs/roadmap.md státusz: <status:done>"
 output:
-  - "specs/cycle-NN-<name>/spec.md státusz: Tervezésre kész"
+  - "specs/cycle-NN-<name>/spec.md státusz: <status:ready_for_plan>"
   - "specs/cycle-NN-<name>/spec-questions.md"
   - "specs/cycle-NN-<name>/plan-input-from-prev.md és/vagy tasks-input-from-prev.md (csak ha van átadandó infó, IP1)"
 prev: bs-add-cycles
@@ -31,7 +31,7 @@ Ez a folyamat **2. fázisa (0–9)**: 0-init · 1-ciklusok · **2-spec ←** · 
 
 ---
 
-## Előfeltétel
+## <field:f_prerequisite>
 
 0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — <!-- INCLUDE:lang/common.md#ciklus-beazonositas --> — és várj a válaszra, mielőtt továbblépsz.
 
@@ -39,13 +39,13 @@ Ez a folyamat **2. fázisa (0–9)**: 0-init · 1-ciklusok · **2-spec ←** · 
 
 1.a **Munkafa-ellenőrzés (csak VCS esetén):** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e most vagy folytassam — várj a válaszra. (No-VCS projektben — a `conventions.md` szerint nincs verziókezelő — ez és a lenti branch-lépés kimarad.)
 
-2. **Roadmap ellenőrzés:** Olvasd be a `specs/roadmap.md`-t. **Ha a státusz nem `Kész`, ne kezdj el spec-et írni.** Jelezd a felhasználónak, hogy a roadmap még nem zárult le, és térjenek vissza a `01` ciklusok kezelése fázishoz. Ha a státusz `Kész`, keresd meg a megadott ciklus (`cycle-NN-<cycle-name>`) bejegyzését a roadmap-ben, és használd azt a spec kiindulópontjaként — a viselkedés, az érintett komponensek, az előfeltételek és a teszt kritérium mind alapot adnak a spec részletes kidolgozásához.
+2. **Roadmap ellenőrzés:** Olvasd be a `specs/roadmap.md`-t. **Ha a státusz nem `<status:done>`, ne kezdj el spec-et írni.** Jelezd a felhasználónak, hogy a roadmap még nem zárult le, és térjenek vissza a `01` ciklusok kezelése fázishoz. Ha a státusz `<status:done>`, keresd meg a megadott ciklus (`cycle-NN-<cycle-name>`) bejegyzését a roadmap-ben, és használd azt a spec kiindulópontjaként — a viselkedés, az érintett komponensek, az előfeltételek és a teszt kritérium mind alapot adnak a spec részletes kidolgozásához.
 
 1.b **Visszatérő teszt-elvárások beolvasása (TC1):** ha létezik a `specs/test-conventions.md`, olvasd be — ez a projekt visszatérő teszt-elvárásainak és a hozzájuk tartozó recepteknek az élő regisztere, amit a `08-doc-sync` tart karban. **Guard:** ha a fájl még nem létezik (korai ciklus — még nincs promótálható tétel), **ne állj meg és ne hozd létre** — egy mondatban jelezd, és folytasd. A fájl használata:
-   - a **2. és 3. szekció** tételeiből azt emeld be a `Teszt specifikáció` szekcióba (és — ha valódi elfogadási feltétel — a `Definition of done`-ba), amit **ez a ciklus tényleges elfogadási feltételként vállal**, **viselkedés-szinten**: mit kell ellenőrizni, milyen bemenetre mi a helyes kimenet. **Parancs, tesztfájl-útvonal, eszköznév és build/deploy lépés ide NEM kerül** — az a `plan.md` dolga (a spec/plan határvonal szerint);
-   - a puszta „ne törjön el" jellegű regressziós tételeket **ne** emeld a spec-be — azok a `plan.md` `Regressziós érintettség` táblájába tartoznak, mert nem a ciklus célja;
+   - a **2. és 3. szekció** tételeiből azt emeld be a `<sec:test_specification>` szekcióba (és — ha valódi elfogadási feltétel — a `<sec:definition_of_done>`-ba), amit **ez a ciklus tényleges elfogadási feltételként vállal**, **viselkedés-szinten**: mit kell ellenőrizni, milyen bemenetre mi a helyes kimenet. **Parancs, tesztfájl-útvonal, eszköznév és build/deploy lépés ide NEM kerül** — az a `plan.md` dolga (a spec/plan határvonal szerint);
+   - a puszta „ne törjön el" jellegű regressziós tételeket **ne** emeld a spec-be — azok a `plan.md` `<sec:regression_impact>` táblájába tartoznak, mert nem a ciklus célja;
    - a **0. blokkot** (koordináták: környezetek, URL-ek, teszt-userek, paraméterek) és az **1. szekciót** (receptek, parancsok) csak **kontextusként** olvasod: ebből látod, milyen környezeti korlátok között mozog a ciklus. A spec-be nem kerülnek át.
-   - **Érvénytelenítés jelzése (a 08 bemenete):** ha a ciklus egy meglévő baseline-tételt **érvénytelenít** (megszünteti vagy átalakítja a komponenst, amire hivatkozik), írd ki explicit a `Teszt specifikáció` szekció végén: *„Érvénytelenített baseline tétel: `<ID>` — <miért>."* Ebből tudja a `08-doc-sync` (TC4), hogy a tételt törölni kell a regiszterből. **Magad ne írd a `test-conventions.md`-t** — annak a doc-sync a kizárólagos gazdája.
+   - **Érvénytelenítés jelzése (a 08 bemenete):** ha a ciklus egy meglévő baseline-tételt **érvénytelenít** (megszünteti vagy átalakítja a komponenst, amire hivatkozik), írd ki explicit a `<sec:test_specification>` szekció végén: *„Érvénytelenített baseline tétel: `<ID>` — <miért>."* Ebből tudja a `08-doc-sync` (TC4), hogy a tételt törölni kell a regiszterből. **Magad ne írd a `test-conventions.md`-t** — annak a doc-sync a kizárólagos gazdája.
 
 1.c **Current-truth kiindulás (DS5):** ha létezik a `docs-generated/system-overview.md`, olvasd be — ez a megvalósult (as-built) rendszer konszolidált, naprakész működésleírása, amit a `08-doc-sync` fázis tart karban. A spec a **jelenlegi valóságból** induljon: nézd meg, milyen flow-k/állapot/endpointok léteznek már, hogy az új spec ezekre épüljön, ne ütközzön velük. **Guard:** ha a fájl még nem létezik (korai ciklus / a bootstrap előtt), **ne állj meg** — jelezd egy mondatban, hogy a current-truth doksi még nincs, és folytasd a spec írását a roadmap alapján.
 
@@ -53,7 +53,7 @@ Ez a folyamat **2. fázisa (0–9)**: 0-init · 1-ciklusok · **2-spec ←** · 
 
 2. **Branch-ellenőrzés (a branch a 01-ben jött létre — BD1):** a ciklus feature branch-ét már a **01-add-cycles** fázis létrehozta `main`-ről; a 02 **nem** nyit új branch-et. Verziókezelő mellett:
    - `git branch --show-current` → ha már a ciklus feature branch-én vagy, folytasd itt.
-   - Ha egy másik branch-en vagy, de a ciklusé létezik → válts rá: `git switch feature/cycle-<cycle-name>` (a `conventions.md` `## Git és branching konvenciók` **Branch-elnevezési stratégia** szerinti névvel).
+   - Ha egy másik branch-en vagy, de a ciklusé létezik → válts rá: `git switch feature/cycle-<cycle-name>` (a `conventions.md` `## <sec:cv_git_conventions>` **<field:f_branch_naming>** szerinti névvel).
    - **Fallback** (ha a ciklus branch-e valamiért nem létezik — pl. régi flow vagy megszakadt 01): a branch-nyitó preflight (friss, tiszta `main`) után hozd létre: `git switch -c feature/cycle-<cycle-name>`. Ez kivétel, nem a főszabály — normál esetben a 01 már létrehozta.
    - **No-VCS ágon** (a `conventions.md` szerint nincs verziókezelő) ez a lépés kimarad.
 
@@ -63,7 +63,7 @@ Ez a folyamat **2. fázisa (0–9)**: 0-init · 1-ciklusok · **2-spec ←** · 
 
 ## Feladatod
 
-**Ha már létezik `spec.md` a `specs/cycle-NN-<cycle-name>/` mappában:** olvasd be a `spec.md`-t és a `spec-questions.md`-t (ha létezik). **Nézd meg a `cycle-design-input.md`-t is** — a felhasználó az előző kör óta írhatott bele vagy bővíthette; a benne lévő, a spec-ben még nem tükröződő tételeket a CD1 szabályai szerint dolgozd fel. **Futtasd le a koordináta-kiszűrést (KX)** a meglévő szövegen — egy korábbi futás (vagy egy másik ágens) hagyhatott bent környezeti koordinátát vagy deploy-eljárást; ezeket most helyezd át a `plan-input-from-prev.md`-be. Utána futtasd le a minőségellenőrzést. Ha hiányosságot vagy problémát találsz, vedd fel kérdésként a `spec-questions.md`-be, és állítsd vissza a `spec.md` státuszát a valódi állapotnak megfelelően (`Nyitott kérdések vannak` vagy `Piszkozat`). Utána az iterációs szabályok szerint folytatd.
+**Ha már létezik `spec.md` a `specs/cycle-NN-<cycle-name>/` mappában:** olvasd be a `spec.md`-t és a `spec-questions.md`-t (ha létezik). **Nézd meg a `cycle-design-input.md`-t is** — a felhasználó az előző kör óta írhatott bele vagy bővíthette; a benne lévő, a spec-ben még nem tükröződő tételeket a CD1 szabályai szerint dolgozd fel. **Futtasd le a koordináta-kiszűrést (KX)** a meglévő szövegen — egy korábbi futás (vagy egy másik ágens) hagyhatott bent környezeti koordinátát vagy deploy-eljárást; ezeket most helyezd át a `plan-input-from-prev.md`-be. Utána futtasd le a minőségellenőrzést. Ha hiányosságot vagy problémát találsz, vedd fel kérdésként a `spec-questions.md`-be, és állítsd vissza a `spec.md` státuszát a valódi állapotnak megfelelően (`<status:open_questions>` vagy `<status:draft>`). Utána az iterációs szabályok szerint folytatd.
 
 **Ha még nem létezik `spec.md`:** hozd létre a `specs/cycle-NN-<cycle-name>/` mappában az alábbi struktúra szerint.
 
@@ -94,7 +94,7 @@ Ha egy mondat technológiát, fájlnevet, függvényt vagy konkrét adatszerkeze
 
 A tapasztalat szerint a spec-be leggyakrabban **környezeti koordináták és eljárás-leírások** szivárognak be (dev hostok, localhost-portok, image-nevek, deploy-parancsok), mert „hasznos infónak" tűnnek. **Ezeket aktívan ki kell szűrni** — akkor is, ha **te** írtad az előző körben, és akkor is, ha egy korábbi futás hagyta bent (lásd a „Feladatod" szekció újrafutás-ágát).
 
-**Menj végig a spec teljes szövegén** (minden szekción, a `Teszt specifikáció`-t és a `Célkitűzés`-t is beleértve), és jelöld meg az alábbiakat:
+**Menj végig a spec teljes szövegén** (minden szekción, a `<sec:test_specification>`-t és a `<sec:objective>`-t is beleértve), és jelöld meg az alábbiakat:
 
 | Kiszűrendő (koordináta / eljárás → **plan**) | Marad (szerződés / viselkedés → **spec**) |
 |---|---|
@@ -131,16 +131,16 @@ A `specs/cycle-NN-<cycle-name>/cycle-design-input.md` a **felhasználó saját, 
 **Szabályok:**
 
 1. **Ne írd át és ne pipáld ki a fájlt.** Ez a felhasználó dokumentuma, nem átadó-fájl (`*-input-from-prev.md`) — nincsenek benne `[ ]` tételek, amiket lezárnál. Olvasd, dolgozd fel, hagyd érintetlenül.
-2. **Minden érdemi tétel sorsa legyen követhető.** Amit a design input tartalmaz, annak vagy (a) meg kell jelennie a `spec.md` megfelelő szekciójában, vagy (b) át kell kerülnie a `plan-input-from-prev.md` / `tasks-input-from-prev.md`-be (ha implementációs vagy task-szintű részlet), vagy (c) explicit az `Out of scope` szekcióba kell kerülnie, vagy (d) `spec-questions.md` kérdéssé kell válnia. **Csendben elejteni tilos.**
+2. **Minden érdemi tétel sorsa legyen követhető.** Amit a design input tartalmaz, annak vagy (a) meg kell jelennie a `spec.md` megfelelő szekciójában, vagy (b) át kell kerülnie a `plan-input-from-prev.md` / `tasks-input-from-prev.md`-be (ha implementációs vagy task-szintű részlet), vagy (c) explicit az `<sec:out_of_scope>` szekcióba kell kerülnie, vagy (d) `spec-questions.md` kérdéssé kell válnia. **Csendben elejteni tilos.**
 3. **A KX szabály erre is érvényes.** A design input jellemzően tele van környezeti koordinátával és eljárással (hostok, portok, parancsok) — ezeket **ne másold a spec-be**: a *„Koordináta-kiszűrés (KX)"* szekció szerint a `plan-input-from-prev.md`-be helyezd át, teljes, szó szerinti tartalommal, `_(forrás: cycle-design-input.md)_` megjelöléssel.
-3.a **De a részletességet őrizd meg (KX2).** A design input a felhasználó **legrészletesebb** bemenete — jellemzően ő írja le a legaprólékosabban a teszt-forgatókönyvet és a folyamat lépéseit. A koordináta-csere **nem** ad felhatalmazást a tartalom tömörítésére: ha a design input egy 10 lépéses ellenőrzési szekvenciát ír le, a `spec.md` `Teszt specifikáció` szekciójában **legalább 10 lépés** marad, szimbolikus koordinátákkal. **A felhasználó által részletesen leírt esetet soha ne foglald össze** — a részletvesztés a leggyakoribb és a legdrágább hiba ebben a fázisban, mert a 03/04/06/07 már csak azt látja, ami itt megmaradt. A stílust, a pontatlanságot, a hiányzó lépéseket és a nem logikus sorrendet **javíthatod és bővítheted** (KX2/b) — a design input nyers vázlat, nem szentírás; csak a tartalom-vesztés tilos.
+3.a **De a részletességet őrizd meg (KX2).** A design input a felhasználó **legrészletesebb** bemenete — jellemzően ő írja le a legaprólékosabban a teszt-forgatókönyvet és a folyamat lépéseit. A koordináta-csere **nem** ad felhatalmazást a tartalom tömörítésére: ha a design input egy 10 lépéses ellenőrzési szekvenciát ír le, a `spec.md` `<sec:test_specification>` szekciójában **legalább 10 lépés** marad, szimbolikus koordinátákkal. **A felhasználó által részletesen leírt esetet soha ne foglald össze** — a részletvesztés a leggyakoribb és a legdrágább hiba ebben a fázisban, mert a 03/04/06/07 már csak azt látja, ami itt megmaradt. A stílust, a pontatlanságot, a hiányzó lépéseket és a nem logikus sorrendet **javíthatod és bővítheted** (KX2/b) — a design input nyers vázlat, nem szentírás; csak a tartalom-vesztés tilos.
 4. **A hangnem nem öröklődik (AV1).** A design input a felhasználó nyelvén íródott („szeretném, ha…", „csináljuk úgy, hogy…"); a `spec.md`-be ebből **artefaktum-hangú, eldönthető követelmény** lesz.
 5. **A hiányosság nem hiba.** A design input nem teljes spec — a benne nem érintett területeket a szokásos ambiguitás-vizsgálat és kérdés-flow szerint járd körbe.
 6. **Jelezd a felhasználónak**, hogy feldolgoztad: egy tömör listában, hogy mely tételek hova kerültek (spec szekció / plan-input / out of scope / új `Knn` kérdés).
 
 > **A 03 is beolvassa.** A `cycle-design-input.md`-t a `03-write-plan` szintén automatikusan feldolgozza (a technikai/eljárás-jellegű tartalmát). Ez **nem mentesít** a 3. pont alól: a KX-szel kiszűrt koordinátákat továbbra is helyezd át a `plan-input-from-prev.md`-be, `_(forrás: cycle-design-input.md)_` megjelöléssel — így a 03 egy helyen, lezárandó tételként is látja őket, nem csak a felhasználó nyers szövegében.
 
-**Fix-módban** (05-analyze hurok) a `cycle-design-input.md`-t **csak akkor** olvasod be, ha egy konkrét `Must Fix` a design inputtal való ütközésre hivatkozik — egyébként ne, hogy a hurok ne kezdje elölről a fázist.
+**Fix-módban** (05-analyze hurok) a `cycle-design-input.md`-t **csak akkor** olvasod be, ha egy konkrét `<status:must_fix>` a design inputtal való ütközésre hivatkozik — egyébként ne, hogy a hurok ne kezdje elölről a fázist.
 
 ---
 
@@ -153,13 +153,13 @@ A `specs/cycle-NN-<cycle-name>/cycle-design-input.md` a **felhasználó saját, 
 \`\`\`md
 # Cycle NN: <cím>
 
-**Státusz:** \`Piszkozat\` | \`Nyitott kérdések vannak\` | \`Tervezésre kész\`
+**<field:f_status>:** \`<status:draft>\` | \`<status:open_questions>\` | \`<status:ready_for_plan>\`
 
-## Célkitűzés
+## <sec:objective>
 
 _Mit akarunk elérni ezzel a ciklussal? Egy-két mondat: üzleti vagy technikai cél, és miért szükséges._
 
-## Architektúra / folyamat leírás
+## <sec:architecture_flow>
 
 _Komponensek kapcsolata és az adatfolyam. Ha a ciklus komponenseket érint, készíts Mermaid \`graph\` diagramot. Ha új folyamatot vagy hívási sorrendet vezet be, készíts Mermaid \`sequenceDiagram\`-ot is. Ha egyik sem értelmezhető, hagyd el._
 
@@ -167,27 +167,27 @@ _**Diagram szabályok:**_
 - _Mermaid node labelekben használj \`<br/>\` sortöréshez (a \`\n\` nem renderelődik le)._
 - _Ha az ábra hívási sorrendet ábrázol (pl. \`graph\` folyamatábra, \`sequenceDiagram\`), számozd be a nyilakat ①②③… sorrendben. Ahol a szekvencia nem értelmezhető (pl. statikus architektúra-áttekintő), a számozás elhagyható._
 
-## Komponensek és viselkedés
+## <sec:components_behavior>
 
 _Részletes viselkedési spec komponensenként: API végpontok, request/response formátum, belső logika, hibakezelés._
 
-_Ha egy komponens viselkedésének megértéséhez **olvasandó segédfájl** szükséges (pl. egy meglévő mock szerver vagy shared service), hivatkozd be közvetlenül a leírásánál is. A módosítandó vagy létrehozandó fájlok **nem** kerülnek ide — azok kizárólag a `Hivatkozott fájlok` szekció feladata._
+_Ha egy komponens viselkedésének megértéséhez **olvasandó segédfájl** szükséges (pl. egy meglévő mock szerver vagy shared service), hivatkozd be közvetlenül a leírásánál is. A módosítandó vagy létrehozandó fájlok **nem** kerülnek ide — azok kizárólag a `<sec:referenced_files>` szekció feladata._
 
 _Ha a spec olyan új komponenst vezet be, amelynek technológiai alapdöntései még nyitottak (build rendszer, kommunikációs mód, deployment mechanizmus, runtime/nyelv, stb.), add hozzá a komponens leírásához ezt a jelzést: **„Technológiai alapdöntések tisztázandók a plan fázisban."** — A spec ne specifikálja ezeket a részleteket, csak jelezze, hogy a plan fázisnak erre figyelmet kell fordítania._
 
 _**Döntési kritérium:** Akkor kell a jelzés, ha a komponens projekt struktúrájára, build rendszerére vagy deployment mechanizmusára **nem tudsz egyértelműen egy meglévő komponenst mutatni mintaként a repóban**. Ha van már hasonló komponens (pl. egy újabb Fastify app, ahol már létezik minta), a jelzés elhagyható. Ha nincs (pl. az első Java projekt, az első gRPC service), a jelzés kötelező._
 
-## Out of scope
+## <sec:out_of_scope>
 
 _Mi NEM tartozik ebbe a ciklusba. Explicit felsorolás — megakadályozza a scope creep-et._
 
-## Hivatkozott fájlok
+## <sec:referenced_files>
 
 _Dokumentációs és specifikációs anyagok: README-k, HOW-TO-k, OpenAPI leírók, Avro sémák, DB migrációk, meglévő spec fájlok, viselkedés-referencia szkriptek (pl. mock szerver, amelyet olvasni kell a viselkedés megértéséhez). **Forrásfájlok (.ts, .tsx, .js, package.json, stb.) nem kerülnek ide — azok a plan fázisban kerülnek azonosításra. A fájlok elérési útjai/linkjei mindig a fájl aktuális könyvtárához képest relatív útvonalak legyenek (a mappa mélységének megfelelő számú visszalépéssel a projekt gyökeréig, pl. `../../apps/legacy-login/README.md`), abszolút útvonalak vagy `file://` sémájú linkek nem használhatók.**_
 
 _Ha a ciklus REST API-t, üzenetsor-üzenetet, cache struktúrát vagy DB sémát érint, és már léteznek formális leírók (OpenAPI YAML, Avro schema, Redis key map, DB migration), hivatkozd be őket itt. A plan fázis ezeket fogja validálni vagy — ha nem léteznek — generálni._
 
-## Teszt specifikáció
+## <sec:test_specification>
 
 _Tesztadatok, tesztelendő esetek (happy path + hibaesetek), kötelező viselkedési ellenőrzések._
 
@@ -195,7 +195,7 @@ _**Eset-orientált, nem eljárás-orientált.** Azt írod le, **minek kell igazn
 
 _**🔴 Ne zanzásítsd a teszteseteket (KX2).** Ha a bemenet — a felhasználó `cycle-design-input.md`-je, a `spec-input-from-prev.md`, a roadmap vagy egy meglévő teszt — **részletes teszt-forgatókönyvet** ad (többlépéses ellenőrzési szekvencia, elágazások, közbenső állapotok, konkrét bemenet→elvárt kimenet párok), azt **teljes részletességgel őrizd meg**: minden lépés, a köztes ellenőrzések és az elvárt eredmények maradjanak meg. Kizárólag a **koordinátákat** cseréld szimbolikus hivatkozásra (`{PUBLIC_BASE_URL}`, `{MEDIA_BASE_URL}`, `{TEST_USER}`) — a **logikai tartalmat ne egyszerűsítsd le**, ne vond össze a lépéseket, és ne cseréld „a folyamat végigfut" típusú összefoglalóra._
 
-_**Formázási tipp, ami a 03-at védi:** a kidolgozott artefaktumot (OpenAPI-részlet, teljes JSON payload, DDL, `curl`) tedd **kódblokkba** a megfelelő nyelv-jelöléssel (```yaml`, ```json`, ```sql`). A `05-analyze` mechanikus kapuja így **gépiesen ellenőrzi** (`V1` check), hogy a 03 szó szerint át is vette-e — csonkítás esetén `Must Fix` lesz belőle, nem kell észrevenni._
+_**Formázási tipp, ami a 03-at védi:** a kidolgozott artefaktumot (OpenAPI-részlet, teljes JSON payload, DDL, `curl`) tedd **kódblokkba** a megfelelő nyelv-jelöléssel (```yaml`, ```json`, ```sql`). A `05-analyze` mechanikus kapuja így **gépiesen ellenőrzi** (`V1` check), hogy a 03 szó szerint át is vette-e — csonkítás esetén `<status:must_fix>` lesz belőle, nem kell észrevenni._
 
 _**Amit viszont szabad — és kell (KX2/b):** átfogalmazni a felhasználó szövegét artefaktum-hangúra; pontatlanságot, kétértelműséget, inkonzisztens elnevezést javítani; **hiányos lépést kifejteni** (hiányzó köztes ellenőrzés, meg nem adott elvárt eredmény pótlása — ha nem tudod, mi a helyes, `spec-questions.md` kérdés lesz belőle); **nem logikus sorrendet átrendezni** (ha egy lépés később előálló állapotra épül). Az irány **bővítés és pontosítás** — összevonás és elhagyás nem. A nem triviális átrendezést/beszúrást jelezd a felhasználónak._
 
@@ -212,11 +212,11 @@ _A **teszt-szintek** (unit / integrációs / E2E) megnevezése rendben van, ha a
 
 _Ha létezik `specs/test-conventions.md`: a 2./3. szekció azon tételei, amelyeket ez a ciklus elfogadási feltételként vállal — **viselkedés-szinten**, a tétel ID-jára hivatkozva (pl. „I01 — a token-csere a `<scope>` scope-pal 200-at ad"). Parancs, tesztfájl-útvonal és eszköznév ide nem kerül (TC1). A ciklus által **érvénytelenített** baseline tételeket a szekció végén explicit írd ki._
 
-## Kockázatok
+## <sec:risks>
 
 _Mi sülhet el rosszul? Milyen feltételezéseken alapul a spec? Elfogadott POC korlátok, nyitott technikai kockázatok._
 
-## Definition of done
+## <sec:definition_of_done>
 
 _Ellenőrizhető, pipálható feltételek. Minden pont legyen konkrét és egyértelműen eldönthető (igen/nem)._
 
@@ -228,7 +228,7 @@ _Ellenőrizhető, pipálható feltételek. Minden pont legyen konkrét és egyé
 
 > **A bizonyíték-mező (DI2) — erősen ajánlott.** Minden DoD-ponthoz nevezd meg, **mi bizonyítja** a teljesülését: egy **tesztnév** (a `plan.md` teszt-specifikációjából), egy **`cmd:` parancs**, vagy — ha tényleg csak kézzel ellenőrizhető — `manual: <mit>`. A `07-validate` a `dod-check.py`-jal **gépi join**-nal értékeli ki ezeket a kör futási eredményeivel: bizonyítékkal bíró pontnál nincs szükség LLM-ítéletre, és nem fordulhat elő emlékezetből adott ✓. Bizonyíték nélküli pont nem hiba, de a 07 `?`-lel jelöli, és kézi ítéletet kér rá — ha sok ilyen van, az a spec ellenőrizhetőségének gyengeségét jelzi. *(A bizonyíték itt **viselkedés-szintű megnevezés**, nem tesztfájl-útvonal vagy futtatási parancs-részlet — a spec/plan határvonal érvényes marad; a `cmd:` alak is csak akkor indokolt, ha nincs hozzá teszteset.)*
 
-> **A `DoD-NN` azonosító kötelező és stabil (DI1).** Minden DoD-pont saját, sorfolytonos azonosítót kap (`DoD-01`, `DoD-02`, …), és ez az azonosító **soha nem változik meg** a ciklus során — a `07-validate` ezzel a névvel naplózza a bukott DoD-pontokat a `# Validation History`-ba, és ezen a néven számolja a 3-próba leállást. Ha egy pont utólag beszúrásra kerül, a következő szabad számot kapja (ne számozd újra a listát); ha egy pont törlődik, a száma nem használható újra. Parafrazeált vagy azonosító nélküli DoD-pontnál a hurok leállító-mechanizmusa csendben elromlik.
+> **A `DoD-NN` azonosító kötelező és stabil (DI1).** Minden DoD-pont saját, sorfolytonos azonosítót kap (`DoD-01`, `DoD-02`, …), és ez az azonosító **soha nem változik meg** a ciklus során — a `07-validate` ezzel a névvel naplózza a bukott DoD-pontokat a `# <sec:validation_history>`-ba, és ezen a néven számolja a 3-próba leállást. Ha egy pont utólag beszúrásra kerül, a következő szabad számot kapja (ne számozd újra a listát); ha egy pont törlődik, a száma nem használható újra. Parafrazeált vagy azonosító nélküli DoD-pontnál a hurok leállító-mechanizmusa csendben elromlik.
 
 ---
 
@@ -262,7 +262,7 @@ Ha a spec fázis megszakad és új sessionban folytatódik:
    → Folytasd az első [ ] státuszú kérdéstől.
 
 2. Olvasd be a spec.md aktuális állapotát.
-   → Ha van [ ] nyitott kérdés: a státusz "Nyitott kérdések vannak".
+   → Ha van [ ] nyitott kérdés: a státusz "<status:open_questions>".
    → Ha minden kérdés [x], de nincs user megerősítés: futtasd a
      minőségellenőrzést, majd kérj megerősítést (ne állítsd Tervezésre késznek).
 
@@ -310,9 +310,9 @@ Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Kn
 
 ### Státusz átmenetek (spec.md státusz mező)
 
-- Új spec indításakor: `Piszkozat`
-- Ha van legalább egy `[ ]` státuszú kérdés a `spec-questions.md`-ben: `Nyitott kérdések vannak`
-- Ha minden kérdés `[x]` státuszú és a minőségellenőrzés átment, és a user explicit megerősítette: `Tervezésre kész`
+- Új spec indításakor: `<status:draft>`
+- Ha van legalább egy `[ ]` státuszú kérdés a `spec-questions.md`-ben: `<status:open_questions>`
+- Ha minden kérdés `[x]` státuszú és a minőségellenőrzés átment, és a user explicit megerősítette: `<status:ready_for_plan>`
 
 ### Iterációs szabályok
 
@@ -321,7 +321,7 @@ Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Kn
 3. Ha a válasz új kérdést nyit meg: azonnal vedd fel a `spec-questions.md` lista végére a következő `Knn` számmal, mielőtt folytatnád.
 4. Addig iterálj, amíg minden kérdés `[x]` státuszban van.
 5. Ha minden kérdés lezárt, futtasd le a minőségellenőrzést. Ha átment, **tedd fel a kérdést a felhasználónak**: <!-- INCLUDE:lang/02-write-spec.md#statusz-megerosites --> — Ne állítsd át a státuszt a megerősítés előtt. **A válasz végén helyezd el a `spec.md` közvetlen, kattintható linkjét.**
-6. Ha a felhasználó explicit megerősíti (pl. "igen", "kész", "mehet"), állítsd a `spec.md` státuszát `Tervezésre kész`-re, **és azonnal commitolj** — lásd a lenti *Fázis-záró commit* szekciót (`<FÁZIS-TAG>` = `02-spec`). Megerősítés → státuszírás → commit: ez egyetlen lépéssor.
+6. Ha a felhasználó explicit megerősíti (pl. "igen", "kész", "mehet"), állítsd a `spec.md` státuszát `<status:ready_for_plan>`-re, **és azonnal commitolj** — lásd a lenti *Fázis-záró commit* szekciót (`<FÁZIS-TAG>` = `02-spec`). Megerősítés → státuszírás → commit: ez egyetlen lépéssor.
 
 Minden iteráció indítható új kontextussal: elég a `spec.md` és a `spec-questions.md` aktuális állapota + ez a prompt. Újraindításkor olvasd be a `spec-questions.md`-t, és folytasd az első `[ ]` státuszú kérdéstől.
 
@@ -332,11 +332,11 @@ Minden iteráció indítható új kontextussal: elég a `spec.md` és a `spec-qu
 Ha az alábbiak bármelyike teljesül, **STOP — állj meg és ne lépj tovább**:
 
 - **Van `[ ]` státuszú kérdés a `spec-questions.md`-ben** — tegyél fel egyet a felhasználónak, várj a válaszra, majd folytasd. Ne tegyél fel több kérdést egyszerre.
-- **A minőségellenőrzés hibát talált** — javítsd a hibát, majd futtasd újra. Ne állítsd `Tervezésre kész`-re a státuszt, amíg nem ment át.
-- **A felhasználó megerősítése hiányzik** — a státusz `Tervezésre kész`-re csak explicit megerősítés után állítható. Ne állítsd át kérdezés nélkül.
+- **A minőségellenőrzés hibát talált** — javítsd a hibát, majd futtasd újra. Ne állítsd `<status:ready_for_plan>`-re a státuszt, amíg nem ment át.
+- **A felhasználó megerősítése hiányzik** — a státusz `<status:ready_for_plan>`-re csak explicit megerősítés után állítható. Ne állítsd át kérdezés nélkül.
 - **A spec plan-tartalmú elemet tartalmaz** (pl. technológiaválasztás, implementációs részlet, konkrét fájlterv) — töröld, nem spec-be való.
-- **A státusz `Tervezésre kész`, de a fázis-záró commit hiányzik** (VCS-es projekt, `git log -1 --oneline` nem a `cycle-NN: 02-spec` commitot mutatja) — először commitolj a *Fázis-záró commit* szerint, csak utána zárd le a fázist.
-- **A státusz már `Tervezésre kész`** (és a commit megvan) — állj meg. Ne kezdj plan-t vagy task listát. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
+- **A státusz `<status:ready_for_plan>`, de a fázis-záró commit hiányzik** (VCS-es projekt, `git log -1 --oneline` nem a `cycle-NN: 02-spec` commitot mutatja) — először commitolj a *Fázis-záró commit* szerint, csak utána zárd le a fázist.
+- **A státusz már `<status:ready_for_plan>`** (és a commit megvan) — állj meg. Ne kezdj plan-t vagy task listát. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
 <!-- INCLUDE:lang/02-write-spec.md#zaro-uzenet -->
 > **A válasz végén helyezd el a `spec.md` közvetlen, kattintható linkjét.**
 
@@ -347,17 +347,17 @@ Ha az alábbiak bármelyike teljesül, **STOP — állj meg és ne lépj tovább
 
 | Állapot | Feltétel |
 |---|---|
-| `Piszkozat` | Spec indításakor |
-| `Nyitott kérdések vannak` | Van legalább egy `[ ]` kérdés a `spec-questions.md`-ben |
-| `Tervezésre kész` | Minden kérdés `[x]` + minőségellenőrzés átment + **felhasználó explicit megerősítette** |
+| `<status:draft>` | Spec indításakor |
+| `<status:open_questions>` | Van legalább egy `[ ]` kérdés a `spec-questions.md`-ben |
+| `<status:ready_for_plan>` | Minden kérdés `[x]` + minőségellenőrzés átment + **felhasználó explicit megerősítette** |
 
-A `Tervezésre kész`-re váltás után **kötelező** git commit (`cycle-NN: 02-spec`) — az eljárást lásd a *Fázis-záró commit* szekcióban. Ne állítsd át a státuszt megerősítés nélkül.
+A `<status:ready_for_plan>`-re váltás után **kötelező** git commit (`cycle-NN: 02-spec`) — az eljárást lásd a *Fázis-záró commit* szekcióban. Ne állítsd át a státuszt megerősítés nélkül.
 
 <!-- INCLUDE:shared/phase-commit.md -->
 
-A fenti blokkban a `<FÁZIS-TAG>` értéke ebben a fázisban: **`02-spec`**, a záró státusz: **`Tervezésre kész`**.
+A fenti blokkban a `<FÁZIS-TAG>` értéke ebben a fázisban: **`02-spec`**, a záró státusz: **`<status:ready_for_plan>`**.
 
-> **Kész lifecycle:** a `spec.md` a `Tervezésre kész` után a ciklus végén — amikor a validate (07) PASS lezárja a ciklust — `Kész` státuszra lép. A 08 fázis már `Kész`-t vár. Ezt az átmenetet a 07 végzi, itt nem.
+> **Kész lifecycle:** a `spec.md` a `<status:ready_for_plan>` után a ciklus végén — amikor a validate (07) PASS lezárja a ciklust — `<status:done>` státuszra lép. A 08 fázis már `<status:done>`-t vár. Ezt az átmenetet a 07 végzi, itt nem.
 
 ---
 

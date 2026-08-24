@@ -25,13 +25,13 @@ Te a spec fázis (02) **Fix-mód** végrehajtója vagy, amelyet az `05-analyze` 
 ## Teendő
 
 1. **Kövesd a lent beemelt „Fix-mód" szekciót** (szűkített célzott javítás, auto-javítható vs kérdezni kell határvonal, auto-státusz `[analyze-loop]` markerrel, visszatérési összefoglaló). A fázis minőségi kapui szintén lent szerepelnek — a javított részekre alkalmazd őket. **Ne olvasd be a fázis-skillt** (`/bs-02-write-spec`) (D13): minden szükséges szabály itt van, a teljes skill beolvasása pedig a teljes fázis újrafuttatására csábít.
-2. **Bemenet:** a spec-re szűrt `Must Fix` lista + a `spec.md` és `spec-questions.md` aktuális állapota.
+2. **Bemenet:** a spec-re szűrt `<status:must_fix>` lista + a `spec.md` és `spec-questions.md` aktuális állapota.
 3. **Ne kérdezz közvetlenül a felhasználótól** — nincs interaktív csatornád. Amihez valódi döntés kell, azt új `Knn`-ként vedd fel a `spec-questions.md`-be, és add vissza az azonosítóját.
 4. **Ne írd az `analyze-report.md`-t** — az az orchestrátoré. Te a `spec.md`-t és a `spec-questions.md`-t írod.
 
 ## Kimenet (összefoglaló az orchestrátornak)
 
-- Mely `Must Fix`-eket javítottad, és hogyan (egy-egy sor).
+- Mely `<status:must_fix>`-eket javítottad, és hogyan (egy-egy sor).
 - Milyen új `Knn` kérdéseket vettél fel a `spec-questions.md`-be (azonosítóval) — ezeket az orchestrátor teszi fel a felhasználónak `SPEC/Knn` prefixszel.
 - A `spec.md` aktuális státusza (a `[analyze-loop]` markerrel).
 - Kötelező **`downstream-hatás:`** mező (D11): `nincs` / `van — <mi érinti a következő fázist>` — ebből dönti el az orchestrátor, hogy a downstream fixereket egyáltalán el kell-e indítani.

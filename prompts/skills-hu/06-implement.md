@@ -3,12 +3,12 @@ phase: 06
 name: bs-implement
 description: "berkispec - 06. Használd, ha az analyze-report.md 'PASS' (Phase 06), a tényleges kódfejlesztéshez. Végrehajtja a tervezett kódmódosításokat a feladatlista alapján, és közben vezeti a 'tasks.md'-t, amíg az el nem éri a 'Validálásra kész' állapotot."
 prerequisites:
-  - "specs/cycle-NN-<name>/tasks.md státusz: Implementálásra kész"
+  - "specs/cycle-NN-<name>/tasks.md státusz: <status:ready_for_implement>"
   - "specs/cycle-NN-<name>/analyze-report.md státusz: PASS"
 output:
   - "Implementált kód"
   - "specs/cycle-NN-<name>/test-report/implement/check-log.md — a [CHECK] futások append-only naplója (TR5)"
-  - "specs/cycle-NN-<name>/tasks.md státusz: Validálásra kész"
+  - "specs/cycle-NN-<name>/tasks.md státusz: <status:ready_for_validate>"
 prev: bs-analyze
 next: bs-validate
 subagents:
@@ -28,11 +28,11 @@ Ez a folyamat **6. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 
 ---
 
-## Előfeltétel
+## <field:f_prerequisite>
 
 0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — <!-- INCLUDE:lang/common.md#ciklus-beazonositas --> — és várj a válaszra, mielőtt továbblépsz.
 
-1. Olvasd be a `tasks.md` státuszát. **Ha a státusz nem `Implementálásra kész`, ne kezdj implementálni.** Jelezd a felhasználónak, hogy a tasks lista még nem zárult le.
+1. Olvasd be a `tasks.md` státuszát. **Ha a státusz nem `<status:ready_for_implement>`, ne kezdj implementálni.** Jelezd a felhasználónak, hogy a tasks lista még nem zárult le.
 
 2. **Munkafa-ellenőrzés (csak VCS esetén):** futtasd: `git status --short`. Ha van commitálatlan változtatás:
    - Listázd ki az érintett fájlokat.
@@ -51,7 +51,7 @@ Ez a folyamat **6. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 
    - **Ha van másik worktree `cycle-*` branch-en** → **STOP.** Egy másik ciklus még nyitott: vagy azt kell végigvinni a `09`-ig, vagy ezt a ciklust kell megvárni. Ne kezdj implementálni, és ne javasolj `--force`-os megkerülést.
    - **Ha linked worktree-ben vagyunk** (a `git rev-parse --git-common-dir` nem `.git`) → **STOP.** A `06`–`09` a **fő** worktree-ben fut (ott lakik a `main`, amit a `09` igényel). A visszaköltözés lépéssorát lásd a *Párhuzamos ciklusok* blokk PW2/3. pontjában.
-   - **Ha a `main` előrement** a ciklus ágának elágazása óta (a `git log` nem üres), **vagy** ha az `analyze-report.md` **`Validált alap`** mezőjében szereplő fő branch SHA nem egyezik a jelenlegivel (`git rev-parse origin/main`) → **STOP.** Az `analyze-report.md` `PASS`-a a **régi** alapon készült. Futtasd újra az `05-analyze`-t (`/bs-analyze input: @specs/cycle-NN-<cycle-name>`) — az hozza be a friss fő branch-et (BR1) és validál rajta. `PASS` után térj vissza ide; magad ne rebase-elj.
+   - **Ha a `main` előrement** a ciklus ágának elágazása óta (a `git log` nem üres), **vagy** ha az `analyze-report.md` **`<field:f_validated_base>`** mezőjében szereplő fő branch SHA nem egyezik a jelenlegivel (`git rev-parse origin/main`) → **STOP.** Az `analyze-report.md` `PASS`-a a **régi** alapon készült. Futtasd újra az `05-analyze`-t (`/bs-analyze input: @specs/cycle-NN-<cycle-name>`) — az hozza be a friss fő branch-et (BR1) és validál rajta. `PASS` után térj vissza ide; magad ne rebase-elj.
    - **Egyébként** (egyetlen worktree, friss alap) → folytasd.
 
 <!-- INCLUDE:shared/parallel-cycles.md -->
@@ -66,7 +66,7 @@ Implementáld a `tasks.md` taskjait sorban, egyenként.
 
 **Folytatás megszakított futás után:** az implementáció bármikor félbeszakadhat — akár az első task közepén is, mielőtt bármit pipáltak volna. Mindig ellenőrizd a tényleges kód állapotát, ne csak a jelöléseket.
 
-**Két forrásból érkezhet visszalépés ide — mindkettő a 07-validate FAIL ágáról:** (a) teszt-/Sonar-/DoD-hiba (`## Validációs javítások` taskok a `tasks.md` végén), vagy (b) kódreview-finding (`## Review javítások` taskok + `test-report/code-review.md`). Mindkét esetben a `tasks.md` végén lévő új taskok az elvégzendők; a review-ágon olvasd be a `test-report/code-review.md`-t is (lásd a Kontextus betöltési szabályok és a Végrehajtási szabályok 2. pontját). Az alábbi döntési fa ugyanúgy érvényes — a kód tényleges állapotából indulj ki.
+**Két forrásból érkezhet visszalépés ide — mindkettő a 07-validate FAIL ágáról:** (a) teszt-/Sonar-/DoD-hiba (`## <sec:validation_fixes>` taskok a `tasks.md` végén), vagy (b) kódreview-finding (`## <sec:review_fixes>` taskok + `test-report/code-review.md`). Mindkét esetben a `tasks.md` végén lévő új taskok az elvégzendők; a review-ágon olvasd be a `test-report/code-review.md`-t is (lásd a Kontextus betöltési szabályok és a Végrehajtási szabályok 2. pontját). Az alábbi döntési fa ugyanúgy érvényes — a kód tényleges állapotából indulj ki.
 
 Döntési fa a folytatáshoz — **ebben a sorrendben**:
 
@@ -89,7 +89,7 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
 ## Kontextus betöltési szabályok
 
 - Implementálás megkezdése előtt olvasd be a `tasks.md`-t, majd a benne felsorolt **Prerequisite dokumentumokat**. Ezek tartalmazzák a függvényszignatúrákat, interfészeket, hibakezelési logikát.
-- **Review visszacsatolás:** Ha a `tasks.md` tartalmaz review-ból származó javítási feladatokat (a 07 review-kapuja `Must Fix`-et talált), olvasd be a `specs/cycle-NN-<cycle-name>/test-report/code-review.md` fájlt is, hogy megértsd a javítások kontextusát és elvárásait.
+- **Review visszacsatolás:** Ha a `tasks.md` tartalmaz review-ból származó javítási feladatokat (a 07 review-kapuja `<status:must_fix>`-et talált), olvasd be a `specs/cycle-NN-<cycle-name>/test-report/code-review.md` fájlt is, hogy megértsd a javítások kontextusát és elvárásait.
 - Minden tasknál **csak az adott taskban megnevezett forrásfájlokat** olvasd be — és csak a releváns részeiket. A task logikai kontextusa a Prerequisite dokumentumokban van.
 - Ne olvasd be a spec-et.
 - **Forrás lokalizálás**: ha a task komponenst vagy függvényt nevez meg, de a pontos fájl/sor nem ismert — hívd a `researcher` subagentet (`agents/researcher.md`, Mód B) a kereséshez. A subagent visszaadja a path-t és a releváns sorokat, nem a teljes fájlt.
@@ -124,7 +124,7 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
 
 1. Vedd a következő elvégzetlen taskot (`- [ ]`).
 
-2. **Visszalépés kódreview-ból (07):** Ha a ciklus a 07 review-kapujának `Must Fix` findingjai miatt került vissza ide, a `tasks.md` végén lévő új feladatokat a `test-report/code-review.md` kritikus észrevételei alapján végezd el. A javítások után a záró `[CHECK]` feladatok újbóli futtatása és commitolása kötelező.
+2. **Visszalépés kódreview-ból (07):** Ha a ciklus a 07 review-kapujának `<status:must_fix>` findingjai miatt került vissza ide, a `tasks.md` végén lévő új feladatokat a `test-report/code-review.md` kritikus észrevételei alapján végezd el. A javítások után a záró `[CHECK]` feladatok újbóli futtatása és commitolása kötelező.
 
 3. **Fejezet-szintű előfeltétel ellenőrzés:** A `tasks.md`-ben a fejezetek `##` szintű blokkokra tagolódnak. (Ha egy task nem esik egyetlen `##` blokkba sem — pl. a lista elején áll fejezetcím nélkül —, kezeld önálló, előfeltétel nélküli taskként, és folytasd a 4. ponttal.) Ha a kiválasztott task az adott fejezet (adott `##` blokk) első elvégzetlen taskja (vagyis a fejezeten belül ez az első `- [ ]`): keresd meg a fejezet fejlécét a `tasks.md`-ben, és nézd meg, hogy közvetlenül alatta van-e `> **Gépi előfeltétel:**` blokk. Ha van: olvasd el a feltételeket, és döntsd el, hogy teljesülnek-e. Ha nem teljesülnek: állj meg, és jelezd a felhasználónak pontosan, mit kell beállítani: *„A(z) [fejezet neve] fejezet megkezdéséhez a következő feltételeknek kell teljesülniük: [feltételek]. Teljesülnek-e ezek?"* — várj a válaszra, mielőtt egyetlen taskot is elkezdenél a fejezetből.
 
@@ -201,11 +201,11 @@ Minden esetben csak **egy** kérdést tegyél fel, várj a válaszra, majd folyt
 **Oszlopok:**
 - **Idő** — konkrét string (`YYYY-MM-DD HH:MM`). Shell-behelyettesítés platformfüggő: bash/zsh → `$(date '+%Y-%m-%d %H:%M')`, PowerShell → `(Get-Date -Format 'yyyy-MM-dd HH:mm')`. Ha nem tudod megállapítani, `—` is elfogadható; a többi oszlop a lényeg.
 - **Próba** — hányadik kísérlet a 3-próba szabályból (8. pont): `1/3`, `2/3`, `3/3`. Ez teszi utólag láthatóvá, hogy egy csoport nehezen ment át.
-- **Mód** — `normál` \| `validate-loop` (a 07 önjavító hurka — teszt- és review-javítás egyaránt). A fix-módban futtatott `[CHECK]`-eket **ugyanígy naplózod**, a megfelelő markerrel — így a javító körök is nyomot hagynak.
+- **<field:f_mode>** — `normál` \| `validate-loop` (a 07 önjavító hurka — teszt- és review-javítás egyaránt). A fix-módban futtatott `[CHECK]`-eket **ugyanígy naplózod**, a megfelelő markerrel — így a javító körök is nyomot hagynak.
 - **Parancs** — a ténylegesen kiadott parancs **szó szerint**, nem a task szövegében szereplő idealizált változat.
 - **Eredmény** — `✓`/`✗` + a futtató darabszámai (`X passed / Y failed / Z skipped`), bukásnál a bukott teszt(ek) neve rövid hibaüzenettel. **Ha a parancs nem teszt** (build, lint, typecheck), a darabszám helyett a lényegi kimenet egy sora (pl. `0 errors`).
 
-**Megjegyzések szekció** — ide kerül minden olyan körülmény, ami a futást befolyásolta, de nem fér a táblába: átmeneti port-csere (és hogy visszaállt-e — 8. pont portütközés-szabálya), kézzel indított/leállított konténer, kihagyott ellenőrzés és annak indoka.
+**<sec:notes> szekció** — ide kerül minden olyan körülmény, ami a futást befolyásolta, de nem fér a táblába: átmeneti port-csere (és hogy visszaállt-e — 8. pont portütközés-szabálya), kézzel indított/leállított konténer, kihagyott ellenőrzés és annak indoka.
 
 ---
 
@@ -226,7 +226,7 @@ Ha a fájl már létezik, append-elj — ne írd felül a korábbi bejegyzéseke
 _(Emlékeztető a 03-plan `README.md` követelményéről — itt a végrehajtás történik, nem új követelmény.)_ Ha egy task új komponenst hoz létre (új alkalmazás, új service, új önálló modul), a komponens gyökér mappájában kötelező létrehozni egy `README.md` fájlt. Tartalma:
 
 - **Mit csinál** — egy-két mondat a komponens felelősségéről
-- **Indítás** — konkrét parancs(ok) a helyi futtatáshoz
+- **<field:f_startup>** — konkrét parancs(ok) a helyi futtatáshoz
 - **Port** — milyen porton hallgatózik
 - **Debug** — ha értelmes: hogyan kell debuggolni, milyen debug portot használ
 - **Logok** — milyen eseményeket naplóz, milyen log szintek vannak
@@ -239,8 +239,8 @@ A README.md az implementáció része — nem utólagos dokumentáció. Akkor ke
 
 ## Státusz kezelés
 
-- Implementálás közben: `Implementálás folyamatban`
-- Ha minden task `[x]`: frissítsd a `tasks.md` státuszát `Validálásra kész`-re, és **commitold ezt az állapotváltozást** (a végső státusz külön legyen rögzítve) — a `check-log.md` utolsó bejegyzéseivel együtt:
+- Implementálás közben: `<status:implement_in_progress>`
+- Ha minden task `[x]`: frissítsd a `tasks.md` státuszát `<status:ready_for_validate>`-re, és **commitold ezt az állapotváltozást** (a végső státusz külön legyen rögzítve) — a `check-log.md` utolsó bejegyzéseivel együtt:
   ```bash
   git add specs/cycle-NN-<cycle-name>/tasks.md \
           specs/cycle-NN-<cycle-name>/test-report/implement/check-log.md \
@@ -248,7 +248,7 @@ A README.md az implementáció része — nem utólagos dokumentáció. Akkor ke
   ```
   **Ellenőrzés a státuszváltás előtt:** a `check-log.md` létezik, és minden csoportzáró `[CHECK]`-hez tartozik benne legalább egy sor. Ha egy csoport `[x]`, de a naplóban nincs hozzá bejegyzés, a bizonyíték hiányzik — pótold a naplósort a tényleges futtatás alapján (ne emlékezetből: ha nem tudod, futtasd újra a `[CHECK]`-et).
 
-Ha a státusz `Validálásra kész`, állj meg. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
+Ha a státusz `<status:ready_for_validate>`, állj meg. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
 <!-- INCLUDE:lang/06-implement.md#zaro-uzenet -->
 > **A válasz végén helyezd el a `tasks.md` és a `check-log.md` közvetlen, kattintható linkjét** — a fázis egyetlen megállás-jelzője ez (IM1).
 

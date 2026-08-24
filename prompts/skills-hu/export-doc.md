@@ -18,7 +18,7 @@ Ez **nem fázis**, hanem segédparancs: bármikor futtatható, nincs előfeltét
   - `docs-generated/system-overview.md` → `export/system-overview-v<N>.pdf`
 - **Paraméterrel:** a megnevezett fájl(ok)ból — ha a felhasználó azt kéri, hogy „még ebből is", akkor a két defaultból **és** a megnevezettekből.
 - **Verziószám:** fájlonként **független** — az `export/` mappában lévő `<név>-v<N>.pdf` fájlok maximuma + 1, üres mappánál `v1`. Ezt a script számolja, **ne számold te**.
-- A **ciklus** nem a fájlnévbe kerül, hanem a PDF **címlapjára** (`Lefedve: cycle-NN-ig · v3`) — a script olvassa ki a doksi fejléc-blokkjából.
+- A **ciklus** nem a fájlnévbe kerül, hanem a PDF **címlapjára** (`<field:f_covered>: cycle-NN-ig · v3`) — a script olvassa ki a doksi fejléc-blokkjából.
 - A forrásfájlokat **soha nem módosítja** (a `docs-generated/` gazdája a `08-doc-sync`).
 
 ---

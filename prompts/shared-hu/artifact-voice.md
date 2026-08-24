@@ -21,7 +21,7 @@
 > Ilyenkor **nem törlöd az információt, hanem átfogalmazod**: ❌ *„🔴 Tilos a statikus `:v1` tag használata"* → ✅ *„Az image tagje futásonként egyedi (`v1-<UTC időbélyeg>`); a statikus tag felülírása a rollbacket ellehetetlenítené."* Ugyanaz a tudás, semleges, leíró hangnemben.
 > - **A szabályt DÖNTÉSSÉ fordítod.** Nem azt írod le, hogy mit tiltott meg neked a skill, hanem hogy **mi lett a döntés**. Példa:
 >   - ❌ *„🔴 Tilos a statikus `:v1` tag használata, mert a rollback látszólagos lenne."*
->   - ✅ *„Az image tagje futásonként egyedi: `v1-<UTC időbélyeg>`."* — az indoklás pedig a `Kockázatok és döntési pontok` szekcióba kerül (a plan-ben), illetve a `Kockázatok` szekcióba (a spec-ben).
+>   - ✅ *„Az image tagje futásonként egyedi: `v1-<UTC időbélyeg>`."* — az indoklás pedig a `<sec:risks_and_decisions>` szekcióba kerül (a plan-ben), illetve a `<sec:risks>` szekcióba (a spec-ben).
 >
 > **Miért számít:** ezeket a dokumentumokat a downstream fázisok **gépiesen olvassák**. Egy bennmaradt imperatívusz félreérthető követelményként vagy taskként (ahogy egy „a spec.md állapotát frissíteni kell" DoD-pontból task lett), és a skill későbbi változásakor elavult másolatként ottmarad.
 >

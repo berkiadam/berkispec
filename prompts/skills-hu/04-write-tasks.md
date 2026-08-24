@@ -3,9 +3,9 @@ phase: 04
 name: bs-write-tasks
 description: "berkispec - 04. Használd, ha a plan.md 'Task írásra kész' (Phase 04), a technikai terv jól strukturált, egyenként végrehajtható és mérhető feladatokra (DoD) bontásához. Létrehozza a 'tasks.md'-t ('Implementálásra kész') + szükség esetén a 'tasks-questions.md'-t."
 prerequisites:
-  - "specs/cycle-NN-<name>/plan.md státusz: Task írásra kész"
+  - "specs/cycle-NN-<name>/plan.md státusz: <status:ready_for_tasks>"
 output:
-  - "specs/cycle-NN-<name>/tasks.md státusz: Implementálásra kész"
+  - "specs/cycle-NN-<name>/tasks.md státusz: <status:ready_for_implement>"
   - "specs/cycle-NN-<name>/tasks-questions.md (ha merül fel kérdés)"
   - "specs/cycle-NN-<name>/validate-input-from-prev.md (csak ha van átadandó infó, IP1)"
 prev: bs-write-plan
@@ -33,13 +33,13 @@ Ez a folyamat **4. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 
 ---
 
-## Előfeltétel
+## <field:f_prerequisite>
 
 0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — <!-- INCLUDE:lang/common.md#ciklus-beazonositas --> — és várj a válaszra, mielőtt továbblépsz.
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` fázishoz. _(A fázis a ciklus feature branch-én fut; a záró commit oda kerül — No-VCS projektben a commit kimarad.)_
-2. Olvasd be a `plan.md` státuszát. **Ha a státusz nem `Task írásra kész`, ne kezdj tasks listát írni.** Jelezd a felhasználónak, hogy a plan még nem zárult le, és térjenek vissza a `03` plan fázishoz.
-3. **Nyitott kérdések lezártsága:** a `Task írásra kész` státusz implikálja, de explicit ellenőrizd — a `spec-questions.md` és `plan-questions.md` egyikében sincs `[ ]` nyitott kérdés. Ha van, a plan nem zárult le valójában: jelezd, és térjenek vissza a `03` (vagy `02`) fázishoz.
+2. Olvasd be a `plan.md` státuszát. **Ha a státusz nem `<status:ready_for_tasks>`, ne kezdj tasks listát írni.** Jelezd a felhasználónak, hogy a plan még nem zárult le, és térjenek vissza a `03` plan fázishoz.
+3. **Nyitott kérdések lezártsága:** a `<status:ready_for_tasks>` státusz implikálja, de explicit ellenőrizd — a `spec-questions.md` és `plan-questions.md` egyikében sincs `[ ]` nyitott kérdés. Ha van, a plan nem zárult le valójában: jelezd, és térjenek vissza a `03` (vagy `02`) fázishoz.
 
 ---
 
@@ -50,7 +50,7 @@ Ha a tasks.md írása félbeszakadt és új sessionban folytatódik:
 1. Olvasd be a `tasks.md` aktuális állapotát.
 2. Keresd meg az első hiányos vagy bizonytalan részt: van-e csoport záró `[CHECK]` nélkül, van-e `[RED]` task párja nélkül, van-e a plan-ből lefedetlen módosítás?
 3. Ha a tasks lista részben megvan és csak befejezés hiányzik, folytasd onnan ahol abbahagyták — ne kezdd újra.
-4. Ha a lista koherensnek tűnik de a státusz még `Piszkozat`, futtasd le a minőségellenőrzést, és zárj le ha átment.
+4. Ha a lista koherensnek tűnik de a státusz még `<status:draft>`, futtasd le a minőségellenőrzést, és zárj le ha átment.
 
 ---
 
@@ -62,9 +62,9 @@ Ha a tasks.md írása félbeszakadt és új sessionban folytatódik:
 
 **Ne implementálj semmit.** A tasks lista az implement fázis bemenete — most csak a lépéseket definiáljuk.
 
-**Ne vegyél fel taskot, amely nincs a plan `Tervezett módosítások` szekciójában.** A tasks lista a plan pontos lebontása — nem bővíti, nem szűkíti a scope-ot.
+**Ne vegyél fel taskot, amely nincs a plan `<sec:planned_changes>` szekciójában.** A tasks lista a plan pontos lebontása — nem bővíti, nem szűkíti a scope-ot.
 
-**Ha egy taskot nem lehet konkrétan leírni** (nincs egyértelmű érintett fájl, nincs egyértelmű elvégzési kritérium), az a plan hiányosságát jelzi. Állj meg, jelezd pontosan mi az alulspecifikált lépés, és kérd a felhasználót, hogy egészítse ki a `plan.md`-t. Egyben állítsd a `plan.md` státuszát vissza `Piszkozat`-ra — a plan nem maradhat `Task írásra kész` státuszban, ha hiányosságot találtál. A plan frissítése és `Task írásra kész` státusz visszaállítása után folytatható a tasks lista.
+**Ha egy taskot nem lehet konkrétan leírni** (nincs egyértelmű érintett fájl, nincs egyértelmű elvégzési kritérium), az a plan hiányosságát jelzi. Állj meg, jelezd pontosan mi az alulspecifikált lépés, és kérd a felhasználót, hogy egészítse ki a `plan.md`-t. Egyben állítsd a `plan.md` státuszát vissza `<status:draft>`-ra — a plan nem maradhat `<status:ready_for_tasks>` státuszban, ha hiányosságot találtál. A plan frissítése és `<status:ready_for_tasks>` státusz visszaállítása után folytatható a tasks lista.
 
 ---
 
@@ -94,12 +94,12 @@ A tasks.md fejlécébe kerülő Prerequisite lista az implementáló agent telje
 Mindig benne van:
 - `specs/<cycle-name>/plan.md`
 
-Benne van, ha a plan `Schema Artifaktumok` táblájában szerepel `Reviewed` státusszal:
+Benne van, ha a plan `<sec:schema_artifacts>` táblájában szerepel `<status:reviewed>` státusszal:
 - OpenAPI YAML, Redis key map, DB schema, Avro séma, stb.
 
 Soha nem kerül bele:
 - `research.md` vagy más exploratív fázismelléktermék
-- `Review Required` státuszú artifact (ha ilyen van, a plan nincs lezárva)
+- `<status:review_required>` státuszú artifact (ha ilyen van, a plan nincs lezárva)
 
 ---
 
@@ -132,16 +132,16 @@ Soha nem kerül bele:
 - **`[OPS]` — éles határvonal:** kizárólag olyan lépés kaphatja, amely **NEM módosít repo-fájlt**, hanem a **környezetet vagy egy artefaktumot** változtatja: build, image push, deploy, kézi konfiguráció, külső erőforrás létrehozása/törlése, jóváhagyás-kérés, rollback.
   - **Ami repo-fájlt szerkeszt, az SOHA nem `[OPS]`** — az `[RED]` (teszt írása/frissítése) vagy `[GREEN]` (forrás- és konfigfájl módosítása), akkor is, ha **regressziós javításról** van szó. Egy `TREG` task, amely egy meglévő tesztfájlt frissít, `[RED]` markert kap.
   - Ez a határvonal teszi lehetővé, hogy az `[OPS]` taskokat gépiesen ki lehessen szűrni a destruktív-művelet ellenőrzéshez (lásd lent) — ha kód-szerkesztő taskok is `[OPS]`-ok, az a szűrés használhatatlan.
-- **Ellenőrzési task:** `[CHECK]` prefix, minden logikai csoport végén kötelező — konkrét parancsot tartalmaz a plan `Ellenőrzési stratégia` szekciójából (pl. `npm test`, `npm run typecheck`). Fájl path elhagyható.
+- **Ellenőrzési task:** `[CHECK]` prefix, minden logikai csoport végén kötelező — konkrét parancsot tartalmaz a plan `<sec:verification_strategy>` szekciójából (pl. `npm test`, `npm run typecheck`). Fájl path elhagyható.
 - **Párhuzamosítható task jelölése:** ha egy task egy másikkal egyszerre elvégezhető (köztük nincs függőség), jelöld `⟂ Tkkk` suffixszel. Csak akkor jelöld, ha a párhuzamosítás valóban időt takarít meg.
   - **Példa:** `- [ ] T012 [GREEN] Implementáld a foo service-t — `src/foo.ts` ⟂ T013` — azt jelenti, hogy T012 és T013 egyszerre szerkeszthető, mert **nem ugyanazt a fájlt érintik** és nincs köztük függőség. Ha ugyanazt a fájlt érintenék, NEM jelölhető párhuzamosnak.
   - **🔴 `[CHECK]` SOHA nem párhuzamosítható azzal a taskkal, amely az általa futtatott artefaktumot létrehozza vagy módosítja** (teszt-író `[RED]`/`[GREEN]` ⟂ a saját `[CHECK]`-je = hamis zöld: a `[CHECK]` a régi vagy hiányzó tesztfájlon fut le). Ellenőrzés a `⟂` kiírása előtt, mechanikusan: **a két task fájlhalmaza diszjunkt-e?** Ha bármelyik fájl közös — vagy az egyik task azt a fájlt/parancsot futtatja, amit a másik ír —, a `⟂` **tilos**.
 - **Sorszámozási konvenciók — `T`, `TREG`, `TLAST`:**
   - **`Tnnn`** — normál, szekvenciálisan számozott implementációs task (`T001`, `T002`, …) a logikai csoportokban.
-  - **`TREGn`** — regressziós felülvizsgálati task (`TREG1`, `TREG2`, …) a kötelező „Regressziós tesztek felülvizsgálata" záró csoportban. Sorrendben, `[CHECK]` nélkül. Csak olyan fájlra, amely a plan `Regressziós érintettség` táblázatában van, de a `Tervezett módosítások`-ban nincs. **Markere `[RED]`** (meglévő tesztfájlt frissít) — **nem `[OPS]`**, mert repo-fájlt szerkeszt.
-  - **`TLASTn`** — a „Dokumentáció" záró csoport taskjai (`TLAST1`, `TLAST2`, …), a lista legvégén, ha vannak. Ezek futnak utoljára. **FONTOS (DS4):** a `docs-generated/` minden fájlja (`system-overview.md`, `architecture.md`, `CHANGELOG.md`, `design-drift.md`, mappa-index) a `08-doc-sync` fázis **kizárólagos** gazdája; a 04 ezekhez **nem** generál `TLAST` taskot.
+  - **`TREGn`** — regressziós felülvizsgálati task (`TREG1`, `TREG2`, …) a kötelező „<sec:regression_review_group>" záró csoportban. Sorrendben, `[CHECK]` nélkül. Csak olyan fájlra, amely a plan `<sec:regression_impact>` táblázatában van, de a `<sec:planned_changes>`-ban nincs. **Markere `[RED]`** (meglévő tesztfájlt frissít) — **nem `[OPS]`**, mert repo-fájlt szerkeszt.
+  - **`TLASTn`** — a „<sec:documentation_group>" záró csoport taskjai (`TLAST1`, `TLAST2`, …), a lista legvégén, ha vannak. Ezek futnak utoljára. **FONTOS (DS4):** a `docs-generated/` minden fájlja (`system-overview.md`, `architecture.md`, `CHANGELOG.md`, `design-drift.md`, mappa-index) a `08-doc-sync` fázis **kizárólagos** gazdája; a 04 ezekhez **nem** generál `TLAST` taskot.
     - **Komponens-README — a határvonal a komponens létezése:** **meglévő** komponens README-jének frissítése (env-változó, port, indítás, kapcsolatok) a **08-doc-sync** dolga → **nincs rá `TLAST`**. **Új komponens első `README.md`-je** viszont a felépítés része → normál `Tnnn` taskként szerepel (`[GREEN]`), a komponens többi fájljával együtt, **nem** `TLAST`-ként.
-    - **🔴 Státusz-frissítő task TILOS.** Soha ne vegyél fel taskot a `spec.md` / `plan.md` / `tasks.md` **státuszmezőjének** átállítására („állítsd `Kész`-re", „frissítsd a fázis állapotát"). A státusz-életciklus a **keretrendszer gépezete**: a `07-validate` állítja mindhármat `Kész`-re PASS esetén. Egy ilyen task ütközik vele, és hamis lefedettséget ad. Ha a spec `Definition of done`-jában szerepel ilyen „meta" pont (pl. *„a dokumentáció és a spec.md állapota frissítésre került"*), az **spec-hiba** — ne fedd le taskkal, hanem vedd fel a `tasks-questions.md`-be.
+    - **🔴 Státusz-frissítő task TILOS.** Soha ne vegyél fel taskot a `spec.md` / `plan.md` / `tasks.md` **státuszmezőjének** átállítására („állítsd `<status:done>`-re", „frissítsd a fázis állapotát"). A státusz-életciklus a **keretrendszer gépezete**: a `07-validate` állítja mindhármat `<status:done>`-re PASS esetén. Egy ilyen task ütközik vele, és hamis lefedettséget ad. Ha a spec `<sec:definition_of_done>`-jában szerepel ilyen „meta" pont (pl. *„a dokumentáció és a spec.md állapota frissítésre került"*), az **spec-hiba** — ne fedd le taskkal, hanem vedd fel a `tasks-questions.md`-be.
     - `TLAST` tehát csak akkor kerül a listába, ha a plan **explicit** kér egy olyan dokumentáció-frissítést, ami **sem** a `docs-generated/`-ben él, **sem** komponens-README (pl. egy projekt-specifikus kézi doksi).
   - A számozás minden prefixen belül 1-től indul és növekvő.
 
@@ -183,15 +183,15 @@ Részletet **csak akkor** adj a task leírásába, ha a plan nem tartalmazza:
 
 **A csoport-fejléc plan-hivatkozása (B) kötelező:** minden `## <csoport>` cím végén ott vannak a csoport által lefedett plan-ID-k. Ez teszi emberi szemmel egy pillantás alatt követhetővé, hogy melyik terv-fejezet hol valósul meg — a taskok ugyanis **végrehajtási sorrend** szerint csoportosulnak, nem a plan tagolása szerint, így egy plan-szekció **több csoportba is szóródhat** (pl. `[P-CONFIG]` teszt-írása az 1., implementációja a 3. csoportban).
 
-**A `Plan-lefedettség` tábla (C) kötelező, és a lista LEZÁRÁSAKOR készül** — akkor, amikor már minden task megvan. Nem külön munka: végigmész a plan `[P-…]` szekcióin, és mindegyikhez kigyűjtöd a rá hivatkozó task-azonosítókat. **Minden ID-nak szerepelnie kell**: ha egy plan-szekcióhoz nem tartozik task, a sor akkor is bekerül, `—` és **egy mondatos indok** (pl. „csak ellenőrzési stratégia, a 07 futtatja"). Indok nélküli üres sor = lefedettségi rés.
+**A `<sec:plan_coverage>` tábla (C) kötelező, és a lista LEZÁRÁSAKOR készül** — akkor, amikor már minden task megvan. Nem külön munka: végigmész a plan `[P-…]` szekcióin, és mindegyikhez kigyűjtöd a rá hivatkozó task-azonosítókat. **Minden ID-nak szerepelnie kell**: ha egy plan-szekcióhoz nem tartozik task, a sor akkor is bekerül, `—` és **egy mondatos indok** (pl. „csak ellenőrzési stratégia, a 07 futtatja"). Indok nélküli üres sor = lefedettségi rés.
 
 A csoportok a plan végrehajtási sorrendjének szakaszait tükrözik. Minden csoport önállóan elvégezhető és ellenőrizhető. Minden csoportnak van legalább egy `[CHECK]` taskja a végén.
 
 **Kötelező záró csoportok:** a tasks lista utolsó két csoportja mindig a következő, ebben a sorrendben:
 
-**1. Regressziós tesztek felülvizsgálata** — kizárólag azokhoz a fájlokhoz, amelyek **szerepelnek** a plan `Regressziós érintettség` táblázatában, de **nem szerepelnek** a plan `Tervezett módosítások` szekciójában. Ha egy fájl mindkét helyen szerepel, az mindig T task — nem TREG. Csak sima taskként (`[ ] TREG...`) vedd fel `[CHECK]` nélkül. Ha nem igényel módosítást, a task jelzésértékű („Ellenőrizd, hogy érintetlen maradt"). **A regressziós tesztek FUTTATÁSA nem ide való — az a validate fázis (07) feladata.**
+**1. <sec:regression_review_group>** — kizárólag azokhoz a fájlokhoz, amelyek **szerepelnek** a plan `<sec:regression_impact>` táblázatában, de **nem szerepelnek** a plan `<sec:planned_changes>` szekciójában. Ha egy fájl mindkét helyen szerepel, az mindig T task — nem TREG. Csak sima taskként (`[ ] TREG...`) vedd fel `[CHECK]` nélkül. Ha nem igényel módosítást, a task jelzésértékű („Ellenőrizd, hogy érintetlen maradt"). **A regressziós tesztek FUTTATÁSA nem ide való — az a validate fázis (07) feladata.**
 
-**Sorrendszabály:** A TREG taskokat az implementáló agent a Dokumentáció szekció előtt, de az integrációs [CHECK] taskokat tartalmazó szekció után végzi el. Ha egy TREG fájl frissítése szükséges ahhoz, hogy egy korábbi szekció [CHECK] taskja zöld legyen, az a fájl nem TREG — T taskként kerül a megfelelő szekció [CHECK] taskja elé.
+**Sorrendszabály:** A TREG taskokat az implementáló agent a <sec:documentation_group> szekció előtt, de az integrációs [CHECK] taskokat tartalmazó szekció után végzi el. Ha egy TREG fájl frissítése szükséges ahhoz, hogy egy korábbi szekció [CHECK] taskja zöld legyen, az a fájl nem TREG — T taskként kerül a megfelelő szekció [CHECK] taskja elé.
 
 **Egy fájl a tasks listában csak egyszer szerepelhet.**
 
@@ -201,7 +201,7 @@ Ha a plan azt mondja, hogy nincs regressziós érintettség, ez a csoport kihagy
 <!-- INCLUDE:lang/04-write-tasks.md#desztruktiv-csoport-sablon -->
 ```
 
-**2. Dokumentáció** — önálló, utolsó csoport, **csak ha szükséges**. **A `docs-generated/` egyetlen fájljához sem (architecture.md, system-overview.md, CHANGELOG.md, design-drift.md), és meglévő komponens `README.md`-jéhez sem generálsz `TLAST` taskot** — ezeket a `08-doc-sync` fázis írja és tartja konzisztensen, a teljes ciklus rálátásával (DS4). Ez a csoport **csak akkor** kerül a listába, ha a plan **explicit** kér egy olyan dokumentáció-frissítést, amely **nem** a `docs-generated/` gazdája alá tartozik. Tisztán átnevezési/refaktorálási ciklusnál, vagy ha a plan nem nevez meg ilyen doksit, ez a csoport **elhagyható**.
+**2. <sec:documentation_group>** — önálló, utolsó csoport, **csak ha szükséges**. **A `docs-generated/` egyetlen fájljához sem (architecture.md, system-overview.md, CHANGELOG.md, design-drift.md), és meglévő komponens `README.md`-jéhez sem generálsz `TLAST` taskot** — ezeket a `08-doc-sync` fázis írja és tartja konzisztensen, a teljes ciklus rálátásával (DS4). Ez a csoport **csak akkor** kerül a listába, ha a plan **explicit** kér egy olyan dokumentáció-frissítést, amely **nem** a `docs-generated/` gazdája alá tartozik. Tisztán átnevezési/refaktorálási ciklusnál, vagy ha a plan nem nevez meg ilyen doksit, ez a csoport **elhagyható**.
 
 ```md
 <!-- INCLUDE:lang/04-write-tasks.md#dokumentacio-csoport-sablon -->
@@ -228,8 +228,8 @@ Ha egy task túl nagy, bontsd ketté.
 
 Ha tasks írása közben az alábbiak bármelyike teljesül, **STOP — állj meg és jelezd a felhasználónak** (ne találd ki a hiányzó részt):
 
-- **Task nem specifikálható:** nincs egyértelmű érintett fájl, nincs elvégzési kritérium, vagy a lépés nem bontható le egyértelműen. Ez a plan hiányosságát jelzi. Állítsd a `plan.md` státuszát vissza `Piszkozat`-ra, jelezd pontosan mi az alulspecifikált lépés, és kérd a plan frissítését. A tasks lista csak ezután folytatható.
-- **A plan egy `Tervezett módosítások` bejegyzéséhez nem tudsz taskot megfogalmazni:** a bejegyzés alulspecifikált vagy értelmezhetetlen. Állítsd a `plan.md`-t `Piszkozat`-ra, jelezd melyik bejegyzés, és kérd a pontosítást.
+- **Task nem specifikálható:** nincs egyértelmű érintett fájl, nincs elvégzési kritérium, vagy a lépés nem bontható le egyértelműen. Ez a plan hiányosságát jelzi. Állítsd a `plan.md` státuszát vissza `<status:draft>`-ra, jelezd pontosan mi az alulspecifikált lépés, és kérd a plan frissítését. A tasks lista csak ezután folytatható.
+- **A plan egy `<sec:planned_changes>` bejegyzéséhez nem tudsz taskot megfogalmazni:** a bejegyzés alulspecifikált vagy értelmezhetetlen. Állítsd a `plan.md`-t `<status:draft>`-ra, jelezd melyik bejegyzés, és kérd a pontosítást.
 - **Egy task csak feltételesen végezhető el** (pl. egy még nem létező fájltól vagy egy másik ciklus eredményétől függ): jelezd a függőséget, és kérj döntést — előfeltétel-taskként vegyük-e fel, vagy a plan hiányos.
 - **A plan és a meglévő kód ellentmond egymásnak:** egy lépés megvalósíthatatlannak tűnik a jelenlegi kódbázis alapján. Ne módosítsd a plan-t magad — jelezd, és kérj döntést.
 - **Körkörös függőség a taskokban:** A → B → A jellegű függőség, amit nem lehet feloldani átrendezéssel. Jelezd pontosan, és kérj döntést.
@@ -250,8 +250,8 @@ Ugyanaz a determinisztikus kapu, ami a `05-analyze` első lépése — de **itt 
 python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-name>
 ```
 
-- **`0`** → nincs blokkoló megállapítás; folytatható a lezárás. A `## Javaslatok` és a `## Leltár` blokk tájékoztató — a javaslatokat eldöntheted, de nem blokkolnak.
-- **`1`** → **nincs státuszváltás.** A `## Must Fix` tételek gépiesen kimutatott hibák (hiányzó `— plan [P-…]` hivatkozás, nem létező ID, marker, `⟂` szimmetria, elavult `Plan-lefedettség` tábla, task nélküli DoD-pont, task-határon átnyúló shell-változó, nem létező futtatott artefaktum).
+- **`0`** → nincs blokkoló megállapítás; folytatható a lezárás. A `## Javaslatok` és a `## <sec:inventory>` blokk tájékoztató — a javaslatokat eldöntheted, de nem blokkolnak.
+- **`1`** → **nincs státuszváltás.** A `## <status:must_fix>` tételek gépiesen kimutatott hibák (hiányzó `— plan [P-…]` hivatkozás, nem létező ID, marker, `⟂` szimmetria, elavult `<sec:plan_coverage>` tábla, task nélküli DoD-pont, task-határon átnyúló shell-változó, nem létező futtatott artefaktum).
   - a **`célfázis: 04`** tételeket **most javítsd**, majd futtasd újra a kaput;
   - a **`célfázis: 03` / `02`** tételeket a *Megállási szabályok* szerint jelezd a felhasználónak — a plan vagy a spec hiányát nem te javítod.
 - **`2`** → használati hiba (hiányzó fájl) → jelezd, ne találgass.
@@ -263,18 +263,18 @@ Ha a lista teljes, a minőségellenőrzés átment **és a mechanikus kapu `0`-t
 <!-- INCLUDE:lang/04-write-tasks.md#statusz-megerosites --> — Ne állítsd át a státuszt a megerősítés előtt. **A válasz végén helyezd el a `tasks.md` közvetlen, kattintható linkjét.**
 
 Ha a felhasználó megerősíti:
-- Állítsd a `tasks.md` státuszát `Implementálásra kész`-re.
+- Állítsd a `tasks.md` státuszát `<status:ready_for_implement>`-re.
 - **Azonnal commitolj** a lenti *Fázis-záró commit* szerint (`<FÁZIS-TAG>` = `04-tasks`). Megerősítés → státuszírás → commit: ez egyetlen lépéssor, ne szakítsd meg.
 
 <!-- INCLUDE:shared/phase-commit.md -->
 
-A fenti blokkban a `<FÁZIS-TAG>` értéke ebben a fázisban: **`04-tasks`**, a záró státusz: **`Implementálásra kész`**.
+A fenti blokkban a `<FÁZIS-TAG>` értéke ebben a fázisban: **`04-tasks`**, a záró státusz: **`<status:ready_for_implement>`**.
 
-> **Kész lifecycle:** a `tasks.md` az `Implementálásra kész` → (implementáció során `Validálásra kész`) → a validate (07) PASS után `Kész` státuszra lép. A 08 fázis már `Kész`-t vár.
+> **Kész lifecycle:** a `tasks.md` az `<status:ready_for_implement>` → (implementáció során `<status:ready_for_validate>`) → a validate (07) PASS után `<status:done>` státuszra lép. A 08 fázis már `<status:done>`-t vár.
 
-Ha a státusz `Implementálásra kész`, **de a fázis-záró commit hiányzik** (VCS-es projekt, `git log -1 --oneline` nem a `cycle-NN: 04-tasks` commitot mutatja) — először commitolj, csak utána zárd le a fázist.
+Ha a státusz `<status:ready_for_implement>`, **de a fázis-záró commit hiányzik** (VCS-es projekt, `git log -1 --oneline` nem a `cycle-NN: 04-tasks` commitot mutatja) — először commitolj, csak utána zárd le a fázist.
 
-Ha a státusz `Implementálásra kész` (és a commit megvan), állj meg. Ne kezdj implementálni vagy analízist. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
+Ha a státusz `<status:ready_for_implement>` (és a commit megvan), állj meg. Ne kezdj implementálni vagy analízist. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
 <!-- INCLUDE:lang/04-write-tasks.md#zaro-uzenet -->
 > **A válasz végén helyezd el a `tasks.md` közvetlen, kattintható linkjét.**
 

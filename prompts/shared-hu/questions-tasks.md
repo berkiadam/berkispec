@@ -14,5 +14,5 @@ A `tasks-questions.md` a tasks fázis kérdés-nyilvántartója, a `spec-questio
 - Egyszerre **egy** kérdés kerül a felhasználó elé — várd meg a választ.
 - A listából **soha nem törlünk** — lezárt kérdést `[x]`-szel jelölünk, a döntés megmarad.
 - Új kérdés a lista végére kerül a következő szekvenciális `Knn` számmal.
-- **`tasks.md` státusz-kölcsönhatás:** ha van legalább egy nyitott `[ ]` kérdés a `tasks-questions.md`-ben, a `tasks.md` **nem lehet** `Implementálásra kész`. A státusz `Piszkozat` marad, amíg minden kérdés `[x]`. (Fix-módban a `[analyze-loop]` markeres megfelelők szerint — lásd lent.)
+- **`tasks.md` státusz-kölcsönhatás:** ha van legalább egy nyitott `[ ]` kérdés a `tasks-questions.md`-ben, a `tasks.md` **nem lehet** `<status:ready_for_implement>`. A státusz `<status:draft>` marad, amíg minden kérdés `[x]`. (Fix-módban a `[analyze-loop]` markeres megfelelők szerint — lásd lent.)
 

@@ -3,9 +3,9 @@ phase: 09
 name: bs-merge
 description: "berkispec - 09. Használd a ciklus utolsó lépéseként (Phase 09), ha a kód, a review és a dokumentáció is 'Kész'. A ciklus branch beolvasztása a 'conventions.md' merge stratégiája szerint (PR nyitás vagy lokális merge), kötelező felhasználói megerősítéssel."
 prerequisites:
-  - "specs/cycle-NN-<name>/tasks.md státusz: Kész"
-  - "specs/cycle-NN-<name>/plan.md státusz: Kész"
-  - "specs/cycle-NN-<name>/spec.md státusz: Kész"
+  - "specs/cycle-NN-<name>/tasks.md státusz: <status:done>"
+  - "specs/cycle-NN-<name>/plan.md státusz: <status:done>"
+  - "specs/cycle-NN-<name>/spec.md státusz: <status:done>"
   - "specs/cycle-NN-<name>/test-report/code-review.md — nincs lezáratlan Must Fix (a 07 review-kapuja)"
 output:
   - "Merged cycle branch (lokális vagy PR, a conventions.md Merge stratégiája szerint)"
@@ -27,11 +27,11 @@ Ez a folyamat **9. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 
 ---
 
-## Előfeltétel
+## <field:f_prerequisite>
 
 0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — <!-- INCLUDE:lang/common.md#ciklus-beazonositas --> — és várj a válaszra, mielőtt továbblépsz.
 
-1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t (különösen a `## Merge stratégia` szekciót). Ha nem létezik, STOP — térjenek vissza a `00` fázishoz.
+1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t (különösen a `## <sec:cv_merge_strategy>` szekciót). Ha nem létezik, STOP — térjenek vissza a `00` fázishoz.
 
 2. **Munkafa-ellenőrzés (csak VCS esetén):** futtasd `git status --short`. Ha van commitálatlan változtatás, listázd, és kérdezd meg egy körben, hogy commitáljam-e most vagy folytassam — várj a válaszra. A ciklus **saját feature branch-én** dolgozol; a fő branch-re váltás majd a Merge lépésben, felhasználói megerősítés után történik (RD8) — itt ne válts. (No-VCS projektben kimarad.)
 
@@ -46,14 +46,14 @@ Ez a folyamat **9. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
    - **Linked worktree-ben vagyunk** (a párhuzamos tervezési ablakból ottmaradt ciklus-worktree) → **STOP.** A `git switch main` itt megtagadva lesz („already used by worktree"). A `06`–`09` szakasz a **fő** worktree-ben fut: a ciklust oda kell visszaköltöztetni (`git worktree remove ../<ciklus-worktree>`, majd a fő worktree-ben `git switch feature/cycle-NN-<cycle-name>`), és onnan folytatni. A commitálatlan tartalmat előbb commitold — `--force`-ot **ne** használj.
    - **Van egy MÁSIK worktree `cycle-*` branch-en** → az egy párhuzamosan tervezett ciklus. Ez a merge-et **nem** blokkolja (a másik ciklus a `05`-ig van), de a merge után szólj: a másik ciklusnak a `06` előtt be kell hoznia a friss `main`-t és újra kell futtatnia az `05`-öt (PW2).
 
-3. **Státusz-kapu:** a validate fázis (07) PASS esetén mindhárom fájl státuszát `Kész`-re állítja. Ellenőrizd:
-   - `tasks.md` státusza: `Kész` — és **nincs rajta `[validate-loop]` marker** (a marker megrekedt hurkot jelent)
-   - `plan.md` státusza: `Kész`
-   - `spec.md` státusza: `Kész`
+3. **Státusz-kapu:** a validate fázis (07) PASS esetén mindhárom fájl státuszát `<status:done>`-re állítja. Ellenőrizd:
+   - `tasks.md` státusza: `<status:done>` — és **nincs rajta `[validate-loop]` marker** (a marker megrekedt hurkot jelent)
+   - `plan.md` státusza: `<status:done>`
+   - `spec.md` státusza: `<status:done>`
 
-   Ha bármelyik nem `Kész` (pl. még `Validálásra kész` vagy visszaállított `Piszkozat`), a validálás még nem futott le sikeresen — térj vissza a `07` fázishoz.
+   Ha bármelyik nem `<status:done>` (pl. még `<status:ready_for_validate>` vagy visszaállított `<status:draft>`), a validálás még nem futott le sikeresen — térj vissza a `07` fázishoz.
 
-4. **Review-kapu (RV1):** a `specs/cycle-NN-<name>/test-report/code-review.md`-nek léteznie kell, és **nem lehet benne lezáratlan `- [ ]` a `Kritikus javítandók (Must Fix)` szekcióban**. Ha hiányzik vagy van nyitott `Must Fix`, a 07 review-kapuja nem zárult le — **STOP**, térj vissza a `07` fázishoz. **Ne merge-elj review nélkül**, és ne futtasd le itt a review-t „gyorsan": az a 07 dolga, a saját javító hurkával és leállási korlátaival.
+4. **Review-kapu (RV1):** a `specs/cycle-NN-<name>/test-report/code-review.md`-nek léteznie kell, és **nem lehet benne lezáratlan `- [ ]` a `<sec:critical_fixes>` szekcióban**. Ha hiányzik vagy van nyitott `<status:must_fix>`, a 07 review-kapuja nem zárult le — **STOP**, térj vissza a `07` fázishoz. **Ne merge-elj review nélkül**, és ne futtasd le itt a review-t „gyorsan": az a 07 dolga, a saját javító hurkával és leállási korlátaival.
 
 5. **Doc-sync kapu:** a `08-doc-sync` fázisnak le kellett futnia a validált kódra. Ellenőrizd, hogy a ciklus `doc-sync-plan.md`-je létezik-e, nincs benne elvégzetlen `[ ]` tétel, nincs nyitott `doc-sync-questions.md` kérdés, és a DS22 kapu zöld volt. Ha ez nem igaz, térj vissza a `08-doc-sync` fázishoz.
 
@@ -102,9 +102,9 @@ git fetch origin
 git log --oneline $(git merge-base HEAD origin/main)..origin/main
 ```
 
-_Remote nélküli (csak lokális) repóban az `origin/main` helyett a lokális `main`-nel dolgozz, `git fetch` nélkül. A `main` helyére a `conventions.md` `## Git és branching konvenciók` **Fő branch** mezője kerül._
+_Remote nélküli (csak lokális) repóban az `origin/main` helyett a lokális `main`-nel dolgozz, `git fetch` nélkül. A `main` helyére a `conventions.md` `## <sec:cv_git_conventions>` **<field:f_main_branch>** mezője kerül._
 
-- **Üres lista** → a ciklus ága a fő branch tetején áll, folytasd a Merge lépéssel. _(Kereszt-ellenőrzés: az `analyze-report.md` **`Validált alap`** mezőjének fő branch SHA-ja is ezt mutatja-e — ha nem, az `05` egy régebbi alapon zárult, és a lenti újravalidálási szabály érvényes.)_
+- **Üres lista** → a ciklus ága a fő branch tetején áll, folytasd a Merge lépéssel. _(Kereszt-ellenőrzés: az `analyze-report.md` **`<field:f_validated_base>`** mezőjének fő branch SHA-ja is ezt mutatja-e — ha nem, az `05` egy régebbi alapon zárult, és a lenti újravalidálási szabály érvényes.)_
 - **Nem üres** → be kell hozni a fő branch-et a ciklus ágába, **majd újravalidálni**:
 
 1. **Behozás** (ugyanaz a mechanika, mint az `05` BR1 lépése). A választás nem ízlés kérdése:
@@ -123,7 +123,7 @@ _Remote nélküli (csak lokális) repóban az `origin/main` helyett a lokális `
 
 ## 2. Merge — a conventions.md Merge stratégiája szerint
 
-Olvasd be a `conventions.md` `## Merge stratégia` szekcióját, és a **Szolgáltató** mező alapján járj el. **Bármelyik ágon a merge előtt KÖTELEZŐ a felhasználói megerősítés** — a `master`-be merge és a branch törlése destruktív, megerősítés nélkül nem hajtható végre. A `07` PASS-a (zöld tesztek + tiszta review) automatikus; a merge-et viszont **változatlanul kézi megerősítés** zárja (RD8).
+Olvasd be a `conventions.md` `## <sec:cv_merge_strategy>` szekcióját, és a **<field:f_provider>** mező alapján járj el. **Bármelyik ágon a merge előtt KÖTELEZŐ a felhasználói megerősítés** — a `master`-be merge és a branch törlése destruktív, megerősítés nélkül nem hajtható végre. A `07` PASS-a (zöld tesztek + tiszta review) automatikus; a merge-et viszont **változatlanul kézi megerősítés** zárja (RD8).
 
 ### Megerősítés (mindkét ágon kötelező)
 
@@ -137,8 +137,8 @@ Ne lépj tovább a megerősítés előtt.
 
 Megerősítés után:
 ```bash
-# 1. Válts át a fő branch-re (a conventions.md `## Git és branching konvenciók`
-#    Fő branch mezője, ill. a `## Merge stratégia` PR target — alapból `main`)
+# 1. Válts át a fő branch-re (a conventions.md `## <sec:cv_git_conventions>`
+#    <field:f_main_branch> mezője, ill. a `## <sec:cv_merge_strategy>` PR target — alapból `main`)
 git switch main
 
 # 2. Squash merge a ciklus ágáról

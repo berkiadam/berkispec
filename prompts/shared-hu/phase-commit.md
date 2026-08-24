@@ -18,8 +18,8 @@
 
 **Sorrend (pontosan ez, kihagyás nélkül):**
 
-1. **No-VCS kapu:** ha a `conventions.md` `## Git és branching konvenciók` szekciója szerint **nincs verziókezelő**, a 2–5. lépés kimarad — a fázis a státuszírással zárul. Egyébként folytasd.
-2. **Státusz átírása** az artefaktumban (a fázis záró státuszára). **Hurok-fázisban (05, 07)** ide tartozik a jelentés/napló státuszának beírása és a `[analyze-loop]` / `[validate-loop]` marker rendezése is, az adott lezáró ág szabálya szerint.
+1. **No-VCS kapu:** ha a `conventions.md` `## <sec:cv_git_conventions>` szekciója szerint **nincs verziókezelő**, a 2–5. lépés kimarad — a fázis a státuszírással zárul. Egyébként folytasd.
+2. **<field:f_status> átírása** az artefaktumban (a fázis záró státuszára). **Hurok-fázisban (05, 07)** ide tartozik a jelentés/napló státuszának beírása és a `[analyze-loop]` / `[validate-loop]` marker rendezése is, az adott lezáró ág szabálya szerint.
 3. **Stage + commit** — a ciklus mappájára, a fázis tagjével:
    ```bash
    git add specs/cycle-NN-<cycle-name>/

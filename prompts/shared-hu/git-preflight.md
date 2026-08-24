@@ -15,9 +15,9 @@
 
 #### No-VCS kapu (BD11) — mindig, elsőként
 
-Olvasd ki a `conventions.md` `## Git és branching konvenciók` szekciójából a verziókezelő-flaget:
+Olvasd ki a `conventions.md` `## <sec:cv_git_conventions>` szekciójából a verziókezelő-flaget:
 
-- Ha ott az áll, hogy **„NINCS verziókezelő (se GIT, se más), és nem is lesz."**, akkor **minden git-műveletet hagyj ki** ebben a fázisban — nincs `git status`, branch-váltás/-létrehozás, `git pull`, commit. A fázis csak a nem-git teendőit végzi el (fájl/mappa létrehozás). A lenti lépéseket **átugrod**.
+- Ha ott az áll, hogy **„<status:no_vcs_flag>"**, akkor **minden git-műveletet hagyj ki** ebben a fázisban — nincs `git status`, branch-váltás/-létrehozás, `git pull`, commit. A fázis csak a nem-git teendőit végzi el (fájl/mappa létrehozás). A lenti lépéseket **átugrod**.
 - Egyébként (git elérhető, a projekt git-repo) → folytasd a *Munkafa-ellenőrzéssel*.
 
 #### Munkafa-ellenőrzés
@@ -29,13 +29,13 @@ Futtasd: `git status --short`. Ha van commitálatlan változtatás:
 
 #### Friss, tiszta `main` (leágazás előtt)
 
-A cél, hogy friss `main`-ről (a `conventions.md` `## Git és branching konvenciók` **Fő branch** mezője; alapból `main`) ágazz le. A tényleges `git switch -c`-t **nem** itt futtatod — azt a fázis a saját logikája szerint végzi (a `00` azonnal, a `01` a ciklusnév meghatározása UTÁN — BD5).
+A cél, hogy friss `main`-ről (a `conventions.md` `## <sec:cv_git_conventions>` **<field:f_main_branch>** mezője; alapból `main`) ágazz le. A tényleges `git switch -c`-t **nem** itt futtatod — azt a fázis a saját logikája szerint végzi (a `00` azonnal, a `01` a ciklusnév meghatározása UTÁN — BD5).
 
 1. **Hol állunk? (BQ3 — idempotencia/resume):** `git branch --show-current`.
    - **`main`-en vagyunk** → tovább a 2. ponthoz.
    - **feature branch-en vagyunk** → hasonlítsd össze a branch nevét az **aktuális ciklus várt branch-nevével** (a `roadmap.md` folyamatban lévő ciklus-blokkjából / a ciklus mappanevéből):
      - **Egyezik** → ez egy **resume**; a branch már létezik. **Nincs teendő** — folytasd ezen a branch-en, `git switch -c`-t **NE** futtass, és **ne** figyelmeztess.
-     - **Nem egyezik** → **csak ekkor** szólj a felhasználónak: a jelenlegi branch-et érdemes lehet **merge-elni vagy PR-t feladni rá** a `## Merge stratégia` szerint, **mielőtt elhagyja**; majd kérd meg, hogy **váltson `main`-re** (a váltást ő végzi az esetleges nyitott munka miatt). Várj, amíg rendezi.
+     - **Nem egyezik** → **csak ekkor** szólj a felhasználónak: a jelenlegi branch-et érdemes lehet **merge-elni vagy PR-t feladni rá** a `## <sec:cv_merge_strategy>` szerint, **mielőtt elhagyja**; majd kérd meg, hogy **váltson `main`-re** (a váltást ő végzi az esetleges nyitott munka miatt). Várj, amíg rendezi.
 1.b **Párhuzamos ciklus / worktree (PW1):** ha a felhasználó **egy másik ciklus mellett, párhuzamosan** indít tervezést (a `06`–`09` szakasz egy másik ciklusban fut), akkor ez a fázis **linked `git worktree`-ben** dolgozik, és a `main`-re **nem** kell (nem is lehet) átállni — az a fő worktree-ben van kicsekkolva, a git a második kicsekkolást megtagadja. Ismerd fel:
 
    ```bash
@@ -54,4 +54,4 @@ A cél, hogy friss `main`-ről (a `conventions.md` `## Git és branching konvenc
    - **Ha van** → **ne** húzz `git pull`-t; kérd meg a felhasználót, hogy kezelje le (commit/push/stash), és várj, amíg a `main` tiszta.
    - **Ha tiszta** → `git pull` (a remote-ot is frissíti, így a feature-branch-scan is friss állapotot lát — külön `git fetch` jellemzően nem kell).
 
-A branch-név a `conventions.md` `## Git és branching konvenciók` **Branch-elnevezési stratégia** mezője szerint áll össze; alapból `feature/cycle-NN-<name>` (a **mappanév** ettől függetlenül mindig tisztán `cycle-NN-<name>`, prefix nélkül — BD3).
+A branch-név a `conventions.md` `## <sec:cv_git_conventions>` **<field:f_branch_naming>** mezője szerint áll össze; alapból `feature/cycle-NN-<name>` (a **mappanév** ettől függetlenül mindig tisztán `cycle-NN-<name>`, prefix nélkül — BD3).

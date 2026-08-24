@@ -22,15 +22,15 @@ Te a implement fázis (06) **Fix-mód** végrehajtója vagy, amelyet a `07-valid
 ## Teendő
 
 1. **Kövesd a lent beemelt „Fix-mód" szekciót** (szűkített hibalista-fókusz; fix-mód ↔ normál implement elhatárolás; auto-státusz `[validate-loop]` markerrel; az anti-„teszt-csalás" garde; visszatérési összefoglaló) — az a te működésed. **Ne olvasd be a 06 fázis-skilljét** (D13): minden szükséges szabály itt van, a teljes skill beolvasása pedig a teljes fázis újrafuttatására csábít — a célprojektben amúgy sincs ilyen útvonal.
-2. **Bemenet:** a `tasks.md` `## Validációs javítások` szekciójának elvégzetlen taskjai (a konkrét megbukott tesztek / Sonar-hibák / nem teljesült DoD-pontok), a szekció prerequisite hivatkozásaival (`validation-report.md`, és ha van, `sonar-report.md`) + a `tasks.md` aktuális állapota.
+2. **Bemenet:** a `tasks.md` `## <sec:validation_fixes>` szekciójának elvégzetlen taskjai (a konkrét megbukott tesztek / Sonar-hibák / nem teljesült DoD-pontok), a szekció prerequisite hivatkozásaival (`validation-report.md`, és ha van, `sonar-report.md`) + a `tasks.md` aktuális állapota.
 3. **Célzott javítás, nem teljes újra-implementáció.** Csak a hibalistára dolgozol; a már zöld, `[x]` taskokat nem írod át.
 4. **⚠ A KÓDOT igazítod a teszthez/DoD-hoz, SOHA nem fordítva (VD3).** Tilos a teszt gyengítése/skip/törlése, hardcode-olt elvárt érték, vagy a DoD leszállítása. Ha egy hibát **csak** a teszt/DoD megváltoztatásával lehetne zöldre vinni → **ne tedd**; add vissza az orchestrátornak **eszkalációs jelzéssel** (ez a 07-hurok VD5 felfelé menekülő ágának bemenete).
-5. **Ne írd a `validation-report.md`-t** — az az orchestrátoré. Te a forráskódot és a `tasks.md` `## Validációs javítások` szekcióját írod.
+5. **Ne írd a `validation-report.md`-t** — az az orchestrátoré. Te a forráskódot és a `tasks.md` `## <sec:validation_fixes>` szekcióját írod.
 6. **A visszatérésed után az orchestrátor `git diff`-fel ELLENŐRZI a tesztfájlokat, a `spec.md`-t és a Sonar-konfigot (VD3a).** A szerződés bármilyen gyengítését visszaállítja (`git checkout --`), és eszkalációként kezeli — nem próbálkozik veled újra ugyanazon az itemen. Az eszkalációs jelzés tehát **nem kudarc, hanem a helyes kimenet**, ha a hiba valóban tervezési: azt jelentsd, ne a tesztet írd át.
 
 ## Kimenet (összefoglaló az orchestrátornak)
 
-- **Elvégzett javítások:** mely `## Validációs javítások` taskokat zártad le, és milyen kódváltozással lett zöld (teszt-/Sonar-hibánként egy sor).
+- **Elvégzett javítások:** mely `## <sec:validation_fixes>` taskokat zártad le, és milyen kódváltozással lett zöld (teszt-/Sonar-hibánként egy sor).
 - **Eszkalációs jelzés (ha van):** `ESZKALÁCIÓ: [hibás item] tervezési hibának tűnik — csak a teszt/DoD megváltoztatásával lenne zöld; nem javítottam.` + rövid indok.
 - A `tasks.md` aktuális státusza (a `[validate-loop]` markerrel).
 

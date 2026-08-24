@@ -28,16 +28,16 @@ Kétféle módban hívhatnak:
 
 ### Bemenet
 
-1. A ciklus `spec.md`-je — különösen a `Komponensek és viselkedés` és a `Hivatkozott fájlok` szekciók.
+1. A ciklus `spec.md`-je — különösen a `<sec:components_behavior>` és a `<sec:referenced_files>` szekciók.
 2. A projekt kódbázisa és dokumentációja.
 
-> **D2 = A:** a `spec.md` `Hivatkozott fájlok` szekciója kizárólag dokumentációs/specifikációs anyagot tartalmaz (README, OpenAPI, séma). A **forrásfájlokat NEM a spec azonosítja** — az a te feladatod itt, a plan fázis számára.
+> **D2 = A:** a `spec.md` `<sec:referenced_files>` szekciója kizárólag dokumentációs/specifikációs anyagot tartalmaz (README, OpenAPI, séma). A **forrásfájlokat NEM a spec azonosítja** — az a te feladatod itt, a plan fázis számára.
 
 ### Két feladat
 
-**1. Forrásfájl-azonosítás (a plan `Tervezett módosítások` előkészítése)**
+**1. Forrásfájl-azonosítás (a plan `<sec:planned_changes>` előkészítése)**
 
-A spec `Komponensek és viselkedés` szekciója alapján azonosítsd, mely forrásfájlok (`.ts`, `.tsx`, `.js`, `package.json`, stb.) érintettek vagy érintettek lehetnek a ciklus által. Minden találathoz add meg:
+A spec `<sec:components_behavior>` szekciója alapján azonosítsd, mely forrásfájlok (`.ts`, `.tsx`, `.js`, `package.json`, stb.) érintettek vagy érintettek lehetnek a ciklus által. Minden találathoz add meg:
 - a fájl elérési útját (relatív, projekt gyökérhez képest),
 - a változás jellegét (új fájl / bővítés / módosítás),
 - az érintett kódrészlet helyét (`path:sor–sor`) navigációs célként,

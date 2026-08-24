@@ -71,7 +71,7 @@ Ha a hívás folytatásra utal (*„folytassuk a 04-es sessiont"*, `/bs-brainsto
 1. Keresd meg a fájlt: `ls -1 .bs-brainstorm/brainstorm-04-*.md`.
 2. **Ha nincs ilyen sorszám:** ne találgass és ne hozz létre újat helyette — listázd ki, mely sessionök léteznek (sorszám + slug + státusz), és kérdezd meg, melyikre gondolt.
 3. **Ha megvan:** olvasd be a **teljes** fájlt, és a beszélgetés előtt foglald össze a felhasználónak 3–5 sorban: hol tartottunk, mi a legutóbbi döntés, mi a legégetőbb nyitott kérdés. Innen folytasd — **ne kezdd újra** a feltárást, és **ne fogalmazd át** a már meglévő szekciókat (csak bővítsd).
-4. Ha a fájl státusza `Lezárva`, kérdezz rá: újranyitjuk ezt, vagy inkább új session induljon a folytatásból?
+4. Ha a fájl státusza `<status:closed>`, kérdezz rá: újranyitjuk ezt, vagy inkább új session induljon a folytatásból?
 
 ### 1.c A `.gitignore` bejegyzés (BS4)
 
@@ -130,7 +130,7 @@ A brainstorm értéke azon áll vagy bukik, hogy a javaslatok **ehhez a rendszer
 - **Legyen bounded:** kérj konkrét felső korlátot a válaszban (pl. „a 10 legrelevánsabb találat"), és ne futtasd ugyanazt a kérdést kétszer.
 - Ha egy állítás a lelet alapján bizonytalan, a munkafájlban is **bizonytalanként** jelöld — ne fixálódjon ténnyé.
 
-Minden érdemi leletet a munkafájl **`## 2. Feltárt tények`** szekciójába írj be, `fájl:sor` horgonnyal — így a következő session (vagy a `01-add-cycles`) nem futtatja újra ugyanazt a keresést.
+Minden érdemi leletet a munkafájl **`## <sec:bs_facts>`** szekciójába írj be, `fájl:sor` horgonnyal — így a következő session (vagy a `01-add-cycles`) nem futtatja újra ugyanazt a keresést.
 
 ---
 
@@ -138,12 +138,12 @@ Minden érdemi leletet a munkafájl **`## 2. Feltárt tények`** szekciójába �
 
 Ez a skill lényege. Ötletelő módban két irányba szokott elromlani a munka: **monológ** (az ágens kiönt egy esszét, és nem kérdez), illetve **igenelés** (mindenre azt mondja, hogy jó ötlet). Mindkettő ellen szabály van.
 
-- **Egy kérdés egy körben (BS8).** Ne dobj 8 kérdést egyszerre. Válaszd ki azt az egyet, amely a leginkább előremozdítja a témát, tedd fel, és várd meg a választ. A többit írd a `## 5. Nyitott kérdések` szekcióba — nem veszik el.
+- **Egy kérdés egy körben (BS8).** Ne dobj 8 kérdést egyszerre. Válaszd ki azt az egyet, amely a leginkább előremozdítja a témát, tedd fel, és várd meg a választ. A többit írd a `## <sec:bs_open_questions>` szekcióba — nem veszik el.
 - **Mindig 2–3 alternatíva, kompromisszumokkal, plusz explicit ajánlás (BS9).** Se döntés nélküli felsorolás („ezek a lehetőségek, döntsd el"), se alternatíva nélküli döntés („csináljuk így"). Minden alternatívánál mondd meg, **mit adsz fel** érte — ha egy opciónak nincs hátránya, azt nem gondoltad végig.
 - **Illesztés a meglévő rendszerhez (BS10).** Ez a leggyakoribb ötletelési hiba: papíron szép, ebben a projektben nem működik. Minden javaslatnál nevezd meg konkrétan, **melyik komponenst/fájlt érinti** (a `system-overview.md` és a `researcher`-leletek alapján), és **mi ütközik** a `conventions.md`-vel. Ha ütközik, ne hallgasd el: vagy a javaslat változik, vagy a konvenció — és az utóbbi külön döntés.
 - **Kódot nem írsz (BS11).** Vázlat, pszeudó, adatfolyam-leírás, séma igen. Működő implementáció nem.
 - **Ne igenelj (BS12).** Ha a felhasználó ötletében valós kockázat, ellentmondás vagy rejtett költség van, mondd ki egy-két mondatban — aztán haladj tovább. A döntés az övé; a fel nem hozott kockázat viszont a te hibád. Ugyanígy: ha valamit nem tudsz, azt írd ki nyitott kérdésnek, ne pótold ki hihető találgatással.
-- **Tartsd a témát (BS13).** Egy munkafájl **egy téma**. Ha a beszélgetés közben egy attól független második téma nyílik, ne olvaszd bele: jegyezd fel a `## 7. Napló`-ba egy sorral, és javasolj rá **külön brainstorm sessiont** a session végén.
+- **Tartsd a témát (BS13).** Egy munkafájl **egy téma**. Ha a beszélgetés közben egy attól független második téma nyílik, ne olvaszd bele: jegyezd fel a `## <sec:bs_log>`-ba egy sorral, és javasolj rá **külön brainstorm sessiont** a session végén.
 
 ---
 
@@ -155,7 +155,7 @@ Ez a skill lényege. Ötletelő módban két irányba szokott elromlani a munka:
 - **Bővíts, ne írj újra.** A meglévő szekciókat ne fogalmazd át és ne rendezd újra „szebbre" — a régi bekezdések a session emlékezete. Új tétel a szekció végére kerül.
 - **Tömör tételek, nem esszé.** Egy tény = egy sor forrással. Egy döntés = mit döntöttünk + egy mondat, hogy miért.
 - **Ne másold be a skill szövegét** a munkafájlba, és ne írj bele rád vonatkozó utasításokat. A fájl olvasója **ember** (és a `01-add-cycles`), nem te.
-- A `## 5. Nyitott kérdések` **élő, pipálható lista**: ami eldőlt, azt pipáld ki, és a döntés kerüljön a 4. szekcióba. Ne töröld a kipipált tételt — a „miért nem így lett" később aranyat ér.
+- A `## <sec:bs_open_questions>` **élő, pipálható lista**: ami eldőlt, azt pipáld ki, és a döntés kerüljön a 4. szekcióba. Ne töröld a kipipált tételt — a „miért nem így lett" később aranyat ér.
 
 ---
 
@@ -163,16 +163,16 @@ Ez a skill lényege. Ötletelő módban két irányba szokott elromlani a munka:
 
 Amikor a téma megérett — vagy a felhasználó lezárja —, tegyél két dolgot.
 
-**1. Ciklus-vágás javaslat (BS16).** Töltsd ki a `## 6. Javasolt ciklus-vágás` szekciót: a téma milyen **önállóan lefejleszthető, önállóan tesztelhető** egységekre esik, milyen sorrendben, mi függ mitől. Ez a `01-add-cycles` valódi bemenete, ezért itt már a roadmap nyelvén gondolkodj (egy egység = egy ciklus-jelölt, rövid cél + „miből látszik, hogy kész"). Ha a téma **egyetlen** kis egység, azt mondd ki — nem minden brainstormból lesz több ciklus.
+**1. Ciklus-vágás javaslat (BS16).** Töltsd ki a `## <sec:bs_cycle_split>` szekciót: a téma milyen **önállóan lefejleszthető, önállóan tesztelhető** egységekre esik, milyen sorrendben, mi függ mitől. Ez a `01-add-cycles` valódi bemenete, ezért itt már a roadmap nyelvén gondolkodj (egy egység = egy ciklus-jelölt, rövid cél + „miből látszik, hogy kész"). Ha a téma **egyetlen** kis egység, azt mondd ki — nem minden brainstormból lesz több ciklus.
 
-**2. Átadás — javasolj, de ne lépj be (BS17).** Állítsd a fájl státuszát `Lezárva`-ra, és zárd a beszélgetést a következő lépés javaslatával:
+**2. Átadás — javasolj, de ne lépj be (BS17).** Állítsd a fájl státuszát `<status:closed>`-ra, és zárd a beszélgetést a következő lépés javaslatával:
 
 | Ha az eredmény… | Javasolt következő lépés |
 |---|---|
 | több ciklusra bomló téma, létező projektben | `/bs-add-cycles brainstorm: NN` — a roadmap kiegészítése és a `cycle-design-input.md` feltöltése a brainstormból |
 | egy kicsi, jól körülhatárolt feladat | `/bs-quick-flow input: <a feladat egy mondatban>` |
 | még nincs projekt-konvenció (greenfield) | `/bs-init-project`, majd `/bs-add-cycles brainstorm: NN` |
-| a téma nem érett meg | maradjon `Folyamatban`; a folytatás `/bs-brainstorm folytassuk a NN-est` |
+| a téma nem érett meg | maradjon `<status:in_progress>`; a folytatás `/bs-brainstorm folytassuk a NN-est` |
 
 A `/bs-add-cycles` átvétele a **híd**: a nyers brainstorm helyi és gitignore-olt, a belőle desztillált `cycle-design-input.md` viszont commitba kerül. **Egy híd, egy irány** — a `02-write-spec` nem a brainstormot olvassa, hanem a `cycle-design-input.md`-t.
 
@@ -183,7 +183,7 @@ A `/bs-add-cycles` átvétele a **híd**: a nyers brainstorm helyi és gitignore
 ## 6. Ha elakadsz
 
 - **A felhasználó nem tudja, mit akar.** Ne kérj tőle specifikációt. Kérdezz a *problémáról*, ne a megoldásról: mi fáj ma, mikor derült ki, mi a legrosszabb, ami emiatt megtörténhet.
-- **A téma túl nagy egy sessionre.** Ne próbáld egy fájlba tömni. Zárd le a jelenlegit a megszületett döntésekkel, és javasolj külön sessiont a leválasztható részre — a `## 7. Napló`-ban hivatkozz rá.
+- **A téma túl nagy egy sessionre.** Ne próbáld egy fájlba tömni. Zárd le a jelenlegit a megszületett döntésekkel, és javasolj külön sessiont a leválasztható részre — a `## <sec:bs_log>`-ban hivatkozz rá.
 - **A felhasználó implementációt kér.** Nem itt: javasold a `/bs-quick-flow`-t vagy a `/bs-add-cycles`-t, és zárd le a brainstormot.
 - **Egy döntés a `conventions.md` megváltoztatását igényli.** Ez nem a brainstorm dolga: írd be döntésként és nyitott kérdésként, hogy a konvenció-változás külön, tudatos lépés (`/bs-init-project` vagy a `conventions-change` folyamat szerint).
 
@@ -195,7 +195,7 @@ A `/bs-add-cycles` átvétele a **híd**: a nyers brainstorm helyi és gitignore
 2. **Orientáció.** `conventions.md` + `system-overview.md` + `docs-generated/README.md` + `roadmap.md`; téma szerint `architecture.md` / `design-drift.md`. A kódbázis-feltárás **párhuzamos `researcher` subagentekkel**.
 3. **Beszélgetés.** Egy kérdés / kör · 2–3 alternatíva + ajánlás · illesztés a meglévő rendszerhez · nem igenelsz · nem írsz kódot.
 4. **Perzisztálás.** Érdemi kör után bővíted a munkafájlt (soha nem írod újra).
-5. **Lezárás.** Ciklus-vágás javaslat → státusz `Lezárva` → átadás a `/bs-add-cycles`-nak (vagy `/bs-quick-flow`-nak) — **belépés nélkül**.
+5. **Lezárás.** Ciklus-vágás javaslat → státusz `<status:closed>` → átadás a `/bs-add-cycles`-nak (vagy `/bs-quick-flow`-nak) — **belépés nélkül**.
 
 ---
 

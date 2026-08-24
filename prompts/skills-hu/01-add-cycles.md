@@ -5,7 +5,7 @@ description: "berkispec - 01. Használd az inicializálás után (Phase 01) fejl
 prerequisites:
   - "conventions.md létezik"
 output:
-  - "specs/roadmap.md státusz: Kész"
+  - "specs/roadmap.md státusz: <status:done>"
   - "specs/cycle-NN-<name>/cycle-design-input.md (üres sablon, a felhasználó tölti ki — opcionális, CD1; brainstorm-bemenet esetén feltöltve, BS18)"
   - "specs/cycle-NN-<name>/spec-input-from-prev.md és/vagy plan-input-from-prev.md (csak ha van átadandó infó, IP1)"
 prev: bs-init-project  # vagy bs-brainstorm (BS18 — brainstorm-bemenet)
@@ -29,7 +29,7 @@ Ez a folyamat **1. fázisa (0–9)**: 0-init · **1-ciklusok ←** · 2-spec · 
 
 ---
 
-## Előfeltétel
+## <field:f_prerequisite>
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` projekt inicializálás fázishoz.
 2. **Git-preflight (közös leírás):** a 01 **branch-nyitó** fázis — a *teljes* preflight vonatkozik rá (no-VCS kapu + munkafa-ellenőrzés + branch-nyitó preflight: friss, tiszta `main`, illetve resume-felismerés). A tényleges `git switch -c`-t **nem** itt futtatod, hanem a ciklusszám + név meghatározása UTÁN, az adott mód (A/B/C) lezárásában (BD5).
@@ -56,7 +56,7 @@ Milyen branch-en vagyunk?
    → ez RESUME: a branch már létrejött. NE hozz új branch-et (`git switch -c` tilos),
      folytasd ezen a branch-en a lenti dokumentum-állapot szerint.
 3. feature branch, ami NEM az aktuális ciklusé
-   → BD6: figyelmeztetés (a jelenlegi branch merge/PR a `## Merge stratégia` szerint),
+   → BD6: figyelmeztetés (a jelenlegi branch merge/PR a `## <sec:cv_merge_strategy>` szerint),
      majd kérd a felhasználót, hogy váltson main-re — ne válts automatikusan.
 ```
 
@@ -127,7 +127,7 @@ A teljes roadmap az **első ciklus feature branch-én** készül és commitolód
 
 1. Kérdezd meg a felhasználót, **mi legyen az első ciklus neve** (kebab-case). Ha nem ad nevet, a **default** branch: `feature/cycle-01` (név-suffix nélkül); ha ad, `feature/cycle-01-<name>`.
 2. Futtasd a branch-nyitó preflightet (fent: friss, tiszta `main`, illetve resume-felismerés — BD6/BQ3/BQ4).
-3. Hozd létre a branch-et: `git switch -c feature/cycle-01[-<name>]` (a `conventions.md` `## Git és branching konvenciók` **Branch-elnevezési stratégia** szerinti prefixszel; alapból `feature/`).
+3. Hozd létre a branch-et: `git switch -c feature/cycle-01[-<name>]` (a `conventions.md` `## <sec:cv_git_conventions>` **<field:f_branch_naming>** szerinti prefixszel; alapból `feature/`).
 4. **A továbbiakban (interjú, roadmap-írás, commit) minden ezen a branch-en történik** — a `main` védett marad (BD4).
 
 **No-VCS ágon** (nincs verziókezelő) ez a lépés kimarad: a roadmap közvetlenül készül, branch/commit nélkül (BI8).
@@ -167,7 +167,7 @@ Mielőtt meghatározod a ciklusokat, elegendő információra van szükséged. �
 
 **Ha bármely pont hiányzik:** tegyél fel **egy** célzott kérdést, várd meg a választ, majd értékeld újra. Addig ismételd, amíg a minimum teljesül. Ne tegyél fel egyszerre több kérdést.
 
-> **Ha van brainstorm-bemenet (BS18):** a minimum jó része már megvan a munkafájlban (`## 1. Cél`, `## 2. Feltárt tények`, `## 4. Döntések`) — **azt ne kérdezd újra**. Az interjút a `## 5. Nyitott kérdések` kipipálatlan tételeivel kezdd, egyszerre eggyel.
+> **Ha van brainstorm-bemenet (BS18):** a minimum jó része már megvan a munkafájlban (`## 1. Cél`, `## <sec:bs_facts>`, `## <sec:bs_decisions>`) — **azt ne kérdezd újra**. Az interjút a `## <sec:bs_open_questions>` kipipálatlan tételeivel kezdd, egyszerre eggyel.
 
 Ha elegendő információ áll rendelkezésre, kezdd el a ciklus meghatározást.
 
@@ -206,9 +206,9 @@ Ha bármely pontra "nem", módosítsd a ciklushatárt, mielőtt továbblépnél.
 **Alapszabály: a listából soha nem törlünk. Lezárt kérdést csak `[x]`-szel jelölünk — a szövege és a döntés megmarad.**
 
 **Státusz átmenetek:**
-- Roadmap írásának kezdetén: `Piszkozat`
-- Ha van legalább egy `[ ]` kérdés: `Nyitott kérdések vannak`
-- Ha minden kérdés `[x]` és a validációs ellenőrzés átment: `Kész`
+- Roadmap írásának kezdetén: `<status:draft>`
+- Ha van legalább egy `[ ]` kérdés: `<status:open_questions>`
+- Ha minden kérdés `[x]` és a validációs ellenőrzés átment: `<status:done>`
 
 **Iterációs szabályok:**
 1. Ha ciklushatárok meghatározása során kérdés merül fel, add hozzá a `## Nyitott kérdések` listához `- [ ] Knn` formátumban, szekvenciális számozással.
@@ -233,7 +233,7 @@ Ha minden kérdés `[x]` és a validációs ellenőrzés átment, tedd fel a ké
 <!-- INCLUDE:lang/01-add-cycles.md#roadmap-statusz-megerosites --> — Ne állítsd át a státuszt a megerősítés előtt. **A válasz végén helyezd el a `specs/roadmap.md` közvetlen, kattintható linkjét.**
 
 Ha a felhasználó megerősíti:
-- Állítsd a `specs/roadmap.md` státuszát `Kész`-re.
+- Állítsd a `specs/roadmap.md` státuszát `<status:done>`-re.
 - Hozd létre az **első ciklus** könyvtárát (`mkdir -p specs/cycle-01-<name>/`, ha még nem létezik) és benne a `cycle-design-input.md` sablont a *„Ciklus design input (CD1)"* szekció szerint. A többi ciklus mappáját **ne** hozd létre előre — azok a saját 01-futásukkor (B. mód) kapják meg a sajátjukat.
 - Készíts git commitot a fázis befejezéséről — **a már létrehozott `feature/cycle-01[-<name>]` branch-en** (BD4/BQ1), nem `main`-en:
   ```bash
@@ -249,7 +249,7 @@ Ha a felhasználó megerősíti:
 
 ### Előkészítés
 
-1. Olvasd be a `specs/roadmap.md`-t (ha létezik) — kontextus és ciklusszám meghatározáshoz. Ha nem létezik, hozd létre az alap struktúrával (`# Fejlesztési Roadmap\n\n**Státusz:** Kész`). _(A roadmap tényleges írása/commitja a ciklus feature branch-én történik — lásd „Branch létrehozása".)_
+1. Olvasd be a `specs/roadmap.md`-t (ha létezik) — kontextus és ciklusszám meghatározáshoz. Ha nem létezik, hozd létre az alap struktúrával (`# Fejlesztési Roadmap\n\n**<field:f_status>:** <status:done>`). _(A roadmap tényleges írása/commitja a ciklus feature branch-én történik — lásd „Branch létrehozása".)_
 2. Határozd meg az új ciklusszámot a **„Ciklusszám meghatározása (BQ2)"** szerint — a main `roadmap.md`/`ls specs/` **és** a feature branch-ek `cycle-NN` számainak maximuma + 1 (VCS mellett). Ez a lépés még az induló branch-en (jellemzően `main`-en) fut.
 3. Jelezd a felhasználónak:
 <!-- INCLUDE:lang/01-add-cycles.md#BQ2-ciklusszam-jelzes -->
@@ -259,7 +259,7 @@ Ha a felhasználó megerősíti:
 1. Tegyél fel **egy** kérdést:
 <!-- INCLUDE:lang/01-add-cycles.md#BD5-cel-kerdes -->
 
-   > **Ha van brainstorm-bemenet (BS18):** ezt a kérdést **hagyd ki** — a célt a munkafájl `## 1. Cél / kérdés` és `## 6. Javasolt ciklus-vágás` szekciója már megválaszolja. Ehelyett foglald össze 2-3 sorban, mit értettél belőle, és **azt** hagyasd jóvá. Csak azt kérdezd meg, amire a fájlban nincs válasz (jellemzően a `## 5. Nyitott kérdések` nyitott tételei).
+   > **Ha van brainstorm-bemenet (BS18):** ezt a kérdést **hagyd ki** — a célt a munkafájl `## <sec:bs_goal_question>` és `## <sec:bs_cycle_split>` szekciója már megválaszolja. Ehelyett foglald össze 2-3 sorban, mit értettél belőle, és **azt** hagyasd jóvá. Csak azt kérdezd meg, amire a fájlban nincs válasz (jellemzően a `## <sec:bs_open_questions>` nyitott tételei).
 
    > **Flow-méret ellenőrzés (a cél leírása után, a névjavaslat előtt):** Mérlegeld, hogy a feladat **nem túl kicsi-e** a teljes, többfázisú ciklushoz. Ha a cél 3-4 lépésben, egyetlen menetben megoldható — tipikusan **konfiguráció összeállítása/módosítása, egyszerűbb script megírása, kisebb javítás vagy lokális finomhangolás** —, akkor a teljes `02→…→09` flow túlméretezett. Ilyenkor **állj meg, és javasold az egyszerűsített flow-t**, mielőtt ciklust hoznál létre:
    >
@@ -279,7 +279,7 @@ Ha a leírás vagy a név alapján valamit tisztázni kell (pl. meglévő ciklus
 A név jóváhagyása után, **mielőtt** a `specs/roadmap.md`-be írnál vagy mappát hoznál létre (BD5 sorrend), verziókezelő mellett:
 
 1. Győződj meg róla, hogy a branch-nyitó preflight (fázis eleje) friss, tiszta `main`-re vitt — vagy hogy ez egy resume ugyanezen a ciklus-branch-en (BQ3). Resume esetén nincs teendő, folytatsz a meglévő branch-en.
-2. `main`-en állva hozd létre és válts a ciklus branch-ére: `git switch -c feature/cycle-NN-<name>` (a `conventions.md` `## Git és branching konvenciók` **Branch-elnevezési stratégia** szerinti prefix/formátum; alapból `feature/`). A **mappanév** ettől függetlenül tisztán `cycle-NN-<name>` (BD3).
+2. `main`-en állva hozd létre és válts a ciklus branch-ére: `git switch -c feature/cycle-NN-<name>` (a `conventions.md` `## <sec:cv_git_conventions>` **<field:f_branch_naming>** szerinti prefix/formátum; alapból `feature/`). A **mappanév** ettől függetlenül tisztán `cycle-NN-<name>` (BD3).
 3. Innentől minden (roadmap-írás, `mkdir`, commit) **ezen a branch-en** történik; a `main` védett marad (BD4).
 
 **No-VCS ágon** (nincs verziókezelő) ez kimarad: a roadmap-írás és a mappa-létrehozás közvetlenül történik, branch/commit nélkül (BI8).
@@ -310,7 +310,7 @@ Ha bármelyikre "nem": javítsd vagy kérdezz rá, mielőtt hozzáfűzöd.
 2. Mutasd meg a kész ciklus leírást, és kérj megerősítést:
 <!-- INCLUDE:lang/01-add-cycles.md#BD5-roadmap-megerosites -->
 3. Ha a felhasználó megerősíti (a `git switch -c` ekkor már megtörtént — lásd „Branch létrehozása"):
-   - Állítsd a roadmap státuszát `Kész`-re.
+   - Állítsd a roadmap státuszát `<status:done>`-re.
    - Hozd létre a ciklus könyvtárát: `mkdir -p specs/cycle-NN-<cycle-name>/` (a **mappanév** prefix nélkül, tisztán `cycle-NN-<name>` — BD3).
    - Hozd létre a **ciklus design input sablont** a mappában: `specs/cycle-NN-<cycle-name>/cycle-design-input.md` — lásd a lenti *„Ciklus design input (CD1)"* szekciót.
    - Készíts git commitot a fázis befejezéséről — a **ciklus feature branch-én** (BD4), nem `main`-en:
@@ -352,22 +352,22 @@ Ha bármelyikre "nem": javítsd vagy kérdezz rá, mielőtt hozzáfűzöd.
 
 **Mikor aktiválódik:** ha a hívás sorszámmal utal egy sessionre — `/bs-add-cycles brainstorm: 04`, *„a 04-es brainstormból hozd létre a design inputot"*. Ha nem, **minden változatlan** (a `cycle-design-input.md` üres sablonként jön létre a CD1 szerint).
 
-### Lépések
+### <sec:steps>
 
 1. **Fájl megkeresése:** `ls -1 .bs-brainstorm/brainstorm-04-*.md`.
    - **Nincs ilyen sorszám:** ne találgass és ne dolgozz nélküle — listázd a létező sessionöket (sorszám + slug), és kérdezd meg, melyikre gondolt.
    - **Nincs `.bs-brainstorm/` mappa sem:** jelezd egy sorban, hogy nem találod (a mappa gitignore-olt, tehát más gépen nem is létezik), és kérdezd meg, folytassuk-e brainstorm-bemenet nélkül.
 2. **Teljes beolvasás.** A munkafájl rövid; olvasd be egészben, ne szemelvényezz.
-3. **Interjú-bemenet.** A `## 6. Javasolt ciklus-vágás` szekció a **roadmap-javaslat kiindulása** (egy egység = egy ciklus-jelölt), a `## 1. Cél` a ciklus célja, a `## 2. Feltárt tények` az érintett komponensek. **Amit a fájl megválaszol, azt ne kérdezd meg újra** — a felhasználó már egyszer végigbeszélte.
-4. **A nyitott kérdések a te kérdéseid.** A `## 5. Nyitott kérdések` **kipipálatlan** tételei nyitottak: ezekből lesznek az interjú célzott kérdései (egyszerre **egy**), illetve — ha a ciklus scope-ján kívülre esnek — a roadmap `## Nyitott kérdések` szekciójának bejegyzései. **Soha ne vedd őket eldöntött ténynek.**
+3. **Interjú-bemenet.** A `## <sec:bs_cycle_split>` szekció a **roadmap-javaslat kiindulása** (egy egység = egy ciklus-jelölt), a `## 1. Cél` a ciklus célja, a `## <sec:bs_facts>` az érintett komponensek. **Amit a fájl megválaszol, azt ne kérdezd meg újra** — a felhasználó már egyszer végigbeszélte.
+4. **A nyitott kérdések a te kérdéseid.** A `## <sec:bs_open_questions>` **kipipálatlan** tételei nyitottak: ezekből lesznek az interjú célzott kérdései (egyszerre **egy**), illetve — ha a ciklus scope-ján kívülre esnek — a roadmap `## Nyitott kérdések` szekciójának bejegyzései. **Soha ne vedd őket eldöntött ténynek.**
 5. **A ciklus-vágás javaslat nem parancs.** A brainstorm javaslata jó kiindulás, de a vertikális vágás elveit (lásd a fenti szekciót) és a `## Validációs ciklus` ellenőrzését **ugyanúgy le kell futtatni** rá. Ha a javasolt vágás sérti az elveket (nem önállóan tesztelhető, túl nagy, körkörös függőség), mondd ki, és javasolj módosítást — a döntés a felhasználóé.
 
 ### A `cycle-design-input.md` feltöltése
 
 A CD1 sablon fejléce és a magyarázó blokk **változatlanul** kerül a fájlba (a felhasználó ezután is ír bele); a `<!-- Írj ide. -->` helyére viszont a desztillátum jön:
 
-- **Mit vigyél át:** a `## 4. Döntések` (ez a fő tartalom), a ciklust érintő `## 3. Alternatívák` közül a **megtartott** opció leírása, és a `## 2. Feltárt tények` azon sorai, amelyek erre a ciklusra vonatkoznak (a `fájl:sor` horgonyokkal együtt — azok navigációs értéke a 02/03 fázisban is megmarad).
-- **Mit NE vigyél át:** a `## 7. Napló`-t, a lezárt/elvetett szálakat, a session meta-információit, és a `## 6. Javasolt ciklus-vágás` teljes listáját (abból csak **ennek** a ciklusnak a szelete tartozik ide — a többi a roadmap dolga).
+- **Mit vigyél át:** a `## <sec:bs_decisions>` (ez a fő tartalom), a ciklust érintő `## 3. Alternatívák` közül a **megtartott** opció leírása, és a `## <sec:bs_facts>` azon sorai, amelyek erre a ciklusra vonatkoznak (a `fájl:sor` horgonyokkal együtt — azok navigációs értéke a 02/03 fázisban is megmarad).
+- **Mit NE vigyél át:** a `## <sec:bs_log>`-t, a lezárt/elvetett szálakat, a session meta-információit, és a `## <sec:bs_cycle_split>` teljes listáját (abból csak **ennek** a ciklusnak a szelete tartozik ide — a többi a roadmap dolga).
 - **Több ciklusra bomló brainstorm:** minden ciklus **csak a saját szeletét** kapja meg. A ciklusokon átívelő, közös döntések a roadmap ciklus-blokkjába, illetve a `spec-input-from-prev.md`-be kerülnek (IP1), nem ismétlődnek minden design inputban.
 - **Hangnem:** leíró, az implementálónak szólva. A brainstormban szereplő beszélgetés-nyomokat (*„megbeszéltük, hogy…"*, *„te azt kérdezted…"*) fogalmazd át döntésre: *„A tanúsítványokat központi store kezeli; a komponensek csak referenciát kapnak."*
 - **Ne hivatkozz a `.bs-brainstorm/` útvonalra** a commitált dokumentumban: a mappa gitignore-olt, a link más gépen és PR-ban halott. A származás jelzésére egy útvonal nélküli sor elég: `> Az NN. brainstorm session döntéseiből desztillálva.`
@@ -387,19 +387,19 @@ A válasz végén itt is helyezd el a `cycle-design-input.md` kattintható linkj
 
 ### Mi változott (BQ6)
 
-A klasszikus „**teljes** roadmap-rekonstrukció az összes ciklusmappából egyetlen `Piszkozat` dokumentumba" forgatókönyv **megszűnt**. A **branch = ciklus** modellben a teljes main-roadmap a ciklusok **merge-elésével** áll össze, nem egy nagy rekonstrukciós lépésben. Ezért a C. mód mostantól **csak az adott ciklus** roadmap-blokkját pótolja/javítja, **az adott ciklus feature branch-én** (BQ5) — így a védett `main` + a „branch = ciklus" invariáns megmarad, és nincs több-ciklust-egyszerre-commitoló rekonstrukciós branch. A C→B automatikus átmenet is megszűnik.
+A klasszikus „**teljes** roadmap-rekonstrukció az összes ciklusmappából egyetlen `<status:draft>` dokumentumba" forgatókönyv **megszűnt**. A **branch = ciklus** modellben a teljes main-roadmap a ciklusok **merge-elésével** áll össze, nem egy nagy rekonstrukciós lépésben. Ezért a C. mód mostantól **csak az adott ciklus** roadmap-blokkját pótolja/javítja, **az adott ciklus feature branch-én** (BQ5) — így a védett `main` + a „branch = ciklus" invariáns megmarad, és nincs több-ciklust-egyszerre-commitoló rekonstrukciós branch. A C→B automatikus átmenet is megszűnik.
 
 ### Mikor fut
 
 Akkor, ha az **aktuális ciklus** roadmap-blokkja hiányzik vagy hibás (a `specs/roadmap.md` nem tartalmazza, vagy hiányosan tartalmazza az adott `cycle-NN-<name>` blokkját), miközben a ciklus mappája már létezik. **Csak azzal az egy ciklussal** dolgozol — nem a teljes `specs/`-fel.
 
-### Lépések
+### <sec:steps>
 
 1. **Ciklus azonosítása:** melyik ciklusról van szó (a felhasználó megadta / a folyamatban lévő ciklus mappaneve). Ez az EGY ciklus, amit pótolsz.
 
 2. **Branch (BQ5):** verziókezelő mellett dolgozz az adott **ciklus feature branch-én** — a B. mód „Branch létrehozása" mintája szerint: ha még nincs branch, a branch-nyitó preflight (friss, tiszta `main`) után `git switch -c feature/cycle-NN-<name>`; ha ez egy resume és már a ciklus branch-én vagy (BQ3), folytasd ott, `git switch -c` nélkül. **No-VCS ágon a git kimarad.**
 
-3. **A hiányzó/hibás blokk pótlása:** ha a `specs/roadmap.md` nem létezik, hozd létre az alap struktúrával (`# Fejlesztési Roadmap\n\n**Státusz:** Kész`). Az adott ciklus `## Cycle NN — cím` blokkját a standard struktúra szerint pótold/javítsd, a ciklus `spec.md`-jéből (ha létezik). Ha az input sok, a `researcher` subagenttel (`agents/researcher.md`, Mód B) kérdezd le tömören (cím, `Célkitűzés` első mondata, érintett komponensek, `Teszt specifikáció`/`Definition of done` kulcspontjai) — a fő kontextust kímélve. **Csak ezt az egy blokkot** érintsd, a roadmap többi részét ne írd felül.
+3. **A hiányzó/hibás blokk pótlása:** ha a `specs/roadmap.md` nem létezik, hozd létre az alap struktúrával (`# Fejlesztési Roadmap\n\n**<field:f_status>:** <status:done>`). Az adott ciklus `## Cycle NN — cím` blokkját a standard struktúra szerint pótold/javítsd, a ciklus `spec.md`-jéből (ha létezik). Ha az input sok, a `researcher` subagenttel (`agents/researcher.md`, Mód B) kérdezd le tömören (cím, `<sec:objective>` első mondata, érintett komponensek, `<sec:test_specification>`/`<sec:definition_of_done>` kulcspontjai) — a fő kontextust kímélve. **Csak ezt az egy blokkot** érintsd, a roadmap többi részét ne írd felül.
 
 4. **Validáció + megerősítés:** mutasd meg a pótolt/javított blokkot, és kérj megerősítést:
 <!-- INCLUDE:lang/01-add-cycles.md#BQ5-C-mod-jelzes -->

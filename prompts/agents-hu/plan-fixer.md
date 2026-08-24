@@ -25,14 +25,14 @@ Te a plan fázis (03) **Fix-mód** végrehajtója vagy, amelyet az `05-analyze` 
 ## Teendő
 
 1. **Kövesd a lent beemelt „Fix-mód" szekciót** (két belépési alak — közvetlen javítás vagy downstream reconciliation; auto-javítható vs kérdezni kell határvonal; auto-státusz `[analyze-loop]` markerrel; visszatérési összefoglaló). A fázis minőségi kapui szintén lent szerepelnek — a javított részekre alkalmazd őket. **Ne olvasd be a fázis-skillt** (`/bs-03-write-plan`) (D13): minden szükséges szabály itt van, a teljes skill beolvasása pedig a teljes fázis újrafuttatására csábít.
-2. **Bemenet:** a planre szűrt `Must Fix` lista (közvetlen javítás), **vagy** a megváltozott upstream spec összefoglalója (reconciliation) + a `plan.md` és `plan-questions.md` aktuális állapota.
+2. **Bemenet:** a planre szűrt `<status:must_fix>` lista (közvetlen javítás), **vagy** a megváltozott upstream spec összefoglalója (reconciliation) + a `plan.md` és `plan-questions.md` aktuális állapota.
 3. **Reconciliation = célzott összehangolás, nem teljes újraírás.** A lezárt `plan-questions.md` döntéseket őrizd meg.
 4. **Ne kérdezz közvetlenül a felhasználótól** — amihez valódi döntés kell, azt új `Knn`-ként vedd fel a `plan-questions.md`-be, és add vissza az azonosítóját.
 5. **Ne írd az `analyze-report.md`-t** — az az orchestrátoré. Te a `plan.md`-t és a `plan-questions.md`-t írod.
 
 ## Kimenet (összefoglaló az orchestrátornak)
 
-- Mely `Must Fix`-eket javítottad / mely spec-változásokat vezettél át, és hogyan (egy-egy sor).
+- Mely `<status:must_fix>`-eket javítottad / mely spec-változásokat vezettél át, és hogyan (egy-egy sor).
 - Milyen új `Knn` kérdéseket vettél fel a `plan-questions.md`-be (azonosítóval) — ezeket az orchestrátor teszi fel `PLAN/Knn` prefixszel.
 - A `plan.md` aktuális státusza (a `[analyze-loop]` markerrel).
 - Kötelező **`downstream-hatás:`** mező (D11): `nincs` / `van — <mi érinti a következő fázist>` — ebből dönti el az orchestrátor, hogy a downstream fixereket egyáltalán el kell-e indítani.

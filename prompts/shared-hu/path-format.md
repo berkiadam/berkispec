@@ -17,4 +17,4 @@
 
 **Ami NEM fájl-útvonal, tehát nem érinti a szabály:** HTTP-endpoint útvonala (`/api/v1/token-exchange`), konténer-belső útvonal egy parancsban (`docker exec app cat /opt/app/config.yaml`), JSON-pointer, regex.
 
-_A `05-analyze` mechanikus kapuja ezt gépiesen ellenőrzi (`R1` check): `file://`, gép-specifikus és abszolút repó-útvonal a tervezési dokumentumokban `Must Fix`._
+_A `05-analyze` mechanikus kapuja ezt gépiesen ellenőrzi (`R1` check): `file://`, gép-specifikus és abszolút repó-útvonal a tervezési dokumentumokban `<status:must_fix>`._

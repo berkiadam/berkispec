@@ -850,6 +850,13 @@ def process_antigravity(src_dir, dest_path, models):
             for section in sections:
                 if section.get("title") == "Instructions":
                     content = inline_shared_includes(section.get("content", ""), src_dir)
+                    # A nyelvi tokenek az INCLUDE UTÁN oldódnak fel — ugyanaz a
+                    # sorrend, mint a `prepare_agent_content`-ben (9.7.3). Az
+                    # Antigravity a gemini-tükörből dolgozik, ezért nem megy át a
+                    # `prepare_agent_content`-en: a feloldást itt kell elvégezni,
+                    # különben a telepített agent.json feloldatlan `<sec:…>`
+                    # tokent hordozna.
+                    content = resolve_lang_tokens(content, src_dir)
                     content = substitute_scripts_dir(content, "antigravity")
                     section["content"] = _build_alert(model, "Antigravity", effort) + content
         except KeyError:
