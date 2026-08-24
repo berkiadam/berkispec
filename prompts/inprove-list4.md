@@ -614,30 +614,36 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
 
 ## 8. Horgonyos INCLUDE + `description` behelyettesítés
 
-- [ ] **8.1 — A marker szintaxis kiterjesztése.** `<!-- INCLUDE:lang/<fájl>.md#<horgony> -->`
+- [x] **8.1 — A marker szintaxis kiterjesztése.** `<!-- INCLUDE:lang/<fájl>.md#<horgony> -->`
   A `_INCLUDE_MARKER_RE` `[^\s]+?`-t illeszt, tehát a `#horgony` **automatikusan bekerül** a
   `path` csoportba — a regexet nem kell módosítani, csak a feloldót.
+  > **Buktató a 9.4-hez (mért viselkedés):** a regex a marker körüli vízszintes whitespace-t is
+  > elfogyasztja (`[ \t]*…[ \t]*`), tehát egy **sor közepére** tett marker elnyeli az előtte
+  > lévő szóközt (`A: <!-- … -->` → `A:<blokk>`). A markereket ezért **mindig önálló sorba** tedd.
 
-- [ ] **8.2 — Horgony-vágás a feloldóban.** A `rel_path`-ot `#`-nél bontsd `(fájl, horgony)`-ra.
+- [x] **8.2 — Horgony-vágás a feloldóban.** A `rel_path`-ot `#`-nél bontsd `(fájl, horgony)`-ra.
   Horgony nélkül a mai viselkedés (teljes fájl, vezető HTML-komment levágva). Horgonnyal: a
   nyelvi fájlban keresd meg a `## <horgony>` sort, és add vissza a **következő `## ` szintű
   címsorig** tartó törzset, `strip('\n')`-nel. A `_shared_include_cache` kulcsa a horgonyt is
   tartalmazza.
 
-- [ ] **8.3 — Hibakezelés (a két eset szándékosan KÜLÖNBÖZIK).**
+- [x] **8.3 — Hibakezelés (a két eset szándékosan KÜLÖNBÖZIK).** *(Mind a három ág tesztelve:
+  horgony-kivágás, hiányzó fájl → marker érintetlen, hiányzó horgony → `exit 1` beszédes hibával.)*
   - Nem létező **fájl** → a mai viselkedés: a marker érintetlenül marad, a telepítés nem törik.
   - Létező fájl + **nem létező horgony** → **`sys.exit(1)`** beszédes hibával. Csendben kihagyni
     egy user-facing mondatot vagy egy fájlba írandó sablont súlyosabb, mint megállni.
   Ezt a különbséget írd bele kommentbe is.
 
-- [ ] **8.4 — Horgony-név konvenció:** `<szabály-ID>-<rövid-név>`, kisbetűs, kötőjeles — pl.
+- [x] **8.4 — Horgony-név konvenció:** `<szabály-ID>-<rövid-név>`, kisbetűs, kötőjeles — pl.
   `BD5-branch-prompt`, `CD1-template`, `DS22-gate-fail-question`. A szabály-ID-vel kezdés azért
   fontos, mert a paritás-kapu és a kereszthivatkozások így nyelvfüggetlenül azonosíthatók.
 
-- [ ] **8.5 — A `_MAX_INCLUDE_DEPTH = 5` marad.** A nyelvi fájlok **ne** tartalmazzanak további
+- [x] **8.5 — A `_MAX_INCLUDE_DEPTH = 5` marad.** A nyelvi fájlok **ne** tartalmazzanak további
   INCLUDE markert — ezt a paritás-kapu ellenőrzi (11.3).
 
-- [ ] **8.6 — `description` behelyettesítés (LG15).** A frontmatterbe nem lehet INCLUDE-olni,
+- [x] **8.6 — `description` (+ `role`) behelyettesítés (LG15/LG26).** *(A `prompts/lang/hu/descriptions.json`
+  a mai frontmatterekből generálva: 25 kulcs = 14 skill + 11 agent; az agent-értékek objektumok.
+  Ezért a `hu`/`hu` telepítés kimenete változatlan — a 16.1 keret byte-azonos maradt.)* A frontmatterbe nem lehet INCLUDE-olni,
   ezért a `description` a **projekt-nyelvből** kerül be behelyettesítéssel, a már működő
   `substitute_scripts_dir` mintájára:
   - forrás: `prompts/lang/<PROJECT_LANG>/descriptions.json` — `{"bs-brainstorm": "…", …}`,
@@ -658,7 +664,7 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
   - a paritás-kapu (11.4) ellenőrzi, hogy a `descriptions.json` kulcskészlete **pontosan** a fa
     `name` mezőinek halmaza, mindkét nyelven.
 
-- [ ] **8.7 — A skill-írás egységesítése (a 8.6 hibaosztály megszüntetése).** A `description`
+- [x] **8.7 — A skill-írás egységesítése (a 8.6 hibaosztály megszüntetése).** A `description`
   behelyettesítés az a harmadik dolog, amit két helyen kell elvégezni (az INCLUDE-feloldás és a
   `substitute_scripts_dir` után) — ez előbb-utóbb elcsúszik. **Emeld ki egy közös
   `prepare_skill_content(skill_file, src_dir, platform)` függvénybe** az INCLUDE-feloldást, a
@@ -667,6 +673,9 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
   automatikusan mind az 5 platformra érvényes.
   **Ez tartalmi refaktor a telepítőben, nem a promptokban — a 16.1 byte-azonosságnak
   teljesülnie KELL utána is** (a kimenet nem változik, csak a kód szerkezete).
+  *(Elvégezve: `prepare_skill_content()` + `prepare_agent_content()`; mind a 8 hívási hely
+  (5 platform skill- és agent-ciklusai) ezeket használja, és az antigravity `agent.json`
+  `description`-je is a projekt-nyelvből jön. A 16.1 utána byte-azonos.)*
 
 ---
 
