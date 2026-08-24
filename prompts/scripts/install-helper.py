@@ -140,28 +140,24 @@ def get_effort(models, platform, filename):
     _, effort = _resolve_agent_config(models, platform, filename)
     return effort
 
-# Minden helper scriptet (prompts/scripts/*.py) átmásol a cél scripts_dest
-# mappába, kivéve saját magát (install-helper.py, ami csak a telepítő gépén
-# fut, a célprojektben nincs rá szükség). Így új helper script (pl.
-# ds22-gate-check.py) hozzáadásakor nem kell mindhárom process_* függvényt
-# külön bővíteni.
 # ── Nyelvi tengelyek (két független beállítás) ─────────────────────────────
+# MINDKETTŐ BUILD-TIME beállítás: a telepítés pillanatában dől el, és utána
+# nyomtalan — semmilyen runtime-nak (sem a scripteknek, sem a
+# `conventions.md`-nek) nem kell tudnia róla. A kettő között NEM az a
+# különbség, hogy melyik mikor hat, hanem a HATÓKÖRÜK:
+#
 # `PROMPT_LANG`  — a PROMPT nyelve: melyik forrás-fából telepítünk
 #                  (`prompts/skills-hu` = hu, `prompts/skills-en` = en).
-#                  MINDKÉT nyelv prefixelt mappában él — nincs kitüntetett,
-#                  suffix nélküli fa (LG5).
-
-#                  BUILD-TIME beállítás: a telepítés után nyomtalan, semmi
-#                  runtime-nak nem kell tudnia róla.
+#                  Hatóköre az AGENSNEK szóló instrukciós szöveg. MINDKÉT
+#                  nyelv prefixelt mappában él — nincs kitüntetett, suffix
+#                  nélküli fa (LG5).
 # `PROJECT_LANG` — a PROJEKT nyelve: a `<!-- INCLUDE:lang/... -->` markerek
 #                  feloldását választja (`prompts/lang/<lang>/`). Ez a mappa
 #                  szándékosan NEM a `shared-<L>/` alatt van: nem a
 #                  prompt-nyelvvel mozog, tehát ott duplikáció lenne.
-#                  Ide tartozik minden, ami a projektbe kerül vagy a
-#                  felhasználóhoz szól: szó szerint kimondandó mondatok,
-#                  fájlba írt sablonok, státusz-kulcsszavak. RUNTIME
-#                  beállítás — a `conventions.md` rögzíti, a scriptek is ezt
-#                  a nyelvet írják/olvassák.
+#                  Hatóköre minden, ami a PROJEKTBE kerül vagy a
+#                  FELHASZNÁLÓHOZ szól: szó szerint kimondandó mondatok,
+#                  fájlba írt sablonok, státusz-kulcsszavak.
 #
 # A kettő ORTOGONÁLIS: az `en` prompt + `hu` projekt kombináció a fő use case
 # (a prompt tokenben olcsóbb, a leadandó magyar marad).
@@ -169,11 +165,11 @@ PROMPT_LANG = "hu"
 PROJECT_LANG = "hu"
 SUPPORTED_LANGS = ("hu", "en")
 
-# A `hu` a kanonikus forrás-fa; az `en` változat külön mappában él. A `hu`
-# TELJES SZIMMETRIA (LG5): mindkét nyelv prefixelt mappában él
-# (`skills-hu` / `skills-en`), nincs kitüntetett, suffix nélküli fa. Az
-# aszimmetria csendes hibát szülne: egy `skills/`-be írt javítás úgy néznének
-# ki, mintha nyelvfüggetlen lenne.
+# A `hu` a fordítás kanonikus forrás-fája, a mappanevekben viszont TELJES A
+# SZIMMETRIA (LG5): mindkét nyelv prefixelt mappában él (`skills-hu` /
+# `skills-en`), nincs kitüntetett, suffix nélküli fa. Az aszimmetria csendes
+# hibát szülne: egy `skills/`-be írt javítás úgy nézne ki, mintha
+# nyelvfüggetlen lenne.
 def _lang_subdir(base, lang):
     return f"{base}-{lang}"
 
@@ -186,6 +182,11 @@ def agents_src_dir(src_dir, gemini=False):
     base = Path(src_dir) / "prompts" / _lang_subdir("agents", PROMPT_LANG)
     return base / "gemini-agent" if gemini else base
 
+# Minden helper scriptet (prompts/scripts/*.py) átmásol a cél scripts_dest
+# mappába, kivéve saját magát (install-helper.py, ami csak a telepítő gépén
+# fut, a célprojektben nincs rá szükség). Így új helper script (pl.
+# ds22-gate-check.py) hozzáadásakor nem kell mindhárom process_* függvényt
+# külön bővíteni.
 def copy_helper_scripts(src_dir, scripts_dest):
     scripts_dest.mkdir(parents=True, exist_ok=True)
     scripts_src_dir = Path(src_dir) / "prompts/scripts"
