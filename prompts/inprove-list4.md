@@ -1566,12 +1566,19 @@ Megoszlás: **fő ágens 28 fájl / ~453700 karakter · subagent 14 fájl / 2194
 **Ez az első lépés**, mert minden skill beemeli: itt dől el a terminológia. A 13.2.1 glosszáriumot
 **ezzel párhuzamosan** véglegesítsd — amit itt eldöntesz, azt a többi 25 fájl követi.
 
+> **✅ A 13.3.1 KÉSZ (2026-08-25) — mind a 17 fájl.** `prompts/shared-en/`, fájlonként futtatott
+> paritás-kapuval (13.2.4). Magyar ékezet a fán: **0 találat** (16.5). A `hu`/`hu` 16.1 keret
+> változatlan. **A glosszárium három tétellel bővült** a fordítás közben: `downstream-hatás:` →
+> `downstream-effect:` (fixer → orchestrátor szerződés-mező, D11), `Knn` → `Qnn`,
+> `<FÁZIS-TAG>` → `<PHASE-TAG>` — ezeket a 05/07 skill fordításának **kötelezően követnie kell**,
+> mert a fixerek és az orchestrátor ezeken a stringeken keresztül beszélnek.
+
 | ✓ | Fájl | Karakter | Ki fordítja |
 |---|---|---:|---|
-| [ ] | `quality-check-plan.md` | 18558 | **fő ágens** |
+| [x] | `quality-check-plan.md` | 18558 | **fő ágens** |
 | [x] | `fix-mode-implement.md` | 6725 | **fő ágens** *(a 7.6-ban létrejött)* |
-| [ ] | `quality-check-tasks.md` | 11986 | **fő ágens** |
-| [ ] | `quality-check-spec.md` | 10716 | **fő ágens** |
+| [x] | `quality-check-tasks.md` | 11986 | **fő ágens** |
+| [x] | `quality-check-spec.md` | 10716 | **fő ágens** |
 | [x] | `phase-commit.md` | 5558 | **fő ágens** |
 | [x] | `git-preflight.md` | 5033 | **fő ágens** |
 | [x] | `fix-mode-tasks.md` | 4882 | **fő ágens** |
