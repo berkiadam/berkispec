@@ -109,10 +109,7 @@ Soha nem kerül bele:
 ## Task formátum
 
 ```md
-- [ ] T001 [RED]   <tesztfájl létrehozása / teszt megírása> — `path/to/test.ts` — plan [P-CONFIG]
-- [ ] T002 [GREEN] <implementáció> — `path/to/file.ts` — plan [P-CONFIG] (betöltő modul)
-- [ ] T003 [OPS]   <nem TDD lépés: build / push / deploy / kézi konfiguráció> — parancs vagy `path/to/file` — plan [P-DEPLOY]
-- [ ] T004 [CHECK] Futtasd a teszteket / typecheck-et — plan [P-CONFIG]
+<!-- INCLUDE:lang/04-write-tasks.md#task-formatum -->
 ```
 
 ### 🔴 Plan-hivatkozás minden taskon (PID1) — kötelező
@@ -180,39 +177,7 @@ Részletet **csak akkor** adj a task leírásába, ha a plan nem tartalmazza:
 ## Tasks struktúra
 
 ```md
-# Cycle NN: <cím> — Tasks
-
-**Státusz:** `Piszkozat` | `Implementálásra kész`
-
-## Prerequisite dokumentumok
-
-_Az implementáló agent ezeket olvassa be a végrehajtás előtt._
-
-- `specs/<cycle-name>/plan.md`
-- _(további Reviewed artifaktok a plan Schema Artifaktumok táblájából)_
-
-> `[RED]` = teszt írása (bukni fog) · `[GREEN]` = implementáció (teszt zöldítése) · `[CHECK]` = ellenőrzés futtatása · `[OPS]` = nem-TDD lépés (build, deploy, kézi konfiguráció, jóváhagyás, rollback)
-
-## <Logikai csoport 1 — a plan végrehajtási sorrendje alapján> — plan [P-CONFIG], [P-REDIS]
-
-- [ ] T001 [RED]   ... — plan [P-CONFIG] (unit teszt)
-- [ ] T002 [GREEN] ... — plan [P-CONFIG] (betöltő modul)
-- [ ] T003 [CHECK] Futtasd: `npm test -- path/to/test.ts` — plan [P-CONFIG]
-
-## <Logikai csoport 2> — plan [P-ROUTING]
-
-- [ ] T004 ... — plan [P-ROUTING]
-- [ ] T005 [CHECK] Futtasd: `npm run typecheck` — plan [P-ROUTING]
-
-## Plan-lefedettség (fordított tábla)
-
-_Minden `[P-…]` ID-t viselő plan-szekció szerepel itt, a hozzá tartozó taskokkal._
-
-| Plan szekció (ID + cím) | Taskok | Csoport |
-|---|---|---|
-| `[P-CONFIG]` Konfigurációs rendszer | T001, T002, T003 | 1 |
-| `[P-ROUTING]` Dinamikus routing | T004, T005 | 2 |
-| `[P-DOCS-ONLY]` … | — (nincs task: <indok>) | — |
+<!-- INCLUDE:lang/04-write-tasks.md#tasks-struktura -->
 ```
 
 **A csoport-fejléc plan-hivatkozása (B) kötelező:** minden `## <csoport>` cím végén ott vannak a csoport által lefedett plan-ID-k. Ez teszi emberi szemmel egy pillantás alatt követhetővé, hogy melyik terv-fejezet hol valósul meg — a taskok ugyanis **végrehajtási sorrend** szerint csoportosulnak, nem a plan tagolása szerint, így egy plan-szekció **több csoportba is szóródhat** (pl. `[P-CONFIG]` teszt-írása az 1., implementációja a 3. csoportban).
@@ -232,40 +197,13 @@ A csoportok a plan végrehajtási sorrendjének szakaszait tükrözik. Minden cs
 Ha a plan azt mondja, hogy nincs regressziós érintettség, ez a csoport kihagyható.
 
 ```md
-## Destruktív / osztott környezetet érintő taskok — jóváhagyás és rollback
-
-Ha a plan **közös (nem eldobható) környezetet** módosító lépést tervez — deployment/pod csere osztott klaszterben, image push közös registrybe, seed vagy törlés osztott adatbázisban, konfiguráció felülírása —, azt **három tasknak kell közrefognia** a saját logikai csoportjában:
-
-```md
-- [ ] T0nn [OPS]   Kérj JÓVÁHAGYÁST a felhasználótól a <művelet> futtatására — érintett: <környezet/namespace/registry>; a művelet más fejlesztők munkáját is érintheti. Rögzítsd az eredeti állapotot FÁJLBA: `<állapot-kiolvasó parancs> > .rollback-state`
-- [ ] T0nn [OPS]   <a tényleges destruktív művelet> — `<konkrét parancs; a korábbi lépés állapotát a fájlból olvasva>`
-- [ ] T0nn [CHECK] Ellenőrizd a művelet sikerét — `<ellenőrző parancs + elvárt kimenet>`
-- [ ] T0nn [OPS]   ROLLBACK (csak ha az előző `[CHECK]` elbukott): állítsd vissza az eredeti állapotot — `<visszaállító parancs, a .rollback-state-ből olvasva>`
-```
-
-> **🔴 Állapot-perzisztencia — a leggyakoribb csendes hiba.** Minden task **külön shellben** fut, ezért a `VAR=...` vagy `export VAR=...` a **következő taskra elpárolog**. Ha a rollback vagy a deploy egy korábbi taskban előállított értékre (mentett eredeti azonosító, generált egyedi tag) hivatkozik, az **üres paraméterrel futna** — vagyis a rollback papíron megvan, a gyakorlatban nem működik. Ezért az ilyen állapot **fájlba kerül**, és a későbbi taskok onnan olvassák; vagy a függő parancsokat **egy taskba** vonod.
-
-Az állapot-fájlra két további szabály:
-- **Hova kerüljön:** a ciklus mappájába (`specs/cycle-NN-<cycle-name>/.rollback-state`), **ne a repo gyökerébe**. Ha mégis a gyökérbe kerül, vedd fel egy taskot, ami a `.gitignore`-ba is beírja — különben egy megszakadt futás után a munkafában marad, és bekerülhet egy commitba.
-- **Takarítás kötelező:** a csoport utolsó taskja (vagy a sikeres `[CHECK]`) törölje (`rm -f`). Megszakadt futás után egy régi állapot-fájl **rosszabb, mint a semmi**: egy elavult azonosítóra állítana vissza.
-
-- A **jóváhagyó task az első** — a destruktív művelet nem futhat le anélkül, hogy a felhasználó rábólintott volna.
-- A jóváhagyó task **rögzíti az eredeti állapotot** (a kiolvasó paranccsal együtt) — enélkül a rollback nem végrehajtható.
-- A **rollback task a csoport végén** áll, feltételesen. Ha a plan nem ad rollback-forgatókönyvet, az **plan-hiányosság**: vedd fel kérdésként a `tasks-questions.md`-be, ne találd ki magad.
-- **Ha a művelet felülír egy meglévő azonosítót** (pl. ugyanarra az image-tagre pushol), jelezd: ilyenkor **nincs mihez visszaállni**, tehát vagy verziót kell léptetni, vagy a rollback nem valós — ez a plan felülvizsgálatát igényli.
-
-## Regressziós tesztek felülvizsgálata
-
-- [ ] TREG1 Ellenőrizd / frissítsd: `test/unit/foo.test.ts` — érintett, mert [indok a plan-ből]
-- [ ] TREG2 Ellenőrizd / frissítsd: `test/integration/cycle-XX-foo.sh` — érintett, mert [indok a plan-ből]
+<!-- INCLUDE:lang/04-write-tasks.md#desztruktiv-csoport-sablon -->
 ```
 
 **2. Dokumentáció** — önálló, utolsó csoport, **csak ha szükséges**. **A `docs-generated/` egyetlen fájljához sem (architecture.md, system-overview.md, CHANGELOG.md, design-drift.md), és meglévő komponens `README.md`-jéhez sem generálsz `TLAST` taskot** — ezeket a `08-doc-sync` fázis írja és tartja konzisztensen, a teljes ciklus rálátásával (DS4). Ez a csoport **csak akkor** kerül a listába, ha a plan **explicit** kér egy olyan dokumentáció-frissítést, amely **nem** a `docs-generated/` gazdája alá tartozik. Tisztán átnevezési/refaktorálási ciklusnál, vagy ha a plan nem nevez meg ilyen doksit, ez a csoport **elhagyható**.
 
 ```md
-## Dokumentáció
-
-- [ ] TLAST1 ...a plan által explicit kért, NEM docs-generated/ alá tartozó dokumentáció-frissítés...
+<!-- INCLUDE:lang/04-write-tasks.md#dokumentacio-csoport-sablon -->
 ```
 
 _Megjegyzés a doksi-felelősségről (DS4): az `architecture.md` és a teljes `docs-generated/` mappa **kizárólag a `08-doc-sync` fázis** gazdája — a korábbi `TLAST1 → docs/architecture.md` záró task **nyugdíjazva**. Az implementáció (06) a kódra koncentrál; a megvalósult rendszer „as-built" dokumentációját (működésleírás, architektúra, changelog, drift) a doc-sync komponálja és validálja a saját konzisztencia-kapujával. Így nincs kettős író és nincs sorrend-probléma._
@@ -321,7 +259,7 @@ python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-nam
 
 
 Ha a lista teljes, a minőségellenőrzés átment **és a mechanikus kapu `0`-t adott**, tedd fel a kérdést a felhasználónak:
-*"A task lista minőségellenőrzése átment. Készen áll a tasks lista implementálásra? Ha megerősíted, átállítom `Implementálásra kész` státuszra."* — Ne állítsd át a státuszt a megerősítés előtt. **A válasz végén helyezd el a `tasks.md` közvetlen, kattintható linkjét.**
+<!-- INCLUDE:lang/04-write-tasks.md#statusz-megerosites --> — Ne állítsd át a státuszt a megerősítés előtt. **A válasz végén helyezd el a `tasks.md` közvetlen, kattintható linkjét.**
 
 Ha a felhasználó megerősíti:
 - Állítsd a `tasks.md` státuszát `Implementálásra kész`-re.
@@ -336,10 +274,7 @@ A fenti blokkban a `<FÁZIS-TAG>` értéke ebben a fázisban: **`04-tasks`**, a 
 Ha a státusz `Implementálásra kész`, **de a fázis-záró commit hiányzik** (VCS-es projekt, `git log -1 --oneline` nem a `cycle-NN: 04-tasks` commitot mutatja) — először commitolj, csak utána zárd le a fázist.
 
 Ha a státusz `Implementálásra kész` (és a commit megvan), állj meg. Ne kezdj implementálni vagy analízist. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
-> *"A task lista kész. Folytathatjuk az 5. lépéssel (analyze — kereszt-fázisos konzisztencia ellenőrzés). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:
-> ```
-> /bs-analyze input: @specs/cycle-NN-<cycle-name>
-> ```"*
+<!-- INCLUDE:lang/04-write-tasks.md#zaro-uzenet -->
 > **A válasz végén helyezd el a `tasks.md` közvetlen, kattintható linkjét.**
 
 ---

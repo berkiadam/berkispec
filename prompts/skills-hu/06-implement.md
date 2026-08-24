@@ -35,8 +35,8 @@ Ez a folyamat **6. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 
 2. **Munkafa-ellenőrzés (csak VCS esetén):** futtasd: `git status --short`. Ha van commitálatlan változtatás:
    - Listázd ki az érintett fájlokat.
-   - Jelezd: *"Az implementáció előtt érdemes ezeket commitálni — ha félremegy az implementáció, egy `git reset --hard` visszaállítja a kiindulóállapotot."*
-   - Kérdezd meg: *"Commitáljam ezeket most?"* — Ha igen: commitáld a változtatásokat, majd folytasd. Ha nem: folytasd commit nélkül. (No-VCS projektben kimarad.)
+   - Jelezd: <!-- INCLUDE:lang/06-implement.md#commit-javaslat -->
+   - Kérdezd meg: <!-- INCLUDE:lang/06-implement.md#commit-kerdes --> — Ha igen: commitáld a változtatásokat, majd folytasd. Ha nem: folytasd commit nélkül. (No-VCS projektben kimarad.)
 
 3. **🔴 Párhuzamos-ciklus kapu (PW1/PW2 — csak VCS esetén):** a `06` az első fázis, amely a **forrásfát** írja, ezért az implementációs sáv **egyszálú**. A tervezés párhuzamosan mehet több ciklusban (külön worktree), az implementáció nem. Futtasd:
 
@@ -194,18 +194,7 @@ Minden esetben csak **egy** kérdést tegyél fel, várj a válaszra, majd folyt
 ### A fájl sablonja
 
 ```md
-# `[CHECK]` futásnapló — cycle-NN-<cycle-name>
-
-_(Append-only. A 06-implement írja, taskonként. A 07/09 nem ír bele.)_
-
-| Idő | Task | Próba | Mód | Parancs | Eredmény |
-|---|---|---|---|---|---|
-| 2026-08-07 10:12 | T004 | 1/3 | normál | `npm test -- token-store` | ✗ 12 passed / 1 failed — `initHash returns stable hash` |
-| 2026-08-07 10:19 | T004 | 2/3 | normál | `npm test -- token-store` | ✓ 13 passed / 0 failed / 0 skipped |
-| 2026-08-07 11:40 | T041 | 1/3 | validate-loop | `npm test -- auth` | ✓ 27 passed / 0 failed / 0 skipped |
-
-## Megjegyzések
-- **T004** — átmeneti port-csere a `[CHECK]` futtatásához: 5432 → 5433 (`docker-compose.yml`); a commit előtt visszaállítva.
+<!-- INCLUDE:lang/06-implement.md#check-log-sablon -->
 ```
 
 **Oszlopok:**
@@ -224,11 +213,7 @@ _(Append-only. A 06-implement írja, taskonként. A 07/09 nem ír bele.)_
 Ha egy task elvégzése során legalább 3 sikertelen kísérlet után sikerül megoldani a problémát, hozd létre vagy bővítsd a `specs/cycle-NN-<cycle-name>/imp-decision.md` fájlt:
 
 ```md
-## <Task azonosító> — <rövid cím>
-
-**Mi volt a gond:** <a hiba tömör leírása>
-**Mit próbáltunk:** <sikertelen kísérletek röviden>
-**Mi lett a megoldás:** <a végül működő megközelítés>
+<!-- INCLUDE:lang/06-implement.md#check-log-pelda-sor -->
 ```
 
 Ha a fájl már létezik, append-elj — ne írd felül a korábbi bejegyzéseket.
@@ -263,10 +248,7 @@ A README.md az implementáció része — nem utólagos dokumentáció. Akkor ke
   **Ellenőrzés a státuszváltás előtt:** a `check-log.md` létezik, és minden csoportzáró `[CHECK]`-hez tartozik benne legalább egy sor. Ha egy csoport `[x]`, de a naplóban nincs hozzá bejegyzés, a bizonyíték hiányzik — pótold a naplósort a tényleges futtatás alapján (ne emlékezetből: ha nem tudod, futtasd újra a `[CHECK]`-et).
 
 Ha a státusz `Validálásra kész`, állj meg. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
-> *"Az implementáció kész. Folytathatjuk a 7. lépéssel (validate). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:*
-> ```
-> /bs-validate input: @specs/cycle-NN-<cycle-name>
-> ```"*
+<!-- INCLUDE:lang/06-implement.md#zaro-uzenet -->
 > **A válasz végén helyezd el a `tasks.md` és a `check-log.md` közvetlen, kattintható linkjét** — a fázis egyetlen megállás-jelzője ez (IM1).
 
 
