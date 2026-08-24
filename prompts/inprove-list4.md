@@ -1348,7 +1348,7 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
 > 1. **11.10 — a magyar `SOHA` ugyanabba az osztályba tartozik, mint a `NEVER`.** A 11.10
 >    felsorolása ezt nem tartalmazta; enélkül minden `SOHA` → `NEVER` fordítás hamis FAIL
 >    lett volna. A kapu csoportonként számol: `TILOS`/`SOHA`/`FORBIDDEN`/`NEVER` egy csoport.
-> 2. **11.8 — a `lang/<L>/` blokkokban a fence TARTALMA is projekt-nyelvi** (az
+> 2. **11.8/a — a `lang/<L>/` blokkokban a fence TARTALMA is projekt-nyelvi** (az
 >    infostring-sorozat viszont ott is kötelezően egyezik). Indok: a nyelvi blokkok definíció
 >    szerint artefaktum-sablonok, és a bennük álló ` ```bash ` fence-ek **helyőrző-magyarázatot**
 >    tartalmaznak (`<a környezet felhúzása: …>`), a beemelt slash-parancsok argumentum-címkéi
@@ -1360,6 +1360,25 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
 > prompt-fája — különben a §13 alatt mind a 73 `lang/en/` horgony árvának látszana; (b) a
 > `descriptions.json` kulcskészletét (11.4) a **referencia-fa** `name:` mezőihez mérjük, ha az
 > adott nyelvnek még nincs fája — a `name` úgyis nyelvfüggetlen (LG6).
+
+> **A §13 fordítása három további pontosítást kényszerített ki a kapun** (mind a három azért,
+> mert a szabály eredeti alakja a 16.5 nyelvi tisztasággal ütközött volna):
+> - **11.8/b — a `mermaid` fence FORDÍTHATÓ.** A 9.3.3 a `mermaid`-et a byte-azonos listára
+>   tette; a `quick-flow` ábrája viszont **a promptban áll, nem artefaktumba íródik**, tehát a
+>   címkéi próza. A node-id-k és a nyíl-szintaxis byte-azonossága továbbra is elvárás — azt a
+>   fordító nem is bántotta.
+> - **11.8/c — a DUPLA idézőjeles string a parancs-fence-ben TARTALOM.** Két valós eset:
+>   `git commit -m "cycle-NN: 06-implement - kész, validálásra kész"` és
+>   `echo "MAR_BENNE"` (sentinel, amit az ágens olvas vissza). Az **egyszeres** idézőjelet
+>   szándékosan nem maszkoljuk (`grep -qxF '.bs-brainstorm/*'` — az minta, tehát szemantika).
+> - **11.10/b — az `ÁLLJ MEG` a `STOP` magyar párja**, egy csoportba tartoznak. A `quick-flow`
+>   magyarul `⛔ ÁLLJ MEG`-et ír ott, ahol az angol természetesen `⛔ STOP`.
+>
+> **És egy VALÓDI fordítási hibát is megfogott a kapu a delegált munkában:** a `quick-flow`
+> fordítója a magyar **kisbetűs** „szigorúan tilos" fordulatot két helyen `strictly FORBIDDEN`-re
+> **erősítette**. A 13.2.2 azt követeli, hogy az utasítás-erősség ne **gyengüljön** — az
+> erősítés viszont átrendezi a hangsúly-eloszlást (a gyenge modell a kiemelt tiltásokat
+> rangsorolja), ezért visszaállítva kisbetűsre.
 
 - [x] **11.1 — Fájllista-paritás.** `skills-hu/` ↔ `skills-en/`, `agents-hu/` ↔ `agents-en/`,
   `agents-hu/gemini-agent/` ↔ `agents-en/gemini-agent/`, `shared-hu/` ↔ `shared-en/`,
@@ -1633,15 +1652,15 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
 | [ ] | `08-doc-sync.md` | 71567 | **fő ágens** |
 | [ ] | `05-analyze.md` | 41157 | **fő ágens** |
 | [ ] | `02-write-spec.md` | 36033 | **fő ágens** |
-| [ ] | `01-add-cycles.md` | 32516 | subagent |
-| [ ] | `quick-flow.md` | 28761 | subagent |
-| [ ] | `04-write-tasks.md` | 28443 | **fő ágens** |
-| [ ] | `06-implement.md` | 27886 | subagent |
-| [ ] | `00-init-project.md` | 25944 | subagent |
-| [ ] | `brainstorm.md` | 17171 | subagent |
-| [ ] | `09-merge.md` | 13792 | subagent |
-| [ ] | `export-doc.md` | 5997 | subagent |
-| [ ] | `cycle-status.md` | 3145 | subagent |
+| [x] | `01-add-cycles.md` | 32516 | subagent |
+| [x] | `quick-flow.md` | 28761 | subagent |
+| [x] | `04-write-tasks.md` | 28443 | **fő ágens** |
+| [x] | `06-implement.md` | 27886 | subagent |
+| [x] | `00-init-project.md` | 25944 | subagent |
+| [x] | `brainstorm.md` | 17171 | subagent |
+| [x] | `09-merge.md` | 13792 | subagent |
+| [x] | `export-doc.md` | 5997 | subagent |
+| [x] | `cycle-status.md` | 3145 | subagent |
 
 ---
 

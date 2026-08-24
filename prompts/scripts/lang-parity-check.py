@@ -55,13 +55,13 @@ IMPERATIVES = {
     "TILOS/SOHA/FORBIDDEN/NEVER": ("TILOS", "SOHA", "FORBIDDEN", "NEVER"),
     "SZIGORÚ/STRICT": ("SZIGORÚ", "STRICT"),
     "Must Fix": ("Must Fix",),
-    "STOP": ("STOP",),
+    "STOP/ÁLLJ MEG": ("STOP", "ÁLLJ MEG"),
 }
 
 # 11.8 — a fence-tartalom akkor FORDÍTHATÓ, ha az infostring ezek egyike
 # (illusztratív, fájlba nem kerülő példa — 9.1). MINDEN MÁS infostring
 # byte-azonosságot követel (biztonságos default): parancsot nem fordítunk.
-TRANSLATABLE_FENCES = {"", "md", "markdown", "text", "txt"}
+TRANSLATABLE_FENCES = {"", "md", "markdown", "text", "txt", "mermaid"}
 
 # ...azzal a pontosítással, hogy a KOMMENT és a HELYŐRZŐ a parancs-fence-ben is
 # prompt-nyelvi. Egy `# a ciklus-worktree megszűnik` sorral és a
@@ -72,11 +72,18 @@ TRANSLATABLE_FENCES = {"", "md", "markdown", "text", "txt"}
 # `#`-kommentet és a `<…>` helyőrzőt, és normalizáljuk a whitespace-t.
 _COMMENT_RE = re.compile(r"#.*$", re.MULTILINE)
 _PLACEHOLDER_RE = re.compile(r"<[^<>\n]*>")
+# A DUPLA idézőjeles string a parancsban TARTALOM, nem szintaxis: commit-üzenet
+# (`git commit -m "cycle-NN: 06-implement - kész"`) vagy sentinel, amit az ágens
+# olvas vissza (`echo "MAR_BENNE"`). Ezek fordulnak. Az EGYSZERES idézőjelet
+# szándékosan NEM maszkoljuk: ott jellemzően minta/glob áll (`grep -qxF '.bs-*'`),
+# ami parancs-szemantika.
+_DQ_STRING_RE = re.compile(r'"[^"\n]*"')
 
 
 def normalize_code(text):
     text = _COMMENT_RE.sub("", text)
     text = _PLACEHOLDER_RE.sub("<>", text)
+    text = _DQ_STRING_RE.sub('""', text)
     return "\n".join(" ".join(line.split()) for line in text.split("\n") if line.strip())
 
 # 11.2 — a suffix nélküli fa tiltott (LG5)
