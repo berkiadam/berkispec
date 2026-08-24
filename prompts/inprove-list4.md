@@ -1538,6 +1538,9 @@ szakasz megvan, mert akkor a fordítandó felület már csak az instrukciós pr�
   | számláló | counter | |
   | fejléc-blokk | header block | a `docs-generated/` doksik `Lefedve:` sora |
   | felhasználó | user | a promptban **Felhasználó**/**felhasználó** egyaránt → *user* |
+  | `downstream-hatás:` | `downstream-effect:` | a fixer → orchestrátor szerződés-mező (D11); az `nincs`/`van —` értékek is fordulnak (`none`/`yes —`) |
+  | `Knn` (kérdés-azonosító) | `Qnn` | a `*-questions.md` tételei; a `lang/en/` blokkok is `Qnn`-t használnak |
+  | `<FÁZIS-TAG>` | `<PHASE-TAG>` | a commit-üzenet helyőrzője; a kitöltött érték (`02-spec`) nyelvfüggetlen |
 - [ ] **13.2.2 — Az imperatívuszok erőssége nem gyengülhet.** `TILOS` → `FORBIDDEN` / `NEVER`,
   **nem** `should not`. A `⛔` és `🔴` jelölések maradnak. A gyenge modellek pont ezeken a
   pontokon romlanak el (1.1).
@@ -1566,15 +1569,15 @@ Megoszlás: **fő ágens 28 fájl / ~453700 karakter · subagent 14 fájl / 2194
 | ✓ | Fájl | Karakter | Ki fordítja |
 |---|---|---:|---|
 | [ ] | `quality-check-plan.md` | 18558 | **fő ágens** |
-| [ ] | `fix-mode-implement.md` | 6725 | **fő ágens** *(a 7.6-ban létrejött)* |
+| [x] | `fix-mode-implement.md` | 6725 | **fő ágens** *(a 7.6-ban létrejött)* |
 | [ ] | `quality-check-tasks.md` | 11986 | **fő ágens** |
 | [ ] | `quality-check-spec.md` | 10716 | **fő ágens** |
 | [x] | `phase-commit.md` | 5558 | **fő ágens** |
-| [ ] | `git-preflight.md` | 5033 | **fő ágens** |
-| [ ] | `fix-mode-tasks.md` | 4882 | **fő ágens** |
-| [ ] | `fix-mode-plan.md` | 4328 | **fő ágens** |
+| [x] | `git-preflight.md` | 5033 | **fő ágens** |
+| [x] | `fix-mode-tasks.md` | 4882 | **fő ágens** |
+| [x] | `fix-mode-plan.md` | 4328 | **fő ágens** |
 | [x] | `input-from-prev.md` | 4121 | **fő ágens** |
-| [ ] | `fix-mode-spec.md` | 3371 | **fő ágens** |
+| [x] | `fix-mode-spec.md` | 3371 | **fő ágens** |
 | [x] | `parallel-cycles.md` | 3258 | **fő ágens** |
 | [x] | `artifact-voice.md` | 3082 | **fő ágens** |
 | [x] | `conventions-change.md` | 2934 | **fő ágens** |
