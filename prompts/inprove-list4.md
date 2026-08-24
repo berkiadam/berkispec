@@ -1569,19 +1569,19 @@ Megoszlás: **fő ágens 28 fájl / ~453700 karakter · subagent 14 fájl / 2194
 | [ ] | `fix-mode-implement.md` | 6725 | **fő ágens** *(a 7.6-ban létrejött)* |
 | [ ] | `quality-check-tasks.md` | 11986 | **fő ágens** |
 | [ ] | `quality-check-spec.md` | 10716 | **fő ágens** |
-| [ ] | `phase-commit.md` | 5558 | **fő ágens** |
+| [x] | `phase-commit.md` | 5558 | **fő ágens** |
 | [ ] | `git-preflight.md` | 5033 | **fő ágens** |
 | [ ] | `fix-mode-tasks.md` | 4882 | **fő ágens** |
 | [ ] | `fix-mode-plan.md` | 4328 | **fő ágens** |
-| [ ] | `input-from-prev.md` | 4121 | **fő ágens** |
+| [x] | `input-from-prev.md` | 4121 | **fő ágens** |
 | [ ] | `fix-mode-spec.md` | 3371 | **fő ágens** |
-| [ ] | `parallel-cycles.md` | 3258 | **fő ágens** |
-| [ ] | `artifact-voice.md` | 3082 | **fő ágens** |
-| [ ] | `conventions-change.md` | 2934 | **fő ágens** |
-| [ ] | `path-format.md` | 1987 | **fő ágens** |
-| [ ] | `questions-tasks.md` | 1434 | **fő ágens** |
-| [ ] | `context-check.md` | 1240 | **fő ágens** |
-| [ ] | `python-cmd.md` | 436 | **fő ágens** |
+| [x] | `parallel-cycles.md` | 3258 | **fő ágens** |
+| [x] | `artifact-voice.md` | 3082 | **fő ágens** |
+| [x] | `conventions-change.md` | 2934 | **fő ágens** |
+| [x] | `path-format.md` | 1987 | **fő ágens** |
+| [x] | `questions-tasks.md` | 1434 | **fő ágens** |
+| [x] | `context-check.md` | 1240 | **fő ágens** |
+| [x] | `python-cmd.md` | 436 | **fő ágens** |
 
 #### 13.3.2 `agents-hu/` → `agents-en/` — 11 fájl, 82603 karakter
 

@@ -63,6 +63,22 @@ IMPERATIVES = {
 # byte-azonosságot követel (biztonságos default): parancsot nem fordítunk.
 TRANSLATABLE_FENCES = {"", "md", "markdown", "text", "txt"}
 
+# ...azzal a pontosítással, hogy a KOMMENT és a HELYŐRZŐ a parancs-fence-ben is
+# prompt-nyelvi. Egy `# a ciklus-worktree megszűnik` sorral és a
+# `git worktree add ../<projekt>-cNN` helyőrzőjével a szó szerinti byte-azonosság
+# szembemenne a 16.5 nyelvi tisztaság-ellenőrzéssel (magyar szöveg az `en` fában).
+# Amit a check VÉD: a parancsnév, a kapcsolók, az útvonalak és a szkript-argumentumok
+# — ezeket a fordító nem írhatja át. Ezért a összevetés előtt maszkoljuk a
+# `#`-kommentet és a `<…>` helyőrzőt, és normalizáljuk a whitespace-t.
+_COMMENT_RE = re.compile(r"#.*$", re.MULTILINE)
+_PLACEHOLDER_RE = re.compile(r"<[^<>\n]*>")
+
+
+def normalize_code(text):
+    text = _COMMENT_RE.sub("", text)
+    text = _PLACEHOLDER_RE.sub("<>", text)
+    return "\n".join(" ".join(line.split()) for line in text.split("\n") if line.strip())
+
 # 11.2 — a suffix nélküli fa tiltott (LG5)
 LEGACY_DIRS = ("skills", "agents", "shared")
 BASES = ("skills", "agents", "shared")
@@ -246,44 +262,50 @@ def check_file_sets(prompts_dir, langs, ref, rep, strict):
 
 
 def check_includes_within_language(prompts_dir, langs, rep):
-    """11.3 — horgony ↔ marker kereszt-ellenőrzés NYELVEN BELÜL is.
-    A 9.4 tanulsága: egy vissza nem cserélt blokk byte-azonos kimenetet ad,
-    tehát a 16.1 keret vak rá — csak ez a leltár mutatja ki."""
+    """11.3 — horgony ↔ marker kereszt-ellenőrzés. A 9.4 tanulsága: egy vissza nem
+    cserélt blokk byte-azonos kimenetet ad, tehát a 16.1 keret vak rá — csak ez a
+    leltár mutatja ki.
+
+    A markereket MINDEN nyelv prompt-fájából együtt gyűjtjük: a horgony-nevek
+    nyelvfüggetlenek (a marker maga sosem fordul), és a §13 alatt az egyik fa már
+    kész lehet, a másik még nem. Ha nyelvenként külön néznénk, a féloldalas
+    állapotban minden `lang/en/` horgony árvának látszana — a kapu pedig arra
+    tanítana, hogy a FAIL-t ignoráljuk (LG25 indoka).
+    A marker-halmazok NYELVEK KÖZÖTTI egyezését a `check_pair` őrzi fájlonként."""
+    anchors = {}          # lang -> {"fájl.md#horgony"}
+    markers = {}          # "fájl.md#horgony" -> {"skills-hu/02-write-spec.md", …}
     for lang in langs:
-        anchors, markers = set(), {}
         lang_dir = prompts_dir / "lang" / lang
-        if not lang_dir.is_dir():
-            continue
-        for f in sorted(lang_dir.glob("*.md")):
-            for m in ANCHOR_RE.finditer(f.read_text(encoding="utf-8")):
-                anchors.add(f"{f.name}#{m.group('name')}")
-            if INCLUDE_RE.search(f.read_text(encoding="utf-8")):
-                rep.fail("11.3", f"lang/{lang}/{f.name}",
-                         "a nyelvi blokk INCLUDE markert tartalmaz (8.5 tiltja)")
-        has_prompt_trees = False
+        anchors[lang] = set()
+        if lang_dir.is_dir():
+            for f in sorted(lang_dir.glob("*.md")):
+                text = f.read_text(encoding="utf-8")
+                for m in ANCHOR_RE.finditer(text):
+                    anchors[lang].add(f"{f.name}#{m.group('name')}")
+                if INCLUDE_RE.search(text):
+                    rep.fail("11.3", f"lang/{lang}/{f.name}",
+                             "a nyelvi blokk INCLUDE markert tartalmaz (8.5 tiltja)")
         for base in BASES:
             d = tree_dir(prompts_dir, base, lang)
             if not d.is_dir():
                 continue
-            has_prompt_trees = True
             for f in sorted(d.glob("*.md")):
                 for m in INCLUDE_RE.finditer(f.read_text(encoding="utf-8")):
                     path = m.group("path")
                     if path.startswith("lang/"):
                         markers.setdefault(path[len("lang/"):], set()).add(f"{d.name}/{f.name}")
-        for ref, users in sorted(markers.items()):
-            if ref not in anchors:
+
+    # (a) hivatkozott, de nem létező horgony — nyelvenként, mert a HIÁNYZÓ nyelvi
+    #     blokk a telepítéskor csendes `hu` fallbackre esne (LG12)
+    for ref, users in sorted(markers.items()):
+        for lang in langs:
+            if ref not in anchors[lang]:
                 rep.fail("11.3", f"lang/{lang}/{ref}",
-                         f"hivatkozott, de nem létező horgony — hivatkozza: {', '.join(sorted(users))}")
-        # Az árva horgony CSAK akkor hiba, ha az adott nyelvnek egyáltalán van
-        # prompt-fája. A §13 közben az `en` nyelvi blokkok már megvannak, a
-        # `skills-en/` még nem — ilyenkor minden horgony árvának látszana, és a
-        # kapu megtanítana rá, hogy a FAIL-t ignoráljuk (LG25 indoka).
-        if not has_prompt_trees:
-            rep.warn("11.3", f"lang/{lang}/", f"{len(anchors)} horgony ellenőrizetlen — "
-                     f"a '{lang}' nyelvnek még nincs prompt-fája (a §13 alatt normális)")
-            continue
-        for a in sorted(anchors - set(markers)):
+                         f"hivatkozott, de nem létező horgony — hivatkozza: "
+                         f"{', '.join(sorted(users))}")
+    # (b) árva horgony — egyetlen nyelv egyetlen prompt-fája sem hivatkozza
+    for lang in langs:
+        for a in sorted(anchors[lang] - set(markers)):
             rep.fail("11.3", f"lang/{lang}/{a}", "árva horgony — egyetlen marker sem hivatkozza")
 
 
@@ -439,9 +461,9 @@ def check_pair(prompts_dir, base, name, ref, lang, keys, rep):
     elif base != "lang":
         for idx, ((info, ca), (_, cb)) in enumerate(zip(fa_, fb_), 1):
             key = info.split()[0].lower() if info else ""
-            if key not in TRANSLATABLE_FENCES and ca != cb:
-                rep.fail("11.8", where, f"a(z) {idx}. `{info}` kódblokk tartalma eltér — "
-                         "parancsot/kódot nem fordítunk (13.1)")
+            if key not in TRANSLATABLE_FENCES and normalize_code(ca) != normalize_code(cb):
+                rep.fail("11.8", where, f"a(z) {idx}. `{info}` kódblokk tartalma eltér a "
+                         "kommenteken és helyőrzőkön TÚL is — parancsot/kódot nem fordítunk (13.1)")
 
     # 11.10 — imperatívusz-kapu
     for label, variants in IMPERATIVES.items():
