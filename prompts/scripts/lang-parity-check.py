@@ -323,25 +323,27 @@ def check_descriptions(prompts_dir, langs, ref, rep):
         except json.JSONDecodeError as exc:
             rep.fail("11.4", f"lang/{lang}/descriptions.json", f"hibás JSON: {exc}")
             continue
-        # A `name:` mező byte-azonos a nyelvek között (LG6), ezért a halmazt a
-        # SAJÁT fából vesszük, ha van, egyébként a referencia-fából — különben a
-        # félig lefordított állapotban minden leíró „fölöslegesnek" látszana.
+        # A `name:` mező byte-azonos a nyelvek között (LG6), ezért a halmazt MINDEN
+        # nyelv fájából együtt gyűjtjük. Így a §13 félig lefordított állapotában
+        # sem látszik „fölöslegesnek" egy leíró csak azért, mert az adott nyelvre
+        # még nem került át a fájl. (A `name:` NYELVEK KÖZÖTTI egyezését a
+        # `check_pair` őrzi fájlonként.)
         names, agent_names = set(), set()
         for base in ("skills", "agents"):
-            d = tree_dir(prompts_dir, base, lang)
-            if not d.is_dir():
-                d = tree_dir(prompts_dir, base, ref)
-            if not d.is_dir():
-                continue
-            for f in sorted(d.glob("*.md")):
-                fm, _ = frontmatter(f.read_text(encoding="utf-8"))
-                name = fm.get("name", "").strip('"').strip("'")
-                if not name:
-                    rep.fail("11.4", f"{d.name}/{f.name}", "hiányzó frontmatter `name:`")
+            for src_lang in langs:
+                d = tree_dir(prompts_dir, base, src_lang)
+                if not d.is_dir():
                     continue
-                names.add(name)
-                if base == "agents":
-                    agent_names.add(name)
+                for f in sorted(d.glob("*.md")):
+                    fm, _ = frontmatter(f.read_text(encoding="utf-8"))
+                    name = fm.get("name", "").strip('"').strip("'")
+                    if not name:
+                        if src_lang == lang:
+                            rep.fail("11.4", f"{d.name}/{f.name}", "hiányzó frontmatter `name:`")
+                        continue
+                    names.add(name)
+                    if base == "agents":
+                        agent_names.add(name)
         for extra in sorted(set(data) - names):
             rep.fail("11.4", f"lang/{lang}/descriptions.json",
                      f"'{extra}' bejegyzéshez nincs `name:` a fában")

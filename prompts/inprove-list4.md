@@ -1606,11 +1606,11 @@ Az 5 fixer a fő ágensnél: a D13 fix-mód szerződéseket hordozzák, és a 7.
 | [ ] | `doc-sync-planner.md` | 10474 | subagent |
 | [ ] | `reviewer.md` | 7022 | subagent |
 | [ ] | `researcher.md` | 6202 | subagent |
-| [ ] | `review-fixer.md` | 4436 | **fő ágens** |
-| [ ] | `implement-fixer.md` | 4144 | **fő ágens** |
-| [ ] | `tasks-fixer.md` | 3657 | **fő ágens** |
-| [ ] | `plan-fixer.md` | 3218 | **fő ágens** |
-| [ ] | `spec-fixer.md` | 2876 | **fő ágens** |
+| [x] | `review-fixer.md` | 4436 | **fő ágens** |
+| [x] | `implement-fixer.md` | 4144 | **fő ágens** |
+| [x] | `tasks-fixer.md` | 3657 | **fő ágens** |
+| [x] | `plan-fixer.md` | 3218 | **fő ágens** |
+| [x] | `spec-fixer.md` | 2876 | **fő ágens** |
 
 #### 13.3.3 `skills-hu/` → `skills-en/` — 14 fájl, 503619 karakter
 
