@@ -1598,14 +1598,21 @@ Megoszlás: **fő ágens 28 fájl / ~453700 karakter · subagent 14 fájl / 2194
 Az 5 fixer a fő ágensnél: a D13 fix-mód szerződéseket hordozzák, és a 7.6 refaktor után a
 `shared-<L>/fix-mode-*.md` blokkokra hivatkoznak. A 6 read-only agent delegálható.
 
+> **✅ A 13.3.2 KÉSZ (2026-08-25) — mind a 11 agent.** Az 5 fixer a fő ágenstől, a 6 read-only
+> agent **fájlonként egy-egy bounded subagenttől** (LG23), a 13.2.1 glosszárium + a 13.2
+> szabályok átadásával. Minden fájlra futott a paritás-kapu: **0 szerkezeti eltérés**, magyar
+> ékezet **0 találat**, és a `<sec:>`/`<field:>`/`<status:>` **token-darabszám fájlonként
+> egyezik** (a 11.12 kapu a legfontosabb védőháló a delegált fordításnál — ez fogja meg, ha a
+> fordító egy tokent literálra oldott volna fel).
+
 | ✓ | Fájl | Karakter | Ki fordítja |
 |---|---|---:|---|
-| [ ] | `test-runner.md` | 15310 | subagent |
-| [ ] | `analyzer.md` | 13769 | subagent |
-| [ ] | `analyzer-exec.md` | 11495 | subagent |
-| [ ] | `doc-sync-planner.md` | 10474 | subagent |
-| [ ] | `reviewer.md` | 7022 | subagent |
-| [ ] | `researcher.md` | 6202 | subagent |
+| [x] | `test-runner.md` | 15310 | subagent |
+| [x] | `analyzer.md` | 13769 | subagent |
+| [x] | `analyzer-exec.md` | 11495 | subagent |
+| [x] | `doc-sync-planner.md` | 10474 | subagent |
+| [x] | `reviewer.md` | 7022 | subagent |
+| [x] | `researcher.md` | 6202 | subagent |
 | [x] | `review-fixer.md` | 4436 | **fő ágens** |
 | [x] | `implement-fixer.md` | 4144 | **fő ágens** |
 | [x] | `tasks-fixer.md` | 3657 | **fő ágens** |
