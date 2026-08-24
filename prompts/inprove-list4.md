@@ -1521,12 +1521,12 @@ Amit ez a rövidítés módosít az elfogadási soron:
 
 ### 17.3 Commit- és branch-stratégia (LG21)
 
-- [ ] **Előfeltétel (LG29): a munkafa rendezése két commitban a `main`-en.**
+- [x] **Előfeltétel (LG29): a munkafa rendezése két commitban a `main`-en.**
   1. kétnyelvűsítéstől független tartalmi munka: `cycle-status.md` átnevezés, `08-doc-sync.md`,
      `context-check.md`, `cycle-status.py`, `README.md`, `jegyzet.md`;
   2. a kétnyelvűsítés előkészítése: az `install-helper.py` nyelvi vezetékezése (5.1–5.4) +
      ez a tervfájl.
-- [ ] Nyiss **egy feature branch-et friss `main`-ről** (`git switch main && git pull && git
+- [x] Nyiss **egy feature branch-et friss `main`-ről** (`git switch main && git pull && git
   switch -c feature/bilingual-prompts`) — a `main` a teljes
   migráció alatt működő állapotban marad, és a végén **egy PR**-ként olvad be.
 - [ ] A branch-en belül a 17.1 lépései **külön commitok**. A **7. szakasz átnevezés saját, atomi
