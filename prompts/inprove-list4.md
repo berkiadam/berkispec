@@ -1645,6 +1645,20 @@ dolgozik (`analyze-gate-check.py`, `validate-gate-check.py`, `report-gate-check.
 `ds22-gate-check.py`, `tc8-gate-check.py`, `run-tests.py`, `round-log.py`) — lásd a 10.2 leltárt.
 Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
 
+> **⏳ A 13.3.3 FOLYAMATBAN (2026-08-25): 10/14 kész.** Delegálva és visszaellenőrizve:
+> `00-init-project`, `01-add-cycles`, `06-implement`, `09-merge`, `brainstorm`, `quick-flow`,
+> `export-doc`, `cycle-status`. Fő ágenstől: `04-write-tasks`, `02-write-spec`.
+> **Hátra: `03-write-plan` · `07-validate` · `08-doc-sync` · `05-analyze`** (mind fő ágens,
+> ~284 000 karakter). A `13.3` tábla pipái mutatják a pontos állást — ez a folytatás horgonya.
+>
+> **A `hu`/`hu` 16.1 keret a teljes §13 alatt változatlan** (70/70 skill + 55/55 agent) — a
+> fordítás definíció szerint nem érinti a magyar kimenetet, tehát ez a regresszió-védőháló
+> minden lépés után futtatható.
+>
+> **Az `en`/`en` próbatelepítés ma 4 platformon lefut** (claude, codex, cursor, copilot):
+> 0 figyelmeztetés, 0 feloldatlan token, 0 feloldatlan INCLUDE. Az **antigravity `exit 1`-et ad**,
+> mert az `agents-en/gemini-agent/` még nem létezik — ez a **§14** hatóköre, nem hiba.
+
 | ✓ | Fájl | Karakter | Ki fordítja |
 |---|---|---:|---|
 | [ ] | `03-write-plan.md` | 87752 | **fő ágens** |
