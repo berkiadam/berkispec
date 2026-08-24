@@ -1,10 +1,13 @@
 <!--
   A `00-init-project` PROJEKT-NYELVI blokkjai (9.4 kiemelés).
-  Ezt a fájlt a telepítő build-time emeli be a `<!-- INCLUDE:lang/00-init-project.md#<horgony> -->`
-  markerek helyére, a választott PROJEKT-nyelv (`PROJECT_LANG`) szerint.
+  Ezt a fájlt a telepítő build-time emeli be az INCLUDE markerek helyére, a
+  választott PROJEKT-nyelv (`PROJECT_LANG`) szerint; a marker alakja
+  `lang/00-init-project.md#<horgony>`.
   A blokkok SZÓ SZERINT kerültek ide — ne fogalmazd át, ne egységesítsd.
-  A `<!-- ANCHOR:<horgony> -->` sorok NEM részei a beemelt szövegnek — csak határolók.
-  Azért HTML-komment és nem `##` címsor, mert a sablonok maguk is tele vannak `##` címsorral.
+  Az ANCHOR sorok NEM részei a beemelt szövegnek, csak határolók. Azért
+  HTML-komment és nem `##` címsor a határoló, mert a sablonok maguk is tele
+  vannak `##` címsorral (8.9).
+  FIGYELEM: ebbe a vezető jegyzetbe ne kerüljön komment-lezáró szekvencia.
 -->
 
 <!-- ANCHOR:conventions-sablon -->
@@ -204,3 +207,24 @@ _(Hagyd ki ezt a szekciót, ha a projekt nem használ SonarQube-ot.)_
 ## Kockázatok és ismert korlátok
 
 _Projekt szintű technikai korlátok, elfogadott POC határok._
+
+<!-- ANCHOR:BD11-vcs-kerdes -->
+*„Van a projektben verziókezelő (git)? Ha nincs, tervezel-e bevezetni?"*
+
+<!-- ANCHOR:BD11-nincs-vcs-flag -->
+„NINCS verziókezelő (se GIT, se más), és nem is lesz."
+
+<!-- ANCHOR:flow-kerdes -->
+*„Milyen jellegű feladatok lesznek túlnyomórészt ebben a projektben? (a) Termékfejlesztés / új funkciók, több komponenst érintő, összetett logika → **teljes berki spec flow** (02–09); (b) Konfiguráció, scriptelés, üzemeltetés, kisebb javítások → **egyszerűsített flow** (`/bs-quick-flow`). Ez lesz az alapértelmezett munkamód; feladatonként felülbírálható."*
+
+<!-- ANCHOR:teszt-stack-kerdes -->
+*„A javasolt teszt stack: <default>. Megfelelő, vagy mást szeretnél?"*
+
+<!-- ANCHOR:TR3-riport-kerdes -->
+*„Milyen riportot generál a teszt-eszközötök, és milyen paranccsal? (pl. Allure HTML, Playwright HTML report, pytest-html, JUnit XML, coverage) — ez minden ciklusban bekerül a `specs/cycle-NN-<name>/test-report/` mappába — körönkénti almappákba —, és a validálás determinisztikus kapuval ellenőrzi a meglétét."*
+
+<!-- ANCHOR:BD9-api-guideline-kerdes -->
+*„Van követendő API design guideline / API-szabályzat (REST konvenciók, verziózás, hibaformátum, elnevezés)? Ha igen, hol a dokumentuma?"*
+
+<!-- ANCHOR:zaro-uzenet -->
+   *"A projekt konvenciók rögzítve. A következő fázis indítása előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd megkezdhető a ciklusok kezelése: `/bs-add-cycles`."*
