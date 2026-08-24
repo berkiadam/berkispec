@@ -647,10 +647,26 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
   > elfogyasztja (`[ \t]*…[ \t]*`), tehát egy **sor közepére** tett marker elnyeli az előtte
   > lévő szóközt (`A: <!-- … -->` → `A:<blokk>`). A markereket ezért **mindig önálló sorba** tedd.
 
+- [x] **8.9 — ⚠ A 8.2 HORGONY-HATÁROLÓ KORRIGÁLVA: `## <horgony>` → `<!-- ANCHOR:<horgony> -->`.**
+  A 8.2 `## ` alapú határolója a **fő használati esetre nem működik**, és ez csak a 9.4 első
+  fájljánál derült ki (a 16.1 keret fogta meg): a kiemelt blokkok túlnyomó része
+  **artefaktum-sablon** (`conventions.md`, `plan.md`, `validation-report.md`, kérdés-fájlok),
+  amik maguk is tele vannak `## ` címsorral — a határoló ezért a sablon **első saját címsoránál**
+  elvágta a blokkot. A `00-init-project` 197 soros `conventions.md`-sablonjából **1 sor** jött át.
+  **Csendes hiba lett volna:** a telepítés lefut, a kimenet hiányos, és ez csak hetekkel később,
+  egy csonka `conventions.md`-ben derül ki.
+  A `<!-- ANCHOR:… -->` sor markdown-tartalomban nem fordul elő, tehát ütközésmentes határoló.
+  A blokk a horgony-sortól a **következő `<!-- ANCHOR: -->` sorig** (vagy a fájl végéig) tart;
+  a vezető forrás-jegyzet levágása az ANCHOR markert **nem** eszi meg. A `8.4` névkonvenció
+  (`<szabály-ID>-<rövid-név>`) és a `8.3` hibakezelés változatlan. *(Mind a négy ág újratesztelve:
+  `##`-t tartalmazó blokk átvitele, második horgony, hiányzó fájl → marker érintetlen, hiányzó
+  horgony → `exit 1`.)*
+
 - [x] **8.2 — Horgony-vágás a feloldóban.** A `rel_path`-ot `#`-nél bontsd `(fájl, horgony)`-ra.
   Horgony nélkül a mai viselkedés (teljes fájl, vezető HTML-komment levágva). Horgonnyal: a
-  nyelvi fájlban keresd meg a `## <horgony>` sort, és add vissza a **következő `## ` szintű
-  címsorig** tartó törzset, `strip('\n')`-nel. A `_shared_include_cache` kulcsa a horgonyt is
+  nyelvi fájlban keresd meg a horgony-sort, és add vissza a **következő horgony-sorig** tartó
+  törzset, `strip('\n')`-nel. *(A határoló alakja a **8.9** szerint `<!-- ANCHOR:… -->`, nem
+  `## <horgony>` — az eredeti megfogalmazás hibás volt.)* A `_shared_include_cache` kulcsa a horgonyt is
   tartalmazza.
 
 - [x] **8.3 — Hibakezelés (a két eset szándékosan KÜLÖNBÖZIK).** *(Mind a három ág tesztelve:

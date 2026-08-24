@@ -274,8 +274,20 @@ def _resolve_include_path(src_dir, rel_path):
         return Path(src_dir) / "prompts" / _lang_subdir("shared", PROMPT_LANG) / name
     return Path(src_dir) / "prompts" / rel_path
 
+_ANCHOR_LINE_RE = re.compile(r'^\s*<!--\s*ANCHOR:\s*(?P<name>\S+?)\s*-->\s*$')
+
+
 def _extract_anchor_section(text, anchor, include_path):
-    """A `## <anchor>` címsortól a KÖVETKEZŐ `## ` szintű címsorig tartó törzs.
+    """A `<!-- ANCHOR:<anchor> -->` sortól a KÖVETKEZŐ `<!-- ANCHOR: -->` sorig
+    (vagy a fájl végéig) tartó törzs.
+
+    MIÉRT HTML-komment és nem `## <horgony>` címsor: a kiemelt blokkok
+    túlnyomó része **artefaktum-sablon** (`conventions.md`, `plan.md`,
+    `validation-report.md`, kérdés-fájlok), és ezek maguk is tele vannak `## `
+    címsorral. Egy `## ` alapú határoló ezért a sablon ELSŐ saját címsoránál
+    elvágná a blokkot — csendben, a hibát csak egy hiányos artefaktumban lehetne
+    észrevenni. A `<!-- ANCHOR: -->` sor markdown-tartalomban nem fordul elő,
+    tehát ütközésmentes határoló.
 
     A horgony nélküli eset (teljes fájl) és ez a két hibakezelés SZÁNDÉKOSAN
     különbözik (lásd `inline_shared_includes`):
@@ -288,18 +300,19 @@ def _extract_anchor_section(text, anchor, include_path):
     lines = text.split('\n')
     start = None
     for i, line in enumerate(lines):
-        if line.strip() == f"## {anchor}":
+        m = _ANCHOR_LINE_RE.match(line)
+        if m and m.group('name') == anchor:
             start = i + 1
             break
     if start is None:
         print(f"HIBA: a '{anchor}' horgony nincs meg a(z) {include_path} fájlban.",
               file=sys.stderr)
-        print("       A nyelvi blokkok horgonyai: `## <szabály-ID>-<rövid-név>`.",
+        print("       A nyelvi blokkok horgonyai: `<!-- ANCHOR:<szabály-ID>-<rövid-név> -->`.",
               file=sys.stderr)
         sys.exit(1)
     end = len(lines)
     for i in range(start, len(lines)):
-        if lines[i].startswith('## '):
+        if _ANCHOR_LINE_RE.match(lines[i]):
             end = i
             break
     return '\n'.join(lines[start:end]).strip('\n')
@@ -312,8 +325,9 @@ def _read_shared_include(src_dir, rel_path):
     egyiktől, a `shared/` markereké a másiktól függ.
 
     A marker útvonala `<fájl>#<horgony>` alakú is lehet (8.1/8.2) — ilyenkor a
-    fájlnak csak a `## <horgony>` szekciója kerül be. Erre a projekt-nyelvi
-    blokkoknál van szükség: fájlonként EGY nyelvi fájl, sok horgonnyal."""
+    fájlnak csak a `<!-- ANCHOR:<horgony> -->` blokkja kerül be. Erre a
+    projekt-nyelvi blokkoknál van szükség: fájlonként EGY nyelvi fájl, sok
+    horgonnyal."""
     file_part, _, anchor = rel_path.partition('#')
     key = (str(src_dir), file_part, anchor, PROMPT_LANG, PROJECT_LANG)
     if key in _shared_include_cache:
@@ -321,8 +335,10 @@ def _read_shared_include(src_dir, rel_path):
     include_path = _resolve_include_path(src_dir, file_part)
     with open(include_path, 'r', encoding='utf-8') as f:
         text = f.read()
-    # Vezető <!-- ... --> blokk (forrás-jegyzet) eltávolítása
-    text = re.sub(r'^\s*<!--.*?-->\s*', '', text, count=1, flags=re.DOTALL)
+    # Vezető <!-- ... --> blokk (forrás-jegyzet) eltávolítása — de az ANCHOR
+    # markert SOHA nem esszük meg (az egy horgony, nem forrás-jegyzet).
+    if not _ANCHOR_LINE_RE.match(text.lstrip('\n').split('\n', 1)[0]):
+        text = re.sub(r'^\s*<!--.*?-->\s*', '', text, count=1, flags=re.DOTALL)
     if anchor:
         text = _extract_anchor_section(text, anchor, include_path)
     else:
