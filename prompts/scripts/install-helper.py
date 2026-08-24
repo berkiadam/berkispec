@@ -39,7 +39,7 @@ def _agent_stem(filename):
 # tervezési/architekturális ítélet, sem megbízhatatlanság-érzékeny
 # szabadformátumú kimenet-értelmezés) munkára szánt tier:
 #   - researcher:     kódbázis-/dokumentum-keresés, fan-out + összefoglalás
-#   - 10-cycle-status: csak egy Python scriptet futtat és megjeleníti (0 LLM-ítélet)
+#   - cycle-status:    csak egy Python scriptet futtat és megjeleníti (0 LLM-ítélet)
 #
 # A test-runner (tesztek/Sonar/E2E futtatása + eredmény-összegzés) SZÁNDÉKOSAN
 # NINCS ezen a legolcsóbb tier-en (`default`-ra esik): több lépéses
@@ -51,7 +51,7 @@ def _agent_stem(filename):
 # érdemes.
 AGENT_MODEL_KEYS = {
     "researcher": "research_agent",
-    "10-cycle-status": "research_agent",
+    "cycle-status": "research_agent",
     "analyzer": "deep_reasoning_agent",
 }
 # Az `analyzer-exec` (6. kategória: végrehajthatóság) SZÁNDÉKOSAN nincs a deep
@@ -80,7 +80,7 @@ READONLY_AGENTS = {"analyzer", "analyzer-exec", "researcher", "doc-sync-planner"
 #
 # Két, egymástól FÜGGETLEN tengely:
 #   - MODELL: melyik modell fut. Az agent → tier hozzárendelést az
-#     AGENT_MODEL_KEYS adja (analyzer → deep, researcher/10-cycle-status →
+#     AGENT_MODEL_KEYS adja (analyzer → deep, researcher/cycle-status →
 #     research); minden más a `default` tier modelljét kapja.
 #   - EFFORT: mennyit "gondolkodik" (thinking-token). Ez NEM esik egybe a
 #     modell-tierrel — pl. a fixerek a `default` MODELLEN futnak, de `low`
@@ -145,6 +145,40 @@ def get_effort(models, platform, filename):
 # fut, a célprojektben nincs rá szükség). Így új helper script (pl.
 # ds22-gate-check.py) hozzáadásakor nem kell mindhárom process_* függvényt
 # külön bővíteni.
+# ── Nyelvi tengelyek (két független beállítás) ─────────────────────────────
+# `PROMPT_LANG`  — a PROMPT nyelve: melyik forrás-fából telepítünk
+#                  (`prompts/skills` = hu, `prompts/skills-en` = en).
+#                  BUILD-TIME beállítás: a telepítés után nyomtalan, semmi
+#                  runtime-nak nem kell tudnia róla.
+# `PROJECT_LANG` — a PROJEKT nyelve: a `<!-- INCLUDE:lang/... -->` markerek
+#                  feloldását választja (`prompts/shared/lang/<lang>/`).
+#                  Ide tartozik minden, ami a projektbe kerül vagy a
+#                  felhasználóhoz szól: szó szerint kimondandó mondatok,
+#                  fájlba írt sablonok, státusz-kulcsszavak. RUNTIME
+#                  beállítás — a `conventions.md` rögzíti, a scriptek is ezt
+#                  a nyelvet írják/olvassák.
+#
+# A kettő ORTOGONÁLIS: az `en` prompt + `hu` projekt kombináció a fő use case
+# (a prompt tokenben olcsóbb, a leadandó magyar marad).
+PROMPT_LANG = "hu"
+PROJECT_LANG = "hu"
+SUPPORTED_LANGS = ("hu", "en")
+
+# A `hu` a kanonikus forrás-fa; az `en` változat külön mappában él. A `hu`
+# esetén szándékosan a suffix NÉLKÜLI nevet adjuk vissza, hogy a meglévő
+# telepítés byte-azonos maradjon.
+def _lang_subdir(base, lang):
+    return base if lang == "hu" else f"{base}-{lang}"
+
+def skills_src_dir(src_dir):
+    """A prompt-nyelv szerinti skill-forrásmappa."""
+    return Path(src_dir) / "prompts" / _lang_subdir("skills", PROMPT_LANG)
+
+def agents_src_dir(src_dir, gemini=False):
+    """A prompt-nyelv szerinti agent-forrásmappa (a gemini-agent alfa is)."""
+    base = Path(src_dir) / "prompts" / _lang_subdir("agents", PROMPT_LANG)
+    return base / "gemini-agent" if gemini else base
+
 def copy_helper_scripts(src_dir, scripts_dest):
     scripts_dest.mkdir(parents=True, exist_ok=True)
     scripts_src_dir = Path(src_dir) / "prompts/scripts"
@@ -193,13 +227,41 @@ def substitute_scripts_dir(content, platform):
 _INCLUDE_MARKER_RE = re.compile(r'[ \t]*<!--\s*INCLUDE:\s*(?P<path>[^\s]+?)\s*-->[ \t]*')
 _shared_include_cache = {}
 
+_lang_fallback_warned = set()
+
+def _resolve_include_path(src_dir, rel_path):
+    """A marker útvonalát fizikai fájlra oldja fel.
+
+    - `shared/<f>`  → `prompts/shared/<f>` — nyelvfüggetlen (instrukciós blokk,
+      a prompt-nyelvvel együtt mozog, mert a hivatkozó fa is nyelvi).
+    - `lang/<f>`    → `prompts/shared/lang/<PROJECT_LANG>/<f>` — PROJEKT-nyelvű
+      blokk: kimondandó mondatok, fájlba írt sablonok, státusz-kulcsszavak.
+
+    Ha a projekt-nyelvi változat még nem létezik (a kétnyelvűsítés fázisos),
+    `hu`-ra esünk vissza **hangos figyelmeztetéssel** — a telepítés nem törik
+    meg, de a vegyes nyelv nem marad csendben.
+    """
+    if rel_path.startswith("lang/"):
+        name = rel_path[len("lang/"):]
+        primary = Path(src_dir) / "prompts/shared/lang" / PROJECT_LANG / name
+        if primary.exists() or PROJECT_LANG == "hu":
+            return primary
+        fallback = Path(src_dir) / "prompts/shared/lang/hu" / name
+        if fallback.exists() and name not in _lang_fallback_warned:
+            _lang_fallback_warned.add(name)
+            print(f"  FIGYELEM: a(z) '{name}' projekt-nyelvi blokk nincs meg "
+                  f"'{PROJECT_LANG}' nyelven — magyar változat kerül be.")
+        return fallback
+    return Path(src_dir) / "prompts" / rel_path
+
 def _read_shared_include(src_dir, rel_path):
-    """Beolvassa és cache-eli a prompts/<rel_path> tartalmát, a vezető
-    magyarázó HTML-kommentet levágva."""
-    key = (str(src_dir), rel_path)
+    """Beolvassa és cache-eli a marker által hivatkozott blokk tartalmát, a
+    vezető magyarázó HTML-kommentet levágva. A cache kulcsa tartalmazza a
+    projekt-nyelvet, mert a `lang/` markerek feloldása attól függ."""
+    key = (str(src_dir), rel_path, PROJECT_LANG)
     if key in _shared_include_cache:
         return _shared_include_cache[key]
-    include_path = Path(src_dir) / "prompts" / rel_path
+    include_path = _resolve_include_path(src_dir, rel_path)
     with open(include_path, 'r', encoding='utf-8') as f:
         text = f.read()
     # Vezető <!-- ... --> blokk (forrás-jegyzet) eltávolítása
@@ -419,8 +481,8 @@ def _build_codex_agent_toml(name, description, model, effort, developer_instruct
 
 def process_codex(src_dir, dest_path, models):
     dest_path = Path(dest_path)
-    agents_src = Path(src_dir) / "prompts/agents"
-    skills_src = Path(src_dir) / "prompts/skills"
+    agents_src = agents_src_dir(src_dir)
+    skills_src = skills_src_dir(src_dir)
 
     # 1. Agents → .codex/agents/<stem>.toml (TOML subagent formátum)
     agents_dest = dest_path / ".codex/agents"
@@ -464,8 +526,8 @@ def process_codex(src_dir, dest_path, models):
 
 def process_antigravity(src_dir, dest_path, models):
     dest_path = Path(dest_path)
-    agents_src = Path(src_dir) / "prompts/agents/gemini-agent"
-    skills_src = Path(src_dir) / "prompts/skills"
+    agents_src = agents_src_dir(src_dir, gemini=True)
+    skills_src = skills_src_dir(src_dir)
     
     # 1. Process agents
     agents_dest = dest_path / ".agents/agents"
@@ -523,8 +585,8 @@ def process_antigravity(src_dir, dest_path, models):
 
 def process_claude(src_dir, dest_path, models):
     dest_path = Path(dest_path)
-    agents_src = Path(src_dir) / "prompts/agents"
-    skills_src = Path(src_dir) / "prompts/skills"
+    agents_src = agents_src_dir(src_dir)
+    skills_src = skills_src_dir(src_dir)
     
     # 1. Process agents
     agents_dest = dest_path / ".claude/agents"
@@ -559,8 +621,8 @@ def process_claude(src_dir, dest_path, models):
 
 def process_copilot(src_dir, dest_path, models):
     dest_path = Path(dest_path)
-    agents_src = Path(src_dir) / "prompts/agents"
-    skills_src = Path(src_dir) / "prompts/skills"
+    agents_src = agents_src_dir(src_dir)
+    skills_src = skills_src_dir(src_dir)
     
     # 1. Process agents
     agents_dest = dest_path / ".github/agents"
@@ -611,8 +673,8 @@ def process_copilot(src_dir, dest_path, models):
 
 def process_cursor(src_dir, dest_path, models):
     dest_path = Path(dest_path)
-    agents_src = Path(src_dir) / "prompts/agents"
-    skills_src = Path(src_dir) / "prompts/skills"
+    agents_src = agents_src_dir(src_dir)
+    skills_src = skills_src_dir(src_dir)
 
     # 1. Process agents → .cursor/agents/*.md (Cursor Agent subagent formátum,
     #    ugyanaz a szerkezet, mint Claude Code-nál: YAML frontmatter + prompt).
@@ -649,13 +711,41 @@ def process_cursor(src_dir, dest_path, models):
     copy_helper_scripts(src_dir, scripts_dest)
 
 def main():
+    global PROMPT_LANG, PROJECT_LANG
+
     if len(sys.argv) < 4:
-        print("Usage: install-helper.py <platform> <src_dir> <dest_path>")
+        print("Usage: install-helper.py <platform> <src_dir> <dest_path> "
+              "[prompt_lang] [project_lang]")
         sys.exit(1)
-        
+
     platform = sys.argv[1]
     src_dir = sys.argv[2]
     dest_path = sys.argv[3]
+
+    # A két nyelvi argumentum OPCIONÁLIS: hiányában `hu`/`hu`, tehát a régi,
+    # 3-argumentumos hívás (és a telepített kimenet) változatlan marad.
+    if len(sys.argv) > 4:
+        PROMPT_LANG = sys.argv[4].strip().lower()
+    if len(sys.argv) > 5:
+        PROJECT_LANG = sys.argv[5].strip().lower()
+
+    for label, lang in (("prompt", PROMPT_LANG), ("projekt", PROJECT_LANG)):
+        if lang not in SUPPORTED_LANGS:
+            print(f"Error: ismeretlen {label}-nyelv: '{lang}' "
+                  f"(támogatott: {', '.join(SUPPORTED_LANGS)})")
+            sys.exit(1)
+
+    # A prompt-nyelvhez tartozó forrás-fa létezés-ellenőrzése: jobb itt
+    # megállni, mint egy üres skills/ mappával "sikeresen" telepíteni.
+    for d in (skills_src_dir(src_dir), agents_src_dir(src_dir)):
+        if not d.is_dir():
+            print(f"Error: a '{PROMPT_LANG}' prompt-nyelvhez tartozó forrásmappa "
+                  f"nem létezik: {d}")
+            sys.exit(1)
+
+    if (PROMPT_LANG, PROJECT_LANG) != ("hu", "hu"):
+        print(f"  Nyelvek — prompt: {PROMPT_LANG.upper()}, "
+              f"projekt: {PROJECT_LANG.upper()}")
     
     models_path = Path(src_dir) / "prompts/models.json"
     if not models_path.exists():
