@@ -258,7 +258,6 @@ berkispec/                            # repo gyökér
     │   ├── quality-check-{spec,plan,tasks}.md  # a 02/03/04 minőségellenőrzése; a skill ÉS a hozzá tartozó fixer-agent is beemeli (D13)
     │   ├── fix-mode-{spec,plan,tasks}.md       # a 02/03/04 Fix-mód (analyze-hurok belépő) szekciója; a skill ÉS a {spec,plan,tasks}-fixer agent is beemeli (D13)
     │   └── questions-tasks.md        # a 04 kérdés-nyilvántartó rendje (tasks-questions.md); a skill és a tasks-fixer is beemeli
-    ├── templates/                    # jövőbeli sablonok
     ├── scripts/                      # automatizációs scriptek (a telepítő minden *.py-t átmásol a célprojektbe)
     │   ├── install-helper.py         # a telepítő motorja (modell- + effort-hozzárendelés, fájlmásolás, `INCLUDE:shared/…` inline-olás (BD14), `<platform-scripts-mappa>` feloldása (BD15)) — NEM kerül a célprojektbe
     │   ├── cycle-status.py           # a cycle-status skill futtató scriptje

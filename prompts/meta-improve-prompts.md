@@ -57,7 +57,11 @@ A specialista subagentek a `prompts/agents/` alatt: `reviewer.md` (07 — read-o
 
 **A fix-mód belépők két megvalósítása** (mindkettő logika-duplikáció nélkül): a 02/03/04 fixerek promptja **önhordó** — a fix-mód szekció és a fázis minőségi kapuja a `prompts/shared/{fix-mode,quality-check}-*.md` fájlokból **build-time beemelődik** a skillbe és a wrapperbe is, így a fixer **nem olvas fázis-skillt** (D13). A 06 fix-módját használó `implement-fixer`/`review-fixer` viszont még a klasszikus úton, a `06-implement.md` Fix-mód szekciójának beolvasásával delegál.
 
-A `prompts/README.md` minden fázishoz tartalmazza a felhasználónak szánt copy-paste prompt blokkot.
+A repó gyökerében lévő `README.md` „Indító prompt (copy-paste)" szekciója tartalmazza a felhasználónak szánt indító prompt blokkot.
+
+**Telepítés és scriptek.** A támogatott telepítési út: `./install.sh` (vagy `install.ps1`) →
+`prompts/scripts/install-helper.py`. A `prompts/scripts/init-project.sh` **elavult** (LG19):
+szimlink-alapú alternatíva, amit soha nem használtunk — ne hivatkozz rá, és ne fejleszd tovább.
 
 ---
 

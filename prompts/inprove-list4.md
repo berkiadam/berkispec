@@ -376,6 +376,15 @@ kivitelezhetetlennek bizonyul, állj meg és kérdezz, ne dönts át csendben.
   tehát aktívan **félrevezeti** a terv végrehajtóját — összekeverhető a `lang/<L>/`
   célszerkezettel. Törlendő: `berkispec`, `src/`, és az üres `prompts/templates/`.
 
+- [x] **LG30 — Az LG22 törlési köre kiegészül a `specification.md`-vel és a `.cursorrules`-zal.**
+  Mindkettő az elhagyott Node CLI generációjához tartozik: a `specification.md` (471 sor) a
+  CLI specifikációja (`./berkispec plan <cycle>`, `.berkispec/latest-prompt.md`, Codex CLI
+  hívás), utolsó módosítása a repó 2. commitja; a `.cursorrules` pedig ezt jelöli meg „hiteles
+  forrásként", és a törölt `src/`-re meg egy nem létező `plans/` mappára hivatkozik. Ugyanaz az
+  indok, mint az LG22-nél: **aktívan félrevezeti** az üres kontextusban induló ágenst. **Mindkettő
+  törlendő** (nem elavult-jelölés, nem átírás) — a gazda-projektre a `README.md` és a
+  `prompts/meta-improve-prompts.md` a hiteles forrás.
+
 - [x] **LG24 — A rövidített úton (17.2) a 9.6 (`lang/en/`) BENNE MARAD, csak a 10. szakasz
   (script-i18n) halasztódik.** Indok: a `lang/en/` nélkül a paritás-kapu 11.1/11.3 pontja
   tartósan FAIL-t adna, tehát a 16.3 sosem teljesülne, és az `en/en` telepítés csendben
@@ -495,16 +504,17 @@ A jelenlegi kód három ponton **nem** a célállapot. Ezek a 7. szakasz teendő
 Ezt végezd el **legelőször**: kevesebb fájl marad, aminek az útvonalát ellenőrizni kell, és
 eltűnik a félrevezető `prompts/<language>/` minta. Nem funkcionális változás, saját commit.
 
-- [ ] **6.1 — Törlés:** `git rm -r src/ berkispec prompts/templates/`
-  *(a `prompts/templates/` csak egy `.gitkeep`-et tartalmaz).*
-- [ ] **6.2 — `README.md`:** a mappastruktúra-ábrából és minden hivatkozásból ki a `src/`, a
+- [x] **6.1 — Törlés:** `git rm -r src/ berkispec prompts/templates/ specification.md .cursorrules`
+  *(a `prompts/templates/` csak egy `.gitkeep`-et tartalmaz; a két gyökér-fájl az LG30.)*
+- [x] **6.2 — `README.md`:** a mappastruktúra-ábrából és minden hivatkozásból ki a `src/`, a
   `berkispec` launcher és a `prompts/templates/`. A TOC-ot is ellenőrizd.
-- [ ] **6.3 — `prompts/meta-improve-prompts.md`:** ugyanez, ha említi őket.
-- [ ] **6.4 — `init-project.sh` elavult-jelölése (LG19):** komment a fájl elejére, hogy elavult
+- [x] **6.3 — `prompts/meta-improve-prompts.md`:** ugyanez, ha említi őket.
+- [x] **6.4 — `init-project.sh` elavult-jelölése (LG19):** komment a fájl elejére, hogy elavult
   és az `install.sh` / `install.ps1` váltja ki; említés a `meta-improve-prompts.md`-ben. Az
   útvonalait **ne** javítsd, és **ne töröld** a fájlt.
-- [ ] **6.5 — Ellenőrzés:**
-  `grep -rIn "index.mjs\|prompts/templates" . | grep -v "^./.git/"` → nulla találat.
+- [x] **6.5 — Ellenőrzés:**
+  `grep -rIn "index.mjs\|prompts/templates\|specification.md\|berkispec plan" . | grep -v "^./.git/"`
+  → nulla találat (az `inprove-list*.md`-t leszámítva).
 
 ---
 

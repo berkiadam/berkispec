@@ -50,8 +50,8 @@ HEADER_SCAN_LINES = 10
 
 # ── LaTeX header (a xelatex úthoz) ───────────────────────────────────────────
 # Szándékosan a scriptbe ágyazva: a telepítő csak a `prompts/scripts/*.py`-t
-# másolja a platform scripts-mappájába, a `prompts/templates/`-et nem — így a
-# script önmagában teljes, és külön fájl nélkül is futtatható.
+# másolja a platform scripts-mappájába, tehát külön sablon-fájlra nem
+# támaszkodhat — így a script önmagában teljes, és futtatható.
 HEADER_TEX = r"""
 \usepackage{xcolor}
 \usepackage{titling}
