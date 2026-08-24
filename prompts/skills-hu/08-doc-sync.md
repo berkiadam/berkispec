@@ -152,12 +152,11 @@ A doc-sync **„terv előbb, aztán mechanikus végrehajtás"** mintát követ. 
 A nehéz munkát (forrásgyűjtés, per-fájl diagnózis, drift-megállapítások) egy **read-only diagnoszta subagent** végzi, az `analyzer` mintájára. A **fő ágens kérdez** (a `doc-sync-questions.md`-ből) és **hajtja végre** a tervet — a subagent **nem** kérdez közvetlenül és **nem** írja a doksikat.
 
 **A tervkészítés lépései:**
-1. Olvasd be a `prompts/agents/doc-sync-planner.md` rendszerpromptot.
-2. Definiálj egy `doc-sync-planner` subagentet ezzel a rendszerprompttal.
-3. Indítsd el, átadva neki: a ciklus mappáját (`spec.md`/`plan.md`/`tasks.md`), a ciklus `git diff`-jét a `master`-höz, a `conventions.md`-t (a `## Projekt referenciák`-kal), és a `docs-generated/` mappa aktuális tartalmát.
-4. A subagent visszaadja a **per-fájl pipálható tervet** (a mappa minden fájljára + a szükséges új fájlokra: „mit kell tenni" vagy „nincs teendő" + a drift-megállapítások) **és minden `reconciliation`/`új` tételhez a kész `Csereszöveg`et** (lecserélendő jelenlegi részlet + megírt új szöveg). **A fő ágens a tervet ÉS a csereszövegeket a `doc-sync-plan.md`-be írja** (inkrementálisan: `specs/cycle-NN-<cycle-name>/doc-sync-plan.md`; bootstrapnél: `temp/doc-sync-plan.md`) — így a csereszöveg perzisztens, egy megszakadt futás resume-ja a fájlból folytat (DS10). Mivel a subagent **már beolvasta** a teljes `docs-generated/` tartalmat és megírta a csereszöveget, a fő ágensnek a fájlokat **nem kell újraolvasnia és újrakomponálnia** — csak alkalmaz.
+1. A `doc-sync-planner` subagentet a platform **telepített agent-definíciója** adja — ezen a néven hívd, ne keresd fájlként a projektben.
+2. Indítsd el, átadva neki: a ciklus mappáját (`spec.md`/`plan.md`/`tasks.md`), a ciklus `git diff`-jét a `master`-höz, a `conventions.md`-t (a `## Projekt referenciák`-kal), és a `docs-generated/` mappa aktuális tartalmát.
+3. A subagent visszaadja a **per-fájl pipálható tervet** (a mappa minden fájljára + a szükséges új fájlokra: „mit kell tenni" vagy „nincs teendő" + a drift-megállapítások) **és minden `reconciliation`/`új` tételhez a kész `Csereszöveg`et** (lecserélendő jelenlegi részlet + megírt új szöveg). **A fő ágens a tervet ÉS a csereszövegeket a `doc-sync-plan.md`-be írja** (inkrementálisan: `specs/cycle-NN-<cycle-name>/doc-sync-plan.md`; bootstrapnél: `temp/doc-sync-plan.md`) — így a csereszöveg perzisztens, egy megszakadt futás resume-ja a fájlból folytat (DS10). Mivel a subagent **már beolvasta** a teljes `docs-generated/` tartalmat és megírta a csereszöveget, a fő ágensnek a fájlokat **nem kell újraolvasnia és újrakomponálnia** — csak alkalmaz.
 
-> **Ha a subagent nem fut le, vagy nem ad tervet:** ne kezdj el „fejből" doksit írni — STOP, jelezd a felhasználónak, és kérdezd, hogy próbáljam-e újra a subagentet, vagy állítsam-e össze a tervet közvetlenül a `doc-sync-planner.md` szempontjai szerint a fő ágensben.
+> **Ha a subagent nem fut le, vagy nem ad tervet:** ne kezdj el „fejből" doksit írni — STOP, jelezd a felhasználónak, és kérdezd, hogy próbáljam-e újra a subagentet, vagy állítsam-e össze a tervet közvetlenül a `doc-sync-planner` szempontjai szerint a fő ágensben.
 
 A `doc-sync-plan.md` formátumát lásd a **Sablonok** szekcióban. **A terv pipálása a végrehajtás állapota** — innen folytat egy megszakadt futás (DS10).
 

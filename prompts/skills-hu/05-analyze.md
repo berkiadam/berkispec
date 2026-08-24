@@ -38,7 +38,7 @@ Ez a folyamat **5. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 | Friss alap (BR1) | Ha a fő branch előrement a ciklus ága óta, a fázis **behozza** (rebase / merge a push-állapot szerint) az analyze ELŐTT — különben elavult fán validálna. Ha nem ment előre, az előzményhez nem nyúl. |
 | Szereped | **Orchestrátor (read-only):** te magad tervezési dokumentumot nem szerkesztesz — vezényelsz, riportot írsz, kérdezel, státuszt fordítasz. |
 | Mechanikus kapu | Minden futás előtt `analyze-gate-check.py` (plan-ID ↔ task-hivatkozás, marker, `⟂`, `DoD-NN`, kötelező táblák, **futtatott artefaktumok, plan-horgonyok, artefaktum-hang**) — a `Must Fix` találatai a szkript célfázisával mennek a hurokba, a `## Leltár` blokkja pedig az `analyzer` bemenete (AG3). |
-| Analyzer subagentek | A read-only kereszt-vizsgálatot **két párhuzamos** subagent végzi: `agents/analyzer.md` (1–5. kategória) és `agents/analyzer-exec.md` (6. kategória, végrehajthatóság) — te a két megállapítás-listát fésülöd össze (E). |
+| Analyzer subagentek | A read-only kereszt-vizsgálatot **két párhuzamos** subagent végzi: `agents/analyzer.md` (1–5. kategória) és az `analyzer-exec` subagent (6. kategória, végrehajthatóság) — te a két megállapítás-listát fésülöd össze (E). |
 | Fixer-subagentek | A javítást a `agents/{spec,plan,tasks}-fixer.md` wrapperek végzik (= 02/03/04 fázis Fix-módja); ők írják a tervezési dokumentumokat. |
 | Eredmény | `analyze-report.md` PASS vagy FAIL, súlyossági besorolással + Hurok-napló. |
 | Egy analyzer-futás / iteráció | Az analyzer futása **mindig teljes**; a 2. futástól megkapja az előző `Must Fix` listát (verifikáció) és a `git diff`-et (navigáció) — de nem szűkíti rá magát (D10). A downstream re-deriválás **feltételes** (D11). |
@@ -154,8 +154,8 @@ A diagnózis **5 kategóriában** keres problémát (a `analyzer` subagent végz
 
 ## Kontextus betöltési szabályok
 
-- A kereszt-vizsgálat sok fájl együttes olvasását igényli — **kötelező a két diagnózis-subagent indítása, egyetlen üzenetben, párhuzamosan** (E): `agents/analyzer.md` (1–5. kategória, a `spec.md` + `plan.md` + `tasks.md` + `conventions.md` négyesen) és `agents/analyzer-exec.md` (6. kategória, a `plan.md` + `tasks.md` + a kapu leltára hármasból). Mindkettő **kizárólag a strukturált megállapítás-listát adja vissza** (a nyers fájltartalom nem terheli a fő kontextust).
-- A rendszerpromptjuk: olvasd be a `prompts/agents/analyzer.md`-t és a `prompts/agents/analyzer-exec.md`-t, és ezekkel definiáld a két subagentet.
+- A kereszt-vizsgálat sok fájl együttes olvasását igényli — **kötelező a két diagnózis-subagent indítása, egyetlen üzenetben, párhuzamosan** (E): az `analyzer` subagent (1–5. kategória, a `spec.md` + `plan.md` + `tasks.md` + `conventions.md` négyesen) és az `analyzer-exec` subagent (6. kategória, a `plan.md` + `tasks.md` + a kapu leltára hármasból). Mindkettő **kizárólag a strukturált megállapítás-listát adja vissza** (a nyers fájltartalom nem terheli a fő kontextust).
+- A rendszerpromptjukat a platform **telepített agent-definíciója** adja (`analyzer`, `analyzer-exec`) — ezeket a neveken hívd, ne keresd őket fájlként a projektben.
 - **Add át a kapu kimenetének megfelelő blokkját mindkét subagentnek, szó szerint:**
   - `analyzer-exec` → a **`## Leltár`** (`[ARTEFAKTUM]` / `[HORGONY]` / `[HANG-GYANÚ]` / `[TESZT-ÍGÉRET]` / `[DESZTRUKTÍV]`, AG3): ez váltja ki a repó- és dokumentum-felderítést, ami a 6. kategória fő költsége volt;
   - `analyzer` → a **`## Lefedettségi mátrix (generált)`** (AG4): a `DoD-NN → [P-…] → task` lánc készen, hogy ne vezesse le újra.

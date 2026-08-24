@@ -385,6 +385,21 @@ kivitelezhetetlennek bizonyul, állj meg és kérdezz, ne dönts át csendben.
   törlendő** (nem elavult-jelölés, nem átírás) — a gazda-projektre a `README.md` és a
   `prompts/meta-improve-prompts.md` a hiteles forrás.
 
+- [x] **LG31 — Az LG16 minta KITERJESZTÉSE minden futásidejű repó-útvonalra.** A 7.4 maradék
+  hivatkozásai ugyanabba a hibaosztályba tartoztak, mint az LG16 fixer-esete: a **telepített**
+  prompt egy `prompts/…` repó-útvonalra küldte az ágenst, ami a célprojektben nem létezik (a
+  gyenge modell megpróbálja beolvasni, elbukik, improvizál). Ezért az útvonal **eltűnik**, és a
+  szöveg a **hívható néven** hivatkozik:
+  - subagent → a neve (`analyzer`, `analyzer-exec`, `doc-sync-planner`, `researcher`, `reviewer`),
+    „a platform telepített agent-definíciója" megjegyzéssel;
+  - fázis-skill → a slash-parancsa (`/bs-02-write-spec`, `/bs-quick-flow`, `/bs-add-cycles`);
+  - ahol tartalom kell (implement-/review-fixer), ott a 7.6 `shared-<L>/fix-mode-implement.md`
+    INCLUDE adja meg, nem hivatkozás.
+  **Következmény a 7.8-ra:** a „grep nulla találat" és a 16.1 byte-azonosság **nem tartható
+  együtt** — a 7.4 szükségszerűen 6 skill tartalmát módosítja (00, 03, 05, 06, 08, quick-flow).
+  A 7. szakasz ezért **két commit**: (a) tiszta átnevezés + kód, ahol a 16.1 byte-azonos; majd
+  (b) a 7.4/7.6/7.7 tartalmi javítás, ahol a keretet újraalapozzuk és a diffet átnézzük.
+
 - [x] **LG24 — A rövidített úton (17.2) a 9.6 (`lang/en/`) BENNE MARAD, csak a 10. szakasz
   (script-i18n) halasztódik.** Indok: a `lang/en/` nélkül a paritás-kapu 11.1/11.3 pontja
   tartósan FAIL-t adna, tehát a 16.3 sosem teljesülne, és az `en/en` telepítés csendben
@@ -523,7 +538,7 @@ eltűnik a félrevezető `prompts/<language>/` minta. Nem funkcionális változ�
 Ez a lépés **atomi**: az átnevezés, a kódmódosítás és az összes útvonal-hivatkozás javítása
 együtt megy, különben a repó egy commitban törött állapotban áll.
 
-- [ ] **7.1 — `git mv` a három fára:**
+- [x] **7.1 — `git mv` a három fára:**
   ```bash
   git mv prompts/skills  prompts/skills-hu
   git mv prompts/agents  prompts/agents-hu
@@ -531,14 +546,14 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
   ```
   *(A `prompts/agents/gemini-agent/` együtt mozog az `agents-hu`-val.)*
 
-- [ ] **7.2 — `_lang_subdir` mindig prefixel.** A `hu` → suffix nélküli elágazás törlendő:
+- [x] **7.2 — `_lang_subdir` mindig prefixel.** A `hu` → suffix nélküli elágazás törlendő:
   `return f"{base}-{lang}"` mindkét nyelvre.
 
-- [ ] **7.3 — A `shared/` INCLUDE-prefix prompt-nyelv-tudatos lesz.** `shared/<f>` →
+- [x] **7.3 — A `shared/` INCLUDE-prefix prompt-nyelv-tudatos lesz.** `shared/<f>` →
   `prompts/shared-<PROMPT_LANG>/<f>`. **A 71 meglévő marker szövege NEM változik** — csak a
   feloldó. Egyúttal a `lang/<f>` prefix célja `prompts/lang/<PROJECT_LANG>/<f>` lesz (2.4).
 
-- [ ] **7.4 — Útvonal-hivatkozások javítása.** Mért leltár (a `inprove-list*.md` nélkül):
+- [x] **7.4 — Útvonal-hivatkozások javítása.** Mért leltár (a `inprove-list*.md` nélkül):
   - **`prompts/skills` — 64 találat, 19 fájlban:** `install.sh`, `install.ps1`,
     `prompts/scripts/init-project.sh`, `prompts/scripts/install-helper.py`,
     `prompts/meta-improve-prompts.md`, `README.md`, `.claude/settings.local.json` (**nem
@@ -553,12 +568,14 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
   - **`prompts/shared` — 3 fájlban:** `install-helper.py`, `meta-improve-prompts.md`, `README.md`.
   - **Kivétel:** az `init-project.sh` útvonalait **ne** javítsd (LG19).
 
-- [ ] **7.5 — `install.sh` / `install.ps1` konstansok.** `SKILLS_SRC` (sh 39. sor, ps1 66. sor)
-  és `AGENTS_SRC_DIR` (sh 37. sor) a prompt-nyelvből származik. A `sh`-ban ezek **`readonly`**,
-  tehát a deklarációt a nyelvválasztás **utánra** kell mozgatni (vagy elhagyni a `readonly`-t).
-  Az `install-helper.py` hívások: sh 372/414/456/498/561, ps1 395/440/485/530/595.
+- [x] **7.5 — `install.sh` / `install.ps1` konstansok — TÖRÖLVE, mert használaton kívül voltak.**
+  *(Tény-korrekció a végrehajtás közben:* a `SKILLS_SRC`, `AGENTS_SRC_DIR` és `AGENTS_GEMINI_SRC`
+  csak deklarálva volt, egyetlen hivatkozás sem volt rájuk sem a `sh`-ban, sem a `ps1`-ben —
+  tehát nem kellett nyelv-tudatossá tenni, hanem törölni. A forrásfát az `install-helper.py`
+  `_lang_subdir()`-je oldja fel.) Az `install-helper.py` hívások helye a §12-hez:
+  sh 372/414/456/498/561, ps1 395/440/485/530/595.
 
-- [ ] **7.6 — A fixer-wrapperek runtime hivatkozásának megszüntetése (LG16).** Az
+- [x] **7.6 — A fixer-wrapperek runtime hivatkozásának megszüntetése (LG16).** Az
   `implement-fixer.md` és a `review-fixer.md` ma azt írja: *„Olvasd be és kövesd a
   `prompts/skills/06-implement.md` fájlt"*. Teendő:
   1. a `06-implement.md` „Fix-mód (validate-hurok belépő)" szekciója kerüljön ki egy
@@ -573,18 +590,25 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
   **Figyelj:** ez tartalmi refaktor, tehát a 16.1 byte-azonosság **ezen a két agenten és a 06
   skillen nem fog teljesülni** — ez itt elvárt, nem hiba.
 
-- [ ] **7.7 — Mellékesen javítandó: 3 elavult `sdd-lightweight-flow` hivatkozás.** A
+- [x] **7.7 — Mellékesen javítandó: 3 elavult `sdd-lightweight-flow` hivatkozás.** A
   `00-init-project.md` (46. és 145. sor) és a `03-write-plan.md` (111. sor) a nem létező
   `prompts/skills/sdd-lightweight-flow.md`-re hivatkozik; a skill ma `quick-flow.md` /
   `/bs-quick-flow`. Javítsd, de a commit-üzenetben **külön jelöld**, mert ez tartalmi javítás,
   nem átnevezés.
 
-- [ ] **7.8 — Verifikáció még a kétnyelvűsítés előtt:**
+- [x] **7.8 — Verifikáció még a kétnyelvűsítés előtt:**
   ```bash
   grep -rIn "prompts/skills/\|prompts/agents/\|prompts/shared/" . \
     | grep -v "^./.git/" | grep -v -- "-hu/\|-en/" | grep -v inprove-list | grep -v init-project.sh
   ```
-  → nulla találat. **És** a 16.1 byte-azonosság teljesül a `hu`/`hu` telepítésre.
+  → nulla találat *(a `.claude/settings.local.json` nem verziókezelt lokális engedély-lista,
+  és az `init-project.sh` az LG19 miatt kivétel)*.
+  **A 16.1-ről lásd az LG31-et:** a byte-azonosság az **átnevezés + kód** commitra teljesült
+  (56/56 hash változatlan — ez fogta meg, hogy a `shared/` marker feloldása a `_lang_subdir`
+  nélkül csendben feloldatlanul hagyta volna mind az 56 skill INCLUDE-jait). A 7.4/7.6/7.7
+  tartalmi commit után a keret **újraalapozva**: ugyanaz az 56 fájl, és pontosan a 6 érintett
+  skill hasha változott (00-init-project, 03-write-plan, 05-analyze, 06-implement, 08-doc-sync,
+  quick-flow) — más nem.
 
 ---
 
@@ -981,7 +1005,7 @@ Megoszlás: **fő ágens 28 fájl / ~453700 karakter · subagent 14 fájl / 2194
 | ✓ | Fájl | Karakter | Ki fordítja |
 |---|---|---:|---|
 | [ ] | `quality-check-plan.md` | 18558 | **fő ágens** |
-| [ ] | `fix-mode-implement.md` | ~4000 | **fő ágens** *(a 7.6-ban jön létre)* |
+| [ ] | `fix-mode-implement.md` | 6725 | **fő ágens** *(a 7.6-ban létrejött)* |
 | [ ] | `quality-check-tasks.md` | 11986 | **fő ágens** |
 | [ ] | `quality-check-spec.md` | 10716 | **fő ágens** |
 | [ ] | `phase-commit.md` | 5558 | **fő ágens** |

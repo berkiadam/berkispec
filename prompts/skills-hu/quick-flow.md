@@ -106,7 +106,7 @@ graph TD
 ### 1. Fázis: Specifikáció (`spec.md`)
 Ebben a fázisban tisztázzuk a követelményeket és rögzítjük a pontos technikai tervet.
 *   **Lépés:** Hozz létre egy `spec.md` fájlt az aktuális `cycle-XX-<név>` mappában.
-*   **Ágens-támogatás (opcionális) — `researcher`:** Ha a feladat meglévő kódbázist érint, és nem nyilvánvaló, mely fájlokat kell módosítani vagy mely dokumentumokat kell frissíteni, indítsd el a [`researcher`](../agents/researcher.md) ágenst (Task tool subagent-ként, read-only). Tömör listát ad vissza az érintett forrásfájlokról (`path:sor–sor`) és a frissítendő dokumentumokról — a fő ágens kontextusablakát kímélve. Tiszta zöldmezős scriptnél vagy egyszerű konfigurációnál ez kihagyható.
+*   **Ágens-támogatás (opcionális) — `researcher`:** Ha a feladat meglévő kódbázist érint, és nem nyilvánvaló, mely fájlokat kell módosítani vagy mely dokumentumokat kell frissíteni, indítsd el a `researcher` ágenst (Task tool subagent-ként, read-only). Tömör listát ad vissza az érintett forrásfájlokról (`path:sor–sor`) és a frissítendő dokumentumokról — a fő ágens kontextusablakát kímélve. Tiszta zöldmezős scriptnél vagy egyszerű konfigurációnál ez kihagyható.
 *   **Tartalom:** 
     *   Részletes célkitűzés és működési logika.
     *   Változók, konfigurációs paraméterek, elnevezési sémák.
@@ -142,7 +142,7 @@ A jóváhagyott specifikáció alapján elkészítjük a lépésről lépésre k
     *   **A Tesztelés helye a sorrendben:** A tesztelési lépéseket (a specifikált tesztelési stratégia alapján) explicit fel kell venni a `task.md` listájába, mégpedig a dokumentáció frissítése (pl. `README.md` szerkesztés) **elé**.
     *   **A tesztek logikus sorrendje (kötelező):** A `task.md` megírása után **ellenőrizd a tesztelési lépések logikai sorrendjét**, hogy minden lépés előfeltétele korábban már teljesüljön. Egy erőforrás (pl. fájl, adatbázis-rekord, deployment, szolgáltatás, hálózati kapcsolat) **meglétét vagy állapotát csak azután ellenőrizd, hogy egy korábbi lépés azt már létrehozta / beállította**; takarítás (cleanup) utáni „már nem létezik" jellegű ellenőrzés pedig a törlés után álljon. Ha a sorrend nem állja meg a helyét (utólag hivatkozol valamire, ami még nem jött létre), rendezd át a lépéseket, mielőtt a Felhasználó elé adnád.
     *   Lépésekre bontott feladatok a fájlok létrehozására, szerkesztésére, a tesztelés lefolytatására, valamint a dokumentációk frissítésére.
-*   **Ágens-támogatás (opcionális) — `analyzer`:** Ha a `spec.md` és a `task.md` viszonya bonyolultabb (több követelmény, könnyen kicsúszó lefedettség), egy könnyű konzisztencia-ellenőrzéshez indítható az [`analyzer`](../agents/analyzer.md) ágens (read-only). A teljes flow-ban a spec/plan/tasks hármast vizsgálja; itt a `spec.md` ↔ `task.md` párra szűkítve fut (a `plan.md` ennél a flow-nál nem létezik), és lefedettségi réseket, kétértelműségeket, alulspecifikációt jelez vissza. Kis, egyértelmű task-listánál fölösleges — ne erőltesd.
+*   **Ágens-támogatás (opcionális) — `analyzer`:** Ha a `spec.md` és a `task.md` viszonya bonyolultabb (több követelmény, könnyen kicsúszó lefedettség), egy könnyű konzisztencia-ellenőrzéshez indítható az `analyzer` ágens (read-only). A teljes flow-ban a spec/plan/tasks hármast vizsgálja; itt a `spec.md` ↔ `task.md` párra szűkítve fut (a `plan.md` ennél a flow-nál nem létezik), és lefedettségi réseket, kétértelműségeket, alulspecifikációt jelez vissza. Kis, egyértelmű task-listánál fölösleges — ne erőltesd.
 *   **Konzisztencia-ellenőrzés (kötelező, a fázis végén):** A `task.md` elkészülte után **ellenőrizd a visszatérő értékek konzisztenciáját a `task.md`-n belül ÉS a `spec.md`-vel összevetve**: elérési utak/útvonalak, szerver-/hostnevek, felhasználónevek, port-számok, adatbázis-/erőforrásnevek, környezeti változók, fájlnevek, parancsok stb. Ugyanaz az érték szerepeljen mindenhol, és egyezzen a `spec.md`-ben rögzítettel. Ha valahol **gyanúsan eltér** egy érték (a két dokumentum között vagy a `task.md`-n belül), **ne javítsd csendben**: hívd fel rá a Felhasználó figyelmét, jelezd hol és mire tér el, és kérdezz rá a helyes értékre.
 *   **Szabály (Kritikus):**
     *   A `task.md`-t ne kezdd el a `spec.md` jóváhagyása előtt.
@@ -167,7 +167,7 @@ Ebben a fázisban történik a tényleges kódolás a feladatlista alapján.
     2. Lépj vissza az 1. fázisba, és frissítsd a `spec.md`-t (és ha kell, a `task.md`-t).
     3. **⛔ Kérd be újra a Felhasználó explicit jóváhagyását**, és csak utána folytasd a kódolást.
     *   Előreugrani továbbra sem szabad; visszalépni a spec pontosításáért viszont kötelező, ha a terv és a valóság elválik.
-*   **Ágens-támogatás (opcionális) — `reviewer`:** A záró commit **előtt** indítható egy gyors kód-review a [`reviewer`](../agents/reviewer.md) ágenssel (read-only): átnézi a diff-et a konvenciók, a scope-fegyelem, a hibakezelés és a spec-megfelelés szempontjából, és `Must Fix` / `Suggestion` listát ad vissza. A teljes flow-tól eltérően itt **nincs automatizált review-önjavító hurok**: a `Must Fix` találatokat az Agent egyszerűen javítja a lezárás előtt, a `Suggestion`-öket pedig jelzi a Felhasználónak. Kis, alacsony kockázatú változásnál (pl. egy konfigurációs sor) ez kihagyható.
+*   **Ágens-támogatás (opcionális) — `reviewer`:** A záró commit **előtt** indítható egy gyors kód-review a `reviewer` ágenssel (read-only): átnézi a diff-et a konvenciók, a scope-fegyelem, a hibakezelés és a spec-megfelelés szempontjából, és `Must Fix` / `Suggestion` listát ad vissza. A teljes flow-tól eltérően itt **nincs automatizált review-önjavító hurok**: a `Must Fix` találatokat az Agent egyszerűen javítja a lezárás előtt, a `Suggestion`-öket pedig jelzi a Felhasználónak. Kis, alacsony kockázatú változásnál (pl. egy konfigurációs sor) ez kihagyható.
 *   **Befejezési feltétel / Ciklus Lezárása:** Az implementáció és a teljes ciklus **kizárólag akkor tekinthető késznek és lezártnak**, ha:
     1. A meghatározott tesztek hiba nélkül lefutottak.
     2. A kapcsolódó dokumentáció (pl. `README.md`) frissítésre került.
@@ -182,13 +182,13 @@ Az egyszerűsített flow szándékosan **kevés** specialista ágenst használ, 
 
 > **Gyengébb/olcsóbb modellel:** ha bizonytalan vagy, **nyugodtan hagyd ki mind a három opcionális ágenst** — a flow nélkülük is teljes. Magának a subagentek vezénylésének is van hibakockázata, ezért kis feladatnál inkább dolgozz közvetlenül, és csak akkor nyúlj ágenshez, ha egyértelműen segít.
 
-A használható ágensek (mind a [`prompts/agents/`](../agents/) mappából):
+A használható ágensek (mind a platform telepített agent-definícióiból, ezeken a neveken hívhatók):
 
 | Ágens | Hol (fázis) | Mit ad | Mikor érdemes |
 |---|---|---|---|
-| [`researcher`](../agents/researcher.md) | 1. fázis (spec.md) | Érintett forrásfájlok (`path:sor–sor`) + frissítendő dokumentumok tömör listája (read-only) | Meglévő kódbázis módosításakor, ha nem nyilvánvaló az érintett fájlkör |
-| [`analyzer`](../agents/analyzer.md) | 2. fázis (task.md) | `spec.md` ↔ `task.md` konzisztencia-diagnózis: lefedettségi rés, kétértelműség, alulspecifikáció (read-only) | Több követelményes, könnyen kicsúszó task-listánál |
-| [`reviewer`](../agents/reviewer.md) | 3. fázis (záró commit előtt) | Diff code review: konvenciók, scope, hibakezelés, spec-megfelelés → `Must Fix` / `Suggestion` (read-only) | Nem triviális kódváltozásnál, a commit előtti minőségi kapuként |
+| `researcher` | 1. fázis (spec.md) | Érintett forrásfájlok (`path:sor–sor`) + frissítendő dokumentumok tömör listája (read-only) | Meglévő kódbázis módosításakor, ha nem nyilvánvaló az érintett fájlkör |
+| `analyzer` | 2. fázis (task.md) | `spec.md` ↔ `task.md` konzisztencia-diagnózis: lefedettségi rés, kétértelműség, alulspecifikáció (read-only) | Több követelményes, könnyen kicsúszó task-listánál |
+| `reviewer` | 3. fázis (záró commit előtt) | Diff code review: konvenciók, scope, hibakezelés, spec-megfelelés → `Must Fix` / `Suggestion` (read-only) | Nem triviális kódváltozásnál, a commit előtti minőségi kapuként |
 
 **Amit ez a flow NEM használ (és miért):**
 *   **Fixer-wrapperek** (`spec-fixer`, `plan-fixer`, `tasks-fixer`, `implement-fixer`, `review-fixer`): ezek a teljes flow **önjavító hurkainak** belépői (05-analyze / 07-validate). Itt nincs automatizált önjavító hurok — a hibákat a fő ágens közvetlenül, inline javítja. A `plan-fixer` ráadásul `plan.md`-t feltételez, ami ennél a flow-nál nem létezik.
