@@ -28,11 +28,7 @@
 **Tétel-formátum** (checkbox-lista, a kérdés-fájlok mintájára):
 
 ```md
-# Cycle NN: <cím> — <célfázis> bemenet korábbi fázisból
-
-- [ ] I01 — [az átadott információ] _(forrás: 02-write-spec)_
-- [x] I02 — [az átadott információ] _(forrás: 01-add-cycles)_ → beépítve: plan.md „Tervezett módosítások"
-- [x] I03 — [az átadott információ] _(forrás: 02-write-spec)_ → elvetve: a ciklus scope-ján kívül (out of scope)
+<!-- INCLUDE:lang/input-from-prev.md#IP1-tetel-formatum -->
 ```
 
 **Szabályok:**

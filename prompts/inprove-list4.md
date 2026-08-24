@@ -426,6 +426,16 @@ kivitelezhetetlennek bizonyul, állj meg és kérdezz, ne dönts át csendben.
   (4) a `lang/<L>/` blokkokban ezek a fejlécek **literálként** állnak (ott már nyelv-specifikus
   a fájl), és a 11.5 kapu ellenőrzi, hogy egyeznek a `status-keys.json`-nal.
 
+- [x] **LG33 — Az ANGOLUL ÍRT projekt-nyelvi literálok is a `status-keys.json`-ba kerülnek,
+  `hu` = `en` értékkel.** Érintettek: `Reviewed` / `Review Required` (schema artifact státusz a
+  `plan.md`-ben), `Must Fix` / `Suggestion` (finding-súlyosság az `analyze-report.md`-ben és a
+  `code-review.md`-ben), valamint a `dod-check.py` `VERDICT: PASS/FAIL/MANUAL` kulcsszava (10.2).
+  Ezek **projekt-nyelviek** (artefaktumba íródnak és kapu-script illeszt rájuk), de a magyar
+  értékük már ma is angol. Indok a felvételükre: (a) a szerződés így **egy helyen** van, és a
+  11.5 kapu rájuk is érvényes; (b) a `hu` érték byte-azonos marad (LG9), tehát a 16.1 nem sérül;
+  (c) ha egyszer mégis magyarítani kell őket, az egy JSON-érték átírása, nem 60 hely megkeresése.
+  **A tokenizálás (9.7.4) rájuk is kiterjed** — `<status:reviewed>`, `<status:must_fix>` stb.
+
 - [x] **LG24 — A rövidített úton (17.2) a 9.6 (`lang/en/`) BENNE MARAD, csak a 10. szakasz
   (script-i18n) halasztódik.** Indok: a `lang/en/` nélkül a paritás-kapu 11.1/11.3 pontja
   tartósan FAIL-t adna, tehát a 16.3 sosem teljesülne, és az `en/en` telepítés csendben
@@ -912,11 +922,10 @@ kulcsot igényel, ott **`(új kulcs)`** jelölés áll: ezeket a 9.7.1 kulcskés
    egyetlen blokk adja a `status-keys.json` `sections` kulcsainak nagy részét, és minden más
    fájl erre a fejléc-készletre hivatkozik. **A 9.4-et ezzel a fájllal kezdd**, és a 9.7.1
    kulcskészletet ebből vezesd le — így a többi fájl leltára már kész kulcsokra hivatkozik.
-7. **⚠ NYITOTT: a `Reviewed` / `Review Required` schema-státusz.** Ma **angol** literál egy
-   egyébként magyar artefaktumban (`plan.md`). Projekt-nyelvi (a plan-be íródik, és a
-   `quality-check-plan.md` illeszt rá), de a `hu` értéke már ma is angol. **Javaslat:** vedd fel
-   a `status-keys.json`-ba `hu` = `en` = `Reviewed` értékkel — így a szerződés egy helyen van,
-   és a `hu` byte-azonos marad (LG9). Ugyanez áll a `Must Fix` / `Suggestion` párra.
+7. **A `Reviewed` / `Review Required` és a `Must Fix` / `Suggestion` — eldöntve (LG33).**
+   Ma angol literálok egy egyébként magyar artefaktumban, de projekt-nyelviek (artefaktumba
+   íródnak, kapu illeszt rájuk). **Bekerülnek a `status-keys.json`-ba `hu` = `en` = angol
+   értékkel**, és a 9.7.4 tokenizálás rájuk is kiterjed.
 8. **Két tartalmi hiba, amit a leltár felszínre hozott — NE javítsd itt (9.4 fegyelem), de
    jegyezd fel:**
    - a `cycle-status.md` 40. sora a `shared-hu/python-cmd.md` szövegét **szó szerint

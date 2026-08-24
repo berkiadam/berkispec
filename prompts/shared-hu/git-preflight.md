@@ -25,7 +25,7 @@ Olvasd ki a `conventions.md` `## Git és branching konvenciók` szekciójából 
 Futtasd: `git status --short`. Ha van commitálatlan változtatás:
 
 - Listázd ki az érintett fájlokat.
-- Kérdezd meg **egy körben**: *„Commitáljam ezeket most, vagy folytassam?"* — várj a válaszra, majd aszerint járj el.
+- Kérdezd meg **egy körben**: <!-- INCLUDE:lang/git-preflight.md#BD13-commit-vagy-folytas --> — várj a válaszra, majd aszerint járj el.
 
 #### Friss, tiszta `main` (leágazás előtt)
 

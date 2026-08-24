@@ -57,20 +57,7 @@ Kétség esetén: blokkol-e a hiba a helyes/biztonságos működésben? Ha igen 
 Készíts egy strukturált markdown jelentést a `specs/cycle-NN-<cycle-name>/test-report/code-review.md` fájlba. A 07 fázis a `Must Fix` szekciót **gépiesen parszolja**, ezért a formátum kötött:
 
 ```md
-# Cycle NN: <cím> — Code review
-
-## Összefoglaló
-
-_Egy-két mondat: merge-elhető-e, vagy mi blokkol. Részleges review esetén ide kerül, mit nem néztél át._
-
-## Kritikus javítandók (Must Fix)
-
-- [ ] **MF-01** — <file>:<line> — <probléma rövid leírása>
-- [ ] **MF-02** — <file>:<line> — <probléma rövid leírása>
-
-## Javasolt fejlesztések (Suggestions)
-
-- **S-01** — <file>:<line> — <javaslat rövid leírása>
+<!-- INCLUDE:lang/reviewer.md#RV1-code-review-formatum -->
 ```
 
 **Formátum-szabályok:**
@@ -81,7 +68,7 @@ _Egy-két mondat: merge-elhető-e, vagy mi blokkol. Részleges review esetén id
 ## Re-review (a 07 hurkának ismételt körei)
 
 Ha megkapod a **korábbi** `code-review.md`-t, **ne írd újra nulláról a jelentést**:
-- a javított findingot jelöld lezártként (`- [x] **MF-01** — …  ✅ javítva`), és hagyd a listában — a hurok nyoma így megmarad;
+- a javított findingot jelöld lezártként (<!-- INCLUDE:lang/reviewer.md#RV1-lezaras-jeloles -->), és hagyd a listában — a hurok nyoma így megmarad;
 - a **még nyitott** findingokat tartsd meg változatlan azonosítóval és szöveggel;
 - csak a ténylegesen **új** problémát vedd fel új `MF-NN` azonosítóval.
 Ez teszi lehetővé, hogy az orchestrátor leállási korlátja („ugyanaz a finding harmadszor is nyitva") egyáltalán működjön.

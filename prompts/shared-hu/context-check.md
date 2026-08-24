@@ -22,6 +22,6 @@ A számláló **csak a saját, korábbi fázis-záró üzeneteidre** vonatkozik.
 
 Ha (és csak ha) a számláló **≥1**, kérdezz rá:
 
-> *„Úgy tűnik, hogy a fázis indításakor a kontextus nem teljesen friss. Szándékosan nem futtattál `/clear`-t az új fázis megkezdése előtt (a tokenekkel való spórolás érdekében)?”*
+<!-- INCLUDE:lang/context-check.md#kontextus-nem-friss -->
 
 Várd meg a választ, mielőtt folytatnád.

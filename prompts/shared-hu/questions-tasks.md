@@ -7,11 +7,7 @@ A `tasks-questions.md` a tasks fázis kérdés-nyilvántartója, a `spec-questio
 **Struktúra** (ha még nem létezik, hozd létre a `specs/cycle-NN-<cycle-name>/` mappában):
 
 ```md
-# Cycle NN: <cím> — Tasks kérdések
-
-- [ ] K01 — [kérdés szövege]
-- [x] K02 — [kérdés szövege] → [döntés / válasz röviden]
-- [ ] K03 — [kérdés szövege] _(K02-ből merült fel)_
+<!-- INCLUDE:lang/questions-tasks.md#tasks-questions-struktura -->
 ```
 
 **Szabályok** (azonosak a spec/plan kérdés-nyilvántartóval):
