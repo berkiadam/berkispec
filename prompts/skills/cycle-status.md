@@ -1,14 +1,9 @@
 ---
-phase: 10
 name: bs-cycle-status
-description: "berkispec - 10. Ciklusok státuszának ellenőrzése. Kilistázza a projekt ciklusait (Kész/Folyamatban), és interaktív TUI felületen vagy argumentumként megadva részletesen mutatja a fázisaik előrehaladását (KÉSZ, FOLYAMATBAN, MÉG NEM FUTOTT)."
-prerequisites: []
+description: "berkispec - segédparancs. Ciklusok státuszának ellenőrzése. Kilistázza a projekt ciklusait (Kész/Folyamatban), és interaktív TUI felületen vagy argumentumként megadva részletesen mutatja a fázisaik előrehaladását (KÉSZ, KÉSZ*, FOLYAMATBAN, MÉG NEM FUTOTT). Nem fázis: a 00-09 folyamatnak nem része, bármikor hívható."
 output: []
-prev: ""
-next: ""
-subagents: []
 ---
-# 10 — Ciklus státusz ellenőrző
+# Ciklus státusz ellenőrző
 <!-- INCLUDE:shared/context-check.md -->
 
 ---

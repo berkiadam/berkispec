@@ -50,3 +50,8 @@ bs-manual-test-summar:
   - mit hogy kell elindítani
   - és milyen hívást adjon
   - és milyen eredményt vársz
+
+
+- bs-help skill
+- mindig relatív útvonlakat használjunk
+- a cycle-desing-input.md-t mindig létre kell hozni, nem csak akkor ha volt brainsorm. 

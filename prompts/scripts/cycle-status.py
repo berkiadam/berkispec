@@ -2,6 +2,7 @@
 import os
 import sys
 import re
+import subprocess
 from pathlib import Path
 
 # Színek ANSI escape kódokkal
@@ -12,6 +13,10 @@ RED = "\033[91m"
 DIM = "\033[2m"
 BOLD = "\033[1m"
 RESET = "\033[0m"
+
+# Közvetett bizonyíték: a fázis lefutott (a rákövetkező állapotokból következik),
+# de a saját artefaktuma nem áll rendelkezésre az ellenőrzéshez.
+INDIRECT = "KÉSZ*"
 
 def get_cycles():
     specs_dir = Path("specs")
@@ -87,6 +92,72 @@ def get_status_from_file(file_path):
         pass
     return None
 
+def _git(args):
+    """(returncode, stdout). returncode None, ha a git nem elérhető vagy ez nem repo."""
+    try:
+        r = subprocess.run(["git"] + args, capture_output=True, text=True, timeout=5)
+        return r.returncode, r.stdout.strip()
+    except Exception:
+        return None, ""
+
+def get_report_verdict(file_path, max_lines=40):
+    """A riport fejlécében lévő státusz-sor értéke (pl. `**Jelenlegi státusz:** PASS`).
+    None, ha a fájl nem létezik vagy nincs benne fejléc-státusz."""
+    if not file_path.exists():
+        return None
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            lines = f.read().splitlines()[:max_lines]
+    except Exception:
+        return None
+    for line in lines:
+        clean = line.strip().lstrip('-').strip().replace('**', '').replace('*', '').replace('`', '').strip()
+        m = re.match(r'^(?:jelenlegi\s+|végleges\s+|összesített\s+)?státusz\s*:\s*(.+)$', clean, re.IGNORECASE)
+        if m:
+            return m.group(1).strip().lower()
+    return None
+
+def is_roadmap_cycle_closed(cycle_name):
+    """A roadmap.md-ben a ciklus le van-e zárva (09-merge: `✅` vagy `(kész)` a cím mellett)."""
+    roadmap = Path("specs/roadmap.md")
+    if not roadmap.exists():
+        return False
+    num_match = re.search(r'cycle-(\d+)', cycle_name)
+    if not num_match:
+        return False
+    num = int(num_match.group(1))
+    try:
+        content = roadmap.read_text(encoding='utf-8')
+    except Exception:
+        return False
+    for line in content.splitlines():
+        if not line.lstrip().startswith('#'):
+            continue
+        if re.search(rf'cycle[-\s]*0*{num}\b', line, re.IGNORECASE):
+            if '✅' in line or re.search(r'\((?:kész|done|lezárva)\)', line, re.IGNORECASE):
+                return True
+    return False
+
+def is_cycle_branch_merged(cycle_name):
+    """True/False, ha a ciklus ágának állapota megállapítható; None, ha nem
+    (nincs git, nincs azonosítható alap-ág, vagy nincs ciklus-ág)."""
+    rc, branches = _git(["for-each-ref", "--format=%(refname:short)", "refs/heads"])
+    if rc != 0:
+        return None
+    names = branches.splitlines()
+    base = next((b for b in ("main", "master", "develop", "trunk") if b in names), None)
+    if base is None:
+        return None
+    cycle_branches = [b for b in names if cycle_name in b and b != base]
+    if not cycle_branches:
+        # nincs ciklus-ág: lehet merge utáni törlés, de az sem biztos, hogy létezett
+        return None
+    for b in cycle_branches:
+        rc_anc, _ = _git(["merge-base", "--is-ancestor", b, base])
+        if rc_anc != 0:
+            return False  # létező, még be nem olvasztott ciklus-ág
+    return True
+
 def analyze_cycle(cycle_path):
     # Ellenőrizzük a flow típusát
     plan_file = cycle_path / "plan.md"
@@ -139,22 +210,25 @@ def analyze_cycle(cycle_path):
         else:
             phases.append(("Task lista (tasks.md)", "MÉG NEM FUTOTT"))
 
-        # 4. Analyze
+        # 4. Analyze — a fejléc státusz-sora a döntő. A puszta "PASS" előfordulás a
+        # szövegtörzsben félrevezet (a körnaplóban a FAIL-körök is említik a PASS-t).
         if analyze_file.exists():
-            try:
-                with open(analyze_file, 'r', encoding='utf-8') as f:
-                    analyze_content = f.read()
-                if "PASS" in analyze_content:
-                    phases.append(("Konzisztencia (analyze-report.md)", "KÉSZ"))
-                else:
-                    phases.append(("Konzisztencia (analyze-report.md)", "FOLYAMATBAN"))
-            except Exception:
-                phases.append(("Konzisztencia (analyze-report.md)", "FOLYAMATBAN"))
-        else:
-            if tasks_status in ["implementálásra kész", "validálásra kész", "kész"]:
-                phases.append(("Konzisztencia (analyze-report.md)", "KÉSZ"))
+            verdict = get_report_verdict(analyze_file)
+            if verdict is not None:
+                analyze_done = "pass" in verdict
             else:
-                phases.append(("Konzisztencia (analyze-report.md)", "MÉG NEM FUTOTT"))
+                # régi, fejléc nélküli riportok: visszaesés a korábbi heurisztikára
+                try:
+                    analyze_done = "PASS" in analyze_file.read_text(encoding='utf-8')
+                except Exception:
+                    analyze_done = False
+            phases.append(("Konzisztencia (analyze-report.md)",
+                           "KÉSZ" if analyze_done else "FOLYAMATBAN"))
+        elif tasks_status in ["implementálásra kész", "validálásra kész", "kész"]:
+            # nincs riport, de a tasks státusza már túllépett az analyze-on
+            phases.append(("Konzisztencia (analyze-report.md)", INDIRECT))
+        else:
+            phases.append(("Konzisztencia (analyze-report.md)", "MÉG NEM FUTOTT"))
 
         # 5. Megvalósítás
         if tasks_status:
@@ -168,57 +242,65 @@ def analyze_cycle(cycle_path):
             phases.append(("Megvalósítás (kód írás)", "MÉG NEM FUTOTT"))
 
         # 6. Validálás (tesztek + kódreview — RV1)
+        # Ha van riport, az dönt — a tasks.md státusza NEM írja felül (a 07 állítja `Kész`-re,
+        # így önmagában körkörös bizonyíték lenne).
         val_file = next((f for f in (validate_file_1, validate_file_2, validate_file_3)
-                         if f.exists()), validate_file_1)
-        if val_file.exists() or (tasks_status == "kész"):
-            if tasks_status == "kész":
+                         if f.exists()), None)
+        review_open = False
+        for rf in (review_file, review_file_legacy):
+            if rf.exists():
+                try:
+                    review_open = "- [ ]" in rf.read_text(encoding='utf-8')
+                except Exception:
+                    review_open = False
+                break
+        if val_file is not None:
+            verdict = get_report_verdict(val_file)
+            if verdict is None:
+                try:
+                    verdict = "pass" if "PASS" in val_file.read_text(encoding='utf-8') else ""
+                except Exception:
+                    verdict = ""
+            if "pass" in verdict and not review_open:
                 phases.append(("Validálás + review (test-report)", "KÉSZ"))
             else:
-                try:
-                    with open(val_file, 'r', encoding='utf-8') as f:
-                        val_content = f.read()
-                    review_open = False
-                    for rf in (review_file, review_file_legacy):
-                        if rf.exists():
-                            try:
-                                review_open = "- [ ]" in rf.read_text(encoding='utf-8')
-                            except Exception:
-                                review_open = False
-                            break
-                    if "PASS" in val_content and not review_open:
-                        phases.append(("Validálás + review (test-report)", "KÉSZ"))
-                    else:
-                        phases.append(("Validálás + review (test-report)", "FOLYAMATBAN"))
-                except Exception:
-                    phases.append(("Validálás + review (test-report)", "FOLYAMATBAN"))
-        else:
-            if tasks_status == "validálásra kész":
                 phases.append(("Validálás + review (test-report)", "FOLYAMATBAN"))
-            else:
-                phases.append(("Validálás + review (test-report)", "MÉG NEM FUTOTT"))
+        elif tasks_status == "kész":
+            # nincs riport, de a 07 lezárta a ciklus státuszait
+            phases.append(("Validálás + review (test-report)", INDIRECT))
+        elif tasks_status == "validálásra kész":
+            phases.append(("Validálás + review (test-report)", "FOLYAMATBAN"))
+        else:
+            phases.append(("Validálás + review (test-report)", "MÉG NEM FUTOTT"))
 
-        # 7. Doc-sync
+        # 7. Doc-sync — a terv-tételek pipái (DS10) a bizonyíték
         if doc_sync_file.exists():
             try:
                 with open(doc_sync_file, 'r', encoding='utf-8') as f:
                     doc_content = f.read()
                 # Ha van még befejezetlen checkbox
-                if "- [ ]" in doc_content:
-                    phases.append(("Dokumentáció (doc-sync-plan.md)", "FOLYAMATBAN"))
-                else:
-                    phases.append(("Dokumentáció (doc-sync-plan.md)", "KÉSZ"))
+                doc_status = "FOLYAMATBAN" if "- [ ]" in doc_content else "KÉSZ"
             except Exception:
-                phases.append(("Dokumentáció (doc-sync-plan.md)", "FOLYAMATBAN"))
+                doc_status = "FOLYAMATBAN"
         else:
-            phases.append(("Dokumentáció (doc-sync-plan.md)", "MÉG NEM FUTOTT"))
+            doc_status = "MÉG NEM FUTOTT"
+        phases.append(("Dokumentáció (doc-sync-plan.md)", doc_status))
 
-        # 8. Merge
-        if tasks_status == "kész" and doc_sync_file.exists():
-            phases.append(("Merge", "KÉSZ"))
-        elif tasks_status == "kész":
-            phases.append(("Merge", "FOLYAMATBAN"))
-        else:
+        # 8. Merge — a 09 tényleges kimeneteiből (roadmap-lezárás, beolvasztott ciklus-ág),
+        # NEM a doc-sync-plan.md puszta létezéséből: az a terv legyártásakor jön létre,
+        # üres checkboxokkal, tehát semmit nem mond a merge-ről.
+        if tasks_status != "kész" or doc_status not in ("KÉSZ", INDIRECT):
             phases.append(("Merge", "MÉG NEM FUTOTT"))
+        elif is_roadmap_cycle_closed(cycle_path.name):
+            phases.append(("Merge", "KÉSZ"))
+        else:
+            merged = is_cycle_branch_merged(cycle_path.name)
+            if merged is False:
+                phases.append(("Merge", "FOLYAMATBAN"))
+            elif merged is True:
+                phases.append(("Merge", "KÉSZ"))
+            else:
+                phases.append(("Merge", INDIRECT))
 
     else:
         # --- SIMPLIFIED (LIGHTWEIGHT) FLOW ---
@@ -252,8 +334,8 @@ def analyze_cycle(cycle_path):
             phases.append(("Megvalósítás (kód + doksi)", "MÉG NEM FUTOTT"))
 
     # Ciklus szintű összesített státusz meghatározása
-    all_done = all(p[1] == "KÉSZ" for p in phases)
-    any_started = any(p[1] in ["KÉSZ", "FOLYAMATBAN"] for p in phases)
+    all_done = all(p[1] in ("KÉSZ", INDIRECT) for p in phases)
+    any_started = any(p[1] in ("KÉSZ", INDIRECT, "FOLYAMATBAN") for p in phases)
     
     overall_status = "KÉSZ" if all_done else ("FOLYAMATBAN" if any_started else "MÉG NEM FUTOTT")
     
@@ -276,11 +358,16 @@ def print_cycle_phases(cycle_path):
     for phase_name, p_status in phases:
         if p_status == "KÉSZ":
             p_color = GREEN
+        elif p_status == INDIRECT:
+            p_color = GREEN + DIM
         elif p_status == "FOLYAMATBAN":
             p_color = YELLOW
         else:
             p_color = DIM
         print(f"  {p_color}● {phase_name:<35} → {p_status}{RESET}")
+    if any(p[1] == INDIRECT for p in phases):
+        print(f"  {DIM}* = közvetett bizonyíték: a fázis a rákövetkező állapotokból "
+              f"lefutottnak tűnik, de a saját artefaktuma nem ellenőrizhető.{RESET}")
     print("")
 
 def text_fallback_menu(cycles):
@@ -407,6 +494,8 @@ def curses_menu(stdscr, cycles):
                     
                 if p_status == "KÉSZ":
                     pc = curses.color_pair(1)
+                elif p_status == INDIRECT:
+                    pc = curses.color_pair(1) | curses.A_DIM
                 elif p_status == "FOLYAMATBAN":
                     pc = curses.color_pair(2)
                 else:

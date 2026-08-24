@@ -228,10 +228,10 @@ berkispec/                            # repo gyökér
     │   ├── 07-validate.md
     │   ├── 08-doc-sync.md            # élő dokumentáció-szinkron (docs-generated/)
     │   ├── 09-merge.md               # csak beolvasztás — a review a 07-ben fut
-    │   ├── 10-cycle-status.md        # ciklusok státuszának ellenőrzése (interaktív TUI vagy közvetlen)
-    │   ├── brainstorm.md            # feltáró ötletelés a spec előtt (.bs-brainstorm/ munkafájl) — segédparancs
-    │   ├── quick-flow.md   # egyszerűsített, háromfázisú flow kis feladatokhoz (spec→task→implement)
-    │   └── export-doc.md            # verziózott PDF export a markdown doksikból (mermaid ábrákkal)
+    │   ├── brainstorm.md             # feltáró ötletelés a spec előtt (.bs-brainstorm/ munkafájl) — segédparancs
+    │   ├── quick-flow.md             # egyszerűsített, háromfázisú flow kis feladatokhoz (spec→task→implement) — segédparancs
+    │   ├── cycle-status.md           # ciklusok státuszának ellenőrzése (interaktív TUI vagy közvetlen) — segédparancs
+    │   └── export-doc.md             # verziózott PDF export a markdown doksikból (mermaid ábrákkal) — segédparancs
     ├── agents/                       # Specialista ágensek (Task tool subagent-ként hívva)
     │   ├── reviewer.md               # code review a 07 fázisban (a teljes kör 2. lépése — statikus réteg)
     │   ├── analyzer.md               # kereszt-fázisos SZEMANTIKAI elemzés (read-only, 1–5. kategória) a 05 fázisban
@@ -261,7 +261,7 @@ berkispec/                            # repo gyökér
     ├── templates/                    # jövőbeli sablonok
     ├── scripts/                      # automatizációs scriptek (a telepítő minden *.py-t átmásol a célprojektbe)
     │   ├── install-helper.py         # a telepítő motorja (modell- + effort-hozzárendelés, fájlmásolás, `INCLUDE:shared/…` inline-olás (BD14), `<platform-scripts-mappa>` feloldása (BD15)) — NEM kerül a célprojektbe
-    │   ├── cycle-status.py           # a 10-cycle-status skill futtató scriptje
+    │   ├── cycle-status.py           # a cycle-status skill futtató scriptje
     │   ├── ds22-gate-check.py        # a 08-doc-sync DS22 Réteg 1 magkapuja (determinisztikus, LLM nélkül)
     │   ├── tc8-gate-check.py         # a 08-doc-sync TC8 kapuja a specs/test-conventions.md-re (determinisztikus, 5 check)
     │   ├── analyze-gate-check.py     # a 05-analyze mechanikus kapuja: plan-`[P-…]` ↔ task-hivatkozás, marker, `⟂`, `DoD-NN`, kötelező táblák, futtatott artefaktumok (A1), plan-horgonyok (A2), artefaktum-hang (A3), a DoD→plan→task lefedettségi lánc (C1–C3), KF1 üres cellák (C4), KO1 koordináta-placeholder/üres cella (C6), task-határon átnyúló shell-változó (C5) + a KÉT GENERÁLT RIPORT-TÁBLA és a `## Leltár` az analyzereknek (AG3/AG4)
@@ -568,7 +568,7 @@ A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de *
 |---|---|---|---|
 | `deep_reasoning_agent` (legdrágább) | **kizárólag** `analyzer` (05) | `claude-opus-4-8` / `pro` (tier) / `Claude Opus 4.8` / `claude-opus-5` / `gpt-5.6-sol` | Kereszt-fázisos konzisztencia-**diagnózis** (spec/plan/tasks/conventions) — a legmélyebb reasoning; egy itt vétett hiba a legdrágább downstream (rossz diagnózisra rossz kód épül). |
 | `default` | **minden más:** orchestrátor-skillek (05, 07…), a 4 fixer (`spec`/`plan`/`tasks`/`implement`-fixer), `reviewer`, `review-fixer`, `doc-sync-planner`, `test-runner` | `claude-sonnet-5` / `flash` (tier) / `Claude Sonnet 5` / `claude-sonnet-5` / `gpt-5.6-luna` | A fixerek **kész, pontos hibalistát** kapnak (megoldás/eszkaláció, nem felfedezés); az orchestrátorok bookkeeping-et végeznek (marker, számláló, routing) a subagent **kész** jelentése alapján — nem diagnózis. |
-| `research_agent` (legolcsóbb) | `researcher` (00/01/02/03/06 + `bs-brainstorm`), `10-cycle-status` skill | `claude-haiku-4-5-20251001` / `flash` (tier) / `Claude Haiku 4.5` / `claude-sonnet-5` (low) / `gpt-5.4-mini` | Tiszta grep/glob/read fan-out, ill. determinisztikus script-futtatás — **nulla tervezési ítélet**; a „csak összefoglaló, soha nyers fájltartalom" kontraktus véd. Antigravityn nincs olcsóbb tier a `flash`-nél, ezért ott a `default` tierrel esik egybe; Cursorban nincs Haiku, ott a `default` Sonnet 5 fut `low` efforton. |
+| `research_agent` (legolcsóbb) | `researcher` (00/01/02/03/06 + `bs-brainstorm`), `cycle-status` skill | `claude-haiku-4-5-20251001` / `flash` (tier) / `Claude Haiku 4.5` / `claude-sonnet-5` (low) / `gpt-5.4-mini` | Tiszta grep/glob/read fan-out, ill. determinisztikus script-futtatás — **nulla tervezési ítélet**; a „csak összefoglaló, soha nyers fájltartalom" kontraktus véd. Antigravityn nincs olcsóbb tier a `flash`-nél, ezért ott a `default` tierrel esik egybe; Cursorban nincs Haiku, ott a `default` Sonnet 5 fut `low` efforton. |
 
 **Effort-leosztás — mennyi reasoning:**
 
@@ -576,12 +576,12 @@ A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de *
 |---|---|---|
 | `high` (default effort) | `analyzer`, és minden nem-felülírt agent | Nyílt végű felfedezés/diagnózis, ahol a mély reasoning fizet. Ez a **biztonságos alapértelmezés** (a `models.json` `default` effortja). |
 | `medium` | `reviewer`, `doc-sync-planner` | Ítéletet igényel, de **kötött szempontlista** mentén (nem nyílt felfedezés). |
-| `low` | a 4 fixer + `review-fixer`, `test-runner`, `researcher`, `10-cycle-status` | Pontos hibalistát célzottan javító, ill. tisztán mechanikus munka — a reasoning-mélység itt nem fizet, csak tokent éget. |
+| `low` | a 4 fixer + `review-fixer`, `test-runner`, `researcher`, `cycle-status` | Pontos hibalistát célzottan javító, ill. tisztán mechanikus munka — a reasoning-mélység itt nem fizet, csak tokent éget. |
 
 **Egy szándékos kivétel:** a `test-runner` mechanikus (tesztek/Sonar/E2E futtatása), mégis `default` **modellen** (nem a legolcsóbbon) fut — a több lépéses Bash-orchesztráció (portütközés, config-visszaállítás) és a projektenként eltérő teszt-/Sonar-kimenet megbízható, **konzisztens tesztnevű** összegzése kritikus: egy elgépelt név csendben elronthatná a 07-hurok per-item 3-próba számlálóját (VD4). (Az effortja viszont `low` — a pontosság formakövetés, nem reasoning-mélység kérdése.)
 
 **Konfiguráció és telepítés:**
-- **Forrás:** [`prompts/models.json`](prompts/models.json) — platformonként (`claude` / `antigravity` / `copilot` / `cursor` / `codex`) a 3 tier `{model, effort}` objektumként, plusz a defaulttól eltérő agentek **saját nevű sorként** (csak az `effort` mezővel; a modelljük a `default` tierből jön). Az `install-helper.py` `AGENT_MODEL_KEYS` szótára rendeli az `analyzer`/`researcher`/`10-cycle-status` stemeket a tierekhez (az `analyzer-exec` szándékosan nincs benne: a kapu leltára készen adja neki a jelölteket, tehát `default` tieren fut); ami nincs sem itt, sem saját sorként a `models.json`-ban, `default` modellt és `default` (=`high`) effortot kap.
+- **Forrás:** [`prompts/models.json`](prompts/models.json) — platformonként (`claude` / `antigravity` / `copilot` / `cursor` / `codex`) a 3 tier `{model, effort}` objektumként, plusz a defaulttól eltérő agentek **saját nevű sorként** (csak az `effort` mezővel; a modelljük a `default` tierből jön). Az `install-helper.py` `AGENT_MODEL_KEYS` szótára rendeli az `analyzer`/`researcher`/`cycle-status` stemeket a tierekhez (az `analyzer-exec` szándékosan nincs benne: a kapu leltára készen adja neki a jelölteket, tehát `default` tieren fut); ami nincs sem itt, sem saját sorként a `models.json`-ban, `default` modellt és `default` (=`high`) effortot kap.
 - **Beírás telepítéskor** (`./install.sh`): Antigravity → `agent.json` `"model"` kulcs, **tier-értékkel** (`pro` / `flash` / `inherit`); Claude Code / Copilot → az agent-fájl YAML frontmatter `model` + `effort` mezője; Cursor → az agent-fájl YAML frontmatter `model` mezője, **modell-azonosítóval és zárójeles paraméterrel**: `model: claude-opus-5[effort=high]` (a Cursor nem ismer külön `effort:` mezőt); Codex → a `.codex/agents/<név>.toml` `model` + `model_reasoning_effort` kulcsa (+ read-only agenteknél `sandbox_mode = "read-only"`).
 - **A skillek** (orchestrátor fő ágensek, nem subagentek) **sem `model`-t, sem `effort`-ot nem kapnak** — egyetlen platformon sem. A skill-szintű `model` ugyanis **nem része az Agent Skills alap-szabványnak** (az csak `name`/`description`/`license`/`compatibility`/`metadata`/`allowed-tools`), hanem Claude Code-kiterjesztés, amit a célplatformokon a modellváltás **nem, vagy nem megbízhatóan** követ:
   - **Codex:** a SKILL.md csak `name` + `description`-t ismer → egy `model` inert.
@@ -983,7 +983,7 @@ Egy kis feladat végigvitele. Itt **egyetlen indító prompt** van; utána a flo
 | `/bs-quick-flow` | **Egyszerűsített flow** (külön út) | feladat leírása | `spec.md` + `task.md` + implementáció — háromfázisú, kis feladatokhoz; opcionális `researcher`/`analyzer`/`reviewer`; túlnövéskor átirányít a `/bs-add-cycles`-ra |
 | `/bs-brainstorm` | **Ötletelés** (segédparancs, a flow előtt) | téma szabad szöveggel, vagy `folytassuk a NN-est` | `.bs-brainstorm/brainstorm-NN-<slug>.md` — perzisztens munkafájl (tények forrással, alternatívák trade-offokkal, döntések, nyitott kérdések, javasolt ciklus-vágás). Nem fázis, nem változtat státuszt; kódot és a mappán kívül semmit nem ír. Átadás: `/bs-add-cycles brainstorm: NN` (BS18) vagy `/bs-quick-flow`. |
 | `/bs-export-doc` | **PDF export** (segédparancs) | markdown fájl(ok), opcionális — üresen a `docs-generated/architecture.md` és `system-overview.md` | `export/<név>-v<N>.pdf` — fájlonként független verziószám (utolsó + 1, v1-től); pandoc + `mermaid-filter` + xelatex, a ciklus a címlapon (`Lefedve: cycle-NN-ig · vN`). Nem fázis: nincs előfeltétele, nem változtat státuszt. |
-| `/bs-cycle-status` | **Státusz ellenőrző** | ciklus neve vagy elérési útja (opcionális) | Kimutatja a ciklusok státuszát (Kész/Folyamatban), és interaktív TUI vagy közvetlen módon részletesen listázza a fázisok előrehaladását (KÉSZ, FOLYAMATBAN, MÉG NEM FUTOTT) felismerve a flow típusát. |
+| `/bs-cycle-status` | **Státusz ellenőrző** | ciklus neve vagy elérési útja (opcionális) | Kimutatja a ciklusok státuszát (Kész/Folyamatban), és interaktív TUI vagy közvetlen módon részletesen listázza a fázisok előrehaladását (KÉSZ, KÉSZ*, FOLYAMATBAN, MÉG NEM FUTOTT) felismerve a flow típusát. |
 
 A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a kimenetet, a szomszédos fázisokat (`prev`/`next`) és a hívott subagenteket. Az egyszerűsített flow skill és a segédparancsok (`bs-brainstorm`, `bs-export-doc`) ettől eltérő, `name`/`description` alapú frontmattert használnak (nem fázisok, lásd a „Két fejlesztési út" szekciót).
 
