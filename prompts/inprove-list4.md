@@ -1030,10 +1030,36 @@ az információt arról, milyen nyelven kell írni.
   helyére a 9.5.3 `output-language` INCLUDE lép. Grepeld végig a többi fájlt is ugyanerre a
   mintára (`nyelve`, `magyarul`, `magyar`), mielőtt a 9.6-ra lépsz.
 
-- [ ] **9.6 — A `lang/en/` blokkok.** A `lang/hu/` kész fájljainak fordítása `lang/en/`-be,
+- [x] **9.6 — A `lang/en/` blokkok.** A `lang/hu/` kész fájljainak fordítása `lang/en/`-be,
   **azonos fájlnevekkel és azonos horgonyokkal**. A státusz-kulcsszavak és az artefaktum-szekció
   fejlécek fordítását a 10. szakasz `status-keys.json`-jával kell egyeztetni — ugyanaz a string
   ne legyen két helyen kétféle (ezt a 11.5 kapu ellenőrzi).
+
+  > **✅ A 9.6 KÉSZ (2026-08-25).** `prompts/lang/en/` — **21 `.md` + `descriptions.json`**,
+  > a `lang/hu/` teljes tükre. **73 horgony**, fájlonként **azonos sorrendben**; a fence-,
+  > táblázat- és címsorszám fájlonként egyezik (a 11.7/11.8 kapu előzetes kézi futtatása).
+  >
+  > **A `descriptions.json` is ide tartozik** (a `lang/hu/`-ban él, LG15/LG26): 25 bejegyzés
+  > (14 skill string + 11 agent `description`+`role`), kulcs- és szerkezet-paritással.
+  > Enélkül az `en` projekt-nyelvű telepítés `hu` leírókra esett vissza — a telepítő
+  > figyelmeztetése ezt jelezte.
+  >
+  > **Verifikáció:** (a) magyar ékezet a `lang/en/` fán → **0 találat** (a 16.5 mintája);
+  > (b) a `status-keys.json` `hu` → `en` érték-illesztés fájlonként ellenőrizve (a 11.5
+  > előfutára) — a talált egyetlen valós eltérés (`Test specification` sortörésen át) javítva,
+  > a maradék 10 találat mind részszó-egyezés (`Kör` a `körönkénti`-ben, `Kész` a `Készen`-ben);
+  > (c) próbatelepítés **mind az 5 platformra `hu` prompt + `en` projekt** nyelvvel:
+  > **0 LG12-figyelmeztetés, 0 feloldatlan token, 0 feloldatlan INCLUDE**, és a telepített
+  > `description` mindenhol angol; (d) a `hu`/`hu` 16.1 keret **70/70 + 55/55 változatlan**.
+  >
+  > **⚠ Amit a 9.6 felszínre hozott a §10-nek** (a `lang/en/` blokkok angol artefaktum-stringeket
+  > vezetnek be, amiket a kapu-scriptek MA magyarul keresnek — ezek a 10.2 leltár hiányzó
+  > tételei): `report-gate-check.py` → `## Teszt-riportolás`, `**Riport-generálás kötelező:**`,
+  > `**Artefaktum-útvonal alapja:**` + a `kör-mappa` / `test-report` jelölő-értékek;
+  > `round-log.py` → `## Kör N` (`ROUND_RE`) és `**Körök száma:**`; `run-tests.py` → a
+  > `### Gépi futtatási tábla` szekciócím és a `--type gyors` / `nehez` **CLI-értékek**, amik
+  > a plan run-táblájának `Típus` oszlopában is állnak; `failure-counter.py` → a
+  > `# Validation History` fejléc (ez angol, tehát nyelvfüggetlen).
 
 ### 9.7 Projekt-nyelvi helyőrző-tokenek (LG32)
 
@@ -1204,6 +1230,21 @@ A `prompts/scripts/*.py`-ban **279 egyedi magyar string** van. Nem egyformák:
 | **(a) Artefaktum-ILLESZTŐ** | a projekt fájljaiban keres szekciót/státuszt/mezőt | **kötelező** | `in` / `re.search` / `startswith` egy beolvasott artefaktum-szövegen |
 | **(b) Artefaktum-ÍRÓ** | riport-szekciót ír a projektbe | **kötelező** | `write_text` / `f.write` / riport-összeállítás |
 | **(c) Konzol-üzenet** | a futtatónak és az agentnek szól | opcionális (LG10) | `print(...)`, artefaktum-írás nélkül |
+
+> **⚠ A 9.6 zárásakor felszínre került, MA HIÁNYZÓ tételek** (mind (a)+(b) osztály — a script
+> írja ÉS illeszti; a `lang/en/` blokkok már az angol alakot hordozzák, tehát a §10 nélkül az
+> `en` projekt ezeken a pontokon csendben elhasal):
+> - `report-gate-check.py`: `## Teszt-riportolás` (`SECTION_RE`), `**Riport-generálás kötelező:**`
+>   (`REQUIRED_FLAG_RE`), `**Artefaktum-útvonal alapja:**` (`PATH_BASE_RE`) + a `BASE_ROUND` /
+>   `BASE_FLAT` **érték-halmazok** (`kör-mappa`, `körmappa`, `kör`, `gyökér` …);
+> - `round-log.py`: `## Kör N` (`ROUND_RE`) és a `**Körök száma:**` fejléc-mező;
+> - `run-tests.py`: a `### Gépi futtatási tábla` szekciócím **és** a `--type gyors|nehez`
+>   **CLI-választék**, ami a plan run-táblájának `Típus` oszlop-értékeivel párban áll —
+>   ez a kettő **együtt** fordul, vagy egyik sem;
+> - `tc8-gate-check.py`: a `test-conventions.md` 0./1./2./3. szekciócímei és a `Cél` /
+>   `Előfeltétel` / `Lépések` / `Elvárt eredmény` mezőnevek (TC10/b).
+>
+> **A `# Validation History` (failure-counter.py) NEM tétel** — ma is angol, tehát nyelvfüggetlen.
 
 - [ ] **10.2 — Az (a) és (b) osztály leltárának véglegesítése.** Az alábbi lista a **biztosan
   teherhordó** találatokat tartalmazza; ellenőrizd és egészítsd ki.
@@ -1405,16 +1446,57 @@ szakasz megvan, mert akkor a fordítandó felület már csak az instrukciós pr�
 - parancsok, kódblokkok, JSON/YAML kulcsok, regexek (a 11.8 byte-azonosságot követel);
 - a `<platform-scripts-mappa>` és minden helyőrző — **beleértve a `<sec:…>` / `<field:…>` /
   `<status:…>` projekt-nyelvi tokeneket** (LG32, 9.7.6): ezek **byte-azonosan** kerülnek át;
+- a **kapu-scriptek CLI-értékei** a példa-parancsokban (`run-tests.py --type gyors|nehez`) —
+  ezek a script `choices` listájából jönnek, a fordításuk a §10 dolga, nem a §13-é;
 - az INCLUDE markerek (a *tartalmuk* lehet nyelvi, a *marker* nem).
 
 ### 13.2 Fordítási szabályok
 
-- [ ] **13.2.1 — Glosszárium ELŐBB, és IDE írd.** A fordítás megkezdése előtt készíts szótárat a
-  visszatérő szakkifejezésekre, és **ebbe a fájlba** írd be (ne a fejedben tartsd). Kiindulás:
-  ciklus → cycle, fázis → phase, kapu → gate, hurok → loop, önjavító → self-healing, bukás →
-  failure, finding → finding, artefaktum → artifact, kiemelés → extraction, tervezési dokumentum
-  → design document, lefedettség → coverage, kör → round, előfeltétel → prerequisite.
+- [x] **13.2.1 — Glosszárium ELŐBB, és IDE írd.** A fordítás megkezdése előtt készíts szótárat a
+  visszatérő szakkifejezésekre, és **ebbe a fájlba** írd be (ne a fejedben tartsd).
   **Inkonzisztens szakszó-fordítás a leggyakoribb hibaforrás egy ilyen korpuszban.**
+
+  > **A glosszárium a 9.6 (`lang/en/`) megkezdésekor készült, és a §13-ra is ez érvényes.**
+  > Ahol a szó **artefaktum-felület** (szekciónév, státusz, mezőnév), ott **nem itt** dől el a
+  > fordítás, hanem a `status-keys.json` `en` szeletében — a glosszárium a **prózára** vonatkozik.
+
+  | Magyar | Angol | Megjegyzés |
+  |---|---|---|
+  | ciklus | cycle | a `cycle-NN-<name>` azonosító sosem fordul |
+  | fázis | phase | `phase 03`, `phase-closing commit` |
+  | kapu | gate | `mechanikus kapu` → *mechanical gate* |
+  | hurok | loop | `önjavító hurok` → *self-healing loop* |
+  | kör | round | `teljes kör` / `könnyű kör` → *full round* / *light round* |
+  | bukás, bukott | failure, failed | `bukott elem` → *failed item* |
+  | artefaktum | artifact | |
+  | tervezési dokumentum | design document | a `spec.md`/`plan.md`/`tasks.md` gyűjtőneve |
+  | lefedettség | coverage | `fordított lefedettség` → *reverse coverage* |
+  | előfeltétel | prerequisite | |
+  | kiemelés (9.4) | extraction | csak a tervben, promptban nem fordul elő |
+  | horgony | anchor | az `ANCHOR:` marker neve sosem fordul |
+  | helyőrző | placeholder | |
+  | csereszöveg | replacement text | `<field:f_replacement_text>` |
+  | eltérés (`design-drift`) | deviation | |
+  | recept, regiszter | recipe, register | `test-conventions.md` = *recipe register* |
+  | promótálás | promotion | `promótált tétel` → *promoted item* |
+  | váz, csontváz | skeleton | |
+  | minőségellenőrzés | quality check | a `## Sonar minőségellenőrzés` fejléc a kulcskészletből jön |
+  | lezárási kapu | closing gate | |
+  | kérdés-nyilvántartó | question register | a `*-questions.md` fájlok |
+  | súlyosság | severity | |
+  | hatókör | scope | `osztott-remote` → *shared-remote* (kulcskészlet) |
+  | szerződés | contract | `szerződés-integritás` → *contract integrity* |
+  | munkafa | working tree | `tiszta munkafa` → *clean working tree* |
+  | visszaintegrálás | back-integration | |
+  | eszkaláció | escalation | `ESZKALÁCIÓ:` prefix — prompt-nyelvi, fordul |
+  | takarítás | cleanup | |
+  | riport | report | |
+  | jelölő, marker | marker | a `[analyze-loop]` / `[validate-loop]` marker maga sosem fordul |
+  | megerősítés | confirmation | `explicit megerősítés` → *explicit confirmation* |
+  | ütközés | conflict | |
+  | számláló | counter | |
+  | fejléc-blokk | header block | a `docs-generated/` doksik `Lefedve:` sora |
+  | felhasználó | user | a promptban **Felhasználó**/**felhasználó** egyaránt → *user* |
 - [ ] **13.2.2 — Az imperatívuszok erőssége nem gyengülhet.** `TILOS` → `FORBIDDEN` / `NEVER`,
   **nem** `should not`. A `⛔` és `🔴` jelölések maradnak. A gyenge modellek pont ezeken a
   pontokon romlanak el (1.1).
