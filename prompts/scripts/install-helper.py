@@ -442,16 +442,88 @@ def substitute_lang_frontmatter(content, src_dir, kind, source_name):
     return content
 
 
+# ── PROJEKT-nyelvi helyőrző-tokenek (LG32) ─────────────────────────────────
+# A `<platform-scripts-mappa>` (BD15) minta kiterjesztése. Az artefaktum-szekció
+# nevek és a státusz-értékek TÚLNYOMÓ RÉSZBEN szövegközi hivatkozások az
+# instrukciós prózában (~440 hely), nem kiemelhető blokkok — INCLUDE marker
+# tehát nem jó rájuk. Literálként hagyva viszont csendes kapu-bukást okoznának:
+# `EN` prompt + `HU` projekt esetén az ágens angol szekciócímet írna, míg a
+# kapu-scriptek a `lang-keys.json`-ból a magyart keresik.
+#
+# Három családot ismerünk, a `status-keys.json` három csoportjának megfelelően:
+#   <sec:planned_changes>     → "Tervezett módosítások"   (artefaktum-szekció NEVE)
+#   <field:f_status>          → "Státusz"                 (mező-/oszlopnév)
+#   <status:ready_for_plan>   → "Tervezésre kész"         (státusz- vagy címke-érték)
+#
+# A token a CSUPASZ literált adja vissza — a `##` / `###` prefix a promptban
+# marad (`## <sec:planned_changes>`). Így ugyanaz a kulcs használható `##`,
+# `###` és mondat közbeni hivatkozásként is, és a prompt olvasható marad.
+_LANG_TOKEN_RE = re.compile(r'<(?P<group>sec|field|status):(?P<key>[a-z0-9_]+)>')
+_LANG_TOKEN_GROUPS = {"sec": "sections", "field": "fields", "status": "status"}
+_status_keys_cache = {}
+
+
+def load_status_keys(src_dir):
+    """A `prompts/lang/status-keys.json` PROJEKT-nyelvi szelete, cache-elve.
+    Hiányzó nyelvi szelet → `hu` tartalék + egyszeri figyelmeztetés (LG12);
+    hiányzó fájl → megállunk, mert a tokenek feloldatlanul a telepített promptba
+    szivárognának, és egy gyenge modell szó szerint kiírná őket az artefaktumba."""
+    key = (str(src_dir), PROJECT_LANG)
+    if key in _status_keys_cache:
+        return _status_keys_cache[key]
+    path = Path(src_dir) / "prompts/lang/status-keys.json"
+    if not path.exists():
+        print(f"HIBA: nincs meg a {path}.", file=sys.stderr)
+        sys.exit(1)
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    lang = PROJECT_LANG
+    if lang not in data:
+        if lang not in _lang_fallback_warned:
+            print(f"FIGYELEM: a status-keys.json nem tartalmaz '{lang}' szeletet — "
+                  f"magyar tartalékra esünk vissza.", file=sys.stderr)
+            _lang_fallback_warned.add(lang)
+        lang = "hu"
+    _status_keys_cache[key] = data[lang]
+    return data[lang]
+
+
+def resolve_lang_tokens(content, src_dir):
+    """A `<sec:…>` / `<field:…>` / `<status:…>` tokenek cseréje a projekt-nyelvi
+    literálra. ISMERETLEN KULCS → `sys.exit(1)`, beszédes hibával: a csendes
+    átengedés a telepített promptba vinné a tokent (ugyanaz a logika, mint 8.3
+    és 8.6)."""
+    if src_dir is None:
+        return content
+    keys = load_status_keys(src_dir)
+
+    def _repl(match):
+        group = _LANG_TOKEN_GROUPS[match.group('group')]
+        name = match.group('key')
+        try:
+            return keys[group][name]
+        except KeyError:
+            print(f"HIBA: a '{match.group(0)}' token kulcsa nincs meg a "
+                  f"status-keys.json '{PROJECT_LANG}' szeletének '{group}' "
+                  f"csoportjában.", file=sys.stderr)
+            sys.exit(1)
+
+    return _LANG_TOKEN_RE.sub(_repl, content)
+
+
 def prepare_skill_content(skill_file, src_dir, platform):
     """MINDEN skill-transzformáció egy helyen (8.7). Két skill-író kódút van
     (`write_markdown_skill` és a `process_copilot` saját ciklusa), és korábban
     mindegyik maga hívta a lépéseket — ez előbb-utóbb elcsúszott volna. Sorrend:
-    projekt-nyelvi frontmatter → INCLUDE-feloldás → scripts-mappa helyőrző."""
+    projekt-nyelvi frontmatter → INCLUDE-feloldás → nyelvi tokenek → scripts-mappa
+    helyőrző. A token-feloldás az INCLUDE UTÁN fut, hogy a beemelt `lang/` és
+    `shared/` blokkokban lévő tokenek is feloldódjanak."""
     with open(skill_file, 'r', encoding='utf-8') as f:
         content = f.read()
     if src_dir is not None:
         content = substitute_lang_frontmatter(content, src_dir, 'skill', skill_file.name)
         content = inline_shared_includes(content, src_dir)
+        content = resolve_lang_tokens(content, src_dir)
     return substitute_scripts_dir(content, platform)
 
 
@@ -463,6 +535,7 @@ def prepare_agent_content(agent_file, src_dir, platform):
     if src_dir is not None:
         content = substitute_lang_frontmatter(content, src_dir, 'agent', agent_file.name)
         content = inline_shared_includes(content, src_dir)
+        content = resolve_lang_tokens(content, src_dir)
     return substitute_scripts_dir(content, platform)
 
 

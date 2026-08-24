@@ -1028,13 +1028,30 @@ az információt arról, milyen nyelven kell írni.
 > áthelyezett blokkokban a fejlécek **literálként** maradnak (a fájl ott már nyelv-specifikus) —
 > tokent csak az a szöveg kap, ami a **prompt-fában marad**.
 
-**A tokenek alakja** (ASCII, ékezet nélkül — LG32): `<sec:<kulcs>>` és `<status:<kulcs>>`.
-A kulcskészlet a `status-keys.json` `sections` / `status` kulcsaival **azonos** (10.3).
-A `<sec:…>` a **teljes fejlécet** adja vissza, a `##` prefixszel együtt (ahogy a 10.3 értékei
-tárolják) — ahol a prózában csak a fejléc *neve* kell (`##` nélkül), ott a
-`<secname:<kulcs>>` alak használatos, ugyanabból a kulcsból, prefix-levágással.
+**A tokenek alakja** (ASCII, ékezet nélkül — LG32) — **három család, a `status-keys.json`
+három csoportjának megfelelően**:
 
-- [ ] **9.7.1 — `prompts/lang/status-keys.json` létrehozása** a 10.3 szerkezetével, **`hu` és
+| Token | Csoport | Példa (hu → en) |
+|---|---|---|
+| `<sec:<kulcs>>` | `sections` — artefaktum-szekció **neve** | `<sec:planned_changes>` → `Tervezett módosítások` / `Planned changes` |
+| `<field:<kulcs>>` | `fields` — mező- vagy oszlopnév | `<field:f_status>` → `Státusz` / `Status` |
+| `<status:<kulcs>>` | `status` — státusz- vagy címke-**érték** | `<status:ready_for_plan>` → `Tervezésre kész` / `Ready for planning` |
+
+**A token a CSUPASZ literált adja vissza, `##` prefix NÉLKÜL** — a prefix a promptban marad
+(`## <sec:planned_changes>`). *(Ez eltér a szakasz első vázlatától, ahol a `<sec:…>` a teljes
+fejlécet adta volna és külön `<secname:…>` kellett volna a csupasz névhez.) Indok: ugyanaz a
+szekciónév `##`, `###` és **mondat közbeni** hivatkozásként is előfordul — a prefix nélküli
+érték mindhárom helyen ugyanazzal a kulccsal használható, és a prompt olvasható marad.*
+
+> **9.7.1 + 9.7.3 KÉSZ.** `prompts/lang/status-keys.json`: **129 kulcs** (73 `sections`,
+> 27 `fields`, 29 `status`), `hu` és `en` szelettel. A feloldó (`load_status_keys()` +
+> `resolve_lang_tokens()`) a `prepare_skill_content` / `prepare_agent_content` láncban fut,
+> **az INCLUDE-feloldás UTÁN** — így a beemelt `lang/` és `shared/` blokkok tokenjei is
+> feloldódnak. Ismeretlen kulcs → `exit 1`; hiányzó nyelvi szelet → `hu` tartalék +
+> figyelmeztetés; hiányzó fájl → `exit 1`. Mindkét nyelv és a hibaág tesztelve; a 16.1
+> **125/125 byte-azonos** (a feloldó inert, amíg nincs token a fákban).
+
+- [x] **9.7.1 — `prompts/lang/status-keys.json` létrehozása** a 10.3 szerkezetével, **`hu` és
   `en` szelettel együtt**. A `hu` értékek **byte-azonosak a maiakkal** (LG9) — ez a 16.1 keret
   feltétele. A kulcskészlet forrása a 10.2 leltár (szekció-fejlécek + státusz-értékek) **plusz**
   a 9.7.2 mérésben előkerülő, kapu-script által nem olvasott, de artefaktumba írt fejlécek
@@ -1063,7 +1080,7 @@ tárolják) — ahol a prózában csak a fejléc *neve* kell (`##` nélkül), ot
   **⚠️ Ez is alsó korlát:** a lista a 10.2-ből és a 9.2 mérésből indul, de nem teljes — a
   leltárt fájlonként végigolvasva kell zárni (ítéletet kíván, nem greppel helyettesíthető).
 
-- [ ] **9.7.3 — A feloldó az `install-helper.py`-ban.** A `<platform-scripts-mappa>` feloldó
+- [x] **9.7.3 — A feloldó az `install-helper.py`-ban.** A `<platform-scripts-mappa>` feloldó
   (`_SCRIPTS_DIR_PLACEHOLDER`, ~208–230. sor) **mintájára**, ugyanabban a transzformációs
   láncban (`prepare_skill_content()` — így mind az 5 platform kapja, LG28):
   - `_load_status_keys(src_dir)` — a `prompts/lang/status-keys.json` beolvasása, cache-elve;
