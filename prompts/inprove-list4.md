@@ -1663,7 +1663,7 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
 |---|---|---:|---|
 | [ ] | `03-write-plan.md` | 87752 | **fő ágens** |
 | [ ] | `07-validate.md` | 83455 | **fő ágens** |
-| [ ] | `08-doc-sync.md` | 71567 | **fő ágens** |
+| [x] | `08-doc-sync.md` | 71567 | **fő ágens** |
 | [x] | `05-analyze.md` | 41157 | **fő ágens** |
 | [x] | `02-write-spec.md` | 36033 | **fő ágens** |
 | [x] | `01-add-cycles.md` | 32516 | subagent |

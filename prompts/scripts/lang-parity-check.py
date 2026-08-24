@@ -55,7 +55,7 @@ IMPERATIVES = {
     "TILOS/SOHA/FORBIDDEN/NEVER": ("TILOS", "SOHA", "FORBIDDEN", "NEVER"),
     "SZIGORÚ/STRICT": ("SZIGORÚ", "STRICT"),
     "Must Fix": ("Must Fix",),
-    "STOP/ÁLLJ MEG": ("STOP", "ÁLLJ MEG"),
+    "STOP/ÁLLJ MEG/MEGÁLL": ("STOP", "ÁLLJ MEG", "MEGÁLL"),
 }
 
 # 11.8 — a fence-tartalom akkor FORDÍTHATÓ, ha az infostring ezek egyike
