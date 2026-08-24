@@ -934,21 +934,52 @@ kulcsot igényel, ott **`(új kulcs)`** jelölés áll: ezeket a 9.7.1 kulcskés
      él (`02`:304–310, `03`:159–165, `shared-hu/questions-tasks.md`:9–15) — a kiemeléskor ez
      **egyetlen** `lang/<L>/` horgonyba vonható, de az már tartalmi változás: külön kör.
 
-- [ ] **9.4 — Kiemelés fájlonként.** Minden fájlra:
+- [x] **9.4 — Kiemelés fájlonként.** Minden fájlra:
   1. a jelölt blokkok átmozgatása a `prompts/lang/hu/<fájlnév>.md`-be `## <horgony>`
      szekcióként, **szó szerint**;
   2. a helyükre `<!-- INCLUDE:lang/<fájlnév>.md#<horgony> -->` marker;
   3. a byte-azonossági teszt futtatása (16.1) — **fájlonként, nem a végén.**
 
-  **Haladás (a 9.3.3 tábla első oszlopa jelöli):**
-  - [x] `00-init-project.md` — 8 blokk (`conventions-sablon`, 6 kérdés/flag, `zaro-uzenet`)
-    → `prompts/lang/hu/00-init-project.md`. **16.1: 70/70 byte-azonos.**
-    *Két, a további fájlokra is érvényes tanulság:*
-    1. **A ```-fence-t hagyd a skillben, csak a BELSEJÉT emeld ki** — így a fence-paritás (11.8)
-       mindkét fában stimmel, és a skill továbbra is olvasható marad.
-    2. **A behúzás a NYELVI blokkba költözik.** Ha a kiemelt sor be volt húzva (pl. `   *"…"*`),
-       a marker a saját sorába kerül és a `_marker_is_standalone` elnyeli a behúzást (8.8) —
-       ezért a szóközöket a `lang/` blokk elejére kell tenni. A 16.1 ezt azonnal kimutatja.
+  **✅ A 9.4 KÉSZ — mind a 42 prompt-fájl feldolgozva.**
+  **73 horgony · 80 marker · `prompts/lang/hu/` 20 fájl · 16.1: 125/125 byte-azonos.**
+
+  | Fa | Fájl (blokk) |
+  |---|---|
+  | `skills-hu/` | `01-add-cycles` (16) · `08-doc-sync` (12) · `00-init-project` (8) · `04-write-tasks` (6) · `06-implement` (5) · `07-validate` (4) · `02-write-spec` (3) · `03-write-plan` (3) · `05-analyze` (2) · `09-merge` (2) · `brainstorm` (2) · `export-doc` (1) · `quick-flow` (1) · `cycle-status` (0) |
+  | `agents-hu/` | `reviewer` (2) — a többi agent jelöltjei a beemelt `shared-hu/` fájlokban vannak |
+  | `shared-hu/` | `context-check` · `git-preflight` · `input-from-prev` · `quality-check-plan` · `questions-tasks` (1–1) |
+  | közös | `common.md#ciklus-beazonositas` — **8 skillből** hivatkozva |
+
+  **Öt tanulság, ami a végrehajtás közben született (mind kódba/tervbe került):**
+  1. **A ```-fence a skillben marad, csak a BELSEJE kerül ki** — így a fence-paritás (11.8)
+     mindkét fában stimmel, és a skill olvasható marad.
+  2. **A behúzás a NYELVI blokkba költözik.** Ha a kiemelt sor be volt húzva, a marker a saját
+     sorába kerül, és a `_marker_is_standalone` elnyeli a behúzást (8.8) — a szóközöket a `lang/`
+     blokk elejére kell tenni. Sortartomány-kiemelésnél ez automatikus.
+  3. **A forrásfájl záró újsor-állapotát meg kell őrizni** — ha az utolsó blokk a fájl végéig ér,
+     a marker sora egyébként újsort tenne oda, ahol nem volt (`09-merge`).
+  4. **A TÖBB fájlban byte-azonosan előforduló user-facing mondat KÖZÖS horgonyt kap**
+     (`lang/hu/common.md`). Nyolc külön másolat a fordításnál garantáltan szétcsúszna (13.2.1),
+     és a paritás-kapu ezt **nem** venné észre: mindkét fában nyolc darab lenne, csak más szöveggel.
+  5. **⚠ A 16.1 NEM fogja meg a KIMARADT kiemelést.** Egy vissza nem cserélt literál byte-azonos
+     kimenetet ad — a keret definíció szerint néma rá. Két marker így is kimaradt (két `git
+     checkout --` visszavonta a közös-mondat cseréjét), és csak a **horgony ↔ marker
+     kereszt-ellenőrzés** mutatta ki. **Ez a 11.3 kapu dolga lesz** — addig fusson kézzel:
+
+  ```python
+  # horgony ↔ marker paritás (a 16.1 vak foltja)
+  import re, pathlib, collections
+  anchors, markers = collections.Counter(), collections.Counter()
+  for f in pathlib.Path("prompts/lang/hu").glob("*.md"):
+      for m in re.finditer(r'^<!-- ANCHOR:(\S+?) -->$', f.read_text(encoding="utf-8"), re.M):
+          anchors[f"{f.name}#{m.group(1)}"] += 1
+  for d in ("skills-hu", "agents-hu", "shared-hu"):
+      for f in pathlib.Path("prompts", d).glob("*.md"):
+          for m in re.finditer(r'<!-- INCLUDE:lang/(\S+?) -->', f.read_text(encoding="utf-8")):
+              markers[m.group(1)] += 1
+  assert not set(anchors) - set(markers), "árva horgony"
+  assert not set(markers) - set(anchors), "hivatkozott, de nem létező horgony"
+  ```
 
   > **A kiemelés SZÓ SZERINTI.** Ne javíts, ne fogalmazz át, ne egységesíts közben — az külön
   > kör. Ha hibát találsz, jegyezd fel, de ne javítsd itt: a byte-azonosság a védőháló, és
@@ -1169,7 +1200,9 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
   `prompts/shared` **suffix nélküli** mappa. Ez fogja meg, ha egy félbehagyott rebase vagy egy
   figyelmetlen commit visszahozza a régi szerkezetet.
 
-- [ ] **11.3 — INCLUDE-marker leltár.** A markerek halmaza legyen azonos a nyelvi párokban;
+- [ ] **11.3 — INCLUDE-marker leltár.** *(A 9.4 tanulsága szerint ez a kapu **a `hu` fán belül** is
+  kell: horgony ↔ marker kereszt-ellenőrzés mindkét irányban — a 16.1 a kimaradt kiemelésre vak.)*
+  A markerek halmaza legyen azonos a nyelvi párokban;
   minden hivatkozott `lang/<fájl>#<horgony>` **létezzen mindkét nyelvi mappában**; a `lang/`
   fájlok **ne** tartalmazzanak INCLUDE markert (8.5).
 

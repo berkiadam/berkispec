@@ -87,9 +87,7 @@ Milyen branch-en vagyunk?
 **1. lépés:** Ellenőrizd a `specs/` könyvtár tartalmát (`ls specs/`).
 
 **`specs/` üres vagy nem létezik** → tegyél fel **egy** kérdést:
-> *"A `specs/` könyvtár üres. Mit szeretnél csinálni?*
-> *A) Teljes roadmap tervezés — meghatározzuk az összes fejlesztési ciklust és létrehozzuk a `specs/roadmap.md`-t*
-> *B) Egyetlen ciklus hozzáadása — csak egy új ciklust adunk a roadmap-hez"*
+<!-- INCLUDE:lang/01-add-cycles.md#specs-ures-kerdes -->
 
 - Válasz **A** → folytasd az **A. móddal**
 - Válasz **B** → folytasd a **B. móddal**
@@ -98,10 +96,10 @@ Milyen branch-en vagyunk?
    **2. lépés:** Ellenőrizd, hogy létezik-e `specs/roadmap.md`.
 
    - **Ha létezik** → jelezd, és folytasd a **B. móddal**:
-     > *"Találtam [N] meglévő ciklust: [cycle-01-xxx, cycle-02-xxx, ...]. Új ciklust adok a roadmap-hez."*
+<!-- INCLUDE:lang/01-add-cycles.md#ciklusok-roadmappal -->
 
    - **Ha NEM létezik** → kérdezd meg:
-     > *"Találtam [N] meglévő ciklust a `specs/` mappában, de nem találom a `specs/roadmap.md` fájlt. Melyik ciklussal dolgozunk most? Az adott ciklus roadmap-blokkját pótolom (per-ciklus, a ciklus feature branch-én) — a többi ciklus a saját branch-én / a merge-elt main-roadmap-ben él."*
+<!-- INCLUDE:lang/01-add-cycles.md#ciklusok-roadmap-nelkul -->
      - **Egy konkrét ciklus** → Kövesd a **C. mód — Egy ciklus roadmap-blokkjának pótlása** lépéseit arra az egy ciklusra (BQ5/BQ6). Ha utána új ciklust is fel akarsz venni, folytasd a **B. móddal**.
      - **Új ciklus felvétele** → Folytasd közvetlenül a **B. móddal**: az új ciklust hozzáadod, a roadmap többi része üres/hiányos maradhat.
 
@@ -188,32 +186,7 @@ Ha elegendő információ áll rendelkezésre, kezdd el a ciklus meghatározást
 ### Roadmap struktúra
 
 ```md
-# Fejlesztési Roadmap
-
-**Státusz:** `Piszkozat` | `Nyitott kérdések vannak` | `Kész`
-
-## Nyitott kérdések
-
-- [ ] K01 — <kérdés szövege>
-- [x] K02 — <kérdés szövege> → <döntés röviden>
-
-## Cycle 01 — <cím>
-
-**Viselkedés:** Mit tud a rendszer a ciklus végén? (1-2 mondat, felhasználói perspektívából)
-
-**Érintett komponensek:** Mely rendszerrészek változnak?
-
-**Előfeltétel:** — (vagy: Cycle NN)
-
-**Mock stratégia:** Mit kell mock-olni a még nem kész komponensekből?
-
-**Teszt kritérium:** Hogyan ellenőrizhető, hogy the ciklus kész? (konkrét, eldönthető állítás)
-
----
-
-## Cycle 02 — <cím>
-
-...
+<!-- INCLUDE:lang/01-add-cycles.md#roadmap-struktura -->
 ```
 
 ### Validációs ciklus — minden javasolt ciklus után
@@ -256,7 +229,7 @@ Minden esetben csak **egy** problémát jelezz egyszerre.
 ### Státusz kezelés
 
 Ha minden kérdés `[x]` és a validációs ellenőrzés átment, tedd fel a kérdést a felhasználónak:
-*"A roadmap minőségellenőrzése átment és minden kérdés lezárt. Készen áll a roadmap? Ha megerősíted, átállítom `Kész` státuszra."* — Ne állítsd át a státuszt a megerősítés előtt. **A válasz végén helyezd el a `specs/roadmap.md` közvetlen, kattintható linkjét.**
+<!-- INCLUDE:lang/01-add-cycles.md#roadmap-statusz-megerosites --> — Ne állítsd át a státuszt a megerősítés előtt. **A válasz végén helyezd el a `specs/roadmap.md` közvetlen, kattintható linkjét.**
 
 Ha a felhasználó megerősíti:
 - Állítsd a `specs/roadmap.md` státuszát `Kész`-re.
@@ -267,7 +240,7 @@ Ha a felhasználó megerősíti:
   git commit -m "cycle-NN: 01-cycles"
   ```
   ahol `NN` az éppen tervezett első ciklus száma (pl. `cycle-01: 01-cycles`). **No-VCS ágon a commit kimarad** (BI8).
-- Jelezd: *"A roadmap kész. Folytathatjuk az 1. ciklus spec fázisával (02). Létrehoztam a `specs/cycle-01-<name>/cycle-design-input.md` fájlt — ide leírhatod a saját szavaiddal az 1. ciklus specifikációját. Kitöltése nem kötelező, de ha írsz bele, a `bs-write-spec` figyelembe fogja venni."* — **a válasz végén helyezd el a `cycle-design-input.md` kattintható linkjét.**
+- Jelezd: <!-- INCLUDE:lang/01-add-cycles.md#A-mod-zaro-uzenet --> — **a válasz végén helyezd el a `cycle-design-input.md` kattintható linkjét.**
 
 ---
 
@@ -278,23 +251,23 @@ Ha a felhasználó megerősíti:
 1. Olvasd be a `specs/roadmap.md`-t (ha létezik) — kontextus és ciklusszám meghatározáshoz. Ha nem létezik, hozd létre az alap struktúrával (`# Fejlesztési Roadmap\n\n**Státusz:** Kész`). _(A roadmap tényleges írása/commitja a ciklus feature branch-én történik — lásd „Branch létrehozása".)_
 2. Határozd meg az új ciklusszámot a **„Ciklusszám meghatározása (BQ2)"** szerint — a main `roadmap.md`/`ls specs/` **és** a feature branch-ek `cycle-NN` számainak maximuma + 1 (VCS mellett). Ez a lépés még az induló branch-en (jellemzően `main`-en) fut.
 3. Jelezd a felhasználónak:
-   > *"Meglévő ciklusok: [N db — cycle-01-xxx, ...]. Következő ciklusszám: [NN]."*
+<!-- INCLUDE:lang/01-add-cycles.md#BQ2-ciklusszam-jelzes -->
 
 ### Információgyűjtés
 
 1. Tegyél fel **egy** kérdést:
-   > *"Mi az új ciklus célja? Röviden írd le, milyen viselkedést szeretnél megvalósítani."*
+<!-- INCLUDE:lang/01-add-cycles.md#BD5-cel-kerdes -->
 
    > **Ha van brainstorm-bemenet (BS18):** ezt a kérdést **hagyd ki** — a célt a munkafájl `## 1. Cél / kérdés` és `## 6. Javasolt ciklus-vágás` szekciója már megválaszolja. Ehelyett foglald össze 2-3 sorban, mit értettél belőle, és **azt** hagyasd jóvá. Csak azt kérdezd meg, amire a fájlban nincs válasz (jellemzően a `## 5. Nyitott kérdések` nyitott tételei).
 
    > **Flow-méret ellenőrzés (a cél leírása után, a névjavaslat előtt):** Mérlegeld, hogy a feladat **nem túl kicsi-e** a teljes, többfázisú ciklushoz. Ha a cél 3-4 lépésben, egyetlen menetben megoldható — tipikusan **konfiguráció összeállítása/módosítása, egyszerűbb script megírása, kisebb javítás vagy lokális finomhangolás** —, akkor a teljes `02→…→09` flow túlméretezett. Ilyenkor **állj meg, és javasold az egyszerűsített flow-t**, mielőtt ciklust hoznál létre:
    >
-   > > *„Ez a feladat elég kicsinek tűnik a teljes fejlesztési ciklushoz (külön spec/plan/tasks + analyze/validate/review). Javaslom helyette az egyszerűsített flow-t (`/bs-quick-flow`): `spec.md` → `task.md` → implementáció, néhány lépésben. Mehetünk azzal, vagy mégis teljes ciklust szeretnél?"*
+<!-- INCLUDE:lang/01-add-cycles.md#BS-quick-flow-javaslat -->
    >
    > A döntés a Felhasználóé: ha a teljes ciklust kéri, folytasd itt; ha az egyszerűsítettet, irányítsd át a `/bs-quick-flow` skillhez.
 
 2. Ha megérkezett a cél leírása, készíts egy javaslatot a ciklus nevére **kebab-case** formátumban, tömören, a viselkedést tükrözve (pl. `performance-load-test`, `token-exchange`, `oidc-login`). Kérdezd rá:
-   > *"A cél alapján a javasolt név: `[javasolt-név]`. Ez lesz a branch és a mappa neve is (pl. `cycle-NN-[javasolt-név]`). Megfelelő, vagy inkább mást szeretnél?"*
+<!-- INCLUDE:lang/01-add-cycles.md#BD5-nevjavaslat -->
 
 Ha a név nem felel meg, kérd a felhasználó saját javaslatát, azt használd.
 
@@ -315,17 +288,7 @@ A név jóváhagyása után, **mielőtt** a `specs/roadmap.md`-be írnál vagy m
 Írd meg a ciklus leírását a standard struktúra szerint. Ez a leírás a `specs/roadmap.md` fájlba kerül, a meglévő ciklusok után beszúrva:
 
 ```md
-## Cycle NN — <cím>
-
-**Viselkedés:** Mit tud a rendszer a ciklus végén? (1-2 mondat, felhasználói perspektívából)
-
-**Érintett komponensek:** Mely rendszerrészek változnak?
-
-**Előfeltétel:** — (vagy: Cycle NN — a meglévők közül)
-
-**Mock stratégia:** Mit kell mock-olni a még nem kész komponensekből?
-
-**Teszt kritérium:** Hogyan ellenőrizhető, hogy a ciklus kész? (konkrét, eldönthető állítás)
+<!-- INCLUDE:lang/01-add-cycles.md#BD5-ciklus-blokk-sablon -->
 ```
 
 ### Validáció
@@ -344,7 +307,7 @@ Ha bármelyikre "nem": javítsd vagy kérdezz rá, mielőtt hozzáfűzöd.
 
 1. Fűzd hozzá az új ciklus leírását a `specs/roadmap.md` végéhez, `---` elválasztóval a meglévők után. **Edge case:** ha a `roadmap.md` utolsó nem-üres sora nem `---`, először szúrj be egy `---`-t, mielőtt az új ciklust hozzáfűznéd — így minden ciklus blokk között garantáltan ott az elválasztó.
 2. Mutasd meg a kész ciklus leírást, és kérj megerősítést:
-   > *"Hozzáadtam a Cycle NN — [cím] leírást. Ha megerősíted, frissítem a roadmap státuszát `Kész`-re és létrehozom a ciklus könyvtárát."*
+<!-- INCLUDE:lang/01-add-cycles.md#BD5-roadmap-megerosites -->
 3. Ha a felhasználó megerősíti (a `git switch -c` ekkor már megtörtént — lásd „Branch létrehozása"):
    - Állítsd a roadmap státuszát `Kész`-re.
    - Hozd létre a ciklus könyvtárát: `mkdir -p specs/cycle-NN-<cycle-name>/` (a **mappanév** prefix nélkül, tisztán `cycle-NN-<name>` — BD3).
@@ -357,14 +320,7 @@ Ha bármelyikre "nem": javítsd vagy kérdezz rá, mielőtt hozzáfűzöd.
      ahol `NN` az éppen hozzáadott ciklus száma (pl. `cycle-16: 01-cycles`). **No-VCS ágon a `git switch -c` és a commit kimarad** — csak a `mkdir` + roadmap-írás + a sablon létrehozása történik (BI8).
    - Jelezd a következő lépést — **a design input felajánlásával együtt**:
 
-     > *"Cycle NN — [cím] hozzáadva. Könyvtár létrehozva: `specs/cycle-NN-<cycle-name>/`*
-     >
-     > *Létrehoztam a `specs/cycle-NN-<cycle-name>/cycle-design-input.md` fájlt. **Ide leírhatod a saját szavaiddal a ciklus specifikációját** — elvárásokat, vázlatot, példákat, bármit, ami a fejedben van. **Kitöltése nem kötelező**, üresen is folytatható a flow; de ha írsz bele, a `bs-write-spec` (02) beolvassa és a spec kiindulópontjaként figyelembe veszi. Érdemes a spec fázis indítása ELŐTT kitölteni.*
-     >
-     > *Következő lépés — spec írás. Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:*
-     > ```
-     > /bs-write-spec input: @specs/roadmap.md, ciklus: cycle-NN-<cycle-name>
-     > ```"*
+<!-- INCLUDE:lang/01-add-cycles.md#B-mod-zaro-uzenet -->
      >
      > **Fázishatár — kemény megállás (PE1):** a 01 fázis ezzel az üzenettel **véget ér**. Ugyanabban a körben **ne kezdj spec-írásba** (`spec.md`-t létre se hozz), akkor sem, ha egy kontextus-összefoglaló/checkpoint teendő-listája, a saját korábbi terved vagy a felhasználó egy korábbi körben adott „menjünk végig a folyamaton" mondata erre biztat. Csak a felhasználó erre a körre szóló, explicit kérése írja felül.
      >
@@ -384,20 +340,7 @@ Ha bármelyikre "nem": javítsd vagy kérdezz rá, mielőtt hozzáfűzöd.
 **A létrehozandó sablon tartalma (szó szerint, `NN` az aktuális ciklusszámra behelyettesítve — pl. `# cycle 25 design input from user`):**
 
 ```md
-# cycle NN design input from user
-
-> **Ez a fájl a Tiéd.** Ide írhatod le a saját szavaiddal, hogy mit szeretnél ebben a ciklusban:
-> elvárások, viselkedés-vázlat, példa kérés/válasz, folyamatleírás, korlátok, hivatkozások, jegyzetek.
->
-> **Kitöltése nem kötelező** — üresen hagyva a flow változatlanul működik.
-> Ha viszont írsz ide, két fázis is automatikusan beolvassa:
-> - `bs-write-spec` (02) — a **viselkedési** tartalmat, a `spec.md` kiindulópontjaként (a `roadmap.md` bejegyzése mellett);
-> - `bs-write-plan` (03) — a **technikai/eljárás-jellegű** tartalmat (parancsok, hostok, komponensek, korlátok) a `plan.md`-hez.
->
-> Formátum nincs megkötve: folyó szöveg, felsorolás, táblázat, kódrészlet — bármi jó.
-> Ezt a fájlt egyik fázis sem írja felül.
-
-<!-- Írj ide. -->
+<!-- INCLUDE:lang/01-add-cycles.md#CD1-design-input-sablon -->
 ```
 
 ---
@@ -433,7 +376,7 @@ A CD1 sablon fejléce és a magyarázó blokk **változatlanul** kerül a fájlb
 
 A szokásos CD1 visszajelzés helyett jelezd, hogy a fájl **nem üres**:
 
-> *„Létrehoztam a `specs/cycle-NN-<name>/cycle-design-input.md` fájlt, és feltöltöttem a NN. brainstorm session döntéseivel. **Olvasd át** — ez lesz a `bs-write-spec` (02) kiindulópontja. Bátran javítsd, bővítsd vagy húzz ki belőle; a fájl a Tiéd, egyik fázis sem írja felül."*
+<!-- INCLUDE:lang/01-add-cycles.md#BS18-design-input-brainstormbol -->
 
 A válasz végén itt is helyezd el a `cycle-design-input.md` kattintható linkjét.
 
@@ -458,7 +401,7 @@ Akkor, ha az **aktuális ciklus** roadmap-blokkja hiányzik vagy hibás (a `spec
 3. **A hiányzó/hibás blokk pótlása:** ha a `specs/roadmap.md` nem létezik, hozd létre az alap struktúrával (`# Fejlesztési Roadmap\n\n**Státusz:** Kész`). Az adott ciklus `## Cycle NN — cím` blokkját a standard struktúra szerint pótold/javítsd, a ciklus `spec.md`-jéből (ha létezik). Ha az input sok, a `researcher` subagenttel (`agents/researcher.md`, Mód B) kérdezd le tömören (cím, `Célkitűzés` első mondata, érintett komponensek, `Teszt specifikáció`/`Definition of done` kulcspontjai) — a fő kontextust kímélve. **Csak ezt az egy blokkot** érintsd, a roadmap többi részét ne írd felül.
 
 4. **Validáció + megerősítés:** mutasd meg a pótolt/javított blokkot, és kérj megerősítést:
-   > *"A(z) `cycle-NN-<name>` roadmap-blokkját pótoltam/javítottam a `specs/roadmap.md`-ben. Kérlek nézd át. Ha rendben van és megerősíted, commitolom a ciklus branch-én."*
+<!-- INCLUDE:lang/01-add-cycles.md#BQ5-C-mod-jelzes -->
    > **A válasz végén helyezd el a `specs/roadmap.md` közvetlen, kattintható linkjét.** Ne lépj tovább a megerősítés előtt.
 
 5. **Lezárás (megerősítés után):** commit a **ciklus feature branch-én** (BD4):
