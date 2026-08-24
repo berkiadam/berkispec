@@ -15,6 +15,7 @@
 
 - [Berki-spec](#berki-spec)
   - [1. Két fejlesztési út — válassz a feladat mérete szerint](#1-két-fejlesztési-út--válassz-a-feladat-mérete-szerint)
+    - [1.1 Mindkét út előtt (opcionális): /bs-brainstorm](#11-mindkét-út-előtt-opcionális-bs-brainstorm)
   - [2. Installáció](#2-installáció)
     - [Telepítés lépései:](#telepítés-lépései)
     - [Támogatott platformok és ágensek:](#támogatott-platformok-és-ágensek)
@@ -104,6 +105,30 @@ A felhasználónak **két útja** van; a feladat súlya dönti el, melyik a megf
 
 A két út **átjárható**: ha az egyszerűsített flow közben kiderül, hogy a feladat túlnő rajta (nagyobb kódírás, több komponens, összetett tervezés), a skill megállítja a munkát és **átirányít a teljes folyamatra** (`01-add-cycles`). Fordítva is: a `01-add-cycles` és a `03-write-plan` jelzi, ha a feladat túl egyszerű a teljes ciklushoz, és javasolja az egyszerűsített flow-t.
 
+### 1.1 Mindkét út előtt (opcionális): `/bs-brainstorm`
+
+A két út **közös előszobája** a `/bs-brainstorm` segédparancs — arra az esetre, amikor még nem a *méret* a kérdés, hanem az, hogy **mit és hogyan** akarunk egyáltalán. („Hogyan valósítsunk meg egy központi cert kezelést?", „Érdemes-e kiszervezni az auth-ot?") Ez a rés a `00–09` flow **előtt** van: a `01-add-cycles` már azt feltételezi, hogy tudod, mit akarsz (csak ciklusokra kell bontani), a `/bs-quick-flow` pedig azt, hogy a feladat kicsi és világos.
+
+**Mit tesz:**
+- **Orientálódik** a projektben: `conventions.md`, `docs-generated/system-overview.md` (as-built igazság), `docs-generated/README.md` (mappa-index), `specs/roadmap.md` — téma szerint az `architecture.md` és a `design-drift.md`. A teljes `specs/` fa bedarálása tilos (BS6).
+- **A kódbázis-feltárást olcsó, párhuzamos `researcher` subagentekkel** végzi (Mód B, read-only, legolcsóbb tier, „soha nem nyers fájltartalom") — a beszélgetés kontextusát így egy leletlista terheli, nem fájlok tucatja (BS7).
+- **Beszélget, nem monologizál:** egyszerre **egy** kérdés, minden javaslatnál **2–3 alternatíva trade-offokkal + explicit ajánlás**, kötelező illesztés a meglévő rendszerhez és a `conventions.md`-hez, és tilos az igenelés — a fel nem hozott kockázat az ágens hibája (BS8–BS13).
+- **Perzisztál:** a session anyaga a `.bs-brainstorm/brainstorm-NN-<slug>.md` munkafájlba kerül, fix csontvázzal (*Cél · Feltárt tények forrással · Alternatívák · Döntések · Nyitott kérdések · Javasolt ciklus-vágás · Napló*). Minden érdemi kör után **bővül** — soha nem íródik újra (BS14). Így egy `/clear`, összeomlás vagy napokkal későbbi visszatérés után is folytatható: `/bs-brainstorm folytassuk a 04-est`.
+
+**Kemény korlátok (BS1):** kódot nem ír, `git`-et nem futtat, és a `.bs-brainstorm/` mappán kívül **egyetlen fájlt sem** módosít — egyetlen kivétellel: az első futáskor felajánlja a `.bs-brainstorm/*` bejegyzés felvételét a `.gitignore`-ba (jóváhagyás után, egyszer). A végén **javasol**, de nem lép be a következő skillbe.
+
+**A híd a flow felé (BS18):** a nyers munkafájl **helyi és gitignore-olt** (nyers gondolkodás, nem leadandó) — ami megőrzésre érdemes, az a ciklus `cycle-design-input.md`-jébe desztillálódik, és *az* kerül commitba:
+
+```
+/bs-brainstorm hogyan legyen központi cert kezelés
+        ↓                      .bs-brainstorm/brainstorm-04-central-cert.md   (gitignore-olt)
+/bs-add-cycles brainstorm: 04
+        ↓                      specs/cycle-NN-<name>/cycle-design-input.md    (commitolt)
+/bs-write-spec
+```
+
+A `01-add-cycles` a `## 6. Javasolt ciklus-vágás` szekciót a roadmap-javaslat kiindulásának veszi, a `## 5. Nyitott kérdések` kipipálatlan tételeit pedig **kérdésként** teszi fel — amit a munkafájl megválaszol, azt nem kérdezi meg újra. **Egy híd, egy irány:** a `02-write-spec` nem a brainstormot olvassa, hanem a `cycle-design-input.md`-t.
+
 ## 2. Installáció
 
 A BerkiSpec keretrendszer beállítása a célprojektben rendkívül egyszerű és automatizált a mellékelt telepítő script segítségével.
@@ -179,6 +204,7 @@ A telepítés után a platform chat felületén a `/` karakter leütésével ér
 * **`/bs-doc-sync`**: Az élő dokumentáció (`docs-generated/`) és README-k szinkronizálása a kódváltozásokkal, valamint a `specs/test-conventions.md` (visszatérő teszt-elvárások és receptek) karbantartása.
 * **`/bs-merge`**: A ciklus branch beolvasztása (lokális squash vagy PR), kötelező felhasználói megerősítéssel. A kódreview már a `/bs-validate`-ben lefutott.
 * **`/bs-cycle-status`**: Ciklusok státuszának ellenőrzése (interaktív TUI vagy parancssori státusz).
+* **`/bs-brainstorm`**: Feltáró ötletelés és közös tervezés **a spec előtt** — perzisztens munkafájllal (`.bs-brainstorm/`), olcsó `researcher` feltárással; a végén átad a `/bs-add-cycles`-nak vagy a `/bs-quick-flow`-nak.
 * **`/bs-quick-flow`**: Az egyszerűsített (lightweight) flow elindítása kis feladatokhoz (spec → task → implementáció).
 * **`/bs-export-doc`**: Verziózott PDF export a markdown doksikból (mermaid ábrákkal együtt) az `export/` mappába — paraméter nélkül az `architecture.md`-ből és a `system-overview.md`-ből.
 
@@ -203,13 +229,14 @@ berkispec/                            # repo gyökér
     │   ├── 08-doc-sync.md            # élő dokumentáció-szinkron (docs-generated/)
     │   ├── 09-merge.md               # csak beolvasztás — a review a 07-ben fut
     │   ├── 10-cycle-status.md        # ciklusok státuszának ellenőrzése (interaktív TUI vagy közvetlen)
+    │   ├── brainstorm.md            # feltáró ötletelés a spec előtt (.bs-brainstorm/ munkafájl) — segédparancs
     │   ├── quick-flow.md   # egyszerűsített, háromfázisú flow kis feladatokhoz (spec→task→implement)
     │   └── export-doc.md            # verziózott PDF export a markdown doksikból (mermaid ábrákkal)
     ├── agents/                       # Specialista ágensek (Task tool subagent-ként hívva)
     │   ├── reviewer.md               # code review a 07 fázisban (a teljes kör 2. lépése — statikus réteg)
     │   ├── analyzer.md               # kereszt-fázisos SZEMANTIKAI elemzés (read-only, 1–5. kategória) a 05 fázisban
     │   ├── analyzer-exec.md          # VÉGREHAJTHATÓSÁGI elemzés (read-only, 6. kategória) — az analyzerrel párhuzamosan fut (E)
-    │   ├── researcher.md             # kódbázis-/dokumentum-kutatás (00/01/02/03/06) — legolcsóbb tier
+    │   ├── researcher.md             # kódbázis-/dokumentum-kutatás (00/01/02/03/06 + brainstorm) — legolcsóbb tier
     │   ├── test-runner.md            # tesztek/Sonar/E2E mechanikus futtatása a 07 fázisban — default tier (szándékosan nem a legolcsóbb, lásd 5.3)
     │   ├── doc-sync-planner.md       # 08 doc-sync: read-only tervkészítő diagnoszta (doc-sync-plan.md + kész csereszöveg-patch)
     │   ├── spec-fixer.md             # 05 önjavító hurok: 02 fix-mód belépő (vékony wrapper)
@@ -291,6 +318,7 @@ flowchart TD
     %% Kezdőpontok
     Start1(["Kezdés üres projektben"]):::start
     Start2(["Új ciklus hozzáadása"]):::start
+    BS(["<b>/bs-brainstorm</b> (opcionális)<br/>feltáró ötletelés a spec előtt<br/>.bs-brainstorm/brainstorm-NN.md"]):::userInput
 
     %% Fázisok dobozai
     0["<b>0. Project Setup</b><br/>(create conventions.md)"]:::setup
@@ -314,6 +342,11 @@ flowchart TD
     %% Kezdő kapcsolatok
     Start1 --> 0
     Start2 --> 1
+
+    %% Opcionális előszoba: a brainstorm nem fázis — a munkafájlból desztillált
+    %% cycle-design-input.md-n keresztül ad bemenetet a 00/01 fázisnak (BS18).
+    BS -. "még nincs conventions.md" .-> 0
+    BS -. "brainstorm: NN → cycle-design-input.md" .-> 1
 
     %% Fázisok közötti átmenetek és visszacsatolások
     0 --> 1
@@ -535,7 +568,7 @@ A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de *
 |---|---|---|---|
 | `deep_reasoning_agent` (legdrágább) | **kizárólag** `analyzer` (05) | `claude-opus-4-8` / `pro` (tier) / `Claude Opus 4.8` / `claude-opus-5` / `gpt-5.6-sol` | Kereszt-fázisos konzisztencia-**diagnózis** (spec/plan/tasks/conventions) — a legmélyebb reasoning; egy itt vétett hiba a legdrágább downstream (rossz diagnózisra rossz kód épül). |
 | `default` | **minden más:** orchestrátor-skillek (05, 07…), a 4 fixer (`spec`/`plan`/`tasks`/`implement`-fixer), `reviewer`, `review-fixer`, `doc-sync-planner`, `test-runner` | `claude-sonnet-5` / `flash` (tier) / `Claude Sonnet 5` / `claude-sonnet-5` / `gpt-5.6-luna` | A fixerek **kész, pontos hibalistát** kapnak (megoldás/eszkaláció, nem felfedezés); az orchestrátorok bookkeeping-et végeznek (marker, számláló, routing) a subagent **kész** jelentése alapján — nem diagnózis. |
-| `research_agent` (legolcsóbb) | `researcher` (00/01/02/03/06), `10-cycle-status` skill | `claude-haiku-4-5-20251001` / `flash` (tier) / `Claude Haiku 4.5` / `claude-sonnet-5` (low) / `gpt-5.4-mini` | Tiszta grep/glob/read fan-out, ill. determinisztikus script-futtatás — **nulla tervezési ítélet**; a „csak összefoglaló, soha nyers fájltartalom" kontraktus véd. Antigravityn nincs olcsóbb tier a `flash`-nél, ezért ott a `default` tierrel esik egybe; Cursorban nincs Haiku, ott a `default` Sonnet 5 fut `low` efforton. |
+| `research_agent` (legolcsóbb) | `researcher` (00/01/02/03/06 + `bs-brainstorm`), `10-cycle-status` skill | `claude-haiku-4-5-20251001` / `flash` (tier) / `Claude Haiku 4.5` / `claude-sonnet-5` (low) / `gpt-5.4-mini` | Tiszta grep/glob/read fan-out, ill. determinisztikus script-futtatás — **nulla tervezési ítélet**; a „csak összefoglaló, soha nyers fájltartalom" kontraktus véd. Antigravityn nincs olcsóbb tier a `flash`-nél, ezért ott a `default` tierrel esik egybe; Cursorban nincs Haiku, ott a `default` Sonnet 5 fut `low` efforton. |
 
 **Effort-leosztás — mennyi reasoning:**
 
@@ -948,10 +981,11 @@ Egy kis feladat végigvitele. Itt **egyetlen indító prompt** van; utána a flo
 | `/bs-doc-sync` | Doc-sync | ciklus mappa + `docs-generated/` + `specs/test-conventions.md` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README mappa-index) + komponens README-k + `specs/test-conventions.md` (promóció / `Utolsó futás` bump / elavult tétel törlése, TC1–TC11) + `doc-sync-plan.md` — terv (`doc-sync-planner`) → mechanikus végrehajtás → objektív kapu (DS22, 3/4 pont a `ds22-gate-check.py` scripttel, LLM nélkül) + TC8 kapu a regiszterre (`tc8-gate-check.py`, teljesen szkriptelt); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
 | `/bs-merge` | Merge | ciklus mappa, `conventions.md` | merged branch / PR + lezárt roadmap — nincs hurok és nincs subagent; a kapuk (státusz, tiszta review, doc-sync) bukása visszairányít a `07`-re vagy a `08`-ra; a merge kézi megerősítéssel (RD8) |
 | `/bs-quick-flow` | **Egyszerűsített flow** (külön út) | feladat leírása | `spec.md` + `task.md` + implementáció — háromfázisú, kis feladatokhoz; opcionális `researcher`/`analyzer`/`reviewer`; túlnövéskor átirányít a `/bs-add-cycles`-ra |
+| `/bs-brainstorm` | **Ötletelés** (segédparancs, a flow előtt) | téma szabad szöveggel, vagy `folytassuk a NN-est` | `.bs-brainstorm/brainstorm-NN-<slug>.md` — perzisztens munkafájl (tények forrással, alternatívák trade-offokkal, döntések, nyitott kérdések, javasolt ciklus-vágás). Nem fázis, nem változtat státuszt; kódot és a mappán kívül semmit nem ír. Átadás: `/bs-add-cycles brainstorm: NN` (BS18) vagy `/bs-quick-flow`. |
 | `/bs-export-doc` | **PDF export** (segédparancs) | markdown fájl(ok), opcionális — üresen a `docs-generated/architecture.md` és `system-overview.md` | `export/<név>-v<N>.pdf` — fájlonként független verziószám (utolsó + 1, v1-től); pandoc + `mermaid-filter` + xelatex, a ciklus a címlapon (`Lefedve: cycle-NN-ig · vN`). Nem fázis: nincs előfeltétele, nem változtat státuszt. |
 | `/bs-cycle-status` | **Státusz ellenőrző** | ciklus neve vagy elérési útja (opcionális) | Kimutatja a ciklusok státuszát (Kész/Folyamatban), és interaktív TUI vagy közvetlen módon részletesen listázza a fázisok előrehaladását (KÉSZ, FOLYAMATBAN, MÉG NEM FUTOTT) felismerve a flow típusát. |
 
-A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a kimenetet, a szomszédos fázisokat (`prev`/`next`) és a hívott subagenteket. Az egyszerűsített flow skill ettől eltérő, `name`/`description` alapú frontmattert használ (külön út, lásd a „Két fejlesztési út" szekciót).
+A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a kimenetet, a szomszédos fázisokat (`prev`/`next`) és a hívott subagenteket. Az egyszerűsített flow skill és a segédparancsok (`bs-brainstorm`, `bs-export-doc`) ettől eltérő, `name`/`description` alapú frontmattert használnak (nem fázisok, lásd a „Két fejlesztési út" szekciót).
 
 ## 8. Agent-index
 
@@ -960,7 +994,7 @@ A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a 
 | `agents/reviewer.md` | 07 | Git diff code review a validálási kör 2. lépéseként (statikus réteg — zöld gyors tesztek után, a nehéz tesztek előtt) | `test-report/code-review.md` (Must Fix + Suggestions) |
 | `agents/analyzer.md` | 05 | Kereszt-fázisos **szemantikai** konzisztencia-diagnózis (read-only, **1–5. kategória**: duplikáció, ambiguitás, alulspecifikáció, konvenció-ütközés, a lefedettség **tartalmi** ítélete a kapu generált mátrixán). Repóhoz nem nyúl. **Az egyetlen agent a rendszerben, ami a legdrágább (`deep_reasoning_agent`, Opus-osztályú) tier-en fut** — lásd 5.3 | megállapítás-lista → `analyze-report.md` |
 | `agents/analyzer-exec.md` | 05 | **Végrehajthatósági** diagnózis (read-only, **6. kategória**: prózában ígért teszt, artefaktum-tulajdon, destruktív művelet teljessége, horgony-szimbólum, artefaktum-hang) a `plan.md` + `tasks.md` + kapu-leltár hármasból. Az `analyzer`-rel **párhuzamosan** fut (E), `default` tieren: a leltár készen adja a jelölteket, tehát nem felfedez, hanem behatárolt listát ítél meg | megállapítás-lista + Végrehajthatósági leltár |
-| `agents/researcher.md` | 00, 01, 02, 03, 06 | **Mód A** (03): forrásfájl-azonosítás + dokumentáció-kutatás a spec alapján. **Mód B** (00/01/02/06): ad-hoc kódbázis-kutatás (modul/szimbólum/nagy fájl megértése egy konkrét kérdésre). Legolcsóbb (`research_agent`) tier — tiszta grep/glob/read fan-out, nincs benne tervezési ítélet | path-listák / tömör összefoglaló, soha nyers fájltartalom |
+| `agents/researcher.md` | 00, 01, 02, 03, 06, `bs-brainstorm` | **Mód A** (03): forrásfájl-azonosítás + dokumentáció-kutatás a spec alapján. **Mód B** (00/01/02/06 + brainstorm): ad-hoc kódbázis-kutatás (modul/szimbólum/nagy fájl megértése egy konkrét kérdésre; brainstormban **párhuzamosan indítva**, leletet adva, nem ítéletet). Legolcsóbb (`research_agent`) tier — tiszta grep/glob/read fan-out, nincs benne tervezési ítélet | path-listák / tömör összefoglaló, soha nyers fájltartalom |
 | `agents/test-runner.md` | 07 | Unit/integration/Sonar/E2E/regressziós tesztek lefuttatása, portütközés-elhárítás, ideiglenes erőforrás-takarítás — **tényszerű összegzést ad, nem dönt** PASS/FAIL-ről. `default` tier (szándékosan **nem** a legolcsóbb — a projektenként eltérő teszt-/Sonar-kimenet megbízható, konzisztens összegzése a 3-próba számláló miatt kritikus) | strukturált PASS/FAIL riport kategóriánként |
 | `agents/doc-sync-planner.md` | 08 | A `docs-generated/` mappa + ciklus-diff **read-only** diagnózisa; per-fájl pipálható terv + DS22 kapu-leltár. **A csereszöveget is ő írja meg** (sebészi patch: cél-szekció + jelenlegi részlet + új szöveg) — így a fő ágensnek nem kell újraolvasnia/újrakomponálnia a doksikat, csak alkalmaz | `doc-sync-plan.md` tervjavaslat + csereszövegek + `doc-sync-questions.md` kérdések |
 | `agents/spec-fixer.md` | 05 | Az önjavító hurok 02 fix-mód belépője (vékony wrapper → `/bs-write-spec` Fix-mód). `default` tier — az `analyzer` már pontos, előre azonosított hibalistát ad neki, nem kell felfedeznie a problémát | javított `spec.md` + új `spec-questions.md` `Knn`-ek |

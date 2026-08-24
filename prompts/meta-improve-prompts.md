@@ -16,6 +16,9 @@ A rendszer célja: egy-két fejlesztő és egy AI-agent együtt, következetes m
 
 A teljes fejlesztési folyamat 10 lépésből áll (0–9):
 
+**A flow ELŐTT (opcionális segédparancs):**
+- `bs-brainstorm` — feltáró ötletelés és közös tervezés, amikor még a *mit és hogyan* a kérdés. Perzisztens munkafájl (`.bs-brainstorm/brainstorm-NN-<slug>.md`, gitignore-olt), olcsó **párhuzamos `researcher`** feltárás (BS7), beszélgetési gardek (egy kérdés/kör, 2–3 alternatíva + ajánlás, tilos az igenelés, BS8–BS13). **Nem fázis:** nem változtat státuszt, kódot és a mappán kívül semmit nem ír (BS1). Átadás a flow-nak: `/bs-add-cycles brainstorm: NN` → a `cycle-design-input.md` feltöltése a desztillátummal (BS18).
+
 **Projekt szintű setup (egyszer fut le):**
 - `00` — Projekt inicializálás: `conventions.md` létrehozása (konvenciók, tech stack, portok, merge stratégia)
 - `01` — Ciklusok kezelése: `specs/roadmap.md` létrehozása/karbantartása (cikluslista, függőségek, teszt kritériumok)
@@ -38,6 +41,7 @@ Minden ciklus mappája: `specs/cycle-NN-<cycle-name>/`
 
 | Fájl | Fázis | Bemenet | Kimenet |
 |------|-------|---------|---------|
+| `prompts/skills/brainstorm.md` | *(nem fázis — a flow előtt)* | téma szabad szöveggel / `folytassuk a NN-est` | `.bs-brainstorm/brainstorm-NN-<slug>.md` (Cél · Tények forrással · Alternatívák · Döntések · Nyitott kérdések · Javasolt ciklus-vágás · Napló) — átadás a `01`-nek (BS18) |
 | `prompts/skills/00-init-project.md` | Projekt init | Projekt leírás | `conventions.md` |
 | `prompts/skills/01-add-cycles.md` | Ciklusok kezelése | HLD/LLD vagy leírás | `specs/roadmap.md` |
 | `prompts/skills/02-write-spec.md` | Spec | Roadmap + ciklus neve | `spec.md` (`Tervezésre kész`) |
@@ -49,7 +53,7 @@ Minden ciklus mappája: `specs/cycle-NN-<cycle-name>/`
 | `prompts/skills/08-doc-sync.md` | Doc-sync | ciklus mappa + `docs-generated/` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README) + `doc-sync-plan.md` — terv (`doc-sync-planner`) → végrehajtás → objektív kapu (DS22); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
 | `prompts/skills/09-merge.md` | Merge | ciklus mappa, `conventions.md` | merged branch / PR + lezárt roadmap — nincs hurok és nincs subagent; bukó kapu → vissza a 07-re vagy a 08-ra |
 
-A specialista subagentek a `prompts/agents/` alatt: `reviewer.md` (07 — read-only kód-diagnózis), `analyzer.md` (05 — read-only **szemantikai** diagnózis, 1–5. kategória), `analyzer-exec.md` (05 — read-only **végrehajthatósági** diagnózis, 6. kategória; az `analyzer`-rel párhuzamosan fut), `researcher.md` (03), `doc-sync-planner.md` (08 — read-only doc-sync tervkészítő), az 05 önjavító hurok fix-mód belépői: `spec-fixer.md`, `plan-fixer.md`, `tasks-fixer.md`, a 07 hurkának két fix-mód belépője: `implement-fixer.md` (teszt/Sonar/DoD) és `review-fixer.md` (review-findingok), `## Validációs javítások` ill. `## Review javítások` bemenettel.
+A specialista subagentek a `prompts/agents/` alatt: `reviewer.md` (07 — read-only kód-diagnózis), `analyzer.md` (05 — read-only **szemantikai** diagnózis, 1–5. kategória), `analyzer-exec.md` (05 — read-only **végrehajthatósági** diagnózis, 6. kategória; az `analyzer`-rel párhuzamosan fut), `researcher.md` (03 Mód A; 00/01/02/06 + `bs-brainstorm` Mód B), `doc-sync-planner.md` (08 — read-only doc-sync tervkészítő), az 05 önjavító hurok fix-mód belépői: `spec-fixer.md`, `plan-fixer.md`, `tasks-fixer.md`, a 07 hurkának két fix-mód belépője: `implement-fixer.md` (teszt/Sonar/DoD) és `review-fixer.md` (review-findingok), `## Validációs javítások` ill. `## Review javítások` bemenettel.
 
 **A fix-mód belépők két megvalósítása** (mindkettő logika-duplikáció nélkül): a 02/03/04 fixerek promptja **önhordó** — a fix-mód szekció és a fázis minőségi kapuja a `prompts/shared/{fix-mode,quality-check}-*.md` fájlokból **build-time beemelődik** a skillbe és a wrapperbe is, így a fixer **nem olvas fázis-skillt** (D13). A 06 fix-módját használó `implement-fixer`/`review-fixer` viszont még a klasszikus úton, a `06-implement.md` Fix-mód szekciójának beolvasásával delegál.
 

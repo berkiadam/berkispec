@@ -1,14 +1,14 @@
 ---
 phase: 01
 name: bs-add-cycles
-description: "berkispec - 01. Használd az inicializálás után (Phase 01) fejlesztési ciklusok (roadmap) tervezéséhez, meglévők átütemezéséhez vagy új ciklus hozzáadásához — a feladatok logikai, önállóan tesztelhető egységekre bontása. Bemenet: 'conventions.md'. A 'specs/roadmap.md'-t hozza létre vagy frissíti 'Kész' státusszal."
+description: "berkispec - 01. Használd az inicializálás után (Phase 01) fejlesztési ciklusok (roadmap) tervezéséhez, meglévők átütemezéséhez vagy új ciklus hozzáadásához — a feladatok logikai, önállóan tesztelhető egységekre bontása. Bemenet: 'conventions.md', opcionálisan egy brainstorm session ('brainstorm: NN' — a '/bs-brainstorm' munkafájljából desztillálja a 'cycle-design-input.md'-t, BS18). A 'specs/roadmap.md'-t hozza létre vagy frissíti 'Kész' státusszal."
 prerequisites:
   - "conventions.md létezik"
 output:
   - "specs/roadmap.md státusz: Kész"
-  - "specs/cycle-NN-<name>/cycle-design-input.md (üres sablon, a felhasználó tölti ki — opcionális, CD1)"
+  - "specs/cycle-NN-<name>/cycle-design-input.md (üres sablon, a felhasználó tölti ki — opcionális, CD1; brainstorm-bemenet esetén feltöltve, BS18)"
   - "specs/cycle-NN-<name>/spec-input-from-prev.md és/vagy plan-input-from-prev.md (csak ha van átadandó infó, IP1)"
-prev: bs-init-project
+prev: bs-init-project  # vagy bs-brainstorm (BS18 — brainstorm-bemenet)
 next: bs-write-spec
 subagents:
   - "agents/researcher.md"
@@ -81,6 +81,8 @@ Milyen branch-en vagyunk?
 ---
 
 ## Mód detektálás — induláskor
+
+> **0. lépés — brainstorm-bemenet (BS18).** Ha a hívás egy brainstorm sessionre utal (`brainstorm: 04`, *„a 04-es brainstormból"*), **először** a *„Brainstorm-bemenet (BS18)"* szekció szerint olvasd be a munkafájlt, és csak utána folytasd a mód detektálással. A brainstorm nem váltja ki a mód-választást — a bemenetet adja hozzá.
 
 **1. lépés:** Ellenőrizd a `specs/` könyvtár tartalmát (`ls specs/`).
 
@@ -165,6 +167,8 @@ Mielőtt meghatározod a ciklusokat, elegendő információra van szükséged. �
 - A külső rendszerekkel való integrációs pontok ismertek
 
 **Ha bármely pont hiányzik:** tegyél fel **egy** célzott kérdést, várd meg a választ, majd értékeld újra. Addig ismételd, amíg a minimum teljesül. Ne tegyél fel egyszerre több kérdést.
+
+> **Ha van brainstorm-bemenet (BS18):** a minimum jó része már megvan a munkafájlban (`## 1. Cél`, `## 2. Feltárt tények`, `## 4. Döntések`) — **azt ne kérdezd újra**. Az interjút a `## 5. Nyitott kérdések` kipipálatlan tételeivel kezdd, egyszerre eggyel.
 
 Ha elegendő információ áll rendelkezésre, kezdd el a ciklus meghatározást.
 
@@ -281,11 +285,13 @@ Ha a felhasználó megerősíti:
 1. Tegyél fel **egy** kérdést:
    > *"Mi az új ciklus célja? Röviden írd le, milyen viselkedést szeretnél megvalósítani."*
 
+   > **Ha van brainstorm-bemenet (BS18):** ezt a kérdést **hagyd ki** — a célt a munkafájl `## 1. Cél / kérdés` és `## 6. Javasolt ciklus-vágás` szekciója már megválaszolja. Ehelyett foglald össze 2-3 sorban, mit értettél belőle, és **azt** hagyasd jóvá. Csak azt kérdezd meg, amire a fájlban nincs válasz (jellemzően a `## 5. Nyitott kérdések` nyitott tételei).
+
    > **Flow-méret ellenőrzés (a cél leírása után, a névjavaslat előtt):** Mérlegeld, hogy a feladat **nem túl kicsi-e** a teljes, többfázisú ciklushoz. Ha a cél 3-4 lépésben, egyetlen menetben megoldható — tipikusan **konfiguráció összeállítása/módosítása, egyszerűbb script megírása, kisebb javítás vagy lokális finomhangolás** —, akkor a teljes `02→…→09` flow túlméretezett. Ilyenkor **állj meg, és javasold az egyszerűsített flow-t**, mielőtt ciklust hoznál létre:
    >
-   > > *„Ez a feladat elég kicsinek tűnik a teljes fejlesztési ciklushoz (külön spec/plan/tasks + analyze/validate/review). Javaslom helyette az egyszerűsített flow-t (`prompts/skills/sdd-lightweight-flow.md`): `spec.md` → `task.md` → implementáció, néhány lépésben. Mehetünk azzal, vagy mégis teljes ciklust szeretnél?"*
+   > > *„Ez a feladat elég kicsinek tűnik a teljes fejlesztési ciklushoz (külön spec/plan/tasks + analyze/validate/review). Javaslom helyette az egyszerűsített flow-t (`/bs-quick-flow`): `spec.md` → `task.md` → implementáció, néhány lépésben. Mehetünk azzal, vagy mégis teljes ciklust szeretnél?"*
    >
-   > A döntés a Felhasználóé: ha a teljes ciklust kéri, folytasd itt; ha az egyszerűsítettet, irányítsd át a `sdd-lightweight-flow` skillhez.
+   > A döntés a Felhasználóé: ha a teljes ciklust kéri, folytasd itt; ha az egyszerűsítettet, irányítsd át a `/bs-quick-flow` skillhez.
 
 2. Ha megérkezett a cél leírása, készíts egy javaslatot a ciklus nevére **kebab-case** formátumban, tömören, a viselkedést tükrözve (pl. `performance-load-test`, `token-exchange`, `oidc-login`). Kérdezd rá:
    > *"A cél alapján a javasolt név: `[javasolt-név]`. Ez lesz a branch és a mappa neve is (pl. `cycle-NN-[javasolt-név]`). Megfelelő, vagy inkább mást szeretnél?"*
@@ -371,7 +377,7 @@ Ha bármelyikre "nem": javítsd vagy kérdezz rá, mielőtt hozzáfűzöd.
 **Mi ez:** a ciklus mappájában létrehozott `cycle-design-input.md` egy **üres sablon a felhasználónak**. Ide írhatja le a saját szavaival, szabad formában, hogy mit szeretne a ciklusban — elvárásokat, vázlatot, példa payloadot, folyamatleírást, linkeket, korábbi jegyzeteket.
 
 **Kulcsszabályok:**
-- **A fájl a felhasználóé.** Te (01) csak a sablont hozod létre, tartalmat **nem** írsz bele. A `02-write-spec` (viselkedési tartalom) és a `03-write-plan` (technikai/eljárás-jellegű tartalom) automatikusan beolvassa, de egyik sem írja át.
+- **A fájl a felhasználóé.** Te (01) csak a sablont hozod létre, tartalmat **nem** írsz bele — **egyetlen kivétel a brainstorm-bemenet (BS18):** ha a hívás egy brainstorm sessionre hivatkozik, a sablon nem üresen, hanem a munkafájlból desztillált tartalommal jön létre. A `02-write-spec` (viselkedési tartalom) és a `03-write-plan` (technikai/eljárás-jellegű tartalom) automatikusan beolvassa, de egyik sem írja át.
 - **Kitöltése opcionális.** Ha üresen marad (csak a sablon-szöveg van benne), a 02 egy mondatban jelzi és a roadmap-bejegyzés alapján dolgozik tovább — ez nem hiba, nem megállási ok.
 - **Nem a `spec-input-from-prev.md` helyettesítője.** A `spec-input-from-prev.md`-be **te** írsz (az interjú során elhangzott, de a roadmap-be nem illő tételek, IP1); a `cycle-design-input.md`-be **a felhasználó** ír, a fázis lezárása után, saját tempójában.
 
@@ -393,6 +399,43 @@ Ha bármelyikre "nem": javítsd vagy kérdezz rá, mielőtt hozzáfűzöd.
 
 <!-- Írj ide. -->
 ```
+
+---
+
+## Brainstorm-bemenet (BS18) — a `/bs-brainstorm` session átvétele
+
+**Mi ez:** a `/bs-brainstorm` segédparancs a spec előtti feltáró ötletelést a `.bs-brainstorm/brainstorm-NN-<slug>.md` munkafájlba perzisztálja (tények forrással, alternatívák trade-offokkal, döntések, nyitott kérdések, javasolt ciklus-vágás). Ha a felhasználó erre hivatkozik, ez a **hivatalos híd** a brainstorm és a flow között: a nyers munkafájl helyi és gitignore-olt, a belőle desztillált `cycle-design-input.md` viszont commitba kerül.
+
+**Mikor aktiválódik:** ha a hívás sorszámmal utal egy sessionre — `/bs-add-cycles brainstorm: 04`, *„a 04-es brainstormból hozd létre a design inputot"*. Ha nem, **minden változatlan** (a `cycle-design-input.md` üres sablonként jön létre a CD1 szerint).
+
+### Lépések
+
+1. **Fájl megkeresése:** `ls -1 .bs-brainstorm/brainstorm-04-*.md`.
+   - **Nincs ilyen sorszám:** ne találgass és ne dolgozz nélküle — listázd a létező sessionöket (sorszám + slug), és kérdezd meg, melyikre gondolt.
+   - **Nincs `.bs-brainstorm/` mappa sem:** jelezd egy sorban, hogy nem találod (a mappa gitignore-olt, tehát más gépen nem is létezik), és kérdezd meg, folytassuk-e brainstorm-bemenet nélkül.
+2. **Teljes beolvasás.** A munkafájl rövid; olvasd be egészben, ne szemelvényezz.
+3. **Interjú-bemenet.** A `## 6. Javasolt ciklus-vágás` szekció a **roadmap-javaslat kiindulása** (egy egység = egy ciklus-jelölt), a `## 1. Cél` a ciklus célja, a `## 2. Feltárt tények` az érintett komponensek. **Amit a fájl megválaszol, azt ne kérdezd meg újra** — a felhasználó már egyszer végigbeszélte.
+4. **A nyitott kérdések a te kérdéseid.** A `## 5. Nyitott kérdések` **kipipálatlan** tételei nyitottak: ezekből lesznek az interjú célzott kérdései (egyszerre **egy**), illetve — ha a ciklus scope-ján kívülre esnek — a roadmap `## Nyitott kérdések` szekciójának bejegyzései. **Soha ne vedd őket eldöntött ténynek.**
+5. **A ciklus-vágás javaslat nem parancs.** A brainstorm javaslata jó kiindulás, de a vertikális vágás elveit (lásd a fenti szekciót) és a `## Validációs ciklus` ellenőrzését **ugyanúgy le kell futtatni** rá. Ha a javasolt vágás sérti az elveket (nem önállóan tesztelhető, túl nagy, körkörös függőség), mondd ki, és javasolj módosítást — a döntés a felhasználóé.
+
+### A `cycle-design-input.md` feltöltése
+
+A CD1 sablon fejléce és a magyarázó blokk **változatlanul** kerül a fájlba (a felhasználó ezután is ír bele); a `<!-- Írj ide. -->` helyére viszont a desztillátum jön:
+
+- **Mit vigyél át:** a `## 4. Döntések` (ez a fő tartalom), a ciklust érintő `## 3. Alternatívák` közül a **megtartott** opció leírása, és a `## 2. Feltárt tények` azon sorai, amelyek erre a ciklusra vonatkoznak (a `fájl:sor` horgonyokkal együtt — azok navigációs értéke a 02/03 fázisban is megmarad).
+- **Mit NE vigyél át:** a `## 7. Napló`-t, a lezárt/elvetett szálakat, a session meta-információit, és a `## 6. Javasolt ciklus-vágás` teljes listáját (abból csak **ennek** a ciklusnak a szelete tartozik ide — a többi a roadmap dolga).
+- **Több ciklusra bomló brainstorm:** minden ciklus **csak a saját szeletét** kapja meg. A ciklusokon átívelő, közös döntések a roadmap ciklus-blokkjába, illetve a `spec-input-from-prev.md`-be kerülnek (IP1), nem ismétlődnek minden design inputban.
+- **Hangnem:** leíró, az implementálónak szólva. A brainstormban szereplő beszélgetés-nyomokat (*„megbeszéltük, hogy…"*, *„te azt kérdezted…"*) fogalmazd át döntésre: *„A tanúsítványokat központi store kezeli; a komponensek csak referenciát kapnak."*
+- **Ne hivatkozz a `.bs-brainstorm/` útvonalra** a commitált dokumentumban: a mappa gitignore-olt, a link más gépen és PR-ban halott. A származás jelzésére egy útvonal nélküli sor elég: `> Az NN. brainstorm session döntéseiből desztillálva.`
+- **Ha a fájl már létezik és tartalmas** (a felhasználó már írt bele): **ne írd felül.** Fűzd a desztillátumot a végére egy `## Brainstorm-desztillátum` alcím alá, és szólj róla egy sorban.
+
+### Lezárás
+
+A szokásos CD1 visszajelzés helyett jelezd, hogy a fájl **nem üres**:
+
+> *„Létrehoztam a `specs/cycle-NN-<name>/cycle-design-input.md` fájlt, és feltöltöttem a NN. brainstorm session döntéseivel. **Olvasd át** — ez lesz a `bs-write-spec` (02) kiindulópontja. Bátran javítsd, bővítsd vagy húzz ki belőle; a fájl a Tiéd, egyik fázis sem írja felül."*
+
+A válasz végén itt is helyezd el a `cycle-design-input.md` kattintható linkjét.
 
 ---
 

@@ -1,12 +1,13 @@
 ---
 name: researcher
-description: "Read-only kódbázis- és dokumentáció-kutató, amely tömör path+összefoglaló listát ad vissza (kontextus-kímélés, nem nyers fájltartalom) — kivéve ha a hívó explicit literál értékeket kér (parancs, URL, JSON payload, szignatúra), azokat szó szerint. A 00/01/02/03/06 fázisok hívják feltáráshoz."
+description: "Read-only kódbázis- és dokumentáció-kutató, amely tömör path+összefoglaló listát ad vissza (kontextus-kímélés, nem nyers fájltartalom) — kivéve ha a hívó explicit literál értékeket kér (parancs, URL, JSON payload, szignatúra), azokat szó szerint. A 00/01/02/03/06 fázisok és a bs-brainstorm segédparancs hívják feltáráshoz."
 role: "Kódbázis- és dokumentáció-kutató specialista ágens (kontextus-őr)"
 called_by:
   - "skills/00-init-project.md"
   - "skills/02-write-spec.md"
   - "skills/03-write-plan.md"
   - "skills/06-implement.md"
+  - "skills/brainstorm.md"
 inputs:
   - "A hívó skill konkrét kutatási célja: vagy egy strukturált plan-feltárás (spec.md), vagy egy ad-hoc kérdés (modul/szimbólum/nagy fájl megértése — lásd Mód B)"
   - "A projekt kódbázisa és dokumentációja (docs/, README-k, diagramok)"
@@ -65,12 +66,13 @@ Cél, hogy a ciklus végén a projektben minden leírás és diagram naprakész 
 
 > **Megjegyzés:** a `docs-generated/` mappa (`architecture.md`, `system-overview.md`, `CHANGELOG.md`, `design-drift.md`) **nem** ide tartozik — azt a `08-doc-sync` fázis tartja karban (DS4), ne sorold a plan/implementáció frissítendő doksijai közé.
 
-## Mód B — Ad-hoc feltárás (`00-init-project.md`, `02-write-spec.md`, `06-implement.md`)
+## Mód B — Ad-hoc feltárás (`00-init-project.md`, `02-write-spec.md`, `06-implement.md`, `brainstorm.md`)
 
 A hívó egy konkrét, egyszeri kutatási célt ad meg, például:
 - "értsd meg ezt a meglévő modult/komponenst: `<útvonal vagy leírás>`",
 - "hol van definiálva ez a szimbólum/függvény/komponens: `<név>`",
-- "foglald össze ezt a nagy fájlt, csak a `<szekció/funkció>` releváns: `<útvonal>`".
+- "foglald össze ezt a nagy fájlt, csak a `<szekció/funkció>` releváns: `<útvonal>`",
+- "hol és hogyan kezeli ma a rendszer ezt a témát: `<téma>`" — a `bs-brainstorm` feltáró kérdése (BS7); ilyenkor **leletet adj, ne ítéletet**: hol van, milyen mintát követ, mi hiányzik — de a megvalósítás megválasztása a hívó dolga.
 
 ### Bemenet
 
