@@ -400,6 +400,32 @@ kivitelezhetetlennek bizonyul, állj meg és kérdezz, ne dönts át csendben.
   A 7. szakasz ezért **két commit**: (a) tiszta átnevezés + kód, ahol a 16.1 byte-azonos; majd
   (b) a 7.4/7.6/7.7 tartalmi javítás, ahol a keretet újraalapozzuk és a diffet átnézzük.
 
+- [x] **LG32 — A SZÖVEGKÖZI projekt-nyelvi literálok HELYŐRZŐ-TOKENT kapnak, build-time
+  feloldással** (a `<platform-scripts-mappa>` / BD15 minta kiterjesztése).
+  **A probléma:** a 9.1 az „artefaktum-szekció fejléc" és a „státusz-kulcsszó" osztályt
+  projekt-nyelvinek (tehát kiemelendőnek) minősíti, de ezek **túlnyomó részben szövegközi,
+  mondat belsejében álló hivatkozások** a magyar instrukciós prózában, nem kiemelhető blokkok.
+  Mért felület (`skills-hu` + `agents-hu` + `shared-hu`): **~296** előfordulás 17
+  szekciónévre, **~140** előfordulás 7 státusz-értékre/címkére — **összesen ~440**.
+  Blokk-kiemeléssel nem kezelhető, literálként hagyva pedig csendes kapu-bukást okoz:
+  `EN` prompt + `HU` projekt esetén az ágens `## Planned changes`-t írna, míg a kapu-scriptek
+  a `lang-keys.json`-ból `## Tervezett módosítások`-at keresnek (16.6/c).
+  **A döntés:** a prompt-forrásokban a literál helyére **ASCII helyőrző-token** kerül
+  (`<sec:planned_changes>`, `<status:draft>`), amit a telepítő **build-time** a
+  `status-keys.json` **PROJECT_LANG-szeletéből** old fel. Előnyök: egyetlen igazságforrás
+  (a 10.4 automatikusan teljesül), szövegközi helyen is működik, a paritás-kapu a
+  **token-halmazt** hasonlítja (11.12), a `hu` feloldás pedig **byte-azonos a maival** (LG9),
+  tehát a 16.1 keret a teljes cserét fedi.
+  **Miért ASCII, nem `<szekció:…>`:** a helyőrzőket nem fordítjuk (13.1), tehát a token a
+  **`en` fába is átkerül** — egy ékezetes token ~440 szándékos kivételt kényszerítene a 16.5
+  ékezet-grepre. A `<platform-scripts-mappa>` marad ékezetes (meglévő, egyetlen kivétel).
+  **Következmények:** (1) új **9.7** szakasz a mechanizmusnak és a cserének; (2) a
+  `status-keys.json` (10.3) **előrekerül** ide, mert a feloldás nélküle nem működik — a §10
+  maradéka (a scriptek i18n-je) a helyén marad; (3) a 9.3 leltárban a szövegközi
+  szekciónév/státusz **NEM kiemelési jelölt**, hanem **token-jelölt** — külön osztály;
+  (4) a `lang/<L>/` blokkokban ezek a fejlécek **literálként** állnak (ott már nyelv-specifikus
+  a fájl), és a 11.5 kapu ellenőrzi, hogy egyeznek a `status-keys.json`-nal.
+
 - [x] **LG24 — A rövidített úton (17.2) a 9.6 (`lang/en/`) BENNE MARAD, csak a 10. szakasz
   (script-i18n) halasztódik.** Indok: a `lang/en/` nélkül a paritás-kapu 11.1/11.3 pontja
   tartósan FAIL-t adna, tehát a 16.3 sosem teljesülne, és az `en/en` telepítés csendben
@@ -508,7 +534,7 @@ A jelenlegi kód három ponton **nem** a célállapot. Ezek a 7. szakasz teendő
 | `shared/<f>` marker | fixen `prompts/shared/<f>` | `prompts/shared-<PROMPT_LANG>/<f>` |
 | `lang/<f>` marker | `prompts/shared/lang/<PROJECT_LANG>/<f>` | `prompts/lang/<PROJECT_LANG>/<f>` |
 
-- [ ] **5.6 — A kódkomment átírása.** Az 5.1 konfig fölötti kommentblokk a projekt-nyelvet
+- [x] **5.6 — A kódkomment átírása.** Az 5.1 konfig fölötti kommentblokk a projekt-nyelvet
   „runtime beállításként" írja le, amit a `conventions.md` rögzít. Ez **nem a célállapot**
   (LG2/LG17): mindkét tengely build-time, a különbség csak a hatókörük. A kommentet írd át.
 
@@ -697,6 +723,13 @@ felhasználóhoz szól**:
 | **Artefaktum-szekció fejléce** | a spec/plan/tasks/riport `## …` címsorai, amikre a kapuk illesztenek | `## Tervezett módosítások`, `## Környezeti koordináták` |
 | **Státusz-kulcsszó** | státusz-mező értéke és címkéje | `Tervezésre kész`, `Státusz:` |
 
+> **A két alsó osztály KÉTFÉLE kezelést kap (LG32).** Ha a literál egy **kiemelendő blokkon
+> belül** áll (sablon-fence, idézetblokk), akkor a blokkal együtt megy a `lang/<L>/`-be, és ott
+> **literál** marad. Ha **szövegközi hivatkozás** az instrukciós prózában (a túlnyomó rész,
+> ~440 hely), akkor **NEM kiemelési jelölt**, hanem **token-jelölt**: `<sec:…>` / `<status:…>`
+> helyőrzőt kap, build-time feloldással — lásd a **9.7** szakaszt. A 9.3 leltárban a kettőt
+> **külön osztályként** jelöld.
+
 **NEM projekt-nyelvi** (a prompt-nyelvvel mozog, marad helyben):
 - minden instrukció, magyarázat, indoklás, garde, tiltás, ellenőrzőlista;
 - a szabály-ID-k és a rájuk hivatkozó szövegek;
@@ -774,6 +807,86 @@ az információt arról, milyen nyelven kell írni.
   fejlécek fordítását a 10. szakasz `status-keys.json`-jával kell egyeztetni — ugyanaz a string
   ne legyen két helyen kétféle (ezt a 11.5 kapu ellenőrzi).
 
+### 9.7 Projekt-nyelvi helyőrző-tokenek (LG32)
+
+> **Ez a szakasz a 9.4 UTÁN fut.** A blokk-kiemelés legyen kész, mert a `lang/<L>/`-be
+> áthelyezett blokkokban a fejlécek **literálként** maradnak (a fájl ott már nyelv-specifikus) —
+> tokent csak az a szöveg kap, ami a **prompt-fában marad**.
+
+**A tokenek alakja** (ASCII, ékezet nélkül — LG32): `<sec:<kulcs>>` és `<status:<kulcs>>`.
+A kulcskészlet a `status-keys.json` `sections` / `status` kulcsaival **azonos** (10.3).
+A `<sec:…>` a **teljes fejlécet** adja vissza, a `##` prefixszel együtt (ahogy a 10.3 értékei
+tárolják) — ahol a prózában csak a fejléc *neve* kell (`##` nélkül), ott a
+`<secname:<kulcs>>` alak használatos, ugyanabból a kulcsból, prefix-levágással.
+
+- [ ] **9.7.1 — `prompts/lang/status-keys.json` létrehozása** a 10.3 szerkezetével, **`hu` és
+  `en` szelettel együtt**. A `hu` értékek **byte-azonosak a maiakkal** (LG9) — ez a 16.1 keret
+  feltétele. A kulcskészlet forrása a 10.2 leltár (szekció-fejlécek + státusz-értékek) **plusz**
+  a 9.7.2 mérésben előkerülő, kapu-script által nem olvasott, de artefaktumba írt fejlécek
+  (`Out of scope`, `Kockázatok`, `Komponensek és viselkedés`, `Hivatkozott fájlok`,
+  `Definition of done`). *Ezzel a 10.3 teendő teljesül — ott csak vissza kell hivatkozni.*
+
+- [ ] **9.7.2 — Pontos, kulcsonkénti előfordulás-leltár.** Kulcsonként a fájl:sor lista, hogy a
+  csere ellenőrizhető legyen és a 9.7.4 után igazolható a nulla maradék. Kiindulási mérés
+  (`grep -ro` a három `*-hu` fán, 2026-08-24):
+
+  | Kulcs-jelölt | Előfordulás | | Kulcs-jelölt | Előfordulás |
+  |---|---:|---|---|---:|
+  | `Teszt specifikáció` | 34 | | `Piszkozat` | 32 |
+  | `Teszt-riportolás` | 28 | | `Validációs javítások` | 28 |
+  | `Tervezett módosítások` | 27 | | `Task írásra kész` | 26 |
+  | `Tervezésre kész` | 24 | | `Implementálásra kész` | 24 |
+  | `Review javítások` | 23 | | `Tesztelési stratégia` | 21 |
+  | `Out of scope` | 17 | | `Környezeti koordináták` | 16 |
+  | `Kockázatok` | 15 | | `Definition of done` | 15 |
+  | `Nyitott kérdések vannak` | 14 | | `Spec-lefedettség` | 13 |
+  | `Konfiguráció-életút` | 12 | | `Fordított lefedettség` | 12 |
+  | `Komponensek és viselkedés` | 11 | | `Validálásra kész` | 11 |
+  | `Hivatkozott fájlok` | 10 | | `Státusz:` | 9 |
+  | `Ellenőrzési stratégia` | 7 | | `Plan-lefedettség` | 7 |
+
+  **⚠️ Ez is alsó korlát:** a lista a 10.2-ből és a 9.2 mérésből indul, de nem teljes — a
+  leltárt fájlonként végigolvasva kell zárni (ítéletet kíván, nem greppel helyettesíthető).
+
+- [ ] **9.7.3 — A feloldó az `install-helper.py`-ban.** A `<platform-scripts-mappa>` feloldó
+  (`_SCRIPTS_DIR_PLACEHOLDER`, ~208–230. sor) **mintájára**, ugyanabban a transzformációs
+  láncban (`prepare_skill_content()` — így mind az 5 platform kapja, LG28):
+  - `_load_status_keys(src_dir)` — a `prompts/lang/status-keys.json` beolvasása, cache-elve;
+  - `resolve_lang_tokens(content, src_dir)` — a `<sec:…>` / `<secname:…>` / `<status:…>`
+    tokenek cseréje a **`PROJECT_LANG` szeletéből**;
+  - **ismeretlen kulcs → `sys.exit(1)`** beszédes hibával (a 8.6 / LG26 mintája). Csendes
+    „marad a token" **tilos**: az a telepített promptba szivárogna, és a gyenge modell szó
+    szerint kiírná a `<sec:...>`-t az artefaktumba;
+  - hiányzó `PROJECT_LANG`-szelet → `hu` fallback + egyszeri figyelmeztetés (LG12);
+  - **az agentekre is fusson le** (nem csak a skillekre) — a 9.5.4 indoka itt is áll: a
+    `reviewer` / `analyzer` / `doc-sync-planner` / fixerek artefaktumba írnak.
+
+- [ ] **9.7.4 — A csere elvégzése a `*-hu` fákon**, fájlonként. A csere **mechanikus**
+  (literál → token), tartalmi javítás nélkül — ugyanaz a fegyelem, mint a 9.4-ben.
+  **Amit NEM cserélünk:**
+  - a `lang/hu/` blokkokba már áthelyezett szöveg (ott literál a helyes — LG32/4);
+  - a `status-keys.json` maga;
+  - a **példa-szövegek**, amik nem az artefaktum fejlécére hivatkoznak, hanem a szót
+    köznévként használják (pl. „a kockázatokat mérd fel") — **ítélet kell**, a 9.1
+    határeset-szabálya szerint;
+  - a `conventions.md` szekciónevei, **amíg** a 9.7.1 kulcskészlet nem tartalmazza őket
+    (a `## Git és branching konvenciók`, `## Sonar`, `## Merge stratégia`, `## Portok` —
+    ezek a **projekt-fájl** fejlécei, tehát a 10.2 (a) osztálya; ha bekerülnek a kulcskészletbe,
+    ide is tartoznak).
+
+- [ ] **9.7.5 — Verifikáció fájlonként:**
+  1. **16.1 byte-azonosság** — a `hu`/`hu` feloldás után a 70 hash **változatlan**. Ez a csere
+     legfőbb védőhálója: bármilyen elírás a tokenben vagy a kulcsban azonnal kiderül.
+  2. **nulla maradék:** a 9.7.2 literálok grepje a `*-hu` fákon már csak a 9.7.4 kivétel-listán
+     ad találatot;
+  3. **nulla feloldatlan token** a telepített kimenetben: `grep -r "<sec:\|<secname:\|<status:"`
+     a próbatelepítés célmappáin → **0 találat** (16.2 kiegészítése).
+
+- [ ] **9.7.6 — A 13.1 kiegészítése:** a `<sec:…>` / `<secname:…>` / `<status:…>` tokenek
+  **NEM fordulnak** (mint minden helyőrző) — a fordítás során **byte-azonosan** kerülnek át az
+  `en` fába. Ez a fordítás legnagyobb kockázatát is csökkenti: a fordítónak nincs is mit
+  elrontania a kapu-illesztő stringeken.
+
 ---
 
 ## 10. `status-keys.json` + a scriptek i18n-je
@@ -817,7 +930,9 @@ A `prompts/scripts/*.py`-ban **279 egyedi magyar string** van. Nem egyformák:
   `## Összesített státusz: …`; `tc8-gate-check.py` — `## TC8 kapu …`; `dod-check.py` —
   `VERDICT: PASS/FAIL/MANUAL` (az angol kulcsszó marad, a magyarázat fordul).
 
-- [ ] **10.3 — `prompts/lang/status-keys.json`.** Szerkezet:
+- [ ] **10.3 — `prompts/lang/status-keys.json`.** *(Ezt a fájlt a **9.7.1** hozza létre — LG32;
+  itt csak a szerkezet referenciája áll. Ha a 9.7.1 kész, ez a pont automatikusan teljesül.)*
+  Szerkezet:
   ```json
   {
     "hu": { "status": { "done": "Kész", "ready_for_plan": "Tervezésre kész",
@@ -834,6 +949,8 @@ A `prompts/scripts/*.py`-ban **279 egyedi magyar string** van. Nem egyformák:
 
 - [ ] **10.4 — Egyetlen igazságforrás.** A 10.3 `sections` értékei és a `lang/<L>/` blokkokban
   szereplő ugyanazon fejlécek **nem csúszhatnak el**. A 11.5 kapu ezt gépiesen ellenőrzi.
+  *(A **prompt-fában** ez az LG32 tokenizálás után szerkezetileg garantált: ott már nincs
+  literál, csak `<sec:…>` token. Ez a pont így a `lang/<L>/` blokkokra és a scriptekre szűkül.)*
 
 - [ ] **10.5 — Közös betöltő (LG18).** `prompts/scripts/lang_keys.py` (aláhúzós név, hogy
   importálható modul legyen, ne a kötőjeles CLI-mintát kövesse): `load_keys()` a **saját
@@ -917,6 +1034,13 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
   *(Ha egy eltérés indokolt — pl. két magyar mondat egy angolba olvad —, azt a fordító
   jegyezze fel a 13.3 listában, és a kapu kapjon rá explicit kivétel-bejegyzést.)*
 
+- [ ] **11.12 — Nyelvi token-paritás (LG32).** A `<sec:…>` / `<secname:…>` / `<status:…>`
+  tokenek **halmaza és darabszáma** legyen azonos a nyelvi párokban (`skills-hu/X.md` ↔
+  `skills-en/X.md`), és **minden előforduló kulcs létezzen** a `status-keys.json` mindkét
+  nyelvi szeletében. Eltérés → FAIL. Ez a 11.5-nél erősebb: azt is megfogja, ha a fordító egy
+  tokent véletlenül literálra oldott fel (a leggyakoribb várható fordítási hiba ezen a
+  felületen), mert akkor a token eltűnik az `en` oldalról.
+
 - [ ] **11.11 — Amit NEM tud ellenőrizni.** Írd bele a script docstringjébe: a fordítás
   *jelentés*-helyességét nem ellenőrzi, azt csak emberi review. A kapu a szerkezeti és leltár-
   hibákat fogja meg.
@@ -975,7 +1099,8 @@ szakasz megvan, mert akkor a fordítandó felület már csak az instrukciós pr�
 - a szabály-ID-k (`VD5`, `DS22`, `BS18`) és a rájuk hivatkozó szövegek;
 - fájl- és mappanevek (`spec.md`, `docs-generated/`, `cycle-NN-<name>`);
 - parancsok, kódblokkok, JSON/YAML kulcsok, regexek (a 11.8 byte-azonosságot követel);
-- a `<platform-scripts-mappa>` és minden helyőrző;
+- a `<platform-scripts-mappa>` és minden helyőrző — **beleértve a `<sec:…>` / `<secname:…>` /
+  `<status:…>` projekt-nyelvi tokeneket** (LG32, 9.7.6): ezek **byte-azonosan** kerülnek át;
 - az INCLUDE markerek (a *tartalmuk* lehet nyelvi, a *marker* nem).
 
 ### 13.2 Fordítási szabályok
@@ -1142,6 +1267,9 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
   tartalom is változott. A `m.skills_src_dir(".")` hívás a `_lang_subdir`-en keresztül mindig a
   helyes fát találja meg.
 
+  **A 9.7 tokenizálás NEM kivétel:** a `hu`/`hu` feloldás byte-azonos a mai literálokkal
+  (LG9/LG32), tehát a keret a teljes ~440 elemű cserét fedi — ez a csere legfőbb védőhálója.
+
   **Két ismert, ELVÁRT kivétel:** a 7.6 fixer-refaktor (tartalmi változás a `06-implement.md`-n
   és a két fixeren) és a 9.5.3 `output-language` beemelés (minden skill élére új blokk).
   Ezeknél a hash **szükségszerűen** változik; a keretet ilyenkor újra kell alapozni.
@@ -1152,6 +1280,8 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
   ellenőrzése a §10-hez csúszik (LG24).**
   Mind a 20 fusson le hibátlanul, és ellenőrizd:
   - **nincs feloldatlan `<!-- INCLUDE:` marker** a telepített fájlokban;
+  - **nincs feloldatlan nyelvi token** (LG32): `grep -r "<sec:\|<secname:\|<status:"` a
+    célmappákon → **0 találat**;
   - **nincs `hu` fallback figyelmeztetés** (LG12) — ha van, hiányzik egy nyelvi blokk;
   - **minden telepített skill/agent frontmatterében van `description`**, és az a **projekt**
     nyelvén (LG15) — ez az egyik legkönnyebben elrontható pont;
@@ -1189,6 +1319,7 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
 | 2 | **8.** Horgonyos INCLUDE + `description` | kis, önálló kód, azonnal tesztelhető |
 | 3 | **9.1–9.4** Leltár + kiemelés | fájlonként, 16.1 byte-azonossággal |
 | 4 | **9.5** `output-language` blokk | a kiemelés után, mert ugyanabba a `lang/` mappába megy |
+| 4b | **9.7** projekt-nyelvi tokenek (LG32) | a 9.4 után (a `lang/` blokkokban literál marad), és a §11 ELŐTT, hogy a 11.12 kapu a végleges felületet lássa. Idehozza a `status-keys.json`-t (10.3). |
 | 5 | **11.** `lang-parity-check.py` | ettől kezdve minden további lépés után fut (default mód; `--strict` a záráskor — LG25) |
 | 6 | **13.** Az `en` fák | fájlonként, a 13.3 lista szerint (részletekben végezhető) |
 | 7 | **9.6** `lang/en/` | a projekt-nyelvi blokkok angolul |
@@ -1206,7 +1337,12 @@ helyesek. A **9.6 (`lang/en/`) viszont BENNE MARAD (LG24)**, különben a parit�
 11.1/11.3 pontja tartósan FAIL-t adna, és az `en/en` telepítés csendben `hu` fallbackre esne.
 Minimális út:
 
-**6 → 7 → 8 → 9.1–9.6 → 11 → 13 → 14 → 12 → 15 → 16**
+**6 → 7 → 8 → 9.1–9.6 → 9.7 → 11 → 13 → 14 → 12 → 15 → 16**
+
+A **9.7 a rövidített úton is BENNE VAN** (LG32): nélküle az `EN` prompt magyar szekciónév-
+literálokat hordozna (16.5 FAIL ~440 helyen), vagy angolra fordítva csendben megbuktatná a
+kapukat a `HU` projekten (16.6/c). A `status-keys.json`-nak itt még **csak a `sections` /
+`status` értékei** kellenek — a scriptek átállítása (10.5–10.7) továbbra is halasztható.
 
 Amit ez a rövidítés módosít az elfogadási soron:
 - **16.2** → csak `hu/hu` + `en/hu` (10 futtatás), a `lang-keys.json`-ellenőrzés a §10-hez csúszik;
@@ -1254,7 +1390,8 @@ Amit ez a rövidítés módosít az elfogadási soron:
 - **Nincs kitüntetett, suffix nélküli fa** (LG5) — a magyar is prefixelt.
 - **Nem javítunk tartalmi hibát a kiemelés közben** (9.4) — az külön kör.
 - **Nem fordítjuk a (c) osztályú konzol-üzeneteket** (LG10) az első körben.
-- **A rövidített úton nem halasztjuk a `lang/en/`-t** (LG24) — csak a script-i18n-t (§10).
+- **A rövidített úton nem halasztjuk a `lang/en/`-t** (LG24) és a **9.7 tokenizálást** (LG32) —
+  csak a scriptek átállítását (§10.5–10.7).
 - **Nem élesztjük fel a Node CLI-t** (LG22) — törlendő.
 - **Nem nyelvesítjük az `init-project.sh`-t** (LG19) — elavult.
 - **Nincs nyelvi mező a `conventions.md`-ben** (LG17), és nincs migrációs szabály (LG8).
