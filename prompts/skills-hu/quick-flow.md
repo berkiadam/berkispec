@@ -28,7 +28,7 @@ Az Agent a feladat átvétele után **először döntsön a megfelelő flow-ról
 
 Ilyenkor az Agent **ne erőltesse a háromfázisú flow-t**: állítsa meg a munkát, jelezze a Felhasználónak, hogy a feladat túlnő ezen a flow-n, és **javasolja** a teljes folyamatot:
 
-> *„Ez a feladat a vártnál nagyobb / összetettebb (pl. több komponenst érint, nagyobb kódírást igényel). Javaslom, hogy ne az egyszerűsített flow-t használjuk, hanem a teljes berki spec folyamatot, amely a `01-add-cycles` skill-lel indul (roadmap + dedikált ciklus). Folytathatom úgy?"*
+<!-- INCLUDE:lang/quick-flow.md#BS-flow-valtas-javaslat -->
 
 A flow-váltás döntése mindig a Felhasználóé; te javasolsz és indokolsz, de nem váltasz önkényesen.
 

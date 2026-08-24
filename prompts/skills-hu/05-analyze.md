@@ -62,7 +62,7 @@ A `05-analyze` egy **vezénylő** fázis. Két dolgot tarts észben végig:
 
 ## Előfeltétel
 
-0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni? Igen / Nem (megadom a ciklust)"* — és várj a válaszra, mielőtt továbblépsz.
+0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — <!-- INCLUDE:lang/common.md#ciklus-beazonositas --> — és várj a válaszra, mielőtt továbblépsz.
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, **STOP** — jelezd a felhasználónak, hogy térjenek vissza a `00` projekt inicializálás fázishoz, és ne folytasd.
 
@@ -355,79 +355,7 @@ Példa:
 Hozd létre / frissítsd a `specs/cycle-NN-<cycle-name>/analyze-report.md` fájlt (relatív útvonal-formátum a dokumentum tartalmában, `file://` tilos):
 
 ```md
-# Cycle NN: <cím> — Analyze report
-
-**Státusz:** PASS | FAIL
-**Futás:** YYYY-MM-DD HH:MM
-**Hurok:** <iterációk száma> / <max X> (PASS | feladva)
-**Validált alap:** `<fő branch neve>@<SHA>` · ciklus ág: `<branch>@<SHA>` (BR1: `behozva` | `nem volt szükséges`)
-
-## Összefoglaló
-
-_Egy-két mondat: konzisztens-e a négyes, vagy hol van a baj, és hogyan zárult a hurok._
-
-## Megállapítások (utolsó analyze)
-
-### Must Fix
-- [ ] <kategória> — <leírás> → célfázis: <fázis> (`fájl:hely` ha van)
-
-### Suggestions
-- <kategória> — <leírás>
-
-## Végrehajthatósági leltár (6. kategória)
-
-_Az `analyzer` subagent kimenetéből átvéve; a `(kapu)` jelölésű mezők a mechanikus kapu eredményéből. **Kötelező szekció** — ha hiányzik, a PASS nem fogadható el._
-
-**Futtatott artefaktumok (kapu, A1):** <rendben / HIÁNYZIK: ...>
-**Prózában ígért tesztek:** <ígéret → teszteset + task / HIÁNYZIK>
-**Artefaktum-tulajdon:** <rendben / a planben szerepel: ...>
-**Státusz-frissítő task (kapu, T3):** <nincs / Tnnn>
-**Marker-helyesség (kapu, T1/T2):** <rendben / téves [OPS]: ...>
-**Destruktív műveletek:** <jóváhagyás + immutable azonosító + rollback megvan / hiányzik: ...>
-**Horgony-feloldás (kapu A2 + szimbólum-ítélet):** <feloldható / nem oldható fel: ...>
-**Artefaktum-hang (kapu A3 + címzett-ítélet):** <rendben / skill-hangú meta-utasítás maradt: ...>
-
-## Lefedettségi mátrix (követelmény ↔ task)
-
-_**Honnan jön (K/AG4):** ezt a mátrixot a **mechanikus kapu generálja** (`## Lefedettségi mátrix (generált)` blokk), és te **szó szerint** fűzöd ide — nem az LLM vezeti le újra. A `Lefedve (gépi)` oszlop kizárólag a `DoD-NN → [P-…] → task` **lánc meglétét** jelenti._
-_**Két javítást te végzel a beillesztett táblán:**_
-1. _ha az `analyzer` egy `✓` sorra **tartalmi** hiányt jelentett (`Érintett DoD-sorok`), írd át `✗`-re, és a `Megjegyzés` oszlopba a `Must Fix` rövid hivatkozását;_
-2. _ugyanez, ha az `analyzer-exec` jelezte, hogy a sor taskja **nem fut le** (végrehajthatósági `Must Fix`)._
-
-_**Mikor (D12):** a végleges tábla a **konvergáló (utolsó, `Must Fix` nélküli) kör** kapu-kimenetéből kerül a riportba, egyszer. Ha a hurok `max X`-nél feladja, az utolsó rendelkezésre álló kapu-kimenetet illeszd be, és jelöld: „(feladáskori állapot)"._
-
-| DoD | Plan szekció (`[P-…]`) | Task(ok) | Lefedve | Megjegyzés |
-|---|---|---|---|---|
-| `DoD-01` | `[P-CONFIG]` | T001, T002 | ✓ / ✗ | <a tartalmi/végrehajthatósági Must Fix hivatkozása, ha ✗> |
-
-**`DoD-NN`-en túli követelmények** (az `analyzer` 5. kategóriájából — a generált mátrix ezeket nem látja):
-- <spec-követelmény task nélkül> _(vagy: „nincs ilyen")_
-
-## Plan-szekció ↔ task (PID1)
-
-_A plan MINDEN `[P-…]` azonosítója szerepel; a „nincs task" sor indoklással érvényes. **Ezt a táblát is a mechanikus kapu generálja** (`## Plan-szekció ↔ task (generált — PID1)`) — szó szerint fűzd ide._
-
-| Plan szekció (ID) | Hivatkozó taskok | Rendben |
-|---|---|---|
-| `[P-CONFIG]` | T001, T002, T003 | ✓ |
-| `[P-XYZ]` | — (a `Plan-lefedettség` tábla indokolja) | ✓ / ✗ |
-
-_Eltérések, amiket itt kell kimutatni: ID task nélkül · task nem létező ID-ra · sorszámos hivatkozás `[P-…]` helyett · végrehajtható plan-szekció ID nélkül._
-
-## Hurok-napló
-
-_Iterációnkénti audit-nyom — a megszakítás-utáni folytatás horgonya._
-
-### Iteráció 1
-- **FAIL kategóriák:** <kategóriák>
-- **Célfázis:** <fázis> (legkorábbi érintett)
-- **Fix:** <a fixer-subagent összefoglalója egy sorban>
-- **Nyitott kérdések:** <FÁZIS/Knn lista vagy „nincs">
-- **Re-deriválás:** <mely downstream fázisok hangolódtak újra>
-- **Eredmény:** PASS | FAIL → következő iteráció
-
-### Iteráció 2
-...
+<!-- INCLUDE:lang/05-analyze.md#analyze-report-struktura -->
 ```
 
 ---
@@ -464,10 +392,7 @@ Teendők **sorban**:
    git commit -m "cycle-NN: 05-analyze"
    ```
 4. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát:
-   > *"Az analízis konzisztensnek találta a tervezési dokumentumokat. Folytathatjuk a 6. lépéssel (implement). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:*
-   > ```
-   > /bs-implement input: @specs/cycle-NN-<cycle-name>/tasks.md
-   > ```"*
+<!-- INCLUDE:lang/05-analyze.md#zaro-uzenet -->
    > **A válasz végén helyezd el az `analyze-report.md` közvetlen, kattintható linkjét.**
 
 ### FAIL (`max X` elérve PASS nélkül)

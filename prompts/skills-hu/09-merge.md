@@ -127,7 +127,7 @@ Olvasd be a `conventions.md` `## Merge stratégia` szekcióját, és a **Szolgá
 ### Megerősítés (mindkét ágon kötelező)
 
 Kérdezd meg, és **várj explicit megerősítésre**:
-> *"A validálás és a review tiszta (07), a doc-sync kapu zöld. Készen állok a merge-re a `<szolgáltató>` stratégia szerint (`feature/cycle-NN-<cycle-name>` → `<target branch>`). Végrehajthatom?"*
+<!-- INCLUDE:lang/09-merge.md#RD8-merge-megerosites -->
 > **A válasz végén helyezd el a `test-report/validation-report.md` és a `test-report/code-review.md` közvetlen, kattintható linkjét.**
 
 Ne lépj tovább a megerősítés előtt.
@@ -181,15 +181,4 @@ A merge után frissítsd a `specs/roadmap.md`-t: jelöld az adott ciklust lezár
 
 Ha a merge (vagy PR létrehozás) sikeresen megtörtént, jelezd a felhasználónak a ciklus lezárását és a következő ciklus indító promptját:
 
-> *"A validálás és a kódreview a 07-ben sikeres volt, a doc-sync kapu zöld, és a ciklust lezártam a `conventions.md` Merge stratégiája szerint (`<lokális squash merge` / `PR létrehozva>`). A ciklus sikeresen lezárult.*
->
-> *Megkezdhető a következő ciklus. Az új ciklus megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez.*
->
-> *Új ciklus hozzáadásához:*
-> ```
-> /bs-add-cycles
-> ```
-> *Vagy ha a következő ciklus már a roadmap-en van, közvetlenül a spec fázissal:*
-> ```
-> /bs-write-spec input: @specs/roadmap.md, ciklus: cycle-NN-<cycle-name>
-> ```"*
+<!-- INCLUDE:lang/09-merge.md#zaro-uzenet -->

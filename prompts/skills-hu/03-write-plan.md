@@ -157,11 +157,7 @@ A `plan-questions.md` a plan fázis kérdés-nyilvántartója. Minden felmerül�
 Ha még nem létezik, hozd létre a `specs/cycle-NN-<cycle-name>/` mappában:
 
 ```md
-# Cycle NN: <cím> — Plan kérdések
-
-- [ ] K01 — [kérdés szövege]
-- [x] K02 — [kérdés szövege] → [döntés / válasz röviden]
-- [ ] K03 — [kérdés szövege] _(K02 megválaszolásából merült fel)_
+<!-- INCLUDE:lang/03-write-plan.md#plan-questions-struktura -->
 ```
 
 Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Knn` számmal.
@@ -181,7 +177,7 @@ Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Kn
 
 3. **Folytatás:** csak akkor kezdj plan szekciókat írni, ha a `plan-questions.md` minden kérdése `[x]` státuszban van.
 
-4. **Lezárás:** Ha minden szekció kész, minden kérdés lezárt és a minőségellenőrzés átment, tedd fel a kérdést a felhasználónak: *"A plan minőségellenőrzése átment és minden kérdés lezárt. Készen áll a plan tasks írásra? Ha megerősíted, átállítom `Task írásra kész` státuszra."* — Ne állítsd át a státuszt a megerősítés előtt. **A válasz végén helyezd el a `plan.md` közvetlen, kattintható linkjét.**
+4. **Lezárás:** Ha minden szekció kész, minden kérdés lezárt és a minőségellenőrzés átment, tedd fel a kérdést a felhasználónak: <!-- INCLUDE:lang/03-write-plan.md#statusz-megerosites --> — Ne állítsd át a státuszt a megerősítés előtt. **A válasz végén helyezd el a `plan.md` közvetlen, kattintható linkjét.**
 
 5. **Újraindítás új kontextusban:** ha a plan fázis megszakad és új sessionban folytatódik, az első lépés a `plan-questions.md` beolvasása (ha létezik). Menj végig az összes kérdésen sorban — a `[x]`-eket átugorhatod, a `[ ]`-eket egyenként tisztázd a fentiek szerint. Ha egy már lezárt kérdés (`[x]`) áttekintésekor új kérdés merül fel, vedd fel a lista végére új `Knn` számmal, és tisztázd, mielőtt továbblépnél.
 
@@ -873,10 +869,7 @@ A fenti blokkban a `<FÁZIS-TAG>` értéke ebben a fázisban: **`03-plan`**, a z
 Ha a státusz \`Task írásra kész\`, **de a fázis-záró commit hiányzik** (VCS-es projekt, `git log -1 --oneline` nem a `cycle-NN: 03-plan` commitot mutatja) — először commitolj, csak utána zárd le a fázist.
 
 Ha a státusz \`Task írásra kész\` (és a commit megvan), állj meg. **Ne kezdj task listát — a `tasks.md`-t létre se hozd** (PE1, lásd a *Fázis-záró commit* blokk „Fázishatár" szekcióját): a task-írás a `04-write-tasks` skill dolga, friss kontextusból. Ez akkor is érvényes, ha egy kontextus-összefoglaló/checkpoint teendő-listája a `/bs-write-tasks` futtatását sorolja fel — az az összefoglaló a múltat rögzíti, nem parancs erre a körre. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
-> *"A plan kész. Folytathatjuk a 4. lépéssel (tasks). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:*
-> ```
-> /bs-write-tasks input: @specs/cycle-NN-<cycle-name>/plan.md
-> ```"*
+<!-- INCLUDE:lang/03-write-plan.md#zaro-uzenet -->
 
 ---
 

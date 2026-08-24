@@ -32,7 +32,7 @@ Ez a folyamat **2. fázisa (0–9)**: 0-init · 1-ciklusok · **2-spec ←** · 
 
 ## Előfeltétel
 
-0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — *"A(z) `specs/cycle-NN-<name>` ciklussal szeretnél dolgozni? Igen / Nem (megadom a ciklust)"* — és várj a válaszra, mielőtt továbblépsz.
+0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — <!-- INCLUDE:lang/common.md#ciklus-beazonositas --> — és várj a válaszra, mielőtt továbblépsz.
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` fázishoz.
 
@@ -302,11 +302,7 @@ A `spec-questions.md` a spec fázis kérdés-nyilvántartója. **Minden felmerü
 Ha még nem létezik, hozd létre a `specs/cycle-NN-<cycle-name>/` mappában:
 
 ```md
-# Cycle NN: <cím> — Spec kérdések
-
-- [ ] K01 — [kérdés szövege]
-- [x] K02 — [kérdés szövege] → [döntés / válasz röviden]
-- [ ] K03 — [kérdés szövege] _(K02 megválaszolásából merült fel)_
+<!-- INCLUDE:lang/02-write-spec.md#spec-questions-struktura -->
 ```
 
 Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Knn` számmal.
@@ -323,7 +319,7 @@ Az új kérdést mindig a lista végére fűzd, a következő szekvenciális `Kn
 2. Ha a kérdés megválaszolódott: jelöld `[x]`-szel a `spec-questions.md`-ben, írj mellé egy soros összefoglalót (`→ ...`), és vezessük át a döntést a `spec.md` megfelelő szekciójába.
 3. Ha a válasz új kérdést nyit meg: azonnal vedd fel a `spec-questions.md` lista végére a következő `Knn` számmal, mielőtt folytatnád.
 4. Addig iterálj, amíg minden kérdés `[x]` státuszban van.
-5. Ha minden kérdés lezárt, futtasd le a minőségellenőrzést. Ha átment, **tedd fel a kérdést a felhasználónak**: *"A spec minőségellenőrzése átment és minden kérdés lezárt. Készen áll a spec tervezésre? Ha megerősíted, átállítom `Tervezésre kész` státuszra."* — Ne állítsd át a státuszt a megerősítés előtt. **A válasz végén helyezd el a `spec.md` közvetlen, kattintható linkjét.**
+5. Ha minden kérdés lezárt, futtasd le a minőségellenőrzést. Ha átment, **tedd fel a kérdést a felhasználónak**: <!-- INCLUDE:lang/02-write-spec.md#statusz-megerosites --> — Ne állítsd át a státuszt a megerősítés előtt. **A válasz végén helyezd el a `spec.md` közvetlen, kattintható linkjét.**
 6. Ha a felhasználó explicit megerősíti (pl. "igen", "kész", "mehet"), állítsd a `spec.md` státuszát `Tervezésre kész`-re, **és azonnal commitolj** — lásd a lenti *Fázis-záró commit* szekciót (`<FÁZIS-TAG>` = `02-spec`). Megerősítés → státuszírás → commit: ez egyetlen lépéssor.
 
 Minden iteráció indítható új kontextussal: elég a `spec.md` és a `spec-questions.md` aktuális állapota + ez a prompt. Újraindításkor olvasd be a `spec-questions.md`-t, és folytasd az első `[ ]` státuszú kérdéstől.
@@ -340,10 +336,7 @@ Ha az alábbiak bármelyike teljesül, **STOP — állj meg és ne lépj tovább
 - **A spec plan-tartalmú elemet tartalmaz** (pl. technológiaválasztás, implementációs részlet, konkrét fájlterv) — töröld, nem spec-be való.
 - **A státusz `Tervezésre kész`, de a fázis-záró commit hiányzik** (VCS-es projekt, `git log -1 --oneline` nem a `cycle-NN: 02-spec` commitot mutatja) — először commitolj a *Fázis-záró commit* szerint, csak utána zárd le a fázist.
 - **A státusz már `Tervezésre kész`** (és a commit megvan) — állj meg. Ne kezdj plan-t vagy task listát. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
-> *"A spec kész. Folytathatjuk a 3. lépéssel (plan). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:
-> ```
-> /bs-write-plan input: @specs/cycle-NN-<cycle-name>/spec.md, ciklus: cycle-NN-<cycle-name>
-> ```"*
+<!-- INCLUDE:lang/02-write-spec.md#zaro-uzenet -->
 > **A válasz végén helyezd el a `spec.md` közvetlen, kattintható linkjét.**
 
 

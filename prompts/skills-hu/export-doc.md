@@ -76,7 +76,7 @@ python3 <platform-script-path> docs-generated/architecture.md specs/cycle-16-oid
 
 Ha a projektben van verziókezelő, és az `export/` mappa **még nincs** kizárva (`git check-ignore -q export/` nem-nulla kilépő kóddal tér vissza), kérdezd meg **egyszer**:
 
-> *„Az `export/` mappa most nincs kizárva a verziókezelésből. A PDF bináris, ciklusonként hízik, és bármikor újragenerálható a `docs-generated/`-ből — javaslom felvenni a `.gitignore`-ba. Felvegyem?"*
+<!-- INCLUDE:lang/export-doc.md#gitignore-felajanlas -->
 
 Csak a felhasználó jóváhagyása után írj a `.gitignore`-ba. Ha nemet mond, ne kérdezd újra a további futásoknál.
 
