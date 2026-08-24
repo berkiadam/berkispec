@@ -17,6 +17,7 @@ shared:
   - "shared/parallel-cycles.md"
 ---
 # 06 — Implementálás
+<!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
 
 ---

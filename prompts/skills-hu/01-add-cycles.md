@@ -18,6 +18,7 @@ shared:
   - "shared/input-from-prev.md"
 ---
 # 01 — Ciklusok kezelése
+<!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
 
 ---

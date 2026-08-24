@@ -4,6 +4,7 @@ description: "berkispec - segédparancs. Ciklusok státuszának ellenőrzése. K
 output: []
 ---
 # Ciklus státusz ellenőrző
+<!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
 
 ---

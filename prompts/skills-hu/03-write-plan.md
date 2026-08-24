@@ -22,6 +22,7 @@ shared:
   - "shared/fix-mode-plan.md"
 ---
 # 03 — Plan írás
+<!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
 
 ---

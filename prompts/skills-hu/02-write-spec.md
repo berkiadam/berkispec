@@ -20,6 +20,7 @@ shared:
   - "shared/fix-mode-spec.md"
 ---
 # 02 — Spec írás
+<!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
 
 ---

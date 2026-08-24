@@ -3,6 +3,7 @@ name: bs-quick-flow
 description: "berkispec - quick-flow. Egyszerűsített, háromfázisú SDD flow (spec.md → task.md → implementáció) KIS, jól körülhatárolt feladatokhoz, amelyek 3-4 lépésben megoldhatók — konfiguráció, egyszerűbb script, kisebb javítás, lokális módosítás. Nagyobb kódírást, több komponenst érintő funkciót vagy összetett tervezést igénylő feladathoz NE ezt használd — javasold a teljes berki spec folyamatot (01-add-cycles)."
 ---
 # SDD (Spec-Driven Development) — Egyszerűsített (Lightweight) Flow
+<!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
 
 ---
@@ -67,7 +68,7 @@ Ahhoz, hogy az Agent ezt a módszertant valódi skillként ismerje fel és autom
 *   **Dokumentumvezérelt fejlesztés:** Kódot írni vagy módosítani szigorúan tilos addig, amíg a tervezési és felbontási fázisok le nem zárultak.
 *   **A README.md karbantartása:** A fejlesztések során a projekt fő [README.md](../README.md) fájljának naprakészen tartása és frissítése nem opcionális lépés; ennek mindig a tervezés (`spec.md`) és a feladatlista (`task.md`) részét kell képeznie.
 *   **Relatív elérési utak és hivatkozások:** Mind a kódban (scriptek, konfigurációk), mind a dokumentációban (specifikációk, README fájlok, feladatlisták) **szigorúan tilos abszolút fájlútvonalak** (pl. `/home/...`) vagy abszolút markdown linkek (`file:///home/...`) használata. Minden hivatkozásnak és elérési útnak a projekt gyökeréhez vagy az aktuális dokumentumhoz képest relatívnak kell lennie.
-*   **Dokumentáció nyelve:** A ciklus-dokumentumok (`spec.md`, `task.md`) és a hozzájuk tartozó leírások nyelve a projekt konvenciójához igazodva **magyar**, a konzisztencia érdekében. A kódban használt azonosítók, kapcsolók és technikai kifejezések ettől függetlenül maradhatnak angolul.
+*   **Dokumentáció nyelve:** a fájl elején álló **A kimenet nyelve** blokk szerint — a ciklus-dokumentumok (`spec.md`, `task.md`) és a hozzájuk tartozó leírások azt követik. Itt nincs külön szabály; a kódban használt azonosítók, kapcsolók és technikai kifejezések ettől függetlenül angolul maradnak.
 
 
 ---

@@ -990,21 +990,26 @@ kulcsot igényel, ott **`(új kulcs)`** jelölés áll: ezeket a 9.7.1 kulcskés
 Mivel a projekt-nyelv nem kerül a projektbe (LG17), **kizárólag ez a bedrótozott blokk** hordozza
 az információt arról, milyen nyelven kell írni.
 
-- [ ] **9.5.1 — `prompts/lang/<L>/output-language.md`** megírása. Tartalmi minimum:
+- [x] **9.5.1 — `prompts/lang/<L>/output-language.md`** megírása. Tartalmi minimum:
   - az artefaktumok nyelve;
   - a felhasználóhoz szóló mondatok nyelve;
   - hogy a **kód, azonosító, kapcsoló, fájlnév marad angol**;
   - hogy a nyelvi keverés hiba.
-- [ ] **9.5.2 — A blokk a CÉLNYELVEN legyen megírva.** `EN` prompt + `HU` projekt esetén a skill
+- [x] **9.5.2 — A blokk a CÉLNYELVEN legyen megírva.** `EN` prompt + `HU` projekt esetén a skill
   élén egy **magyar** bekezdés áll. A szabály így egyszerre utasítás **és nyelvi horgony** — ez
   mérhetően jobban tart, mint egy angolul megfogalmazott „write in Hungarian".
-- [ ] **9.5.3 — Minden skill és minden agent élére** kerüljön be, a `context-check.md` mintájára
+- [x] **9.5.3 — Minden skill és minden agent élére** kerüljön be, a `context-check.md` mintájára
   (`<!-- INCLUDE:lang/output-language.md -->`), közvetlenül a H1 után.
-- [ ] **9.5.4 — Az agentek se maradjanak ki.** A `reviewer`, `analyzer`, `analyzer-exec`,
+- [x] **9.5.4 — Az agentek se maradjanak ki.** A `reviewer`, `analyzer`, `analyzer-exec`,
   `doc-sync-planner` és a fixerek **artefaktumba írnak** (`code-review.md`, `analyze-report.md`,
   riportok), tehát nekik is kell.
 
-- [ ] **9.5.5 — A BEDRÓTOZOTT nyelv-mondatok kivezetése (a 9.3 leltár találata).** A
+> **✅ A 9.5 KÉSZ.** `prompts/lang/hu/output-language.md` (39 sor) · a marker **mind a 14 skill
+> és mind a 11 agent** H1-je után · a `quick-flow.md` bedrótozott nyelv-mondata kivezetve.
+> A 16.1 keret **mind a 125 bejegyzésen** változott — ez a 16.1-ben **előre jelzett, elvárt
+> kivétel**; a keret újraalapozva. A telepített kimenetben **nincs feloldatlan marker**.
+
+- [x] **9.5.5 — A BEDRÓTOZOTT nyelv-mondatok kivezetése (a 9.3 leltár találata).** A
   `quick-flow.md` **70. sora** ma szó szerint kimondja: *„A ciklus-dokumentumok … nyelve a
   projekt konvenciójához igazodva **magyar**"*. Ez a 9.5 blokk **konkurens, hardcode-olt
   változata**: `EN` prompt + `EN` projekt esetén az `en` fába lefordítva („Hungarian") **aktívan

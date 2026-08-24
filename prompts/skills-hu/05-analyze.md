@@ -20,6 +20,7 @@ scripts:
   - "scripts/analyze-gate-check.py"
 ---
 # 05 — Analyze (kereszt-fázisos konzisztencia ellenőrzés + önjavító hurok)
+<!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
 
 ---

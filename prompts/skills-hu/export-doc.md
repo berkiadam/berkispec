@@ -5,6 +5,7 @@ output:
   - "export/<név>-v<N>.pdf (fájlonként független verziószámmal)"
 ---
 # Export doc — verziózott PDF a markdown doksikból
+<!-- INCLUDE:lang/output-language.md#output-language -->
 
 Ez **nem fázis**, hanem segédparancs: bármikor futtatható, nincs előfeltétele és nem változtat a ciklus állapotán. A tényleges munkát az `export-doc.py` script végzi — a te dolgod eldönteni, **miből** készüljön PDF, majd a scriptet meghívni és az eredményt visszajelezni.
 

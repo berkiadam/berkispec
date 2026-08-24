@@ -13,6 +13,7 @@ shared:
   - "shared/git-preflight.md"
 ---
 # 00 — Projekt inicializálás
+<!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
 
 ---

@@ -18,6 +18,7 @@ subagents:
   - "agents/doc-sync-planner.md"
 ---
 # 08 — Dokumentáció szinkron (doc-sync)
+<!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
 
 ---

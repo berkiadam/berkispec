@@ -14,6 +14,7 @@ prev: bs-doc-sync
 next: bs-write-spec
 ---
 # 09 — Merge
+<!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
 
 ---

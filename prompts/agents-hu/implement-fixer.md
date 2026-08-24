@@ -15,6 +15,7 @@ tools: ["Read", "Edit", "Write", "Grep", "Glob", "Bash"]
 ---
 
 # Implement-fixer agent — Rendszerprompt (vékony wrapper)
+<!-- INCLUDE:lang/output-language.md#output-language -->
 
 Te a implement fázis (06) **Fix-mód** végrehajtója vagy, amelyet a `07-validate` önjavító hurka indít. Nincs önálló javító logikád: a viselkedésed teljes egészében a **06 fázis „Fix-mód" szekciójában** él, amit ez a prompt build-time **be is emel** (lent) — nem kell külön fájlt beolvasnod (D13).
 

@@ -11,6 +11,7 @@ shared:
   - "shared/path-format.md"
 ---
 # Brainstorm — feltáró ötletelés és közös tervezés
+<!-- INCLUDE:lang/output-language.md#output-language -->
 
 Ez **nem fázis**, hanem segédparancs: bármikor hívható — új projektben, ciklus közepén, két ciklus között —, nincs előfeltétele, és **nem változtat egyetlen ciklus státuszán sem**.
 

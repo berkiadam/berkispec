@@ -30,6 +30,7 @@ shared:
   - "shared/phase-commit.md"
 ---
 # 07 — Validálás és kódreview
+<!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
 
 ---

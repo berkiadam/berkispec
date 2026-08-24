@@ -22,6 +22,7 @@ shared:
   - "shared/fix-mode-tasks.md"
 ---
 # 04 — Tasks írás
+<!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
 
 ---
