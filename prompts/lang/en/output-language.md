@@ -23,7 +23,7 @@
 >   project also comments in English; if the existing code uses another language, follow
 >   the habit of the code base.
 >
-> **STAYS AS IT IS — never translate these:**
+> **STAYS AS IT IS — NEVER translate these:**
 > - identifiers, function and variable names, type names, API field names, enum values;
 > - file and folder names, paths, commands, flags, env variable names;
 > - the framework's own identifiers: `/bs-*` command names, rule IDs (`DS22`, `TR3`,

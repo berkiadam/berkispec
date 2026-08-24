@@ -1290,10 +1290,18 @@ A `prompts/scripts/*.py`-ban **279 egyedi magyar string** van. Nem egyformák:
   A `hu` értékek **byte-azonosak a maiakkal** (LG9) — ez a visszamenőleges kompatibilitás
   feltétele.
 
-- [ ] **10.4 — Egyetlen igazságforrás.** A 10.3 `sections` értékei és a `lang/<L>/` blokkokban
+- [x] **10.4 — Egyetlen igazságforrás.** A 10.3 `sections` értékei és a `lang/<L>/` blokkokban
   szereplő ugyanazon fejlécek **nem csúszhatnak el**. A 11.5 kapu ezt gépiesen ellenőrzi.
   *(A **prompt-fában** ez az LG32 tokenizálás után szerkezetileg garantált: ott már nincs
   literál, csak `<sec:…>` token. Ez a pont így a `lang/<L>/` blokkokra és a scriptekre szűkül.)*
+
+  > **✅ A 11.5 kapu leszállította a `lang/<L>/` felét (2026-08-25).** A szabály, amit
+  > implementál: *ha egy kulcs értéke LITERÁLKÉNT szerepel az egyik nyelv blokkjában, akkor a
+  > párjának is szerepelnie kell a másikéban* — **szóhatáros** kereséssel, mert a puszta
+  > részszó-egyezés a találatok ~90%-át adta (`Kör` a `körönkénti`-ben, `Kész` a `Készen`-ben).
+  > A **meg nem jelenő kulcs nem hiba**: 21 kulcs kizárólag `<sec:…>`/`<status:…>` token
+  > alakban él (azt a 11.12 őrzi), kettőt pedig csak kapu-script olvas (`blocking_findings`,
+  > `failed_conditions`). **A scriptek fele a 10.5–10.7-tel zárul.**
 
 - [ ] **10.5 — Közös betöltő (LG18).** `prompts/scripts/lang_keys.py` (aláhúzós név, hogy
   importálható modul legyen, ne a kötőjeles CLI-mintát kövesse): `load_keys()` a **saját
@@ -1320,7 +1328,40 @@ A `sync-gemini-agents.py` mintájára: `--check` módban `exit 1` eltérésnél,
 olvasásra formázott riport. **Ez a kapu tartja életben a kétnyelvűséget** — enélkül a két fa
 csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
 
-- [ ] **11.1 — Fájllista-paritás.** `skills-hu/` ↔ `skills-en/`, `agents-hu/` ↔ `agents-en/`,
+> **✅ A 11. SZAKASZ KÉSZ (2026-08-25).** `prompts/scripts/lang-parity-check.py` — mind a 12
+> ellenőrzés benne van, két üzemmóddal (LG25). Mai állapot: **default → exit 0** (21 fájlpár,
+> 43 WARN: a még le nem fordított `*-en` fák és a féloldalas gemini-tükrök), **`--strict` →
+> exit 1** (a 11.1 fájlhalmaz-paritás a §13 zárásáig definíció szerint bukik). A telepítő
+> **nem másolja** a célprojektbe (a `copy_helper_scripts` kizárja, mint az
+> `install-helper.py`-t és a `sync-gemini-agents.py`-t).
+>
+> **Hibainjektálással tesztelve** — mind kiderült: kihagyott szekció (11.7 + 11.5), eltűnt
+> szabály-ID (11.6), ismeretlen token-kulcs (11.12), suffix nélküli `prompts/skills/` mappa
+> (11.2), gyengített imperatívusz (11.10).
+>
+> **A kapu a saját munkánkban is talált egy valódi hibát:** a 9.6-ban írt
+> `lang/en/output-language.md` a magyar **`SOHA` ne fordítsd le** mondatot kisbetűs
+> *„never translate these"*-re fordította — pontosan az a gyengülés, ami ellen a 11.10
+> készült. Javítva (`NEVER`).
+>
+> **Két ponton pontosítottuk a tervet a megvalósítás közben:**
+> 1. **11.10 — a magyar `SOHA` ugyanabba az osztályba tartozik, mint a `NEVER`.** A 11.10
+>    felsorolása ezt nem tartalmazta; enélkül minden `SOHA` → `NEVER` fordítás hamis FAIL
+>    lett volna. A kapu csoportonként számol: `TILOS`/`SOHA`/`FORBIDDEN`/`NEVER` egy csoport.
+> 2. **11.8 — a `lang/<L>/` blokkokban a fence TARTALMA is projekt-nyelvi** (az
+>    infostring-sorozat viszont ott is kötelezően egyezik). Indok: a nyelvi blokkok definíció
+>    szerint artefaktum-sablonok, és a bennük álló ` ```bash ` fence-ek **helyőrző-magyarázatot**
+>    tartalmaznak (`<a környezet felhúzása: …>`), a beemelt slash-parancsok argumentum-címkéi
+>    pedig fordulnak (`ciklus:` → `cycle:`). A byte-azonosság ott tehát rossz kérdés — a
+>    prompt-fákon viszont változatlanul él (LG27 listája szerint).
+>
+> **Két féloldalas-állapot kezelés (LG25 szelleme), ami nélkül a kapu ma használhatatlan
+> lenne:** (a) az **árva horgony** irány (11.3) csak akkor FAIL, ha az adott nyelvnek már van
+> prompt-fája — különben a §13 alatt mind a 73 `lang/en/` horgony árvának látszana; (b) a
+> `descriptions.json` kulcskészletét (11.4) a **referencia-fa** `name:` mezőihez mérjük, ha az
+> adott nyelvnek még nincs fája — a `name` úgyis nyelvfüggetlen (LG6).
+
+- [x] **11.1 — Fájllista-paritás.** `skills-hu/` ↔ `skills-en/`, `agents-hu/` ↔ `agents-en/`,
   `agents-hu/gemini-agent/` ↔ `agents-en/gemini-agent/`, `shared-hu/` ↔ `shared-en/`,
   `lang/hu/` ↔ `lang/en/`: azonos fájlnév-készlet. Hiányzó vagy extra fájl → FAIL.
   A pár-képzés a `_lang_subdir` logikáját tükrözze (`<base>-<lang>`), **ne** hardcode-olt
@@ -1329,48 +1370,48 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
   WARN-ként listázódnak, és a 11.3–11.10 ellenőrzések csak a **mindkét oldalon létező**
   párokra futnak — így a kapu a fájlonként haladó 13. szakasz alatt is használható marad.
 
-- [ ] **11.2 — Aszimmetria-őr (LG5).** FAIL, ha létezik `prompts/skills`, `prompts/agents` vagy
+- [x] **11.2 — Aszimmetria-őr (LG5).** FAIL, ha létezik `prompts/skills`, `prompts/agents` vagy
   `prompts/shared` **suffix nélküli** mappa. Ez fogja meg, ha egy félbehagyott rebase vagy egy
   figyelmetlen commit visszahozza a régi szerkezetet.
 
-- [ ] **11.3 — INCLUDE-marker leltár.** *(A 9.4 tanulsága szerint ez a kapu **a `hu` fán belül** is
+- [x] **11.3 — INCLUDE-marker leltár.** *(A 9.4 tanulsága szerint ez a kapu **a `hu` fán belül** is
   kell: horgony ↔ marker kereszt-ellenőrzés mindkét irányban — a 16.1 a kimaradt kiemelésre vak.)*
   A markerek halmaza legyen azonos a nyelvi párokban;
   minden hivatkozott `lang/<fájl>#<horgony>` **létezzen mindkét nyelvi mappában**; a `lang/`
   fájlok **ne** tartalmazzanak INCLUDE markert (8.5).
 
-- [ ] **11.4 — Frontmatter-paritás.** `name:` **byte-azonos** (LG6); a `prerequisites`, `output`,
+- [x] **11.4 — Frontmatter-paritás.** `name:` **byte-azonos** (LG6); a `prerequisites`, `output`,
   `prev`, `next`, `subagents`, `shared`, `phase` kulcsok jelenléte és **elemszáma** azonos.
   A `description`-re: a `lang/<L>/descriptions.json` kulcskészlete **pontosan** a fa `name`
   mezőinek halmaza legyen, mindkét nyelven (8.6). Az **agent**-bejegyzések objektumok, és
   mindkét nyelven tartalmazzák a `description` **és** a `role` kulcsot (LG26).
 
-- [ ] **11.5 — Státusz- és szekció-kulcsok.** A `status-keys.json` minden nyelvén ugyanazok a
+- [x] **11.5 — Státusz- és szekció-kulcsok.** A `status-keys.json` minden nyelvén ugyanazok a
   kulcsok; és minden ott szereplő érték **elő is forduljon** a hozzá tartozó `lang/<L>/`
   blokkokban. Ez fogja meg a 10.4 kétigazság-hibát.
 
-- [ ] **11.6 — Szabály-ID leltár.** A `([A-Z]{2,3}\d+[a-z]?(?:/[a-z])?)` minta szerinti
+- [x] **11.6 — Szabály-ID leltár.** A `([A-Z]{2,3}\d+[a-z]?(?:/[a-z])?)` minta szerinti
   azonosítók halmaza legyen azonos a nyelvi párokban. Ez fogja meg, ha a fordításból kimarad egy
   szabály. (A használt prefixek listája: 1.5.)
 
-- [ ] **11.7 — Szekció-szerkezet.** A `##`/`###` címsorok **száma és sorrendje** fájlonként
+- [x] **11.7 — Szekció-szerkezet.** A `##`/`###` címsorok **száma és sorrendje** fájlonként
   egyezzen. Ez a legjobb egyszerű detektora annak, hogy a fordító kihagyott vagy összevont egy
   szekciót.
 
-- [ ] **11.8 — Kódblokk-paritás (fence-alapú, LG27).** A ``` fence-ek **száma és
+- [x] **11.8 — Kódblokk-paritás (fence-alapú, LG27).** A ``` fence-ek **száma és
   infostring-sorozata** egyezzen. Tartalom-ellenőrzés az infostring szerint:
   - **byte-azonos:** `bash`, `sh`, `python`, `json`, `yaml`, `toml`, `regex`, `diff`, **és
     minden fel nem sorolt infostring** (biztonságos default) — parancsot nem fordítunk;
   - **fordítható (nincs tartalom-ellenőrzés):** `md`, `text`, és a nyelv-jelölés nélküli fence
     — ezek az illusztratív, fájlba nem kerülő példák (9.1), amik prompt-nyelviek.
 
-- [ ] **11.9 — Integráció.** A repóban **nincs CI és nincs pre-commit hook** (1.6). Ezért:
+- [x] **11.9 — Integráció.** A repóban **nincs CI és nincs pre-commit hook** (1.6). Ezért:
   dokumentáld a `meta-improve-prompts.md`-ben **kötelező kézi lépésként** a
   `sync-gemini-agents.py --check` mellett, és írd bele a 17.3 folytatási receptbe is.
   A commit-előtti futás a **default** módot használja, a PR zárása és a 16.3 a **`--strict`**-et
   (LG25).
 
-- [ ] **11.10 — Imperatívusz-kapu (a fordítás legfőbb kockázata, gépiesen).** A fordítás
+- [x] **11.10 — Imperatívusz-kapu (a fordítás legfőbb kockázata, gépiesen).** A fordítás
   legvalószínűbb minőségi hibája, hogy **gyengül az utasítás-erősség** (`TILOS` → `should not`),
   ami pont a gyenge modellek dolgát rontja el (1.1). Ez **mérhető jelentés-értés nélkül**:
   számold meg a „kemény padló" jelöléseket mindkét nyelvi változatban, és követelj egyezést:
@@ -1379,14 +1420,14 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
   *(Ha egy eltérés indokolt — pl. két magyar mondat egy angolba olvad —, azt a fordító
   jegyezze fel a 13.3 listában, és a kapu kapjon rá explicit kivétel-bejegyzést.)*
 
-- [ ] **11.12 — Nyelvi token-paritás (LG32).** A `<sec:…>` / `<field:…>` / `<status:…>`
+- [x] **11.12 — Nyelvi token-paritás (LG32).** A `<sec:…>` / `<field:…>` / `<status:…>`
   tokenek **halmaza és darabszáma** legyen azonos a nyelvi párokban (`skills-hu/X.md` ↔
   `skills-en/X.md`), és **minden előforduló kulcs létezzen** a `status-keys.json` mindkét
   nyelvi szeletében. Eltérés → FAIL. Ez a 11.5-nél erősebb: azt is megfogja, ha a fordító egy
   tokent véletlenül literálra oldott fel (a leggyakoribb várható fordítási hiba ezen a
   felületen), mert akkor a token eltűnik az `en` oldalról.
 
-- [ ] **11.11 — Amit NEM tud ellenőrizni.** Írd bele a script docstringjébe: a fordítás
+- [x] **11.11 — Amit NEM tud ellenőrizni.** Írd bele a script docstringjébe: a fordítás
   *jelentés*-helyességét nem ellenőrzi, azt csak emberi review. A kapu a szerkezeti és leltár-
   hibákat fogja meg.
 
@@ -1748,10 +1789,11 @@ Amit ez a rövidítés módosít az elfogadási soron:
 - [ ] A branch-en belül a 17.1 lépései **külön commitok**. A **7. szakasz átnevezés saját, atomi
   commit** (`git mv` + `_lang_subdir` + `shared/` prefix-feloldás + a 64/9/3 útvonal-javítás), és
   a commit-üzenetben **külön jelöld** a 7.7 tartalmi javítást, mert az nem átnevezés.
-- [ ] **Minden commit előtt** fusson a 16.1 byte-azonosság (ahol értelmezhető — lásd a 16.1 két
+- [x] **Minden commit előtt** fusson a 16.1 byte-azonosság (ahol értelmezhető — lásd a 16.1 két
   elvárt kivételét) és — amint létezik — a `lang-parity-check.py --check` + a
   `sync-gemini-agents.py --check` (a paritás-kapu **default** módban; a PR zárásakor
-  **`--strict`** — LG25).
+  **`--strict`** — LG25). *(A 11.9 óta ez a recept a `prompts/meta-improve-prompts.md`
+  „KÉTNYELVŰ REPÓ" blokkjában is ott áll, kimásolható parancsokkal.)*
 
 ### 17.4 Hogyan folytasd friss kontextusban
 

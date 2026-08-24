@@ -63,6 +63,26 @@ A repó gyökerében lévő `README.md` „Indító prompt (copy-paste)" szekci�
 `prompts/scripts/install-helper.py`. A `prompts/scripts/init-project.sh` **elavult** (LG19):
 szimlink-alapú alternatíva, amit soha nem használtunk — ne hivatkozz rá, és ne fejleszd tovább.
 
+**⛔ KÉTNYELVŰ REPÓ — KÖTELEZŐ KÉZI KAPUK MINDEN COMMIT ELŐTT.** A promptok **két
+prompt-nyelvi fában** élnek (`prompts/skills-hu/` ↔ `prompts/skills-en/`, ugyanígy
+`agents-*` és `shared-*`), a projekt-nyelvi blokkok pedig a `prompts/lang/<nyelv>/`
+alatt. **Nincs CI és nincs pre-commit hook**, tehát a két fa szinkronját semmi nem
+őrzi automatikusan — ezt a két scriptet **kézzel kell lefuttatni**:
+
+```bash
+python3 prompts/scripts/lang-parity-check.py      # nyelvi paritás (§11) — default mód
+python3 prompts/scripts/sync-gemini-agents.py --check   # a gemini agent.json tükrök
+```
+
+- **Ha az egyik nyelvi fát szerkeszted, a másikat is szerkeszd** — a paritás-kapu a
+  szerkezeti eltérést (címsor, kódblokk, INCLUDE-marker, szabály-ID, nyelvi token,
+  imperatívusz-darabszám) megfogja, a **jelentés**-eltérést nem: az emberi review dolga.
+- A kapu **két üzemmódú**: a napi, commit előtti futás a **defaultot** használja (a
+  féloldalas fájlok WARN-ok), a PR zárása és a végső elfogadás a **`--strict`**-et
+  (ott a teljes fájlhalmaz-paritás is kötelező).
+- Mindkét script **repó-karbantartó eszköz**: a telepítő szándékosan **nem másolja**
+  őket a célprojektbe.
+
 ---
 
 ## Tervezési elvek, amelyek minden promptban érvényesülnek

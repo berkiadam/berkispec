@@ -192,7 +192,8 @@ def copy_helper_scripts(src_dir, scripts_dest):
     scripts_src_dir = Path(src_dir) / "prompts/scripts"
     for script_src in sorted(scripts_src_dir.glob("*.py")):
         # A repó-karbantartó szkriptek nem a célprojekt eszközei
-        if script_src.name in ("install-helper.py", "sync-gemini-agents.py"):
+        if script_src.name in ("install-helper.py", "sync-gemini-agents.py",
+                               "lang-parity-check.py"):
             continue
         script_dest = scripts_dest / script_src.name
         shutil.copy(script_src, script_dest)
