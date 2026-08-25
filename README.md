@@ -216,7 +216,9 @@ A keretrendszer **két, egymástól független** nyelvi beállítást ismer. Nem
 
 > **A fő kockázat: nyelvi átszivárgás.** Angol instrukció + magyar projekt esetén a modell (különösen a gyengébb) hajlamos angol szavakat szivárogtatni a magyar dokumentumba, vagy az egész artefaktumot angolul megírni. Az ez elleni fő fegyver az **`output-language` blokk**: minden skill és minden agent legelejére — közvetlenül a H1 után — bekerül egy blokk, amely **a projekt nyelvén** mondja ki, hogy mit kell azon a nyelven írni (artefaktumok, a felhasználónak szóló mondatok), mi marad angol (azonosítók, fájlnevek, parancsok, szabály-ID-k), és hogy **a keverés javítandó hiba**. A célnyelven megfogalmazott szabály egyszerre utasítás és nyelvi horgony — mérhetően jobban tart, mint egy angolul megfogalmazott „write in Hungarian".
 
-> **⚠️ Jelenlegi korlát — `projekt = English`:** a determinisztikus kapu-scriptek (riport-kapu, DoD-ellenőrzés, kör-napló) üzenetei és a bennük keresett artefaktum-stringek **még magyarok**. Angol projekt-nyelvvel ezek egy része hibázhat; a telepítő ezt a választásnál külön jelzi. Az `EN` prompt + `HU` projekt (az alapértelmezés) teljes értékűen működik.
+> **A kapu-scriptek is követik a projekt nyelvét.** A determinisztikus kapuk (riport-kapu, DoD-ellenőrzés, kör-napló, analyze-kapu, TC8) nem hardcode-olt magyar szövegre illesztenek: a telepítő a választott projekt-nyelv szótárát a scriptek mellé írja (`lang-keys.json`), és a scriptek abból veszik a szekciócímeket, mezőneveket és státusz-értékeket. Amit *keresnek* és amit az artefaktumba *írnak*, tehát a projekt nyelvén van. A bemenetük ugyanakkor **nyelvfüggetlen**: mindkét nyelv alakját elfogadják, így egy magyarul indult projekt angol újratelepítés után sem esik ki.
+>
+> **⚠️ Egy maradék `projekt = English` mellett:** a kapu-scriptek **konzol-üzenetei** magyarok (ezek a futtatónak és az ágensnek szólnak, nem kerülnek artefaktumba). A telepítő ezt a választásnál külön jelzi.
 
 ### Hogyan lehet használni?
 A telepítés után az adott platform automatikusan beolvassa a symlinkelt definíciókat:

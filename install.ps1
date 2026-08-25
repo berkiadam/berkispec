@@ -401,13 +401,14 @@ function Ask-Languages {
     $jl = Get-LangLabel $script:PROJECT_LANG_CHOICE
     Write-Success "Prompt nyelve: ${BOLD}$pl${RESET} · Projekt nyelve: ${BOLD}$jl${RESET}"
 
-    # A §10 (script-i18n) még nem készült el: a kapu-scriptek üzenetei és a
-    # bennük keresett artefaktum-stringek magyarok.
+    # A §10 óta a kapu-scriptek a `lang-keys.json`-ból illesztenek: az artefaktum-
+    # oldal nyelvhelyes, csak a konzol-üzenet maradt magyar (LG10).
     if ($script:PROJECT_LANG_CHOICE -eq "en") {
         Write-Host ""
-        Write-Warn "A projekt nyelve ${BOLD}English${RESET}, de a kapu-scriptek üzenetei még magyarok."
-        Write-Host "  ${GRAY}A determinisztikus kapuk (riport-, DoD-, kör-napló ellenőrzés) magyar"
-        Write-Host "  szekciónevekre illesztenek, ezért angol projekt-nyelvvel egy részük hibázhat.${RESET}"
+        Write-Warn "A projekt nyelve ${BOLD}English${RESET}: a kapu-scriptek ${BOLD}konzol-üzenetei${RESET} magyarok."
+        Write-Host "  ${GRAY}Az artefaktumokat ez nem érinti — a kapuk a telepített lang-keys.json"
+        Write-Host "  angol szekciónevei szerint illesztenek és írnak. Csak a futtatónak szóló"
+        Write-Host "  kimenet marad magyar.${RESET}"
     }
 }
 

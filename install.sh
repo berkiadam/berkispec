@@ -329,14 +329,15 @@ ask_languages() {
 
   success "Prompt nyelve: ${BOLD}$(lang_label "${PROMPT_LANG_CHOICE}")${RESET} · Projekt nyelve: ${BOLD}$(lang_label "${PROJECT_LANG_CHOICE}")${RESET}"
 
-  # A §10 (script-i18n) még nem készült el: a kapu-scriptek üzenetei és a
-  # bennük keresett artefaktum-stringek magyarok. `projekt = English` mellett
-  # ezt ki KELL mondani, különben a felhasználó csendben hibás kapukat kap.
+  # A §10 óta a kapu-scriptek a `lang-keys.json`-ból illesztenek, tehát az
+  # ARTEFAKTUM-oldal nyelvhelyes. Ami magyar maradt (LG10), az a KONZOL-üzenet —
+  # ezt `projekt = English` mellett ki kell mondani, hogy ne érje meglepetés.
   if [[ "${PROJECT_LANG_CHOICE}" == "en" ]]; then
     echo ""
-    warn "A projekt nyelve ${BOLD}English${RESET}, de a kapu-scriptek üzenetei még magyarok."
-    echo -e "  ${GRAY}A determinisztikus kapuk (riport-, DoD-, kör-napló ellenőrzés) magyar"
-    echo -e "  szekciónevekre illesztenek, ezért angol projekt-nyelvvel egy részük hibázhat.${RESET}"
+    warn "A projekt nyelve ${BOLD}English${RESET}: a kapu-scriptek ${BOLD}konzol-üzenetei${RESET} magyarok."
+    echo -e "  ${GRAY}Az artefaktumokat ez nem érinti — a kapuk a telepített lang-keys.json"
+    echo -e "  angol szekciónevei szerint illesztenek és írnak. Csak a futtatónak szóló"
+    echo -e "  kimenet marad magyar.${RESET}"
   fi
 }
 
