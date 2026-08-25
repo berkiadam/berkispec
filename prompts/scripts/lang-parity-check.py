@@ -80,10 +80,25 @@ _PLACEHOLDER_RE = re.compile(r"<[^<>\n]*>")
 _DQ_STRING_RE = re.compile(r'"[^"\n]*"')
 
 
+# A kapu-scriptek SAJÁT szinonima-táblái. Ahol egy script explicit elfogad egy
+# angol alakot ugyanarra a CLI-értékre, ott a fordítás nem elcsúszás, hanem a
+# script deklarált képessége — a 11.8 tehát nem jelezheti eltérésnek.
+# Forrás: `round-log.py` → `normalize_type()` (TELJES|FULL, KÖNNYŰ|KONNYU|LIGHT).
+# FIGYELEM: ide CSAK olyan pár kerülhet, amit egy script kódja tényleg elfogad —
+# ez a 11.10 „explicit kivétel-bejegyzés" mechanizmusa, nem általános lazítás.
+_CLI_SYNONYMS = [
+    (("TELJES", "FULL"), "<round-type-full>"),
+    (("KÖNNYŰ", "KONNYU", "KONNYŰ", "LIGHT"), "<round-type-light>"),
+]
+
+
 def normalize_code(text):
     text = _COMMENT_RE.sub("", text)
     text = _PLACEHOLDER_RE.sub("<>", text)
     text = _DQ_STRING_RE.sub('""', text)
+    for variants, canon in _CLI_SYNONYMS:
+        for v in variants:
+            text = text.replace(v, canon)
     return "\n".join(" ".join(line.split()) for line in text.split("\n") if line.strip())
 
 # 11.2 — a suffix nélküli fa tiltott (LG5)
