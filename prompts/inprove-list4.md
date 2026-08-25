@@ -1984,9 +1984,14 @@ Amit ez a rövidítés módosít az elfogadási soron:
 - [x] Nyiss **egy feature branch-et friss `main`-ről** (`git switch main && git pull && git
   switch -c feature/bilingual-prompts`) — a `main` a teljes
   migráció alatt működő állapotban marad, és a végén **egy PR**-ként olvad be.
-- [ ] A branch-en belül a 17.1 lépései **külön commitok**. A **7. szakasz átnevezés saját, atomi
+- [x] A branch-en belül a 17.1 lépései **külön commitok**. A **7. szakasz átnevezés saját, atomi
   commit** (`git mv` + `_lang_subdir` + `shared/` prefix-feloldás + a 64/9/3 útvonal-javítás), és
   a commit-üzenetben **külön jelöld** a 7.7 tartalmi javítást, mert az nem átnevezés.
+
+  > **✅ Teljesült (2026-08-25).** A `feature/bilingual-prompts` **38 commitja** szakaszonként
+  > halad; az átnevezés a `8bd758c` **atomi** commit (csak `git mv` + a feloldó kódja, a
+  > markerek szövege változatlan), a 7.7 tartalmi javítás pedig a rákövetkező `b8f1880`
+  > commitban áll, saját, külön jelölt bekezdéssel.
 - [x] **Minden commit előtt** fusson a 16.1 byte-azonosság (ahol értelmezhető — lásd a 16.1 két
   elvárt kivételét) és — amint létezik — a `lang-parity-check.py --check` + a
   `sync-gemini-agents.py --check` (a paritás-kapu **default** módban; a PR zárásakor
