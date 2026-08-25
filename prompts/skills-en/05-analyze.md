@@ -38,11 +38,12 @@ This is **phase 5 (0–9)** of the process: 0-init · 1-cycles · 2-spec · 3-pl
 | Prerequisite | `tasks.md` = `<status:ready_for_implement>`, `conventions.md` exists, a clean working tree. |
 | A fresh base (BR1) | If the main branch moved ahead since the branch of the cycle, the phase **brings it in** (rebase / merge according to the push state) BEFORE the analyze — otherwise it would validate on an outdated tree. If it did not move ahead, it does not touch the history. |
 | Your role | **Orchestrator (read-only):** you do not edit a design document yourself — you conduct, write a report, ask, and switch statuses. |
-| The mechanical gate | Before every run `analyze-gate-check.py` (plan ID ↔ task reference, marker, `⟂`, `DoD-NN`, mandatory tables, **artifacts being run, plan anchors, artifact voice**) — its `<status:must_fix>` hits go into the loop with the target phase given by the script, and its `## <sec:inventory>` block is the input of the `analyzer` (AG3). |
-| The analyzer subagents | The read-only cross-check is done by **two parallel** subagents: `agents/analyzer.md` (categories 1–5) and the `analyzer-exec` subagent (category 6, executability) — you merge the two finding lists (E). |
-| The fixer subagents | The fixing is done by the `agents/{spec,plan,tasks}-fixer.md` wrappers (= the Fix mode of phase 02/03/04); they write the design documents. |
+| The mechanical gate | Before every run `analyze-gate-check.py` (plan ID ↔ task reference, marker, `⟂`, `DoD-NN`, mandatory tables, **artifacts being run, plan anchors, artifact voice**) — its `<status:must_fix>` hits go into the loop with the target phase given by the script, its `## <sec:inventory>` block is the input of `analyzer-exec` (AG3), and `--emit-slices` cuts the slice of each of the three semantic rounds (SH1). |
+| The analyzer diagnosis rounds | The read-only cross-check is done by **four parallel rounds**: the `agents/analyzer.md` subagent three times, with three different scopes (`s1-dup-underspec` = categories 1+3, `s2-coverage` = 2+5, `s3-conventions` = 4), plus the `analyzer-exec` subagent (category 6, executability) — you merge the four finding lists (E/SH1). |
+| The fixer subagents | The fixing is done by the `agents/{spec,plan,tasks}-fixer.md` wrappers (= the Fix mode of phase 02/03/04); they write the design documents, and **run the mechanical gate themselves** before returning (GS1). If every `<status:must_fix>` is local, the fixers are started **in a single message, in parallel** (LF1). |
+| Live report (AR1) | `analyze-report.md` is produced **immediately after the very first diagnosis** with an `IN_PROGRESS` status, with a plain-language tick list (*what is wrong · why it blocks · target phase · state*) — not at the end of the loop. Every step of the loop refreshes it, so the user can see what the phase is working on right now. |
 | Result | `analyze-report.md` PASS or FAIL, with a severity classification + <sec:loop_log>. |
-| One analyzer run / iteration | The run of the analyzer is **always full**; from the 2nd run it gets the previous `<status:must_fix>` list (verification) and the `git diff` (navigation) — but it does not narrow itself down to them (D10). The downstream re-derivation is **conditional** (D11). |
+| One analyzer round / iteration | Every round is **full within its own scope**, and a `PASS` requires all four of them to have run; from the 2nd round it gets the previous `<status:must_fix>` list (verification) and the `git diff` (navigation) — but it does not narrow itself down to them (D10). The downstream re-derivation is **conditional** (D11). |
 | FAIL | **A self-healing loop starts:** the earliest affected target phase → a fixer subagent → downstream re-derivation (`02→03→04`) → a re-analyze, until PASS — with `max X = 3` iterations. |
 | Stopping for a question | If the fixer reported an open question: the orchestrator (you) asks the user with a `PHASE/Qnn` header, writes in the answer, and restarts the fixer — the loop **continues** (this is not an error). |
 | PASS | On to the 06-implement phase. Commit: a single `cycle-NN: 05-analyze` at the end of the loop. |
@@ -55,7 +56,7 @@ This is **phase 5 (0–9)** of the process: 0-init · 1-cycles · 2-spec · 3-pl
 `05-analyze` is a **conducting** phase. Keep two things in mind throughout:
 
 1. **You do not edit a design document yourself** (`spec.md`, `plan.md`, `tasks.md`). Every content fix is done by the fixer subagents (= the Fix mode of phases 02/03/04). The only file you write is `analyze-report.md`, and your only direct modification on the design documents is **switching the status field** (putting the `[analyze-loop]` marker on and taking it off, see below).
-2. **The read-only diagnosis belongs to the `analyzer` subagent.** You read its finding list and decide about PASS / FAIL, then in case of a FAIL you conduct the fixing loop.
+2. **The read-only diagnosis belongs to the diagnosis rounds** (`analyzer` × 3 scopes + `analyzer-exec`). You read the merged finding list and decide about PASS / FAIL, then in case of a FAIL you conduct the fixing loop.
 
 This way the responsibility of the phase is clean: **diagnosis (analyzer) → conducting (you) → fixing (the fixers)**, each in its own place.
 
@@ -94,7 +95,7 @@ This way the responsibility of the phase is clean: **diagnosis (analyzer) → co
      ```bash
      git diff --name-only "$PRE" HEAD -- . ':(exclude)specs/*'
      ```
-     This is the list of the **source, test and config files** that arrived from another cycle/hotfix. If it is not empty, it has to get into the input of **both analyzer subagents** (see *"The two analyzer subagents"* → **The rebase file list**). If it is empty (only the `specs/` folders of other cycles came in), there is nothing to do.
+     This is the list of the **source, test and config files** that arrived from another cycle/hotfix. If it is not empty, it has to get into the input of **all four diagnosis rounds** (see *"The four diagnosis rounds"* → **The rebase file list**). If it is empty (only the `specs/` folders of other cycles came in), there is nothing to do.
      _Hand over a file list, **not the whole diff** — the subagent reads the necessary details itself (AG3)._
 
    > **Do not rebase unconditionally.** If the list above is empty, you do **not touch** the history of the branch — the analyze may run several times in the self-healing loop, and a needless rewriting of the history would provoke a force push on a pushed branch.
@@ -128,8 +129,13 @@ The **diagnosis** of the analyze is read-only, but the loop may already have mod
    → If its status is FAIL and there is no marker anywhere: the loop closed by
      giving up at max X (see the Loop log of the report). Report the stuck
      state to the user — do not start a new loop automatically without confirmation.
-   → If the report looks interrupted (not every category is filled in) and
-     there is no marker: delete the partial report, and start the analysis again.
+   → If its status is IN_PROGRESS: the report is LIVE (AR1), not broken — the items
+     in it are real, only the loop did not run to the end. Do not throw it away and
+     do not overwrite it: read from its `Current step:` field and from the `State:`
+     fields of the items where it stopped, and continue from there.
+   → If the report looks interrupted (not every category is filled in), its status is
+     NOT IN_PROGRESS, and there is no marker: delete the partial report, and start the
+     analysis again.
 
 3. There is no analyze-report.md and no marker.
    → Start the analysis according to "What you have to do".
@@ -143,7 +149,7 @@ Check that the design documents of the cycle (`spec.md`, `plan.md`, `tasks.md`) 
 
 **Do not implement anything.** This is the sanity check (and, if needed, a fixing loop) before the implementation.
 
-The diagnosis looks for problems in **5 categories** (done by the `analyzer` subagent):
+The diagnosis looks for problems in **5 categories** (done by the three semantic `analyzer` rounds, split by scope — see "The four diagnosis rounds"):
 
 1. **Duplications** — the same decision several times within the plan; `tasks.md` describing the test case steps of the plan again; a redundant task. **Taking over the elaborated artifact of the spec into the plan verbatim is NOT a duplication** (KX3) — that is the mandatory self-containedness.
 2. **Ambiguity** — vague concepts, missing metrics, an acceptance criterion that cannot be measured.
@@ -155,18 +161,19 @@ The diagnosis looks for problems in **5 categories** (done by the `analyzer` sub
 
 ## Context loading rules
 
-- The cross-check requires reading many files together — **starting the two diagnosis subagents is mandatory, in a single message, in parallel** (E): the `analyzer` subagent (categories 1–5, on the `spec.md` + `plan.md` + `tasks.md` + `conventions.md` quartet) and the `analyzer-exec` subagent (category 6, on the `plan.md` + `tasks.md` + the inventory of the gate triple). Both return **exclusively the structured finding list** (the raw file content does not burden the main context).
-- Their system prompt is given by the **installed agent definition** of the platform (`analyzer`, `analyzer-exec`) — call them by these names, do not look for them as files in the project.
-- **Hand over the corresponding block of the gate output to both subagents, verbatim:**
+- The cross-check requires reading many files together — **starting all four diagnosis rounds is mandatory, in a single message, in parallel** (E/SH1): the `analyzer` subagent three times (with the scopes `s1-dup-underspec` = categories 1+3, `s2-coverage` = 2+5, `s3-conventions` = 4) and the `analyzer-exec` subagent once (category 6). Each of them returns **exclusively the structured finding list** (the raw file content does not burden the main context).
+- Their system prompt is given by the **installed agent definition** of the platform (`analyzer`, `analyzer-exec`) — call them by these names, do not look for them as files in the project. The three semantic rounds use the **same `analyzer` definition**; the difference is the scope, which you give in the launching message.
+- **Hand over the corresponding part of the gate output to every round, verbatim:**
   - `analyzer-exec` → the **`## <sec:inventory>`** (`<status:mk_artifact>` / `<status:mk_anchor>` / `<status:mk_tone_suspect>` / `<status:mk_test_promise>` / `<status:mk_destructive>`, AG3): this replaces the repo and document exploration, which was the main cost of category 6;
-  - `analyzer` → the **`## <sec:coverage_matrix>`** (AG4): the `DoD-NN → [P-…] → task` chain ready-made, so that it does not derive it again.
-- You merge the output of the two subagents (see "The two analyzer subagents"), and decide about PASS / FAIL based on that.
+  - `s2-coverage` → the **`## <sec:coverage_matrix>`** (AG4): the `DoD-NN → [P-…] → task` chain ready-made, so that it does not derive it again;
+  - **all three semantic rounds** → the **path of their own slice** (`analyze-slices/<scope>.md`, SH1) **and the name of their scope**. Give the path, **not the content of the slice**: the whole point of the slicing is that the text of the quartet does not reach the subagent through the main context.
+- You merge the output of the four rounds (see "The four diagnosis rounds"), and decide about PASS / FAIL based on that.
 
-  > **🔴 If one of the analyzer subagents does not run, or does not give a findings list:** **do not silently carry out the cross-examination yourself** — the whole value of the phase is that the diagnosis is **independent** of the orchestrator. The **type of the error** decides what to do — do not deliberate, look at the text of the error message:
+  > **🔴 If one of the diagnosis rounds does not run, or does not give a findings list:** **do not silently carry out the cross-examination yourself** — the whole value of the phase is that the diagnosis is **independent** of the orchestrator. The **type of the error** decides what to do — do not deliberate, look at the text of the error message:
   > - **A platform limit** (the text mentions a quota/allowance/limit — e.g. "usage limit", "quota exceeded", "reached its usage limit", or an allowance reset date): **do NOT retry.** The second call runs deterministically into the same thing. Jump straight to the STOP + human branch, and **copy the error message verbatim** into the question (together with the reset date) — the decision (an admin permission, waiting for the reset, another model pool) belongs to the user.
-  > - **Every other error** (a timeout, a one-off crash, an empty answer): retry **once**. If only **one** of the subagents failed, restart **only that one** — do not discard the findings list of the other.
+  > - **Every other error** (a timeout, a one-off crash, an empty answer): retry **once**. If only **one** of the rounds failed, restart **only that one** — do not discard the findings lists of the other three.
   >
-  > If it cannot be run even so: **STOP + human** — ask whether I should retry it, or carry out the missing categories directly in the main agent according to the aspects of `analyzer` / `analyzer-exec`.
+  > If it cannot be run even so: **STOP + human** — ask whether I should retry it, or carry out the missing categories directly in the main agent according to the aspects of `analyzer` / `analyzer-exec`. **Name the scope** of the missing round in the question (which categories were left without a diagnosis).
   >
   > **If you go down the fallback branch, marking the origin of the diagnosis is MANDATORY.** The main agent works on a different model and in a narrower context than the subagent, and on top of that it is the orchestrator itself — so the diagnosis **loses its independence**, and is systematically a weaker finding set. One line should go into the header of `analyze-report.md`: **Diagnosis:** the main agent (fallback) — <subagent> could not be run: <reason>. A PASS produced this way is **not of full value** — note there that making up for the subagent diagnosis is recommended.
 - You start the fixing fixer subagents also as Task tool subagents, with their own wrapper prompt (`agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`) — see "The self-healing loop".
@@ -196,21 +203,22 @@ The checks that can be decided mechanically are **not done by the `analyzer` sub
 <!-- INCLUDE:shared/python-cmd.md -->
 
 ```bash
-python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-name>
+python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-name> --emit-slices
 ```
 
 _(Run from the root of the project, the `--repo-root .` and the `--conventions conventions.md` defaults are fine. If `conventions.md` is elsewhere, give it: `--conventions <path>` — without it the `G1` gate-configuration check is skipped.)_
 
 **What it covers:** plan ID format/uniqueness (P1), the existence of the task→plan reference (P2), a reference to a non-existent ID (P3), an ID without a task (P4), a reference by ordinal (P5), a marker on every task (T1), `[OPS]` on a repo file (T2), a status-updating task (T3), `⟂` symmetry (T4), a missing/duplicated `DoD-NN` (D1), a `DoD-NNb` shaped after-the-fact identifier (D2), the existence of the mandatory tables (S1/S2) — **and the mechanical layer of category 6 (AG3):** the existence of the artifact being run / the creating task (A1 = 6.a), the resolution of a plan `path:line` anchor (A2 = 6.g at file level), the validity of the anchor line number (A2b, a suggestion), the hard floor of artifact voice (A3 = 6.h `🔴`/"Forbidden", a suggestion) — **and further:** the taking over of the elaborated artifacts of the spec (`V1`) and the extent of the test sections (`V2`, KX3), the path format (`R1`, RP1) and the anchor format (`A2c`, a suggestion), and the **gate configuration moving along** (`G1`, GC1: the cycle touches the report structure, but the `## <sec:cv_test_reporting>` table of `conventions.md` does not move → the TR3 gate of 07 would look in the old place).
 
-**The three blocks of the output:**
+**The four blocks of the output:**
 - **`## <status:must_fix>`** — line by line `[code] (target phase: NN) message`. Each of them is a `<status:must_fix>`, with the target phase given by the script — add them to the list of `analyze-report.md` **verbatim**. Do not question them and do not re-evaluate them: they are the results of a mechanical check.
 - **`## Javaslatok`** — they do not block, they do not start a loop; they go into the `Suggestions` section of the report.
-- **`## <sec:inventory>`** — **not a finding, but the INPUT of the `analyzer`.** It contains the text of the anchored lines, the state of the artifacts being run and the voice hits requiring a judgement. **Hand it over to the `analyzer` subagent verbatim** — this way it does not have to run `Grep`/`Glob` rounds in the repo (this was the main cost of category 6).
+- **`## <sec:inventory>`** — **not a finding, but the INPUT of `analyzer-exec`.** It contains the text of the anchored lines, the state of the artifacts being run and the voice hits requiring a judgement. **Hand it over to the `analyzer-exec` subagent verbatim** — this way it does not have to run `Grep`/`Glob` rounds in the repo (this was the main cost of category 6).
+- **`## Szeletek` (SH1)** — **not a finding, but the INPUT of the three semantic rounds.** `--emit-slices` writes the slices into the folder of the cycle (`analyze-slices/s1-dup-underspec.md`, `analyze-slices/s2-coverage.md`, `analyze-slices/s3-conventions.md`); each of them is a verbatim extract of the design documents, cut exactly for the categories of that round. Give the round **the path, not the content.** The folder hides itself with a `.gitignore`, so the phase-closing commit does not stage it, and it does not disturb the working-tree check either.
 
 **Exit code:**
-- **`0`** → there is no blocking mechanical finding (there may be suggestions and an inventory in the output); start the `analyzer` subagent for the semantic categories, together with the inventory.
-- **`1`** → there is a `<status:must_fix>`; start the analyzer the same way, and handle the two finding lists together in the loop.
+- **`0`** → there is no blocking mechanical finding (there may be suggestions, an inventory and slices in the output); start the four diagnosis rounds, each with the block belonging to it.
+- **`1`** → there is a `<status:must_fix>`; start the four rounds the same way, and handle all the finding lists together in the loop.
 - **`2`** → a usage error (a missing cycle folder or document) → STOP, report it to the user.
 
 **The gate runs in every iteration** (after the fixing as well) — this way a mechanical regression cannot slip through.
@@ -247,13 +255,46 @@ A cheaper LLM has to be given a concrete target, not "back to the appropriate ph
 
 ---
 
+## Live report (AR1) — the report is produced right after the diagnosis
+
+The most expensive side effect of this phase used to be that the user **could not see what was wrong** during the whole run of the loop: the only thing that showed up on disk was the `analyze-slices/` input slices (gitignored, verbatim cut-outs of the design documents), while `analyze-report.md` was born only at the **end** of the loop. An interrupted or long-running loop therefore left nothing behind that could be read.
+
+**The rule:** `analyze-report.md` is produced **immediately after the first merged diagnosis** — still **before the first fixer is started** — with an `IN_PROGRESS` status, and it is refreshed at every step of the loop. This is your job (orchestrator), and it does not violate the read-only invariant: the report is not a design document.
+
+**When you write / refresh it:**
+
+| Point | What you write into the report |
+|---|---|
+| After merging the first diagnosis (before the loop) | The full file with an `IN_PROGRESS` status: `Summary`, the **`Items to fix`** tick list with every merged `<status:must_fix>` item, `Suggestions`, `Executability inventory`, the two generated tables. This is produced even if the diagnosis gave a PASS (with an empty Must Fix list). |
+| Before starting a fixer (loop points 2-3) | `Current step:` = which fixer runs on which identifiers; the `State:` field of the affected items becomes `being fixed (iter <n>)`. |
+| At a question stop (loop point 4) | The `State:` field of the item becomes `question (<PHASE>/Q<nn>)`, and `Current step:` signals that the loop is waiting for the user. |
+| After the re-analyze (loop point 6) | The row of every resolved item flips to `[x]`, `State:` = `resolved (iter <n>)`; new findings go to the end of the list as **new** items; the Loop log gets the entry of the iteration. |
+| When the loop closes | `IN_PROGRESS` → `PASS` or `FAIL`, `Current step:` = `closed`, the `Loop:` field filled in. |
+
+**What has to be said about an item of the list.** The name of the category is not an explanation on its own: into the `What is wrong` field write **what the document states now, and why that is wrong**, and into the `Why it blocks` field **what can break in the implementation** if it stays like this. The identifier of the item (`AF-NN` / `AC-NN` / `AN-NN` / `AX-NN`) comes from the diagnostic round and gets into the report **verbatim** — the same one you hand over to the fixer, and the one the survival rule (TS) counts on.
+
+> **An item is never removed from the list afterwards.** A resolved item **stays** with `[x]` and a `resolved (iter <n>)` state — this way the list is a tick list and an audit trail at the same time. For a dismissed item the `dismissed — <justification>` state is mandatory; if an item was made to disappear without a justification, the report cannot be closed.
+
+---
+
 ## The self-healing loop (the orchestrator loop)
 
 In case of a FAIL you do **not** simply hand control back to the user. Instead, you conduct an iterative fixing loop until there is a PASS, or until you reach the `max X` limit.
 
 ### One iteration of the loop
 
+0. **Live report (AR1).** If it does not exist yet, **create** `analyze-report.md` now, with an `IN_PROGRESS` status and the full `Items to fix` tick list — BEFORE the first fixer is started. If it already exists, at this point you only carry over the `Current step:` field and the `State:` field of the affected items. Do not start a fixer without a report: the user would have nothing to read about what the loop is working on.
 1. **Determining the target phase.** From the categories of the `<status:must_fix>` list (according to the mapping above), determine the **earliest affected target phase** (02/03/04). This is the entry point of the fixer.
+1.a **Local fix batch — PARALLEL start (LF1).** Before you step onto the sequential path, classify the merged `<status:must_fix>` list:
+   - a **local** item = its fix can be carried out within its own document, and it has **no downstream effect by construction**: a refinement of the wording, resolving an ambiguity with a metric, merging a duplicate, artifact voice (6.h), path format (`R1`), a typo, restoring a missing or broken `[P-…]` reference (`P2`/`P3`/`P5`);
+   - a **structural** item = everything else: a coverage gap, a missing task or plan section, a missing acceptance criterion, a convention conflict, a KX3 truncation, an executability `<status:must_fix>`.
+
+   **If the list contains EXCLUSIVELY local items:** start the affected fixers **in a single message, in parallel** — one per document, each with the list filtered for it. The downstream re-derivation of point 5 is **left out** in this case (every fixer gives `downstream-effect: none`). If a fixer does report `yes` after all, handle it as a normal iteration, and write into the Loop log which item you classified wrongly.
+   **If the list contains even one structural item:** the usual sequential path follows from point 2 (the earliest target phase → downstream). The **local items of the affected document ride along** on the same fixer call in that case — they do not deserve a round of their own.
+
+   > **NEVER start two fixers in parallel on the same document** — they would write the same file. The parallelism is between documents, not between items.
+   >
+   > **Why it wins.** The common case is many small findings. Sequentially that is `02 → 03 → 04`: three fixer rounds, plus the downstream re-derivation between them. This way it is a single parallel batch, whose elapsed time is that of the slowest fixer.
 2. **Putting on the status marker.** From the target phase downwards, switch the status of every affected document to the phase-appropriate not-done state with an `[analyze-loop]` marker (e.g. `<status:draft> [analyze-loop]`). The marker signals: the fix mode is active → the fixers step the status automatically (see D7), and after an interruption it shows that the document was reopened by the loop.
 3. **Starting the fixer subagent** with the wrapper belonging to the target phase (see "Starting the fixer subagent").
 4. **Handling a stop for a question.** If the fixer reported open questions in its summary (new `Qnn` entries in `*-questions.md`): put them to the user **one by one**, with a phase header (see "The question format with a phase header"), carry the answer over into `*-questions.md` (`[x]` + the decision), then **restart the same fixer** with the question now answered. This does not count as a new analyze iteration.
@@ -262,7 +303,7 @@ In case of a FAIL you do **not** simply hand control back to the user. Instead, 
    - **If the diff is not empty** (or there is a new question) → on to point 4.b.
 
 
-4.b **Mechanical feedback after the fixer — G.** As soon as the fixer has returned (and its questions are answered), **run the mechanical gate** (step 0) — still before the analyzer.
+4.b **Mechanical feedback after the fixer — G (after the fixer self-check, GS1).** The fixer runs the gate itself BEFORE returning, and reports the result in its `gate:` field. This point is therefore a **safety net, not the base step:** if the `gate:` field says `clean`, run the gate once (step 0, with `--emit-slices`, since the slices have to be refreshed anyway), and if there really is no mechanical `<status:must_fix>`, **go on to point 5 without a single fixer round**. The send-back branch below only applies if the fixer self-check did not converge (`gate: remained — …`), or the gate does find something after all.
    - **There is only a mechanical `<status:must_fix>`** (P/T/S/A/C/D codes, that is, exclusively the output of the gate) → **send the items of the gate back to the same fixer**, verbatim. This is **not a new iteration**, and it **does not start an analyzer run**: the loop counter does not grow.
    - **There is no mechanical `<status:must_fix>`** → on to point 5.
    - **Limit:** run this same feedback **at most twice** within one iteration. If the fixer gives back a mechanically faulty document for the third time as well, handle it as a normal iteration (on from point 5), and note in the Loop log: `the mechanical regression of the fixer did not converge`.
@@ -274,7 +315,7 @@ In case of a FAIL you do **not** simply hand control back to the user. Instead, 
    - **`yes`** → start the downstream fixer, and **hand over the text of the `downstream-effect`** to it — this is the scope of the reconciliation. This is a **targeted reconciliation, not a full rewrite**: it preserves the closed decisions of `*-questions.md`.
    - If the fixer did not give the field, **ask it back** in one sentence — do not guess, and do not run the whole chain "just to be safe".
    - **The mechanical feedback of 4.b runs after every downstream fixer as well** — the referencing order of `tasks.md` is typically broken exactly by the reconciliation.
-6. **Re-analyze — ONE full round, with TWO PARALLEL subagents (D10/E).** First run the **mechanical gate** (step 0), then start the `analyzer` and the `analyzer-exec` subagent **in a single message, in parallel** (see "The two analyzer subagents"). Both run **once**, in full mode, and get two extra inputs:
+6. **Re-analyze — ONE full round, with FOUR PARALLEL diagnosis rounds (D10/E/SH1).** First run the **mechanical gate** with `--emit-slices` (step 0) — the slices have to reflect the state after the fixing —, then start the **four rounds in a single message, in parallel** (see "The four diagnosis rounds"). Each of them runs **once**, in full mode within its own scope, and gets two extra inputs:
    - **the `<status:must_fix>` list of the previous round** — the **first block** of the analyzer's report verifies item by item whether it got resolved;
    - **the change of the design documents**: `git diff -- specs/cycle-NN-<cycle-name>/` (there is no commit during the loop, so the diff shows the complete change of the loop) — this is **navigation**: it should look at the changed sections first, because a new gap is most likely there. The scope of the examination, however, stays the **whole document**.
 
@@ -282,9 +323,9 @@ In case of a FAIL you do **not** simply hand control back to the user. Instead, 
    - **There is no `<status:must_fix>`** → the loop converged, jump to "Status handling → PASS" (this is where the marker comes off and the single commit happens).
    - **There is a `<status:must_fix>`** → a new iteration from point 1, the loop counter +1.
 
-   > **A `PASS` can only be given from a full analyzer run** — the `git diff` gives the focus, not the scope.
+   > **A `PASS` can only be given from a full round** — that is, all four diagnosis rounds ran and gave an interpretable finding list; the `git diff` gives the focus, not the scope.
 
-6.a **The survival rule (per-item escalation) — TS.** Before you start a new iteration, look at the **first block** of the analyzer's report (`Previous round's Must Fix items`), and collect those `AF-NN` / `AX-NN` items that came back marked `NOT resolved`.
+6.a **The survival rule (per-item escalation) — TS.** Before you start a new iteration, look at the **first block** of the reports of the diagnosis rounds (`Previous round's Must Fix items`), and collect those `AF-NN` / `AC-NN` / `AN-NN` / `AX-NN` items that came back marked `NOT resolved`.
    - **Keep the survival counter in the Loop log:** write out the identifiers of the surviving items for each iteration. The survival count of an item is which **consecutive** iteration it came back in as `NOT resolved`.
    - **If an item survives the SECOND consecutive iteration as well, do not hand it to the fixer a third time.** After two unsuccessful fixing attempts the most likely explanation is not that the fixer is clumsy, but that the item **requires a genuine decision** (a technology base, a configuration path, a test scope) that the fixer by definition must not make — see the "genuine decision" rule of the fix mode. In that case:
      1. **turn it into a question:** add it as a `Qnn` into the `*-questions.md` file of the target phase, if the fixer has not done so already;
@@ -296,35 +337,39 @@ In case of a FAIL you do **not** simply hand control back to the user. Instead, 
 
    > **Why it is needed.** `max X` is a **loop-level** limit: it does not notice when the fixer brings in a big package while leaving the same few items untouched round after round. In that case the loop burns all three iterations, and the user gets a `3/3 (given up)` report at the end — instead of having received the few concrete questions in the second round, after which the loop could have converged. In 07 the same role is filled by the per-item stop counter (VD4) and the escalation heuristic (VD5).
 
-### The two analyzer subagents (E) — parallel start and merging
+### The four diagnosis rounds (E/SH1) — parallel start and merging
 
-The diagnosis is done by **two subagents**, with scopes independent of each other. **Start them in a single message so that they can run in parallel** — this way the elapsed time of the phase is that of the slower one, not their sum.
+The diagnosis is done by **four parallel rounds**, with scopes independent of each other. **Start them in a single message so that they can run in parallel** — this way the elapsed time of the phase is that of the slowest round, not the sum of the four. The first three call the **same `analyzer` definition** with a different scope; you give the name of the scope and the path of the slice in the launching message.
 
-| Subagent | Scope | Its input |
-|---|---|---|
-| `agents/analyzer.md` | **Categories 1–5** (duplication, ambiguity, under-specification, convention conflict, the **content** judgement of coverage) | `spec.md` + `plan.md` + `tasks.md` + `conventions.md` + the handover files + `cycle-design-input.md` + the **generated matrix** of the gate |
-| `agents/analyzer-exec.md` | **Category 6** (a test promised in prose, artifact ownership, a destructive operation, an anchor symbol, artifact voice) | `plan.md` + `tasks.md` + the **`## <sec:inventory>`** block of the gate |
+| Round (scope) | Definition | Categories | Its input | Prefix |
+|---|---|---|---|---|
+| `s1-dup-underspec` | `agents/analyzer.md` | **1. duplication + 3. under-specification** (the KX3 truncation too) | `analyze-slices/s1-dup-underspec.md` | `AF-NN` |
+| `s2-coverage` | `agents/analyzer.md` | **2. ambiguity + 5. the content judgement of coverage** | `analyze-slices/s2-coverage.md` + the **generated matrix** of the gate + the handover files + `cycle-design-input.md` | `AC-NN` |
+| `s3-conventions` | `agents/analyzer.md` | **4. convention conflict** | `analyze-slices/s3-conventions.md` | `AN-NN` |
+| `analyzer-exec` | `agents/analyzer-exec.md` | **Category 6** (a test promised in prose, artifact ownership, a destructive operation, an anchor symbol, artifact voice) | `plan.md` + `tasks.md` + the **`## <sec:inventory>`** block of the gate | `AX-NN` |
 
-_The input of both subagents is extended with the **rebase file list**, if BR1 brought in the main branch (see below)._
+_The input of all four rounds is extended with the **rebase file list**, if BR1 brought in the main branch (see below)._
 
-**The rebase file list (BR1/a) — only if BR1 brought in something.** In that case the **source tree** changed, not the design documents: the analyzer sees nothing of this from its own `git diff` navigation (D10). Therefore hand the file list over to **both** subagents, with this call:
+> **If the slices were not produced** (the gate ran without `--emit-slices`, or the slice file is empty), that is not a stop: the semantic rounds work from the design documents, as they did before the slicing. This does **not** change the number of the rounds or their scopes.
+
+**The rebase file list (BR1/a) — only if BR1 brought in something.** In that case the **source tree** changed, not the design documents: the analyzer sees nothing of this from its own `git diff` navigation (D10). Therefore hand the file list over to **all four** rounds, with this call:
 
 > *"The following files arrived into the branch of the cycle with the bringing in of the main branch (rebase/merge), as the result of another cycle or a hotfix: `<file list>`. Look specifically at whether the references, anchors, signature and interface assumptions of `plan.md` and `tasks.md` pointing at them **still hold** (a renamed or moved symbol, a changed parameter list, a disappeared export, a modified config key). The scope of the examination does NOT narrow because of this — this is focus, not scope."*
 
 The file list is **focus, not a narrowing** (the same principle as with the document diff, D10): a `PASS` can still only be given from a full analyzer run. A drift resulting from the changes brought in continues along the usual path — `<status:must_fix>` → the earliest target phase → a fixer —, there is **no separate "rebase fixing round"**: the self-healing loop is itself the fixing round.
 
 **The merging is your business:**
-1. You join the two `<status:must_fix>` lists and the `<status:must_fix>` list of the gate **into one list**, and then determine the **earliest affected target phase** from this merged list.
-2. **Duplicate filtering:** if both subagents gave a finding for the same `file:location`, keep the **more specific** one (typically the executability item of the `analyzer-exec`), and do not carry the other one over to the fixer.
-3. The `Executability inventory` section of the report comes from the output of the `analyzer-exec`, the `Coverage matrix` from the **gate** (see below), the `Affected DoD rows` from both.
-4. **If one of the subagents runs into an error or does not give an interpretable list**, do not qualify the round as a PASS: restart that one (this is not a new iteration).
+1. You join the four `<status:must_fix>` lists and the `<status:must_fix>` list of the gate **into one list**, and then determine the **earliest affected target phase** from this merged list.
+2. **Duplicate filtering:** if several rounds gave a finding for the same `file:location`, keep the **more specific** one (typically the executability item of the `analyzer-exec`), and do not carry the others over to the fixer. **Do not rewrite the identifier** — the item you keep goes on with its own prefix.
+3. The `Executability inventory` section of the report comes from the output of the `analyzer-exec`, the `Coverage matrix` from the **gate** (see below), the `Affected DoD rows` from the `s2-coverage` and the `analyzer-exec` round.
+4. **If one of the rounds runs into an error or does not give an interpretable list**, do not qualify the round as a PASS: restart that one (this is not a new iteration). The categories of the missing round **do not drop out** — a PASS cannot be given with a category left without a diagnosis.
 
 ### Starting the fixer subagent
 
 - The **system prompt** of the fixer subagent is the fixer wrapper of the target phase: `agents/spec-fixer.md` (02), `agents/plan-fixer.md` (03), `agents/tasks-fixer.md` (04). The wrapper **contains** the Fix mode section of the phase and the quality gate of the phase (from a shared source, inlined at build time) — there is no duplicated fixing logic, and the own gates of the phase take effect automatically.
 - **The fixer does not read a phase skill (D13).** Every rule is in the wrapper; if a fixer does announce reading the skill, that is an error (it tempts to re-run the whole phase instead of a targeted fix).
-- **The input** to the subagent: the `<status:must_fix>` list filtered for the target phase **together with the `AF-NN` / `AX-NN` identifiers** (identifier + category + description + `file:location`) + the documents of the target phase. **Do not drop and do not rewrite** the identifiers — the survival rule (TS) builds on a literal identifier match.
-- **The output** from the subagent: (a) a summary of the (mechanical) fixes made, (b) the **`downstream-effect:`** field (`none` / `yes — <what affects the next phase>`, D11), and (c) the identifiers of the **<status:op_new>** questions added to `*-questions.md` — of those points that need a real decision. The subagent **does not ask the user directly** (it has no interactive channel); it only collects and returns. Asking is your business (D2).
+- **The input** to the subagent: the `<status:must_fix>` list filtered for the target phase **together with the `AF-NN` / `AC-NN` / `AN-NN` / `AX-NN` identifiers** (identifier + category + description + `file:location`) + the documents of the target phase. **Do not drop and do not rewrite** the identifiers — the survival rule (TS) builds on a literal identifier match.
+- **The output** from the subagent: (a) a summary of the (mechanical) fixes made, (b) the **`downstream-effect:`** field (`none` / `yes — <what affects the next phase>`, D11), (c) the identifiers of the **<status:op_new>** questions added to `*-questions.md` — of those points that need a real decision —, and (d) the **`gate:`** field (GS1): the result of its own closing gate run. The subagent **does not ask the user directly** (it has no interactive channel); it only collects and returns. Asking is your business (D2).
 - **A completeness check on return.** Compare the list you handed over with the fixer's summary: **every** identifier handed over must appear either as fixed, or as a `Qnn` question, or with an explicit "I could not handle it" justification. **If an identifier is silently missing**, do not start an analyzer run for it: ask the fixer back in one sentence what happened to it. Otherwise a silently omitted item looks as if the fixer had tried and failed — and the TS counter would give a false picture.
 
 ### The `max X` loop counter + stopping
@@ -374,7 +419,7 @@ Example:
 
 ## analyze-report.md structure
 
-Create / update the `specs/cycle-NN-<cycle-name>/analyze-report.md` file (a relative path format in the content of the document, `file://` is forbidden):
+Create / update the `specs/cycle-NN-<cycle-name>/analyze-report.md` file (a relative path format in the content of the document, `file://` is forbidden). **The moment of creation is the point after the first diagnosis, not the end of the phase** — see the *Live report (AR1)* section:
 
 ```md
 <!-- INCLUDE:lang/05-analyze.md#analyze-report-struktura -->
@@ -384,16 +429,18 @@ Create / update the `specs/cycle-NN-<cycle-name>/analyze-report.md` file (a rela
 
 ## Quality check — before closing the report
 
-Go through whether all **6** categories really ran (1–5 in the output of the `analyzer`, 6 in that of the `analyzer-exec` — **whether both arrived at all**). **For category 6, check separately whether the subagent returned the "Executability inventory"** — without it the PASS cannot be accepted, because exactly those errors would stay hidden that the coverage matrix does not see structurally:
+Go through whether all **6** categories really ran — that is, **whether all four diagnosis rounds arrived** (`s1-dup-underspec` → categories 1+3, `s2-coverage` → 2+5, `s3-conventions` → 4, `analyzer-exec` → 6). **For category 6, check separately whether the subagent returned the "Executability inventory"** — without it the PASS cannot be accepted, because exactly those errors would stay hidden that the coverage matrix does not see structurally:
 
 1. **Duplication** — is spec/plan/tasks reviewed for redundancy?
 2. **Ambiguity** — is every acceptance criterion measurable/decidable?
 3. **Under-specification** — is every component and condition defined?
 4. **Convention conflict** — does every design decision match `conventions.md`?
-5. **Coverage** — did the generated matrix of the gate get into the report, and is the content judgement of the `analyzer` (`Affected DoD rows` + requirements beyond `DoD-NN`) carried over onto it?
-6. **Executability and artifact ownership** — did the `analyzer-exec` return the *Executability inventory* (see above), did the **mechanical gate** (`analyze-gate-check.py`) run in this round, and did you hand the blocks of the gate over to the two subagents (AG3/AG4)?
+5. **Coverage** — did the generated matrix of the gate get into the report, and is the content judgement of the `s2-coverage` round (`Affected DoD rows` + requirements beyond `DoD-NN`) carried over onto it?
+6. **Executability and artifact ownership** — did the `analyzer-exec` return the *Executability inventory* (see above), did the **mechanical gate** (`analyze-gate-check.py`) run in this round with `--emit-slices`, and did you hand the blocks of the gate over to the rounds (AG3/AG4/SH1)?
 
 If any of the categories did not run, do not close the report. If the loop ran, check as well that the **<sec:loop_log>** contains every iteration.
+
+**Is the `Items to fix` list closed? (AR1)** — the report cannot be closed with an item left in a `[ ]` state with an `open` or `being fixed` field. Every item runs into one of three end states: `[x]` + `resolved (iter <n>)`, or `[x]` + `dismissed — <justification>`, or — on the `FAIL` branch — `[ ]` + `question (<PHASE>/Q<nn>)` or `open`, **explicitly as the documentation of the giving up**, referenced from the Loop log. An item left open next to a `PASS` is in itself a reason to reject the report.
 
 **Is the `<field:f_validated_base>` field filled in? (BR1)** — the name and SHA of the main branch (`git rev-parse origin/main`), the tip of the branch of the cycle (`git rev-parse HEAD`), and whether BR1 brought in anything appear in the header of the report. `06` and `09` **compare this with the state at their own run**: if the main branch has moved ahead in the meantime, the `PASS` of `analyze-report.md` was produced on an outdated base. With a placeholder or a missing field, the report cannot be closed. (In a No-VCS project the value of the field is `—`.)
 
@@ -406,7 +453,7 @@ If any of the categories did not run, do not close the report. If the loop ran, 
 There is no `<status:must_fix>` finding.
 
 What to do, **in order**:
-1. Write the status of `analyze-report.md` to `PASS`, fill in the `Loop:` field and the Loop log (if there was an iteration).
+1. The report already exists (AR1) — **do not rewrite it from scratch**: set its status from `IN_PROGRESS` to `PASS`, the `Current step:` field to `closed`, fill in the `Loop:` field and the Loop log (if there was an iteration), and tick off the remaining items of the `Items to fix` list with their end state.
 2. **Take the `[analyze-loop]` marker off** every affected document — the fixers gave the real closing status of the phase (`<status:ready_for_plan>` / `<status:ready_for_tasks>` / `<status:ready_for_implement>`); check that this is what stands on each of them.
 3. **A single closing commit** (there was no intermediate commit during the loop) — according to the procedure of the *Phase-closing commit* section, **mandatory**:
    ```bash
@@ -422,7 +469,7 @@ What to do, **in order**:
 The loop did not converge even after `max X = 3` iterations.
 
 What to do, **in order**:
-1. Write the status of `analyze-report.md` to `FAIL`, `<max X>/<max X> (given up)` into the `Loop:` field, and the stuck state into the Loop log (which `<status:must_fix>` remained, at which phase).
+1. The report already exists (AR1) — **do not rewrite it from scratch**: set its status from `IN_PROGRESS` to `FAIL`, the `Current step:` field to `closed`, `<max X>/<max X> (given up)` into the `Loop:` field, and the stuck state into the Loop log (which `<status:must_fix>` remained, at which phase). On the `Items to fix` list the stuck items stay in `[ ]` — that is the documentation of the giving up.
 2. **Leave the `[analyze-loop]` marker on** the affected documents — this way the user (or a next session) sees that the loop reopened them, and where it got stuck.
 3. **A single closing commit** — according to the procedure of the *Phase-closing commit* section, **mandatory** (the FAIL branch is no exception either):
    ```bash

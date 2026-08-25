@@ -82,11 +82,18 @@ A szkript ezen felül két nem-megállapítás blokkot is kiír:
   művelet) JELÖLTJEI. Ez az analyzerek BEMENETE: nem kell sem a repóban, sem a
   dokumentumokban célpontot keresniük — kapnak egy listát, és ítélnek.
 
+  `analyze-slices/` (SH1, csak `--emit-slices` mellett) — a HÁROM szemantikai
+  analyzer-kör (1+3., 2+5., 4. kategória) bemenete, a tervezési dokumentumok
+  szó szerinti kimetszéseként. Enélkül a három párhuzamos kör mindegyike a
+  teljes négyest olvasná: az eltelt idő csökkenne, a token-költség viszont
+  megháromszorozódna. A mappa `.gitignore`-ral rejti magát, tehát a fázis-záró
+  commit nem stage-eli.
+
 Amit NEM csinál: nem értelmez ott, ahol ítélet kell (kinek szól egy mondat,
 meglévő-e egy szimbólum), és nem javít.
 
 Használat:
-  analyze-gate-check.py specs/cycle-NN-<name> [--repo-root .]
+  analyze-gate-check.py specs/cycle-NN-<name> [--repo-root .] [--emit-slices]
 
 Kilépő kód: 0 = nincs BLOKKOLÓ megállapítás (javaslat és leltár lehet a stdout-on)
             1 = van Must Fix (a `## Must Fix` blokk a stdout-on, gépiesen olvasható)
@@ -1117,6 +1124,107 @@ def _force_utf8_output():
         except (AttributeError, ValueError):
             pass
 
+# ── Szeletelés (SH1) ─────────────────────────────────────────────────────────
+# Miért kell: a szemantikai diagnózist HÁROM párhuzamos analyzer-kör viszi
+# (1+3., 2+5. és 4. kategória). Ha mindhárom a teljes spec+plan+tasks+conventions
+# négyest olvassa, a párhuzamosság eltelt időt nyer, de a token-költséget
+# megháromszorozza. Ez a blokk determinisztikusan kimetszi minden körnek a SAJÁT
+# bemenetét — ugyanaz az elv, mint a leltárnál (AG3): a subagent ne keressen,
+# hanem ítéljen.
+#
+# A szelet-fájl FEJLÉCE szándékosan nyelvfüggetlen ASCII (`SOURCE-DOCS:`,
+# `MISSING-SECTIONS:`, `SLICE-CUT`): ugyanez a script írja magyar és angol
+# prompt-nyelv mellett is, a TÖRZSE pedig a projekt szövegének szó szerinti
+# másolata — ott a projekt nyelve érvényesül, fordítás nélkül.
+#
+# A `*` érték = a TELJES dokumentum (nincs értelme szekcióra vágni).
+SLICES = {
+    "s1-dup-underspec": {
+        "scope": "categories 1+3 (duplication, under-specification) — finding prefix: AF",
+        "spec.md": ["components_behavior", "definition_of_done", "test_specification",
+                    "schema_artifacts", "out_of_scope"],
+        "plan.md": ["planned_changes", "affected_components", "schema_artifacts",
+                    "new_dependencies", "test_specification", "testing_strategy",
+                    "verification_strategy", "risks_and_decisions",
+                    "spec_coverage", "reverse_coverage"],
+        "tasks.md": ["*"],
+        "conventions.md": [],
+    },
+    "s2-coverage": {
+        "scope": "categories 2+5 (ambiguity/measurability, coverage interpretation) — finding prefix: AC",
+        "spec.md": ["definition_of_done", "components_behavior", "test_specification",
+                    "out_of_scope"],
+        "plan.md": ["spec_coverage", "reverse_coverage", "test_specification",
+                    "config_lifecycle", "environment_coords", "machine_run_table"],
+        "tasks.md": ["*"],
+        "conventions.md": [],
+    },
+    "s3-conventions": {
+        "scope": "category 4 (convention conflict) — finding prefix: AN",
+        "spec.md": [],
+        "plan.md": ["goal_and_approach", "planned_changes", "new_dependencies",
+                    "config_build_changes", "testing_strategy", "verification_strategy",
+                    "machine_run_table", "environment_coords", "risks_and_decisions"],
+        "tasks.md": [],
+        "conventions.md": ["*"],
+    },
+}
+SLICE_DIR_NAME = "analyze-slices"
+SLICE_DOCS = ("spec.md", "plan.md", "tasks.md", "conventions.md")
+
+
+def _slice_part(doc, text, key):
+    """Egy szekció kimetszése a CÍMSORÁVAL együtt. Visszaad: (blokk, hiányzik?)."""
+    if key == "*":
+        return f"<!-- SLICE-CUT: {doc} (whole document) -->\n{text.strip()}\n", None
+    title = sec(key)
+    body = section_body(text, title)
+    if not body.strip():
+        return None, f"{doc} § {title}"
+    return f"<!-- SLICE-CUT: {doc} § {title} -->\n## {title}\n{body.strip()}\n", None
+
+
+def emit_slices(cycle, texts):
+    """A három szemantikai analyzer-kör bemenetének kiírása.
+
+    A mappa ÖNMAGÁT rejti el a git elől (`.gitignore` = `*`), ezért a fázis-záró
+    `git add specs/cycle-NN-<name>/` nem stage-eli, és a munkafa tisztaság-
+    ellenőrzését sem zavarja meg. Visszaad: [(név, útvonal, scope, hiányzók)]."""
+    out_dir = cycle / SLICE_DIR_NAME
+    out_dir.mkdir(exist_ok=True)
+    (out_dir / ".gitignore").write_text("*\n", encoding="utf-8")
+
+    written = []
+    for name, spec_def in SLICES.items():
+        parts, missing, used_docs = [], [], []
+        for doc in SLICE_DOCS:
+            keys = spec_def.get(doc) or []
+            if not keys or not texts.get(doc, "").strip():
+                continue
+            used_docs.append(doc)
+            for key in keys:
+                block, gap = _slice_part(doc, texts[doc], key)
+                if gap:
+                    missing.append(gap)
+                else:
+                    parts.append(block)
+        header = [
+            f"# SLICE: {name}",
+            f"# SCOPE: {spec_def['scope']}",
+            f"# SOURCE-DOCS: {', '.join(used_docs) or '-'}",
+            f"# ABSENT-SECTIONS: {'; '.join(missing) if missing else 'none'}",
+            "# RULE: verbatim extract of the cycle's design documents. Judge from this file.",
+            "#       An ABSENT section is either optional in this cycle, or already reported by",
+            "#       the mechanical gate (S1/S2) — do NOT go hunting for it. Read from the source",
+            "#       document only if you genuinely need it, and say so in your report.",
+            "",
+        ]
+        path = out_dir / f"{name}.md"
+        path.write_text("\n".join(header) + "\n".join(parts), encoding="utf-8")
+        written.append((name, path, spec_def["scope"], missing))
+    return written
+
+
 def main():
     _force_utf8_output()
     parser = argparse.ArgumentParser(description="Analyze mechanikus kapu (05-analyze)")
@@ -1128,6 +1236,12 @@ def main():
         "--plan-only",
         action="store_true",
         help="a 03-plan fázis lezárásához: csak a spec+plan checkek futnak (a tasks.md még nem létezik)",
+    )
+    parser.add_argument(
+        "--emit-slices",
+        action="store_true",
+        help="a 05-analyze-hoz: a három szemantikai analyzer-kör bemenetének kimetszése a "
+             "<ciklus>/analyze-slices/ mappába (SH1). `--plan-only` mellett nem fut.",
     )
     args = parser.parse_args()
 
@@ -1220,6 +1334,22 @@ def main():
         print("hozzák meg, így nem kell a repóban vagy a dokumentumokban célpontot keresniük.")
         for kind, message in rest:
             print(f"[{kind}] {message}")
+
+    if args.emit_slices and not args.plan_only:
+        written = emit_slices(cycle, {
+            "spec.md": spec_text, "plan.md": plan_text, "tasks.md": tasks_text,
+            "conventions.md": read(Path(args.conventions)) if Path(args.conventions).is_file() else "",
+        })
+        print(f"\n## Szeletek (SH1) — a szemantikai analyzer-körök BEMENETE")
+        print("Minden körnek a SAJÁT szeletét add át; a szelet a dokumentumok szó szerinti")
+        print("kimetszése, tehát a subagentnek nem kell a teljes négyest beolvasnia.")
+        for name, path, scope, missing in written:
+            print(f"[SZELET] {name} → {path} ({scope})")
+            if missing:
+                print(f"         nem talált szekció (opcionális vagy S1/S2 által már jelzett): "
+                      f"{'; '.join(missing)}")
+    elif args.emit_slices and args.plan_only:
+        print("\nA --emit-slices `--plan-only` mellett kimarad (a tasks.md még nem létezik).")
 
     if not f.items:
         print("\nNincs blokkoló mechanikus megállapítás.")

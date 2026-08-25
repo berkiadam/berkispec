@@ -299,3 +299,188 @@ python3 prompts/scripts/validate-gate-check.py <ciklusmappa> --stage close --req
 
 Egy commit a T1+T2 párosnak, egy a T3-nak, és ha kell, egy a T4-nek. Üzenet-minta a repó
 szokása szerint: `07.4: a megerősítő kör statikus rétege feltételessé válik (O1+O2)`.
+
+---
+---
+
+# II. Az 05-analyze gyorsítása — a maradék tételek
+
+> **Ez a rész önhordó, de NEM önálló dokumentum:** az I. rész (a 07 megerősítő köre) független
+> tőle, csak a fájl közös. A II. rész az `05-analyze` fázis gyorsítására tett hat javaslat
+> **maradéka**: az 1–3. tétel (a fixer önellenőrzése, a négy párhuzamos diagnoszta-kör
+> szeletelt bemenettel, a párhuzamos lokális fix-batch) **elkészült** — lásd a II.1 szakaszt.
+> **Státusz:** javaslat. A II.3–II.6 tétel egyike sincs eldöntve.
+
+---
+
+## II.1 Ami már elkészült (a kiindulási állapot)
+
+| Tétel | Szabály-ID | Hol él |
+|---|---|---|
+| A fixer a visszatérése ELŐTT maga futtatja a mechanikus kaput, és a `kapu:` mezőben jelenti az eredményt; a 4.b orchestrátor-kör védőhálóvá szelídült | `GS1` | `agents-{hu,en}/{spec,plan,tasks}-fixer.md`, `skills-*/05-analyze.md` 4.b |
+| A szemantikai diagnózis **három párhuzamos körre** oszlik (`s1-dup-underspec` = 1+3., `s2-coverage` = 2+5., `s3-conventions` = 4. kategória), a 6. kategória marad az `analyzer-exec`-nél → négy párhuzamos kör | `SH1` | `agents-*/analyzer.md` (hatókör-paraméter), `skills-*/05-analyze.md` („A négy diagnoszta-kör") |
+| A körök bemenetét a kapu **kimetszi** (`--emit-slices` → `<ciklus>/analyze-slices/*.md`, önmagát rejtő `.gitignore`-ral), így egyik kör sem olvassa a teljes négyest | `SH1` | `scripts/analyze-gate-check.py` (`SLICES`, `emit_slices`) |
+| Ha minden `Must Fix` **lokális** (megfogalmazás, hang, útvonal-formátum, duplikátum-összevonás, elromlott `[P-…]`), a fixerek egyetlen üzenetben, **párhuzamosan** indulnak, downstream re-deriválás nélkül | `LF1` | `skills-*/05-analyze.md` 1.a |
+
+**Amit ez a csomag NEM oldott meg** — ezek a II.3–II.6 tételek.
+
+---
+
+## II.2 Mérés — ezt kell megismételni döntés előtt
+
+A II.3–II.6 sorrendje attól függ, hogy **melyik a hosszú pólus**. Ez ma nincs megmérve, és
+találgatásból rossz tételt választanánk. A recept:
+
+1. Futtass egy éles `05-analyze` ciklust FAIL-lel (legalább 2 iteráció).
+2. A Hurok-naplóba iterációnként írasd bele: **a hívások számát** (kapu, kör, fixer), **a körök
+   eltelt idejét** külön-külön, és **az emberi kérdés-körök számát + a válaszra várás idejét**.
+3. A három szám aránya adja a döntést:
+   - ha az **emberi kérdés-körök** dominálnak → **II.3** (kérdés-batch) az első tétel;
+   - ha a **kör-tokenek** dominálnak → **II.4** (jelölt-inventory);
+   - ha az **iterációszám** dominál (3/3 feladva) → **II.5** (shard-szűkített közbenső kör).
+
+> **A II.1 utáni állapotot mérd, ne a régit.** A négy párhuzamos kör és a `GS1` már megváltoztatta
+> az arányokat: a fixer-körfordulások száma iterációnként 2–4-gyel csökkent.
+
+---
+
+## II.3 Döntés-jellegű tételek előre, BATCHELVE — döntést igényel
+
+**A probléma.** Egy döntést igénylő megállapítás ma a leglassabb úton jut a felhasználóhoz:
+kör → merge → fixer lefut → `Knn` → kérdés → válasz → fixer újra. A `TS` túlélés-szabály
+ráadásul csak a **második** túlélés után eszkalál, tehát a rossz esetben két iteráció ég el
+azelőtt, hogy a felhasználó egyáltalán meglátná a kérdést.
+
+**A javaslat.** Az összefésülésnél (a fixer indítása ELŐTT) osztályozd a tételeket
+`fixer-javítható` / `döntés-igényes` szerint. A döntés-igényeseket (ambiguitás, súlyos
+konvenció-ütközés, definiálatlan komponens) az orchestrátor **azonnal** felteszi — és **egy
+blokkban az összeset**, nem egyesével.
+
+**Miért döntést igényel.** Ütközik az „egyszerre egy kérdés" szabállyal, ami szándékos
+gyenge-modell-védelem (a `05` „Kérdezési szabályok" szekciója és a `shared/questions-tasks.md`).
+Az érv a batch mellett: itt az **orchestrátor** kérdez, nem a fixer, és a fázis eltelt idejének
+nagy részét épp az emberi körök adják. Az érv ellene: több kérdés egy blokkban a gyengébb
+modellnél összecsúszó válaszokat és félrevezetett `[x]` pipálást szül.
+
+**Három lehetséges alak (a döntés ezek között van):**
+
+- **A) Nincs batch, csak korábbi eszkaláció.** A `TS` az **első** túlélés után eszkalál a
+  döntés-jellegű kategóriákban. Egy iterációt nyer, szabályt nem sért. *(A legkisebb kockázat.)*
+- **B) Előre-osztályozás, egyesével kérdezve.** A döntés-igényes tételek a fixer előtt jönnek ki,
+  de továbbra is egy kérdés / egy válasz. A fixer-körfordulásokat nyerjük meg, az emberi
+  köröket nem.
+- **C) Előre-osztályozás + batch.** A teljes nyereség, a teljes szabály-ütközéssel.
+
+**Ha C mellett dönt a felhasználó, ez kell hozzá:**
+- [ ] `skills-{hu,en}/05-analyze.md` — az összefésülés (`A négy diagnoszta-kör` → `Az összefésülés
+      a te dolgod`) új 5. pontja: a `döntés-igényes` osztály definíciója + a batch-kérdés formátuma.
+- [ ] Ugyanott a „Kérdezési szabályok" szekcióban **kimondott kivétel**: az `05` orchestrátor
+      döntés-batchje az egyetlen hely, ahol több kérdés mehet egy blokkban — a fixerek és a többi
+      fázis szabálya nem változik.
+- [ ] A batch-formátum: számozott lista, tételenként `[FÁZIS · iter n/max X · FÁZIS/Knn]` fejléc,
+      és **kötelező visszaolvasás**: a válaszok átvezetése után az orchestrátor tételenként
+      visszaidézi, mit írt be, mielőtt a fixert indítja.
+- [ ] Elfogadás: egy éles ciklus, ahol 3 döntés-igényes tétel van — a hurok **egy** emberi körben
+      kapja meg mindhárom választ, és a `*-questions.md` mindhárom `[x]`-e a helyes döntést hordozza.
+
+---
+
+## II.4 Jelölt-inventory az 1–4. kategóriára (a `SH1` folytatása)
+
+**Az elv, ami már bizonyított.** A 6. kategóriát az `AG3` leltár tette olcsóvá: a subagent nem
+**keres**, hanem **ítél** egy kész jelölt-listán. Ugyanez a négy szemantikai kategóriára még nincs
+meg — a szeletelés (`SH1`) csak a **bemenet méretét** vágta le, a keresés munkáját nem.
+
+**Mit lehet gépiesen jelöltté tenni** (mind a `analyze-gate-check.py`-ba, a leltár mellé):
+
+| Kategória | Jelölt-generátor | Blokk |
+|---|---|---|
+| 1. duplikáció | normalizált bekezdés-/szakaszpárok `difflib.SequenceMatcher` hasonlósága a plan-en belül és plan↔tasks között, küszöb felett | `## Duplikátum-jelöltek` |
+| 2. ambiguitás | vágy-szótár (`megfelelő`, `gyors`, `robusztus`, `optimális`, `hatékony`) + **szám és összehasonlítás nélküli** `DoD-NN` és elfogadási sorok | `## Ambiguitás-jelöltek` |
+| 3. alulspecifikáció (KX3-próza) | a spec tábla- és listasorai, amelyek jellegzetes tokenje nem szerepel a plan-ben (a mai `V1`/`V2` csak kódblokkot és terjedelmet mér) | `## Csonkítás-jelöltek` |
+| 4. konvenció-ütközés | `conventions.md`-ből kulcs-érték tények kinyerése (stack, teszt-eszköz, elnevezés, útvonalak), majd ütköző tokenek keresése a plan-ben | `## Konvenció-jelöltek` |
+
+**Ez a legnagyobb token-nyereség, és a legnagyobb munka.** Becsült méret: 300–400 sor a kapuba,
+plusz a négy blokk átvezetése a három kör promptjába. A **fő kockázat a false-positive ráta**:
+minden jelölt-fajtát külön kell hangolni, mert egy zajos jelölt-lista rosszabb, mint a semmi
+(a kör az ítélet helyett a szűrésre megy el). Ezért:
+
+- [ ] **Egy jelölt-fajta = egy külön lépés, saját méréssel.** Kezdd a **2. kategóriával**
+      (a vágy-szótár a legkevésbé zajos), és csak akkor menj a következőre, ha a jelöltek
+      **legalább fele** valódi megállapítássá válik egy éles cikluson.
+- [ ] A jelölt-blokk **soha nem megállapítás**: a kapu `Must Fix` és `Javaslatok` blokkja nem nő
+      tőle, az exit code nem változik. Ugyanaz a szerződés, mint a leltárnál.
+- [ ] A kör promptja mondja ki: **a jelölt-lista nem szűkíti a hatókört** — a szeleten kívüli
+      megállapítás továbbra is jelenthető (különben a zajszűrés lefedettség-vesztéssé válik).
+
+---
+
+## II.5 Shard-szűkített közbenső kör + szakasz-hash cache
+
+**A probléma.** A `D10` szerint minden kör teljes, és `max X = 3` iterációban akár **három** teljes
+négy-körös diagnózis fut le — miközben a 2. és 3. iteráció jellemzően egyetlen dokumentum egyetlen
+szakaszát érinti.
+
+**A javaslat.** A `PASS` garanciáját megtartva:
+- az **1..n−1** iterációkban csak a kapu + azok a körök futnak, amelyek szeletét a
+  `git diff` érintette;
+- a `PASS` előtt **egy teljes kör** kötelező (ez marad a `D10` betűje).
+
+**Determinisztikus biztosíték.** A kapu a szelet-fájl fejlécébe írja minden bemeneti szakasz
+**tartalom-hash-ét**, és az `analyze-report.md` Hurok-naplója rögzíti őket. Egy kör csak akkor
+hagyható ki, ha **minden** input-szakaszának hash-e változatlan az előző körhöz képest. Ez nem
+LLM-ítélet, hanem összehasonlítás — ezért nem tud csendben lefedettséget veszíteni.
+
+- [ ] `scripts/analyze-gate-check.py` — `# SECTION-HASHES:` sor a szelet fejlécébe (szakaszonként
+      rövid `sha256`), és egy `--slice-hashes` kimeneti blokk az orchestrátornak.
+- [ ] `skills-{hu,en}/05-analyze.md` — a 6. lépés kap egy „mit kell újrafuttatni" alpontot,
+      a `D10` mellé kimondva, hogy a **PASS-kör** továbbra is teljes.
+- [ ] `lang/{hu,en}/05-analyze.md` — a Hurok-napló sor-formátuma kap egy `kihagyott körök:` mezőt
+      (audit-nyom: ha valaki később hibát talál, látszik, melyik kör mit nem nézett meg).
+- [ ] **Kockázat, amit ki kell mondani:** a kereszt-dokumentumos csatolás. Egy `tasks.md`-változás
+      nyithat rést olyan körben, aminek a szelete nem változott (pl. `s3-conventions`). Ezért a
+      kihagyás feltétele **minden** input-szakasz változatlansága, és nem elég a „saját"
+      dokumentum változatlansága.
+
+---
+
+## II.6 A drága tier háromszorozódása — a `SH1` nyitva hagyott ára
+
+**A tény.** Az `install-helper.py` `AGENT_MODEL_KEYS` **agent-stem szerint** rendel tiert
+(`analyzer` → `deep_reasoning_agent`). Mivel a három szemantikai kör **ugyanazt az `analyzer`
+definíciót** hívja, mind a három a **legdrágább** tieren fut. A szeletelés miatt a bemenet
+körönként jóval kisebb, tehát a token-összeg nagyságrendileg 1,3–1,5× (nem 3×), de ez az
+**Opus-osztályú** kereten jelenik meg — épp azon, amit a rendszer szándékosan egyetlen pontra
+szorít (README 5.3).
+
+**A javaslat.** Ha a drága keret a szűk keresztmetszet, a `s2-coverage` és/vagy az
+`s3-conventions` kör kapjon **saját agent-definíciót** `default` tieren:
+
+- [ ] `agents-{hu,en}/analyzer-conv.md` — a 4. kategória önálló, vékony diagnosztája
+      (`s3-conventions` a legjobb jelölt: a `conventions.md` kulcs-érték jellegű összevetése a
+      legkevesebb reasoningot igényli).
+- [ ] `lang/{hu,en}/descriptions.json` — `description` + `role` mindkét nyelven (LG26).
+- [ ] `scripts/install-helper.py` — `READONLY_AGENTS` (kötelező: read-only sandbox) és — ha
+      `default`-nál más kell — `AGENT_MODEL_KEYS`.
+- [ ] `models.json` — platformonként `effort` sor, ha a `default` nem jó.
+- [ ] `scripts/sync-gemini-agents.py` futtatása (az új agent `agent.json` váza automatikusan
+      létrejön), majd a `toolNames` kézi beállítása.
+- [ ] README: az agent-tábla, az 5.3 tier-tábla és az 5.4 ábra.
+
+> **Miért nem ez lett az első megoldás.** Egy új agent-definíció **hét** felületet érint (fenti
+> lista), a hatókör-paraméter viszont egyet. A II.1 ezért a kis felületű utat választotta —
+> a tier-szétválasztás akkor válik indokolttá, ha a mérés (II.2) kimutatja a drága keret
+> telítődését.
+
+---
+
+## II.7 Amit szándékosan NEM javasolunk
+
+1. **Az analyzer szűkítése a `git diff`-re.** A `D10` pont ezt zárja ki: a kereszt-fázisos hiba
+   jellemzően a **nem változott** oldalon nyílik. A II.5 hash-alapú kihagyása más dolog —
+   ott a kihagyás feltétele bizonyított változatlanság, nem heurisztika.
+2. **A `BR1` friss-alap ellenőrzés elhagyása.** Az adja a `PASS` érvényességét; nélküle a
+   `06` és a `09` összevetése értelmetlenné válik.
+3. **A `Végrehajthatósági leltár` opcionálissá tétele.** A `05` minőségellenőrzése kimondja: e
+   nélkül a PASS nem fogadható el, mert épp azok a hibák maradnának rejtve, amiket a lefedettségi
+   mátrix szerkezetileg nem lát.

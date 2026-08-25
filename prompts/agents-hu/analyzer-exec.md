@@ -87,6 +87,7 @@ Add vissza a hívó skillnek (ne írj fájlt; a 05-analyze skill írja az `analy
 ```md
 ## Must Fix
 - [ ] **AX-NN** — <kategória (6.x)> — <leírás> → célfázis: <fázis> (`fájl:hely`)
+      **miért blokkol:** <egy mondat: mi romolhat el az implementációban, ha így marad>
 
 ## Suggestions
 - <kategória (6.x)> — <leírás> (`fájl:hely`)

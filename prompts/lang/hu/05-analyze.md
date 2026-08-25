@@ -11,8 +11,9 @@
 <!-- ANCHOR:analyze-report-struktura -->
 # Cycle NN: <cím> — Analyze report
 
-**Státusz:** PASS | FAIL
+**Státusz:** IN_PROGRESS | PASS | FAIL
 **Futás:** YYYY-MM-DD HH:MM
+**Aktuális lépés:** <mit csinál most a fázis — pl. „iter 2/3 · a plan-fixer az AF-03, AN-01 tételeken dolgozik", vagy „lezárva">
 **Hurok:** <iterációk száma> / <max X> (PASS | feladva)
 **Validált alap:** `<fő branch neve>@<SHA>` · ciklus ág: `<branch>@<SHA>` (BR1: `behozva` | `nem volt szükséges`)
 
@@ -20,17 +21,28 @@
 
 _Egy-két mondat: konzisztens-e a négyes, vagy hol van a baj, és hogyan zárult a hurok._
 
-## Megállapítások (utolsó analyze)
+## Javítandó tételek (AR1)
+
+_Ez a lista a diagnózis után **azonnal** elkészül, még az első javítás előtt, és a hurok minden
+lépésénél frissül — ez a felhasználó ablaka a fázisra. Egy tétel = egy pipálható sor, alatta
+emberi nyelvű magyarázat. Tételt utólag **nem törlünk**: a megoldott tétel `[x]`-szel marad, ez az
+audit-nyom. Az `analyze-slices/` mappa a diagnoszta-körök **bemenete** (gitignore-olt szeletek,
+a tervezési dokumentumok szó szerinti kimetszései), nem eredmény — hogy „mi a baj", kizárólag itt
+olvasható._
 
 ### Must Fix
-- [ ] <kategória> — <leírás> → célfázis: <fázis> (`fájl:hely` ha van)
+- [ ] **AF-01** · <kategória> · `fájl:hely`
+      **Mi a baj:** <egy-két mondat emberi nyelven: mit állít most a dokumentum, és miért hibás — a kategória neve önmagában nem magyarázat>
+      **Miért blokkol:** <mi romolhat el az implementációban, ha így marad>
+      **Célfázis:** <02-spec | 03-plan | 04-tasks>
+      **Állapot:** nyitott | javítás alatt (iter <n>) | kérdés (<FÁZIS>/K<nn>) | megoldva (iter <n>) | elvetve — <indoklás>
 
 ### Suggestions
 - <kategória> — <leírás>
 
 ## Végrehajthatósági leltár (6. kategória)
 
-_Az `analyzer` subagent kimenetéből átvéve; a `(kapu)` jelölésű mezők a mechanikus kapu eredményéből. **Kötelező szekció** — ha hiányzik, a PASS nem fogadható el._
+_Az `analyzer-exec` kör kimenetéből átvéve; a `(kapu)` jelölésű mezők a mechanikus kapu eredményéből. **Kötelező szekció** — ha hiányzik, a PASS nem fogadható el._
 
 **Futtatott artefaktumok (kapu, A1):** <rendben / HIÁNYZIK: ...>
 **Prózában ígért tesztek:** <ígéret → teszteset + task / HIÁNYZIK>
@@ -45,8 +57,8 @@ _Az `analyzer` subagent kimenetéből átvéve; a `(kapu)` jelölésű mezők a 
 
 _**Honnan jön (K/AG4):** ezt a mátrixot a **mechanikus kapu generálja** (`## Lefedettségi mátrix (generált)` blokk), és te **szó szerint** fűzöd ide — nem az LLM vezeti le újra. A `Lefedve (gépi)` oszlop kizárólag a `DoD-NN → [P-…] → task` **lánc meglétét** jelenti._
 _**Két javítást te végzel a beillesztett táblán:**_
-1. _ha az `analyzer` egy `✓` sorra **tartalmi** hiányt jelentett (`Érintett DoD-sorok`), írd át `✗`-re, és a `Megjegyzés` oszlopba a `Must Fix` rövid hivatkozását;_
-2. _ugyanez, ha az `analyzer-exec` jelezte, hogy a sor taskja **nem fut le** (végrehajthatósági `Must Fix`)._
+1. _ha az `s2-coverage` kör egy `✓` sorra **tartalmi** hiányt jelentett (`Érintett DoD-sorok`), írd át `✗`-re, és a `Megjegyzés` oszlopba a `Must Fix` rövid hivatkozását;_
+2. _ugyanez, ha az `analyzer-exec` kör jelezte, hogy a sor taskja **nem fut le** (végrehajthatósági `Must Fix`)._
 
 _**Mikor (D12):** a végleges tábla a **konvergáló (utolsó, `Must Fix` nélküli) kör** kapu-kimenetéből kerül a riportba, egyszer. Ha a hurok `max X`-nél feladja, az utolsó rendelkezésre álló kapu-kimenetet illeszd be, és jelöld: „(feladáskori állapot)"._
 
@@ -54,7 +66,7 @@ _**Mikor (D12):** a végleges tábla a **konvergáló (utolsó, `Must Fix` nélk
 |---|---|---|---|---|
 | `DoD-01` | `[P-CONFIG]` | T001, T002 | ✓ / ✗ | <a tartalmi/végrehajthatósági Must Fix hivatkozása, ha ✗> |
 
-**`DoD-NN`-en túli követelmények** (az `analyzer` 5. kategóriájából — a generált mátrix ezeket nem látja):
+**`DoD-NN`-en túli követelmények** (az `s2-coverage` kör 5. kategóriájából — a generált mátrix ezeket nem látja):
 - <spec-követelmény task nélkül> _(vagy: „nincs ilyen")_
 
 ## Plan-szekció ↔ task (PID1)

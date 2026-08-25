@@ -18,7 +18,7 @@
     "role": "Executability and artifact-ownership analyst specialist agent"
   },
   "analyzer": {
-    "description": "Read-only cross-phase SEMANTIC consistency diagnosis between spec.md/plan.md/tasks.md/conventions.md, before the implementation (categories 1–5: duplication, ambiguity, under-specification, convention conflict, coverage interpretation). Category 6 is carried by analyzer-exec, in parallel. The 05-analyze skill calls it.",
+    "description": "Read-only cross-phase SEMANTIC consistency diagnosis across spec.md/plan.md/tasks.md/conventions.md, before implementation (categories 1–5: duplication, ambiguity, under-specification, convention conflict, coverage interpretation). The caller gives a SCOPE (s1-dup-underspec / s2-coverage / s3-conventions), so it runs in three parallel rounds, each from the slice cut by the gate. Category 6 is carried by analyzer-exec, also in parallel. Invoked by the 05-analyze skill.",
     "role": "Cross-phase consistency analyst specialist agent"
   },
   "doc-sync-planner": {
