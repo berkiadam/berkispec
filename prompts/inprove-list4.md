@@ -1454,7 +1454,37 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
 
 ## 12. A telepítő
 
-- [ ] **12.1 — `install.sh`: két nyelvi kérdés.** A platform-választó mintájára (a *„Melyik AI
+> **✅ A 12. SZAKASZ KÉSZ (2026-08-25).** `install.sh` és `install.ps1` egyaránt.
+>
+> - **12.1/12.2 — a két nyelvi kérdés** a platform-választó után (`2/b. lépés`), külön
+>   magyarázattal, hogy melyik tengely mit jelent (*„amit az ágens olvas"* vs *„amit az ágens
+>   ír"*). Default: prompt = **English**, projekt = **Magyar** (LG7). Az öt helper-hívás
+>   mindkét scriptben megkapja a 4. és 5. argumentumot.
+> - **12.3 — a záró összefoglaló** kiírja mindkét nyelvet, és **külön figyelmeztet**, hogy
+>   bedrótozódtak, tehát csak újratelepítéssel változtathatók. Emellett `projekt = English`
+>   választásnál a nyelvi kérdés után **azonnal** jelez, hogy a kapu-scriptek üzenetei még
+>   magyarok (a §10 hiánya — a 17.2 rövidített út elvárása).
+> - **12.4 — nem interaktív mód:** `--platform`, `--prompt-lang`, `--project-lang`, `--path`,
+>   `--force`, `--help` (a `.ps1`-ben `param()` blokkal, `-Platform` … `-Help`). **Flag nélkül a
+>   régi interaktív út fut változatlanul**; részleges megadásnál a hiányzókat kérdezi. Az
+>   ütközés-kezelés `--force` nélkül **megáll** (`exit 1`), nem ír felül csendben — a
+>   kölcsönös-kizárás kérdése (Codex ↔ Antigravity) ugyanígy.
+> - **12.5 — nem igényelt változtatást, csak ellenőrzést:** a `00-init-project` **nem kérdez**
+>   projekt-nyelvet, és a `conventions.md` sablonjában sincs nyelvi mező (a Tech stack
+>   `**Nyelv:**` sora a *programozási* nyelv — az `en` blokkban helyesen `**Language:**`).
+>   A 7.7 `sdd-lightweight-flow` hivatkozások már a §7-ben javítva lettek.
+>
+> **Verifikáció:** `install.sh` nem-interaktív módban **4 nyelvkombináció × 5 platform = 20
+> futás, mind exit 0**, és a telepített `bs-02-write-spec` mind a négy kombinációban a **kért**
+> nyelvpárt hordozza (`en/hu` → angol prompt + `Tervezésre kész`; `hu/en` → magyar prompt +
+> `Ready for planning`). A `--force` nélküli ütközés `exit 1`-gyel megáll, `--force`-szal
+> felülír. A `--prompt-lang xx` és az ismeretlen platform `exit 2`-t ad.
+> *(A `.ps1` futtatása ezen a gépen nem lehetséges — nincs `pwsh` —, ezért statikus
+> ellenőrzés futott: zárójel-egyensúly, a `param()` blokk helye, az öt helper-hívás
+> nyelvi argumentuma, a `Ask-Languages`/`Get-LangLabel`/`Show-Usage`/`Initialize-FromParams`
+> megléte és bekötése. **Ezt Windowson egyszer futtatva érdemes visszaigazolni.**)*
+
+- [x] **12.1 — `install.sh`: két nyelvi kérdés.** A platform-választó mintájára (a *„Melyik AI
   agent platformot használod?"* blokk, ~180–200. sor), **a platform-kérdés után**:
   ```
   Milyen nyelvűek legyenek a promptok?   1) English [default]   2) Magyar
@@ -1464,16 +1494,16 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
   Az `install-helper.py` **öt** hívása (372/414/456/498/561. sor) kapja meg őket 4. és 5.
   argumentumként.
 
-- [ ] **12.2 — `install.ps1`: ugyanez** `Read-Host`-tal (minta: a ~210. sor környéki
+- [x] **12.2 — `install.ps1`: ugyanez** `Read-Host`-tal (minta: a ~210. sor környéki
   platform-választó). `$SKILLS_SRC` a 66. sorban; a helper-hívások a 395/440/485/530/595. sorban.
 
-- [ ] **12.3 — Visszajelzés a telepítés végén (LG2 maradék kockázat).** A záró összefoglaló írja
+- [x] **12.3 — Visszajelzés a telepítés végén (LG2 maradék kockázat).** A záró összefoglaló írja
   ki **hangosan mindkét nyelvet**, és jelezze, hogy ezek a telepített promptokba
   **bedrótozódtak**, tehát utólag csak újratelepítéssel változtathatók. Mivel a projektben
   semmilyen nyelvi mező nem él (LG17), ez az **egyetlen** hely, ahol a felhasználó szembesül a
   választásával — nem elhagyható kozmetika.
 
-- [ ] **12.4 — Nem interaktív mód (LG20).** Ma nincs ilyen: se `getopts`, se `usage`, minden
+- [x] **12.4 — Nem interaktív mód (LG20).** Ma nincs ilyen: se `getopts`, se `usage`, minden
   választ `read -r` kér be (a `.ps1`-ben `Read-Host`). Az új, minimális mód:
   - `--platform <claude|codex|antigravity|cursor|copilot>`, `--prompt-lang <hu|en>`,
     `--project-lang <hu|en>`, `--path <cél>`, `--help`;
@@ -1484,7 +1514,7 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
     ne írjon felül csendben;
   - ugyanez a `.ps1`-ben, `param(...)` blokkal.
 
-- [ ] **12.5 — `00-init-project.md` takarítás.** Ne kérdezzen projekt-nyelvet, és a
+- [x] **12.5 — `00-init-project.md` takarítás.** Ne kérdezzen projekt-nyelvet, és a
   `conventions.md` sablonjába se generálj nyelvi mezőt (LG17). *(A 7.7 szerinti két elavult
   `sdd-lightweight-flow` hivatkozás javítása szintén ebben a fájlban van.)*
 

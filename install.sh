@@ -43,6 +43,23 @@ PROJECT_PATH=""
 PLATFORM_CHOICE="" # "antigravity" vagy "claude" vagy "copilot"
 INSTALL_STATUS=""  # "done" vagy "skipped" (ütközés esetén kihagyva)
 
+# ── Nyelvi választás (LG1/LG7) ──────────────────────────────────────────────
+# KÉT FÜGGETLEN tengely, mindkettő `hu` | `en`, és ORTOGONÁLISAK:
+#   PROMPT_LANG_CHOICE  — milyen nyelvű INSTRUKCIÓT kap az ágens (default: en)
+#   PROJECT_LANG_CHOICE — milyen nyelven ÍR a projektbe és a felhasználónak (default: hu)
+# Mindkettő BUILD-TIME dől el és bedrótozódik a telepített promptba (LG2): a
+# projektben semmilyen nyelvi mező nem marad (LG17), tehát utólag csak
+# újratelepítéssel változtatható. Ezért írja ki a záró összefoglaló hangosan (12.3).
+PROMPT_LANG_CHOICE=""
+PROJECT_LANG_CHOICE=""
+
+# ── Nem interaktív mód (LG20) ───────────────────────────────────────────────
+# Ha EGYETLEN flag sincs megadva, a mai interaktív út fut változatlanul — ez a
+# visszafelé kompatibilitás feltétele. Részlegesen megadott flagek esetén a
+# megadottakat használjuk, a többit interaktívan kérdezzük.
+NON_INTERACTIVE=0
+FORCE=0
+
 # ── Segédfüggvények ─────────────────────────────────────────────────────────
 info()    { echo -e "  ${CYAN}ℹ${RESET}  $*"; }
 
@@ -255,6 +272,83 @@ ask_agent_platform() {
   fi
 }
 
+# ── 2/b. lépés: Nyelvi választás (LG1/LG7) ──────────────────────────────────
+# A két tengely FÜGGETLEN. A leggyakoribb eset — és a default — az `EN` prompt +
+# `HU` projekt: az angol instrukció olcsóbb (tokenben) és a gyenge modellek
+# pontosabban követik, miközben a leadott dokumentáció magyar marad.
+ask_languages() {
+  # Flaggel megadott értéket nem kérdezünk újra (12.4: részleges flag-megadás).
+  if [[ -n "${PROMPT_LANG_CHOICE}" && -n "${PROJECT_LANG_CHOICE}" ]]; then
+    return 0
+  fi
+
+  step "2/b. lépés: Nyelvek kiválasztása"
+  echo ""
+  echo -e "  ${GRAY}Két külön beállítás — nem ugyanaz, és nem is kell egyezniük.${RESET}"
+  echo ""
+
+  local choice=""
+
+  if [[ -z "${PROMPT_LANG_CHOICE}" ]]; then
+    echo -e "  ${WHITE}Milyen nyelvűek legyenek a PROMPTOK?${RESET}"
+    echo -e "  ${GRAY}(amit az ágens olvas — a te dokumentumaidat nem érinti)${RESET}"
+    echo ""
+    echo -e "  ${CYAN}1)${RESET} English ${GRAY}[alapértelmezett]${RESET}"
+    echo -e "  ${CYAN}2)${RESET} Magyar"
+    echo ""
+    while true; do
+      echo -ne "  ${MAGENTA}❯${RESET} Választás [1-2, Enter = 1]: "
+      read -r choice
+      case "${choice}" in
+        ""|1) PROMPT_LANG_CHOICE="en"; break ;;
+        2)    PROMPT_LANG_CHOICE="hu"; break ;;
+        *)    warn "Kérlek válassz 1 vagy 2 közül." ;;
+      esac
+    done
+    echo ""
+  fi
+
+  if [[ -z "${PROJECT_LANG_CHOICE}" ]]; then
+    echo -e "  ${WHITE}Milyen nyelvű legyen a PROJEKT?${RESET}"
+    echo -e "  ${GRAY}(amit az ágens ÍR: spec.md, plan.md, riportok, és amit neked válaszol)${RESET}"
+    echo ""
+    echo -e "  ${CYAN}1)${RESET} Magyar ${GRAY}[alapértelmezett]${RESET}"
+    echo -e "  ${CYAN}2)${RESET} English"
+    echo ""
+    while true; do
+      echo -ne "  ${MAGENTA}❯${RESET} Választás [1-2, Enter = 1]: "
+      read -r choice
+      case "${choice}" in
+        ""|1) PROJECT_LANG_CHOICE="hu"; break ;;
+        2)    PROJECT_LANG_CHOICE="en"; break ;;
+        *)    warn "Kérlek válassz 1 vagy 2 közül." ;;
+      esac
+    done
+    echo ""
+  fi
+
+  success "Prompt nyelve: ${BOLD}$(lang_label "${PROMPT_LANG_CHOICE}")${RESET} · Projekt nyelve: ${BOLD}$(lang_label "${PROJECT_LANG_CHOICE}")${RESET}"
+
+  # A §10 (script-i18n) még nem készült el: a kapu-scriptek üzenetei és a
+  # bennük keresett artefaktum-stringek magyarok. `projekt = English` mellett
+  # ezt ki KELL mondani, különben a felhasználó csendben hibás kapukat kap.
+  if [[ "${PROJECT_LANG_CHOICE}" == "en" ]]; then
+    echo ""
+    warn "A projekt nyelve ${BOLD}English${RESET}, de a kapu-scriptek üzenetei még magyarok."
+    echo -e "  ${GRAY}A determinisztikus kapuk (riport-, DoD-, kör-napló ellenőrzés) magyar"
+    echo -e "  szekciónevekre illesztenek, ezért angol projekt-nyelvvel egy részük hibázhat.${RESET}"
+  fi
+}
+
+# Nyelvi kód → ember-olvasható címke.
+lang_label() {
+  case "$1" in
+    en) printf 'English' ;;
+    hu) printf 'Magyar' ;;
+    *)  printf '%s' "$1" ;;
+  esac
+}
+
 # ── Ütközés kezelés ─────────────────────────────────────────────────────────
 # Visszatérési értékek: 0=felülír, 1=kihagy, 2=abort
 handle_conflict() {
@@ -300,6 +394,22 @@ ask_conflict() {
   local target="$1"
   local type="$2"
 
+  # Nem interaktív módban NEM kérdezünk és NEM írunk felül csendben (LG20):
+  # `--force` nélkül megállunk. A csendes felülírás pont az a hibaosztály,
+  # ami miatt egy scriptelt telepítés visszafordíthatatlan kárt okozhat.
+  if [[ "${NON_INTERACTIVE}" -eq 1 ]]; then
+    if [[ "${FORCE}" -eq 1 ]]; then
+      CONFLICT_ANSWER=0
+      warn "Felülírás (--force): ${DIM}${target}${RESET} (${type})"
+    else
+      error "Már létezik: ${target} (${type})."
+      echo -e "  ${GRAY}Nem interaktív módban nem írom felül. Adj meg ${BOLD}--force${RESET}${GRAY}-ot,"
+      echo -e "  vagy futtasd a scriptet flagek nélkül, interaktív módban.${RESET}"
+      exit 1
+    fi
+    return 0
+  fi
+
   CONFLICT_ANSWER=0
   handle_conflict "${target}" "${type}" || CONFLICT_ANSWER=$?
 }
@@ -318,6 +428,14 @@ check_mutual_exclusion() {
     warn "Úgy tűnik, a(z) ${BOLD}${other_name}${RESET} már telepítve van ebbe a projektbe."
     echo -e "  ${GRAY}A Codex és az Antigravity a közös ${BOLD}.agents/skills/${RESET}${GRAY} mappát használja,"
     echo -e "  ezért a folytatás felülírhatja a(z) ${other_name} skilljeit.${RESET}"
+    if [[ "${NON_INTERACTIVE}" -eq 1 ]]; then
+      if [[ "${FORCE}" -eq 1 ]]; then
+        warn "Folytatás (--force)."
+        return 0
+      fi
+      error "Nem interaktív módban megállok. Adj meg --force-ot, ha tudatosan felülírod."
+      exit 1
+    fi
     echo -ne "    ${YELLOW}?${RESET} Biztosan folytatod? [${BOLD}i${RESET}/${BOLD}n${RESET}]: "
     local answer=""
     read -r answer
@@ -369,7 +487,7 @@ install_antigravity() {
   separator
 
   info "Fájlok másolása és modellek konfigurálása..."
-  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "antigravity" "${SCRIPT_DIR}" "${PROJECT_PATH}"; then
+  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "antigravity" "${SCRIPT_DIR}" "${PROJECT_PATH}" "${PROMPT_LANG_CHOICE}" "${PROJECT_LANG_CHOICE}"; then
     success "Antigravity ágensek és skillek sikeresen konfigurálva és másolva!"
     INSTALL_STATUS="done"
   else
@@ -411,7 +529,7 @@ install_claude() {
   separator
 
   info "Fájlok másolása és modellek konfigurálása..."
-  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "claude" "${SCRIPT_DIR}" "${PROJECT_PATH}"; then
+  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "claude" "${SCRIPT_DIR}" "${PROJECT_PATH}" "${PROMPT_LANG_CHOICE}" "${PROJECT_LANG_CHOICE}"; then
     success "Claude ágensek és skillek sikeresen konfigurálva és másolva!"
     INSTALL_STATUS="done"
   else
@@ -453,7 +571,7 @@ install_copilot() {
   separator
 
   info "Fájlok másolása és modellek konfigurálása..."
-  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "copilot" "${SCRIPT_DIR}" "${PROJECT_PATH}"; then
+  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "copilot" "${SCRIPT_DIR}" "${PROJECT_PATH}" "${PROMPT_LANG_CHOICE}" "${PROJECT_LANG_CHOICE}"; then
     success "Copilot ágensek és skillek sikeresen konfigurálva és másolva!"
     INSTALL_STATUS="done"
   else
@@ -495,7 +613,7 @@ install_cursor() {
   separator
 
   info "Fájlok másolása és modellek konfigurálása..."
-  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "cursor" "${SCRIPT_DIR}" "${PROJECT_PATH}"; then
+  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "cursor" "${SCRIPT_DIR}" "${PROJECT_PATH}" "${PROMPT_LANG_CHOICE}" "${PROJECT_LANG_CHOICE}"; then
     success "Cursor rule-ok és command-ok sikeresen konfigurálva és másolva!"
     INSTALL_STATUS="done"
   else
@@ -558,7 +676,7 @@ install_codex() {
   separator
 
   info "Fájlok másolása és modellek konfigurálása..."
-  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "codex" "${SCRIPT_DIR}" "${PROJECT_PATH}"; then
+  if python3 "${SCRIPT_DIR}/prompts/scripts/install-helper.py" "codex" "${SCRIPT_DIR}" "${PROJECT_PATH}" "${PROMPT_LANG_CHOICE}" "${PROJECT_LANG_CHOICE}"; then
     success "Codex subagentek (TOML) és skillek sikeresen konfigurálva és másolva!"
     INSTALL_STATUS="done"
   else
@@ -603,6 +721,16 @@ show_summary() {
   echo -e "  ${GREEN}${BOLD}🎉 Telepítés kész!${RESET}"
   echo ""
   echo -e "  ${WHITE}Projekt:${RESET}  ${BOLD}${PROJECT_PATH}${RESET}"
+
+  # ── Nyelvi visszajelzés (12.3 / LG2) ──
+  # Ez az EGYETLEN hely, ahol a felhasználó szembesül a nyelvi választásával:
+  # a projektbe semmilyen nyelvi mező nem kerül (LG17), tehát utólag sehol nem
+  # tudja megnézni, mit választott. Ezért nem elhagyható kozmetika.
+  echo -e "  ${WHITE}Prompt nyelve:${RESET}  ${BOLD}$(lang_label "${PROMPT_LANG_CHOICE}")${RESET} ${GRAY}(amit az ágens olvas)${RESET}"
+  echo -e "  ${WHITE}Projekt nyelve:${RESET} ${BOLD}$(lang_label "${PROJECT_LANG_CHOICE}")${RESET} ${GRAY}(amit az ágens ír: spec.md, plan.md, riportok, válaszok)${RESET}"
+  echo ""
+  echo -e "  ${YELLOW}⚠${RESET}  ${GRAY}Mindkét nyelv ${BOLD}bedrótozódott${RESET}${GRAY} a telepített promptokba."
+  echo -e "     A projektben nincs nyelvi beállítás, ezért a váltás csak ${BOLD}újratelepítéssel${RESET}${GRAY} lehetséges.${RESET}"
 
   if [[ "${PLATFORM_CHOICE}" == "antigravity" ]]; then
     echo -e "  ${WHITE}Platform:${RESET} ${BOLD}Google Antigravity CLI${RESET}"
@@ -677,12 +805,101 @@ show_summary() {
   echo ""
 }
 
+# ── Használat (LG20) ────────────────────────────────────────────────────────
+usage() {
+  cat <<'USAGE'
+BerkiSpec telepítő
+
+Használat:
+  ./install.sh                      interaktív mód (változatlan, ez a default)
+  ./install.sh [flagek]             nem interaktív / részlegesen előre kitöltött mód
+
+Flagek:
+  --platform <név>       claude | codex | antigravity | cursor | copilot
+  --prompt-lang <nyelv>  hu | en    — az ágens INSTRUKCIÓINAK nyelve   (default: en)
+  --project-lang <nyelv> hu | en    — amit az ágens ÍR a projektbe     (default: hu)
+  --path <útvonal>       a célprojekt könyvtára
+  --force                ütközésnél felülír (enélkül nem interaktív módban MEGÁLL)
+  -h, --help             ez a súgó
+
+Megjegyzés:
+  Ha EGYETLEN flaget sem adsz meg, a régi interaktív út fut változatlanul.
+  Ha csak néhányat adsz meg, a megadottakat használom, a többit megkérdezem.
+
+  A két nyelvi beállítás FÜGGETLEN, és a telepített promptokba BEDRÓTOZÓDIK —
+  utólag csak újratelepítéssel változtatható.
+
+Példa:
+  ./install.sh --platform claude --prompt-lang en --project-lang hu --path ~/projekt
+USAGE
+}
+
+# Egy nyelvi flag értékének ellenőrzése (`hu` | `en`).
+validate_lang() {
+  local value="$1" flag="$2"
+  case "${value}" in
+    hu|en) return 0 ;;
+    *)
+      error "A(z) ${flag} értéke csak 'hu' vagy 'en' lehet (kaptam: '${value}')."
+      exit 2
+      ;;
+  esac
+}
+
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --platform)
+        [[ -n "${2:-}" ]] || { error "A --platform után hiányzik az érték."; exit 2; }
+        case "$2" in
+          claude|codex|antigravity|cursor|copilot) PLATFORM_CHOICE="$2" ;;
+          *) error "Ismeretlen platform: '$2'. Lehetséges: claude, codex, antigravity, cursor, copilot."; exit 2 ;;
+        esac
+        NON_INTERACTIVE=1; shift 2 ;;
+      --prompt-lang)
+        [[ -n "${2:-}" ]] || { error "A --prompt-lang után hiányzik az érték."; exit 2; }
+        validate_lang "$2" "--prompt-lang"; PROMPT_LANG_CHOICE="$2"; NON_INTERACTIVE=1; shift 2 ;;
+      --project-lang)
+        [[ -n "${2:-}" ]] || { error "A --project-lang után hiányzik az érték."; exit 2; }
+        validate_lang "$2" "--project-lang"; PROJECT_LANG_CHOICE="$2"; NON_INTERACTIVE=1; shift 2 ;;
+      --path)
+        [[ -n "${2:-}" ]] || { error "A --path után hiányzik az érték."; exit 2; }
+        PROJECT_PATH="$2"; NON_INTERACTIVE=1; shift 2 ;;
+      --force)
+        FORCE=1; NON_INTERACTIVE=1; shift ;;
+      -h|--help)
+        usage; exit 0 ;;
+      *)
+        error "Ismeretlen kapcsoló: '$1'"; echo ""; usage; exit 2 ;;
+    esac
+  done
+
+  # Nem interaktív módban a hiányzó nyelvi értékek a defaultra esnek (LG7) —
+  # a platformot és az útvonalat viszont NEM találjuk ki: azokat vagy flaggel
+  # adod meg, vagy interaktívan kérdezzük.
+  if [[ "${NON_INTERACTIVE}" -eq 1 ]]; then
+    [[ -n "${PROMPT_LANG_CHOICE}" ]]  || PROMPT_LANG_CHOICE="en"
+    [[ -n "${PROJECT_LANG_CHOICE}" ]] || PROJECT_LANG_CHOICE="hu"
+  fi
+
+  # A `--path` ellenőrzése: nem interaktív módban nem kérdezhetünk vissza.
+  if [[ -n "${PROJECT_PATH}" ]]; then
+    if [[ ! -d "${PROJECT_PATH}" ]]; then
+      error "A megadott célprojekt nem létezik: ${PROJECT_PATH}"
+      exit 2
+    fi
+    PROJECT_PATH="$(cd "${PROJECT_PATH}" && pwd)"
+  fi
+}
+
 # ── Főprogram ───────────────────────────────────────────────────────────────
 main() {
+  parse_args "$@"
   show_logo
   show_welcome
-  ask_project_path
-  ask_agent_platform
+  [[ -n "${PROJECT_PATH}" ]] || ask_project_path
+  [[ -n "${PLATFORM_CHOICE}" ]] || ask_agent_platform
+  ask_languages
   create_symlinks
   # A célmappa megjegyzése a következő futtatáshoz (lásd `history` fájl).
   [[ -n "${PROJECT_PATH}" ]] && save_history "${PROJECT_PATH}" "${PLATFORM_CHOICE}"
