@@ -1,0 +1,60 @@
+{
+  "bs-init-project": "berkispec - 00. Használd a projekt legelső indításakor (Phase 00), vagy ha a gyökér 'conventions.md' hiányzik/hiányos. A fejlesztővel közösen rögzíti a globális projektkonvenciókat (tech stack, teszt, fejlesztési flow, git merge stratégia) a 'conventions.md'-ben — ez minden további fázis előfeltétele.",
+  "bs-add-cycles": "berkispec - 01. Használd az inicializálás után (Phase 01) fejlesztési ciklusok (roadmap) tervezéséhez, meglévők átütemezéséhez vagy új ciklus hozzáadásához — a feladatok logikai, önállóan tesztelhető egységekre bontása. Bemenet: 'conventions.md', opcionálisan egy brainstorm session ('brainstorm: NN' — a '/bs-brainstorm' munkafájljából desztillálja a 'cycle-design-input.md'-t, BS18). A 'specs/roadmap.md'-t hozza létre vagy frissíti 'Kész' státusszal.",
+  "bs-write-spec": "berkispec - 02. Használd egy ciklus indításakor (Phase 02) a roadmap alapján, a funkcionális/üzleti követelmények specifikálásához. A ciklus git branch-én dolgozik (a branch a 01 fázisban jött létre 'main'-ről), és létrehozza a 'spec.md'-t ('Tervezésre kész') + a 'spec-questions.md'-t. Előfeltétel: 'specs/roadmap.md' státusz 'Kész'.",
+  "bs-write-plan": "berkispec - 03. Használd, ha a ciklus spec.md-je 'Tervezésre kész' (Phase 03), a részletes technikai megvalósítási terv kidolgozásához (kódbázis-elemzés, szükség esetén researcher subagent). Létrehozza a 'plan.md'-t ('Task írásra kész') + a 'plan-questions.md'-t.",
+  "bs-write-tasks": "berkispec - 04. Használd, ha a plan.md 'Task írásra kész' (Phase 04), a technikai terv jól strukturált, egyenként végrehajtható és mérhető feladatokra (DoD) bontásához. Létrehozza a 'tasks.md'-t ('Implementálásra kész') + szükség esetén a 'tasks-questions.md'-t.",
+  "bs-analyze": "berkispec - 05. Használd az implementáció előtt (Phase 05), ha a tasks.md 'Implementálásra kész'. Kereszt-fázisos konzisztencia-kapu a spec.md/plan.md/tasks.md között: subagentekkel (analyzer, *-fixer) azonosítja és automatikusan javítja az ellentmondásokat. Létrehozza az 'analyze-report.md'-t (PASS/FAIL).",
+  "bs-implement": "berkispec - 06. Használd, ha az analyze-report.md 'PASS' (Phase 06), a tényleges kódfejlesztéshez. Végrehajtja a tervezett kódmódosításokat a feladatlista alapján, és közben vezeti a 'tasks.md'-t, amíg az el nem éri a 'Validálásra kész' állapotot.",
+  "bs-validate": "berkispec - 07. Használd az implementáció után (Phase 07), ha a tasks.md 'Validálásra kész'. Teszt-, lint- és build-ellenőrzés ÉS kódreview egyetlen önjavító hurokban (test-runner, reviewer, implement-fixer, review-fixer subagentek). Létrehozza a 'validation-report.md'-t és a 'code-review.md'-t; PASS esetén a spec.md/plan.md/tasks.md státuszát 'Kész'-re állítja.",
+  "bs-doc-sync": "berkispec - 08. Használd a validáció után, merge előtt (Phase 08), ha a tasks.md/plan.md/spec.md mind 'Kész'. A kódváltozásokat a 'docs-generated/' rendszer-dokumentációba és az érintett komponens-README-kbe szinkronizálja (doc-sync-planner subagent, design-drift ellen), karbantartja a 'specs/test-conventions.md' visszatérő teszt-elvárás regisztert, és létrehozza a 'doc-sync-plan.md'-t.",
+  "bs-merge": "berkispec - 09. Használd a ciklus utolsó lépéseként (Phase 09), ha a kód, a review és a dokumentáció is 'Kész'. A ciklus branch beolvasztása a 'conventions.md' merge stratégiája szerint (PR nyitás vagy lokális merge), kötelező felhasználói megerősítéssel.",
+  "bs-brainstorm": "berkispec - segédparancs. Feltáró ötletelés és közös tervezés a projektről MÉG A SPEC ELŐTT — amikor a téma iránya, megvalósítási módja vagy ciklusokra vágása még nem világos (pl. 'hogyan legyen központi cert kezelés?'). Beszélget, alternatívákat állít szembe, és a session anyagát a '.bs-brainstorm/brainstorm-NN-<slug>.md' munkafájlba perzisztálja. Kódot és a munkafájlon kívül SEMMIT nem ír; a végén átad a '/bs-add-cycles' vagy a '/bs-quick-flow' skillnek.",
+  "bs-cycle-status": "berkispec - segédparancs. Ciklusok státuszának ellenőrzése. Kilistázza a projekt ciklusait (Kész/Folyamatban), és interaktív TUI felületen vagy argumentumként megadva részletesen mutatja a fázisaik előrehaladását (KÉSZ, KÉSZ*, FOLYAMATBAN, MÉG NEM FUTOTT). Nem fázis: a 00-09 folyamatnak nem része, bármikor hívható.",
+  "bs-export-doc": "berkispec - segédparancs. Verziózott PDF-et készít markdown doksikból (mermaid ábrákkal együtt) a projekt gyökerében lévő 'export/' mappába. Paraméter nélkül a 'docs-generated/architecture.md' és 'system-overview.md' fájlokból, egyébként a megnevezett fájl(ok)ból. A verziószám fájlonként független: az utolsó + 1, v1-től.",
+  "bs-quick-flow": "berkispec - quick-flow. Egyszerűsített, háromfázisú SDD flow (spec.md → task.md → implementáció) KIS, jól körülhatárolt feladatokhoz, amelyek 3-4 lépésben megoldhatók — konfiguráció, egyszerűbb script, kisebb javítás, lokális módosítás. Nagyobb kódírást, több komponenst érintő funkciót vagy összetett tervezést igénylő feladathoz NE ezt használd — javasold a teljes berki spec folyamatot (01-add-cycles).",
+  "analyzer-exec": {
+    "description": "Read-only VÉGREHAJTHATÓSÁGI diagnózis a plan.md/tasks.md párra az implementáció előtt (a 6. kategória ítélet-igényes checkjei: prózában ígért teszt, artefaktum-tulajdon, destruktív művelet teljessége, horgony-szimbólum, artefaktum-hang). Az 05-analyze skill hívja, az `analyzer`-rel PÁRHUZAMOSAN.",
+    "role": "Végrehajthatóság- és artefaktum-tulajdon elemző specialista ágens"
+  },
+  "analyzer": {
+    "description": "Read-only kereszt-fázisos SZEMANTIKAI konzisztencia-diagnózis a spec.md/plan.md/tasks.md/conventions.md között, az implementáció előtt (1–5. kategória: duplikáció, ambiguitás, alulspecifikáció, konvenció-ütközés, lefedettség-értelmezés). A 6. kategóriát az analyzer-exec viszi, párhuzamosan. Az 05-analyze skill hívja.",
+    "role": "Kereszt-fázisos konzisztencia elemző specialista ágens"
+  },
+  "doc-sync-planner": {
+    "description": "Read-only diagnoszta, amely a docs-generated/ frissítésének per-fájl pipálható tervét és kész csereszövegeit állítja elő (doc-sync-plan.md). A 08-doc-sync skill hívja.",
+    "role": "Dokumentáció-szinkron diagnoszta ágens (read-only tervkészítő)"
+  },
+  "implement-fixer": {
+    "description": "A 07-validate önjavító hurok javító belépője: a 06-implement Fix-módjára delegál a teszt-/Sonar-/DoD-hibák javításához (## Validációs javítások). A 07-validate skill hívja.",
+    "role": "Implement Fix-mód végrehajtó wrapper (a validate-hurok 06-fázis javítója)"
+  },
+  "plan-fixer": {
+    "description": "Az 05-analyze önjavító hurok 03-plan Fix-mód belépője (vékony wrapper a 03-write-plan Fix-módjához). Az 05-analyze skill hívja.",
+    "role": "Plan Fix-mód végrehajtó wrapper (az analyze-hurok 03-fázis javítója)"
+  },
+  "researcher": {
+    "description": "Read-only kódbázis- és dokumentáció-kutató, amely tömör path+összefoglaló listát ad vissza (kontextus-kímélés, nem nyers fájltartalom) — kivéve ha a hívó explicit literál értékeket kér (parancs, URL, JSON payload, szignatúra), azokat szó szerint. A 00/01/02/03/06 fázisok és a bs-brainstorm segédparancs hívják feltáráshoz.",
+    "role": "Kódbázis- és dokumentáció-kutató specialista ágens (kontextus-őr)"
+  },
+  "review-fixer": {
+    "description": "A 07-validate review-ágának javító belépője: a 06-implement Fix-módjára delegál a ## Review javítások alapján. A 07-validate skill hívja.",
+    "role": "Review Fix-mód végrehajtó wrapper (a 07 önjavító hurkának review-ága)"
+  },
+  "reviewer": {
+    "description": "Read-only kód-review diagnoszta: a cycle branch diffjét vizsgálja és test-report/code-review.md-t ad (Must Fix / Suggestion). A 07-validate skill hívja, a teljes kör 2. lépéseként (statikus réteg, a Sonar mellett).",
+    "role": "Kód-review specialista ágens"
+  },
+  "spec-fixer": {
+    "description": "Az 05-analyze önjavító hurok 02-spec Fix-mód belépője (vékony wrapper a 02-write-spec Fix-módjához). Az 05-analyze skill hívja.",
+    "role": "Spec Fix-mód végrehajtó wrapper (az analyze-hurok 02-fázis javítója)"
+  },
+  "tasks-fixer": {
+    "description": "Az 05-analyze önjavító hurok 04-tasks Fix-mód belépője (vékony wrapper a 04-write-tasks Fix-módjához). Az 05-analyze skill hívja.",
+    "role": "Tasks Fix-mód végrehajtó wrapper (az analyze-hurok 04-fázis javítója)"
+  },
+  "test-runner": {
+    "description": "Tesztek/Sonar/E2E mechanikus futtatása és tényszerű összegzése (nem dönt PASS/FAIL-ról). A 07-validate — és közvetve a 09 re-validate — hívja.",
+    "role": "Teszt- és kódminőség-futtató specialista ágens (mechanikus végrehajtó — tényeket jelent, nem dönt)"
+  }
+}

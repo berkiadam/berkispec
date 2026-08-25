@@ -6,7 +6,7 @@ Ez a fájl arra való, hogy egy új AI-sessziót indítsál, amelynek célja a `
 
 ---
 
-Egy **spec-driven development workflow** promptrendszerét fejlesztjük. A `prompts/` mappa az AI-asszisztált szoftverfejlesztési ciklus fázisonkénti instrukcióit tartalmazza, **skillekre** (`prompts/skills/` — fázis-receptek) és **ágensekre** (`prompts/agents/` — specialista subagentek) szervezve. Minden skill egy fázist vezérel — ezeket a promptokat adjuk be egy AI-agentnek, hogy az adott fázist elvégezze.
+Egy **spec-driven development workflow** promptrendszerét fejlesztjük. A `prompts/` mappa az AI-asszisztált szoftverfejlesztési ciklus fázisonkénti instrukcióit tartalmazza, **skillekre** (`prompts/skills-hu/` — fázis-receptek) és **ágensekre** (`prompts/agents-hu/` — specialista subagentek) szervezve. Minden skill egy fázist vezérel — ezeket a promptokat adjuk be egy AI-agentnek, hogy az adott fázist elvégezze.
 
 A rendszer célja: egy-két fejlesztő és egy AI-agent együtt, következetes minőségű, tesztelt szoftvert fejlesszen ciklusonként leszállítható egységekben. A promptok adják az agentnek a keretet, korlátokat, minőségellenőrzési listát és megállási szabályokat.
 
@@ -39,25 +39,77 @@ Minden ciklus mappája: `specs/cycle-NN-<cycle-name>/`
 
 ## A prompt fájlok
 
+> **⚠ A repó KÉTNYELVŰ — a lenti tábla a `-hu` fát nevezi meg, de MINDEN sorának van `-en` párja.**
+> A szerkezet **teljesen szimmetrikus** (LG5): nincs suffix nélküli, kitüntetett fa.
+>
+> ```
+> prompts/
+> ├── skills-hu/  · agents-hu/  · shared-hu/    # a magyar prompt-nyelvi fa
+> ├── skills-en/  · agents-en/  · shared-en/    # az angol — AZONOS fájlnevek, AZONOS szerkezet
+> ├── lang/                                     # a PROJEKT-nyelvi tartalom (a két tengely itt találkozik)
+> │   ├── status-keys.json                      # szekciónév / mezőnév / státusz szótár (`hu` + `en` szelet)
+> │   ├── hu/  ·  en/                           # projekt-nyelvi blokkok + `descriptions.json`
+> └── scripts/                                  # nyelvfüggetlen
+> ```
+>
+> **Két nyelvi tengely, egymástól függetlenül:** a **prompt-nyelv** dönti el, melyik `-<lang>`
+> fából telepítünk; a **projekt-nyelv** azt, hogy a `lang/<L>/` blokkok és a `status-keys.json`
+> melyik szelete kerül be. Mindkettő **build-time** dől el és bedrótozódik (LG2) — a projektben
+> semmilyen nyelvi mező nem marad (LG17).
+>
+> **Amit egy prompt-módosításnál tudni kell:**
+> - a **szerkezeti** változást (címsor, kódblokk, INCLUDE-marker, szabály-ID, nyelvi token,
+>   imperatívusz-darabszám) **mindkét fán** át kell vezetni — ezt a `lang-parity-check.py` őrzi;
+> - az **artefaktum-szekciónevek, mezőnevek és státusz-értékek** a promptban **NEM literálok**,
+>   hanem `<sec:…>` / `<field:…>` / `<status:…>` tokenek, amiket a telepítő old fel a
+>   `lang/status-keys.json`-ból. **Új szekciónév → előbb kulcs a JSON-ba, csak utána token.**
+> - a **user-facing mondatok és az artefaktum-sablonok** nem a promptban élnek, hanem a
+>   `lang/<L>/<fájl>.md` horgonyaiban, `<!-- INCLUDE:lang/<fájl>.md#<horgony> -->` markerrel
+>   behivatkozva — ezeket **mindkét nyelven** szerkeszteni kell.
+
 | Fájl | Fázis | Bemenet | Kimenet |
 |------|-------|---------|---------|
-| `prompts/skills/brainstorm.md` | *(nem fázis — a flow előtt)* | téma szabad szöveggel / `folytassuk a NN-est` | `.bs-brainstorm/brainstorm-NN-<slug>.md` (Cél · Tények forrással · Alternatívák · Döntések · Nyitott kérdések · Javasolt ciklus-vágás · Napló) — átadás a `01`-nek (BS18) |
-| `prompts/skills/00-init-project.md` | Projekt init | Projekt leírás | `conventions.md` |
-| `prompts/skills/01-add-cycles.md` | Ciklusok kezelése | HLD/LLD vagy leírás | `specs/roadmap.md` |
-| `prompts/skills/02-write-spec.md` | Spec | Roadmap + ciklus neve | `spec.md` (`Tervezésre kész`) |
-| `prompts/skills/03-write-plan.md` | Plan | `spec.md` | `plan.md` (`Task írásra kész`) |
-| `prompts/skills/04-write-tasks.md` | Tasks | `plan.md` | `tasks.md` (`Implementálásra kész`) |
-| `prompts/skills/05-analyze.md` | Analyze | ciklus mappa | `analyze-report.md` (PASS/FAIL) — mechanikus kapu + két párhuzamos diagnoszta (`analyzer`, `analyzer-exec`); FAIL → önjavító hurok (fixer-subagentek, `max X=3`, iterációnként egy analyzer-kör) |
-| `prompts/skills/06-implement.md` | Implementálás | `tasks.md` | Kód + `tasks.md` (`Validálásra kész`) + `test-report/implement/check-log.md`; a task listát **egy futásban** dolgozza fel (IM1) |
-| `prompts/skills/07-validate.md` | Validálás + kódreview | `spec.md`, `plan.md`, `tasks.md`, cycle diff | `test-report/validation-report.md` + `test-report/code-review.md` — FAIL → önjavító hurok (`implement-fixer` / `review-fixer`, 3-próba korlát, VD5 eszkaláció) |
-| `prompts/skills/08-doc-sync.md` | Doc-sync | ciklus mappa + `docs-generated/` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README) + `doc-sync-plan.md` — terv (`doc-sync-planner`) → végrehajtás → objektív kapu (DS22); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
-| `prompts/skills/09-merge.md` | Merge | ciklus mappa, `conventions.md` | merged branch / PR + lezárt roadmap — nincs hurok és nincs subagent; bukó kapu → vissza a 07-re vagy a 08-ra |
+| `prompts/skills-hu/brainstorm.md` | *(nem fázis — a flow előtt)* | téma szabad szöveggel / `folytassuk a NN-est` | `.bs-brainstorm/brainstorm-NN-<slug>.md` (Cél · Tények forrással · Alternatívák · Döntések · Nyitott kérdések · Javasolt ciklus-vágás · Napló) — átadás a `01`-nek (BS18) |
+| `prompts/skills-hu/00-init-project.md` | Projekt init | Projekt leírás | `conventions.md` |
+| `prompts/skills-hu/01-add-cycles.md` | Ciklusok kezelése | HLD/LLD vagy leírás | `specs/roadmap.md` |
+| `prompts/skills-hu/02-write-spec.md` | Spec | Roadmap + ciklus neve | `spec.md` (`Tervezésre kész`) |
+| `prompts/skills-hu/03-write-plan.md` | Plan | `spec.md` | `plan.md` (`Task írásra kész`) |
+| `prompts/skills-hu/04-write-tasks.md` | Tasks | `plan.md` | `tasks.md` (`Implementálásra kész`) |
+| `prompts/skills-hu/05-analyze.md` | Analyze | ciklus mappa | `analyze-report.md` (PASS/FAIL) — mechanikus kapu + két párhuzamos diagnoszta (`analyzer`, `analyzer-exec`); FAIL → önjavító hurok (fixer-subagentek, `max X=3`, iterációnként egy analyzer-kör) |
+| `prompts/skills-hu/06-implement.md` | Implementálás | `tasks.md` | Kód + `tasks.md` (`Validálásra kész`) + `test-report/implement/check-log.md`; a task listát **egy futásban** dolgozza fel (IM1) |
+| `prompts/skills-hu/07-validate.md` | Validálás + kódreview | `spec.md`, `plan.md`, `tasks.md`, cycle diff | `test-report/validation-report.md` + `test-report/code-review.md` — FAIL → önjavító hurok (`implement-fixer` / `review-fixer`, 3-próba korlát, VD5 eszkaláció) |
+| `prompts/skills-hu/08-doc-sync.md` | Doc-sync | ciklus mappa + `docs-generated/` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README) + `doc-sync-plan.md` — terv (`doc-sync-planner`) → végrehajtás → objektív kapu (DS22); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
+| `prompts/skills-hu/09-merge.md` | Merge | ciklus mappa, `conventions.md` | merged branch / PR + lezárt roadmap — nincs hurok és nincs subagent; bukó kapu → vissza a 07-re vagy a 08-ra |
 
-A specialista subagentek a `prompts/agents/` alatt: `reviewer.md` (07 — read-only kód-diagnózis), `analyzer.md` (05 — read-only **szemantikai** diagnózis, 1–5. kategória), `analyzer-exec.md` (05 — read-only **végrehajthatósági** diagnózis, 6. kategória; az `analyzer`-rel párhuzamosan fut), `researcher.md` (03 Mód A; 00/01/02/06 + `bs-brainstorm` Mód B), `doc-sync-planner.md` (08 — read-only doc-sync tervkészítő), az 05 önjavító hurok fix-mód belépői: `spec-fixer.md`, `plan-fixer.md`, `tasks-fixer.md`, a 07 hurkának két fix-mód belépője: `implement-fixer.md` (teszt/Sonar/DoD) és `review-fixer.md` (review-findingok), `## Validációs javítások` ill. `## Review javítások` bemenettel.
+A specialista subagentek a `prompts/agents-hu/` alatt: `reviewer.md` (07 — read-only kód-diagnózis), `analyzer.md` (05 — read-only **szemantikai** diagnózis, 1–5. kategória), `analyzer-exec.md` (05 — read-only **végrehajthatósági** diagnózis, 6. kategória; az `analyzer`-rel párhuzamosan fut), `researcher.md` (03 Mód A; 00/01/02/06 + `bs-brainstorm` Mód B), `doc-sync-planner.md` (08 — read-only doc-sync tervkészítő), az 05 önjavító hurok fix-mód belépői: `spec-fixer.md`, `plan-fixer.md`, `tasks-fixer.md`, a 07 hurkának két fix-mód belépője: `implement-fixer.md` (teszt/Sonar/DoD) és `review-fixer.md` (review-findingok), `## Validációs javítások` ill. `## Review javítások` bemenettel.
 
-**A fix-mód belépők két megvalósítása** (mindkettő logika-duplikáció nélkül): a 02/03/04 fixerek promptja **önhordó** — a fix-mód szekció és a fázis minőségi kapuja a `prompts/shared/{fix-mode,quality-check}-*.md` fájlokból **build-time beemelődik** a skillbe és a wrapperbe is, így a fixer **nem olvas fázis-skillt** (D13). A 06 fix-módját használó `implement-fixer`/`review-fixer` viszont még a klasszikus úton, a `06-implement.md` Fix-mód szekciójának beolvasásával delegál.
+**A fix-mód belépők két megvalósítása** (mindkettő logika-duplikáció nélkül): a 02/03/04 fixerek promptja **önhordó** — a fix-mód szekció és a fázis minőségi kapuja a `prompts/shared-hu/{fix-mode,quality-check}-*.md` fájlokból **build-time beemelődik** a skillbe és a wrapperbe is, így a fixer **nem olvas fázis-skillt** (D13). A 06 fix-módját használó `implement-fixer`/`review-fixer` viszont még a klasszikus úton, a `06-implement.md` Fix-mód szekciójának beolvasásával delegál.
 
-A `prompts/README.md` minden fázishoz tartalmazza a felhasználónak szánt copy-paste prompt blokkot.
+A repó gyökerében lévő `README.md` „Indító prompt (copy-paste)" szekciója tartalmazza a felhasználónak szánt indító prompt blokkot.
+
+**Telepítés és scriptek.** A támogatott telepítési út: `./install.sh` (vagy `install.ps1`) →
+`prompts/scripts/install-helper.py`. A `prompts/scripts/init-project.sh` **elavult** (LG19):
+szimlink-alapú alternatíva, amit soha nem használtunk — ne hivatkozz rá, és ne fejleszd tovább.
+
+**⛔ KÉTNYELVŰ REPÓ — KÖTELEZŐ KÉZI KAPUK MINDEN COMMIT ELŐTT.** A promptok **két
+prompt-nyelvi fában** élnek (`prompts/skills-hu/` ↔ `prompts/skills-en/`, ugyanígy
+`agents-*` és `shared-*`), a projekt-nyelvi blokkok pedig a `prompts/lang/<nyelv>/`
+alatt. **Nincs CI és nincs pre-commit hook**, tehát a két fa szinkronját semmi nem
+őrzi automatikusan — ezt a két scriptet **kézzel kell lefuttatni**:
+
+```bash
+python3 prompts/scripts/lang-parity-check.py      # nyelvi paritás (§11) — default mód
+python3 prompts/scripts/sync-gemini-agents.py --check   # a gemini agent.json tükrök
+```
+
+- **Ha az egyik nyelvi fát szerkeszted, a másikat is szerkeszd** — a paritás-kapu a
+  szerkezeti eltérést (címsor, kódblokk, INCLUDE-marker, szabály-ID, nyelvi token,
+  imperatívusz-darabszám) megfogja, a **jelentés**-eltérést nem: az emberi review dolga.
+- A kapu **két üzemmódú**: a napi, commit előtti futás a **defaultot** használja (a
+  féloldalas fájlok WARN-ok), a PR zárása és a végső elfogadás a **`--strict`**-et
+  (ott a teljes fájlhalmaz-paritás is kötelező).
+- Mindkét script **repó-karbantartó eszköz**: a telepítő szándékosan **nem másolja**
+  őket a célprojektbe.
 
 ---
 
@@ -97,7 +149,7 @@ Nem minden task TDD: konfigurációs fájlok, docker, README, infrastruktúra-v�
 A fázisok közötti átadás **kétirányú hibát** tud véteni, és mindkettőre van szabály. (a) A bemenet **túl absztrakt** (hivatkozik valamire ahelyett, hogy tartalmazná) → `Hivatkozás-feloldás`: a hivatkozást fel kell oldani a forrásból, literál értékekkel. (b) A bemenet **már kidolgozott** (OpenAPI-leíró, teljes payload, hibamátrix, többlépéses teszt-forgatókönyv) → **szó szerint, csonkítás nélkül** kell átvinni: a 02-ben ez a `KX2` („ne zanzásítsd a teszteseteket"), a 03-ban a `KX3`. Az irány mindkettőben: **bővítés és pontosítás igen, összevonás és elhagyás nem.** A `KX3` explicit feloldja azt a három szabályt, ami korábban az egyszerűsítés felé nyomta a plan-írót („a plan terv, nem archívum" — az a repó forrásfájljaira szól; „az absztrakciós szintet fel kell oldani, nem reprodukálni" — a *szintre* igaz, a *tartalomra* nem; a 05 duplikáció-kategóriája — az nem vonatkozik a kötelező önhordóságra). A 05 mechanikus kapuja méri (`V1`: a spec szerződés-blokkjai megvannak-e a plan-ben; `V2`: a teszt-szekciók terjedelme), a prózai csonkítás pedig az `analyzer` 3. kategóriájában marad. **Prompt-módosításnál ezt ne rontsd el:** a „tömörítsd", „ne duplikálj", „a plan legyen rövid" jellegű utasítás ebben a fázisban adatvesztést okoz.
 
 **7/c. Útvonal-konvenció (RP1)**
-Egyetlen közös blokk (`prompts/shared/path-format.md`) definiálja: **kód- és fájl-hivatkozás a repó gyökeréhez** képest relatív (a parancsok ott futnak, és a `05` mechanikus kapuja oda oldja fel a horgonyokat), **dokumentum-link a fájl saját könyvtárához** képest (hogy kattintható legyen); abszolút, gép-specifikus és `file://` alak tilos a dokumentum tartalmában (a chat-válaszban adott kattintható link kivétel). A kapu `R1` checkje méri. **Prompt-módosításnál ne írd újra fázisonként** — a szabály korábban három helyen, egymással ütköző tartalommal élt.
+Egyetlen közös blokk (`prompts/shared-hu/path-format.md`) definiálja: **kód- és fájl-hivatkozás a repó gyökeréhez** képest relatív (a parancsok ott futnak, és a `05` mechanikus kapuja oda oldja fel a horgonyokat), **dokumentum-link a fájl saját könyvtárához** képest (hogy kattintható legyen); abszolút, gép-specifikus és `file://` alak tilos a dokumentum tartalmában (a chat-válaszban adott kattintható link kivétel). A kapu `R1` checkje méri. **Prompt-módosításnál ne írd újra fázisonként** — a szabály korábban három helyen, egymással ütköző tartalommal élt.
 
 **7/d. A kapu-konfiguráció együtt mozog a struktúrával (GC1)**
 Több determinisztikus kapu a projekt `conventions.md`-jéből olvas (TR3 riport-artefaktumok és útvonal-alap, Sonar küszöbök, teszt-parancsok, portok, merge-stratégia). Ha egy ciklus olyat változtat, amit egy kapu ott keres, a `conventions.md` frissítése **a ciklus része**: explicit döntés → a plan tervezi konkrét tartalommal → `[GREEN]` task → a kapu ugyanebben a ciklusban újra fut. A `00`-ra csak akkor megy vissza, ha magát a **projekt-konvenciót** kérdőjelezzük meg. Határvonal (TC1/c): riport-artefaktum/útvonal-alap/riport-parancs → `conventions.md`; teszt-recept és koordináta → `specs/test-conventions.md`. **Séma-váltásnál kötelező migrációs őr:** ha egy struktúra jelentése változik, de a formátuma nem (mint a TR5-nél: a tábla utolsó oszlopa `test-report/` gyökér → kör-mappa), a régi adat **csendben félreértelmeződik** — ezért a szekcióba verzió/szemantika-jelölő kell (`**Artefaktum-útvonal alapja:**`), és a kapu a jelölő hiányában nem találgat, hanem `exit 2`-vel megáll a pótlandó sorral. **Prompt-módosításnál:** ha egy kapu által olvasott struktúra jelentését módosítod, mindig tedd mellé a jelölőt és a migrációs ágat.
@@ -125,13 +177,13 @@ A 07-validate és a 09-merge közé egy dedikált **doc-sync** fázis ékelődik
 
 ## A promptok aktuális állapota
 
-A rendszer aktívan használatban van — több fejlesztési ciklus (cycle-01 – cycle-16) lefutott már ezekkel a promptokkal. A skill fájlok a `prompts/skills/`, a specialista ágensek a `prompts/agents/` mappában olvashatók.
+A rendszer aktívan használatban van — több fejlesztési ciklus (cycle-01 – cycle-16) lefutott már ezekkel a promptokkal. A skill fájlok a `prompts/skills-hu/`, a specialista ágensek a `prompts/agents-hu/` mappában olvashatók.
 
 ---
 
 ## Feladatod
 
-Olvasd be a releváns skill fájlokat a `prompts/skills/` mappából (és szükség szerint az ágenseket a `prompts/agents/`-ból), majd segíts a következő fejlesztési célban:
+Olvasd be a releváns skill fájlokat a `prompts/skills-hu/` mappából (és szükség szerint az ágenseket a `prompts/agents-hu/`-ból), majd segíts a következő fejlesztési célban:
 
 **[IDE ÍRD LE A KONKRÉT FEJLESZTÉSI CÉLT — pl.:]**
 - „A 03-as plan skill minőségellenőrzési listája hiányos — egészítsd ki."

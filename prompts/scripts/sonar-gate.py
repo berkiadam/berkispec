@@ -41,6 +41,8 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from lang_keys import fld, sec
+
 BLOCKING = ("BLOCKER", "CRITICAL", "MAJOR")
 ALL_SEVERITIES = ("BLOCKER", "CRITICAL", "MAJOR", "MINOR", "INFO")
 
@@ -96,15 +98,15 @@ def write_report(out_path, status, failed, counts, issues, project_key):
     lines = [f"# Sonar Quality Gate — {project_key}", "",
              f"**Quality Gate:** {status}", ""]
     if failed:
-        lines += ["## Bukott feltételek", ""]
+        lines += [f"## {sec('failed_conditions')}", ""]
         lines += [f"- {fmt_condition(c)}" for c in failed] + [""]
-    lines += ["## Nyitott findingek súlyosság szerint", "",
-              "| Súlyosság | Darab |", "|---|---|"]
+    lines += [f"## {sec('open_findings_by_sev')}", "",
+              f"| {fld('f_severity')} | {fld('f_count')} |", "|---|---|"]
     lines += [f"| {sev} | {counts.get(sev, 0)} |" for sev in ALL_SEVERITIES]
     lines += [""]
     blocking = [i for i in issues if i.get("severity") in BLOCKING]
     if blocking:
-        lines += ["## Blokkoló findingek (BLOCKER / CRITICAL / MAJOR)", ""]
+        lines += [f"## {sec('blocking_findings')}", ""]
         for i in blocking:
             comp = i.get("component", "").split(":")[-1]
             line = i.get("line", "?")

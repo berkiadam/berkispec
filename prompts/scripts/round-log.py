@@ -32,9 +32,20 @@ import re
 import sys
 from pathlib import Path
 
+from lang_keys import fld, sec, st
+
+# A `# Validation History` NEM nyelvi tétel: ma is angol, a failure-counter.py
+# írja — nyelvfüggetlen horgony (10.1).
 HISTORY_HEADER = "# Validation History"
-ROUND_RE = re.compile(r"^## Kör (\d+) —", re.MULTILINE)
-STEP_TABLE_HEADER = "| # | Idő | Lépés | Mit futtatott | Eredmény |"
+_SEC_ROUND = sec("round")
+_IN_PROGRESS = st("in_progress").lower()
+_TYPE_FULL = st("round_type_full")
+_TYPE_LIGHT = st("round_type_light")
+ROUND_RE = re.compile(r"^## " + re.escape(_SEC_ROUND) + r" (\d+) —", re.MULTILINE)
+# A script által ÍRT tábla-fejlécek is projekt-nyelviek (a szeparátor sor a
+# nyelvfüggetlen horgony, az `append_steps` azt keresi).
+STEP_TABLE_HEADER = ("| # | " + fld("f_time") + " | " + fld("f_step") + " | " +
+                     fld("f_what_ran") + " | " + fld("f_result") + " |")
 STEP_TABLE_SEP = "|---|---|---|---|---|"
 
 
@@ -48,10 +59,10 @@ def split_history(text):
 
 def new_file_header(cycle_name, timestamp):
     return (
-        f"# Validálási riport — {cycle_name}\n\n"
-        "**Jelenlegi státusz:** folyamatban\n"
-        "**Körök száma:** 0\n"
-        f"**Utolsó frissítés:** {timestamp}\n\n"
+        f"# {sec('validation_report')} — {cycle_name}\n\n"
+        f"**{fld('f_current_status')}:** {_IN_PROGRESS}\n"
+        f"**{fld('f_round_count')}:** 0\n"
+        f"**{fld('f_last_updated')}:** {timestamp}\n\n"
         "---\n\n"
     )
 
@@ -76,23 +87,28 @@ def last_round_span(head):
 
 def normalize_type(value):
     v = (value or "").strip().upper()
+    # A CLI-alakok NYELVFÜGGETLENEK (mindkét nyelv szavait elfogadjuk), a
+    # visszaadott — tehát a riportba ÍRT — érték viszont projekt-nyelvi.
     if v in ("TELJES", "FULL"):
-        return "TELJES"
+        return _TYPE_FULL
     if v in ("KÖNNYŰ", "KONNYU", "KONNYŰ", "LIGHT"):
-        return "KÖNNYŰ"
+        return _TYPE_LIGHT
     return None
 
 
 def update_header(head, status=None, rounds=None, timestamp=None):
     if status is not None:
-        head = re.sub(r"^\*\*Jelenlegi státusz:\*\*.*$",
-                      f"**Jelenlegi státusz:** {status}", head, count=1, flags=re.MULTILINE)
+        head = re.sub(r"^\*\*" + re.escape(fld("f_current_status")) + r":\*\*.*$",
+                      f"**{fld('f_current_status')}:** {status}", head, count=1,
+                      flags=re.MULTILINE)
     if rounds is not None:
-        head = re.sub(r"^\*\*Körök száma:\*\*.*$",
-                      f"**Körök száma:** {rounds}", head, count=1, flags=re.MULTILINE)
+        head = re.sub(r"^\*\*" + re.escape(fld("f_round_count")) + r":\*\*.*$",
+                      f"**{fld('f_round_count')}:** {rounds}", head, count=1,
+                      flags=re.MULTILINE)
     if timestamp is not None:
-        head = re.sub(r"^\*\*Utolsó frissítés:\*\*.*$",
-                      f"**Utolsó frissítés:** {timestamp}", head, count=1, flags=re.MULTILINE)
+        head = re.sub(r"^\*\*" + re.escape(fld("f_last_updated")) + r":\*\*.*$",
+                      f"**{fld('f_last_updated')}:** {timestamp}", head, count=1,
+                      flags=re.MULTILINE)
     return head
 
 
@@ -109,20 +125,20 @@ def cmd_open(args):
     head, history = split_history(text)
 
     numbers = round_numbers(head)
-    if numbers and args.reuse_open and "— folyamatban" in head[last_round_span(head)[0]:]:
+    if numbers and args.reuse_open and f"— {_IN_PROGRESS}" in head[last_round_span(head)[0]:]:
         n = numbers[-1]
-        print(f"Kör {n} már nyitva — újranyitás kihagyva.")
+        print(f"{_SEC_ROUND} {n} már nyitva — újranyitás kihagyva.")
     else:
         n = (max(numbers) if numbers else 0) + 1
         block = (
-            f"## Kör {n} — {args.timestamp} — {rtype} — folyamatban\n\n"
-            f"**Indító:** {args.trigger}\n"
-            f"**Riport-mappa:** `test-report/{args.round_base}/round-{n:02d}/`\n\n"
-            "### Lépések (végrehajtási sorrendben)\n\n"
+            f"## {_SEC_ROUND} {n} — {args.timestamp} — {rtype} — {_IN_PROGRESS}\n\n"
+            f"**{fld('f_trigger')}:** {args.trigger}\n"
+            f"**{fld('f_report_folder')}:** `test-report/{args.round_base}/round-{n:02d}/`\n\n"
+            f"### {sec('steps_execution_order')}\n\n"
             f"{STEP_TABLE_HEADER}\n{STEP_TABLE_SEP}\n\n"
         )
         head = head.rstrip("\n") + "\n\n" + block
-        head = update_header(head, status="folyamatban", rounds=n, timestamp=args.timestamp)
+        head = update_header(head, status=_IN_PROGRESS, rounds=n, timestamp=args.timestamp)
 
     round_dir = path.parent / args.round_base / f"round-{n:02d}"
     round_dir.mkdir(parents=True, exist_ok=True)
@@ -131,8 +147,8 @@ def cmd_open(args):
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(head + history)
 
-    print(f"Kör {n} megnyitva ({rtype}).")
-    print(f"Riport-mappa: {round_dir}")
+    print(f"{_SEC_ROUND} {n} megnyitva ({rtype}).")
+    print(f"{fld('f_report_folder')}: {round_dir}")
     print(f"round-subdir: test-report/{args.round_base}/round-{n:02d}")
     return 0
 
@@ -190,13 +206,13 @@ def cmd_step(args):
 def build_sections(args):
     out = []
     if args.failed_item:
-        out.append("### Bukott elemek\n")
+        out.append(f"### {sec('failed_items')}\n")
         for item in args.failed_item:
             out.append(f"- `{item}`")
         out.append("")
     if args.dod:
-        out.append("### Definition of done\n")
-        out.append("| ID | Eredmény | Indoklás |")
+        out.append(f"### {sec('definition_of_done')}\n")
+        out.append(f"| ID | {fld('f_result')} | {fld('f_reason')} |")
         out.append("|---|---|---|")
         for raw in args.dod:
             parts = [p.strip() for p in raw.split("|")]
@@ -205,36 +221,43 @@ def build_sections(args):
             out.append(f"| {parts[0]} | {parts[1]} | {parts[2]} |")
         out.append("")
     if args.review:
-        out.append("### Kódreview (RV1)\n")
+        out.append(f"### {sec('code_review_section')}\n")
         for line in args.review:
             out.append(f"- {line}")
         out.append("")
     if args.note:
-        out.append("### Megjegyzések\n")
+        out.append(f"### {sec('notes')}\n")
         for line in args.note:
             out.append(f"- {line}")
         out.append("")
-    out.append("### A kör döntése\n")
+    out.append(f"### {sec('round_verdict')}\n")
     out.append(args.decision or "—")
     out.append("")
     return "\n".join(out)
 
 
 def rebuild_summary(head):
-    """`## Összegzés` újragenerálása a körök fejléceiből (gépi adat)."""
-    rounds = re.findall(r"^## Kör (\d+) — .* — (TELJES|KÖNNYŰ) — (\S+)$", head, re.MULTILINE)
+    """`## <Összegzés>` újragenerálása a körök fejléceiből (gépi adat)."""
+    # A kör-típus mindkét nyelv alakját felismeri: egy régebbi, más nyelven
+    # nyitott riport se essen ki az összegzésből.
+    types = "|".join(re.escape(t) for t in
+                     dict.fromkeys((_TYPE_FULL, _TYPE_LIGHT, "TELJES", "KÖNNYŰ", "FULL", "LIGHT")))
+    rounds = re.findall(r"^## " + re.escape(_SEC_ROUND) + r" (\d+) — .* — (" + types +
+                        r") — (\S+)$", head, re.MULTILINE)
     if not rounds:
         return head
     total = len(rounds)
-    full = sum(1 for r in rounds if r[1] == "TELJES")
+    full = sum(1 for r in rounds if r[1] in (_TYPE_FULL, "TELJES", "FULL"))
     light = total - full
     last = rounds[-1][2]
     summary = (
-        "## Összegzés\n\n"
-        f"- **Végeredmény:** {last} — {total} kör után\n"
-        f"- **Körök:** {total} összesen — ebből {full} teljes, {light} könnyű _(VD10)_\n"
+        f"## {sec('closing_summary')}\n\n"
+        f"- **{fld('f_final_result')}:** {last} — {total} kör után\n"
+        f"- **{fld('f_rounds')}:** {total} összesen — ebből {full} teljes, "
+        f"{light} könnyű _(VD10)_\n"
     )
-    head = re.sub(r"\n## Összegzés\n.*?(?=\n## |\Z)", "\n", head, flags=re.DOTALL)
+    head = re.sub(r"\n## " + re.escape(sec("closing_summary")) + r"\n.*?(?=\n## |\Z)",
+                  "\n", head, flags=re.DOTALL)
     # A lezárt kör-blokk már `---`-re végződik: ne tegyünk elé még egyet.
     head = head.rstrip("\n")
     if head.endswith("---"):
@@ -254,7 +277,7 @@ def cmd_close(args):
         return 1
     start, end = span
     block = head[start:end]
-    if "— folyamatban" not in block.split("\n")[0]:
+    if f"— {_IN_PROGRESS}" not in block.split("\n")[0]:
         print("FIGYELEM: az utolsó kör már le van zárva — a blokk felülírás nélkül marad.",
               file=sys.stderr)
         return 1
@@ -263,12 +286,12 @@ def cmd_close(args):
     if block is None:
         return 1
     lines = block.split("\n")
-    lines[0] = re.sub(r"— folyamatban$", f"— {args.result}", lines[0])
+    lines[0] = re.sub(r"— " + re.escape(_IN_PROGRESS) + r"$", f"— {args.result}", lines[0])
     block = "\n".join(lines).rstrip("\n") + "\n\n" + build_sections(args) + "\n---\n"
 
     head = head[:start] + block
     n = round_numbers(head)[-1]
-    status = {"PASS": "PASS", "FAIL": "folyamatban"}.get(args.result, args.result)
+    status = {"PASS": "PASS", "FAIL": _IN_PROGRESS}.get(args.result, args.result)
     if args.final:
         status = args.final
     head = update_header(head, status=status, rounds=n, timestamp=args.timestamp)
@@ -277,7 +300,7 @@ def cmd_close(args):
 
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(head.rstrip("\n") + "\n\n" + history)
-    print(f"Kör {n} lezárva — {args.result}.")
+    print(f"{_SEC_ROUND} {n} lezárva — {args.result}.")
     return 0
 
 

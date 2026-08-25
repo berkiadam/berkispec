@@ -140,23 +140,24 @@ def get_effort(models, platform, filename):
     _, effort = _resolve_agent_config(models, platform, filename)
     return effort
 
-# Minden helper scriptet (prompts/scripts/*.py) átmásol a cél scripts_dest
-# mappába, kivéve saját magát (install-helper.py, ami csak a telepítő gépén
-# fut, a célprojektben nincs rá szükség). Így új helper script (pl.
-# ds22-gate-check.py) hozzáadásakor nem kell mindhárom process_* függvényt
-# külön bővíteni.
 # ── Nyelvi tengelyek (két független beállítás) ─────────────────────────────
+# MINDKETTŐ BUILD-TIME beállítás: a telepítés pillanatában dől el, és utána
+# nyomtalan — semmilyen runtime-nak (sem a scripteknek, sem a
+# `conventions.md`-nek) nem kell tudnia róla. A kettő között NEM az a
+# különbség, hogy melyik mikor hat, hanem a HATÓKÖRÜK:
+#
 # `PROMPT_LANG`  — a PROMPT nyelve: melyik forrás-fából telepítünk
-#                  (`prompts/skills` = hu, `prompts/skills-en` = en).
-#                  BUILD-TIME beállítás: a telepítés után nyomtalan, semmi
-#                  runtime-nak nem kell tudnia róla.
+#                  (`prompts/skills-hu` = hu, `prompts/skills-en` = en).
+#                  Hatóköre az AGENSNEK szóló instrukciós szöveg. MINDKÉT
+#                  nyelv prefixelt mappában él — nincs kitüntetett, suffix
+#                  nélküli fa (LG5).
 # `PROJECT_LANG` — a PROJEKT nyelve: a `<!-- INCLUDE:lang/... -->` markerek
-#                  feloldását választja (`prompts/shared/lang/<lang>/`).
-#                  Ide tartozik minden, ami a projektbe kerül vagy a
-#                  felhasználóhoz szól: szó szerint kimondandó mondatok,
-#                  fájlba írt sablonok, státusz-kulcsszavak. RUNTIME
-#                  beállítás — a `conventions.md` rögzíti, a scriptek is ezt
-#                  a nyelvet írják/olvassák.
+#                  feloldását választja (`prompts/lang/<lang>/`). Ez a mappa
+#                  szándékosan NEM a `shared-<L>/` alatt van: nem a
+#                  prompt-nyelvvel mozog, tehát ott duplikáció lenne.
+#                  Hatóköre minden, ami a PROJEKTBE kerül vagy a
+#                  FELHASZNÁLÓHOZ szól: szó szerint kimondandó mondatok,
+#                  fájlba írt sablonok, státusz-kulcsszavak.
 #
 # A kettő ORTOGONÁLIS: az `en` prompt + `hu` projekt kombináció a fő use case
 # (a prompt tokenben olcsóbb, a leadandó magyar marad).
@@ -164,11 +165,13 @@ PROMPT_LANG = "hu"
 PROJECT_LANG = "hu"
 SUPPORTED_LANGS = ("hu", "en")
 
-# A `hu` a kanonikus forrás-fa; az `en` változat külön mappában él. A `hu`
-# esetén szándékosan a suffix NÉLKÜLI nevet adjuk vissza, hogy a meglévő
-# telepítés byte-azonos maradjon.
+# A `hu` a fordítás kanonikus forrás-fája, a mappanevekben viszont TELJES A
+# SZIMMETRIA (LG5): mindkét nyelv prefixelt mappában él (`skills-hu` /
+# `skills-en`), nincs kitüntetett, suffix nélküli fa. Az aszimmetria csendes
+# hibát szülne: egy `skills/`-be írt javítás úgy nézne ki, mintha
+# nyelvfüggetlen lenne.
 def _lang_subdir(base, lang):
-    return base if lang == "hu" else f"{base}-{lang}"
+    return f"{base}-{lang}"
 
 def skills_src_dir(src_dir):
     """A prompt-nyelv szerinti skill-forrásmappa."""
@@ -179,22 +182,42 @@ def agents_src_dir(src_dir, gemini=False):
     base = Path(src_dir) / "prompts" / _lang_subdir("agents", PROMPT_LANG)
     return base / "gemini-agent" if gemini else base
 
+# Minden helper scriptet (prompts/scripts/*.py) átmásol a cél scripts_dest
+# mappába, kivéve saját magát (install-helper.py, ami csak a telepítő gépén
+# fut, a célprojektben nincs rá szükség). Így új helper script (pl.
+# ds22-gate-check.py) hozzáadásakor nem kell mindhárom process_* függvényt
+# külön bővíteni.
 def copy_helper_scripts(src_dir, scripts_dest):
     scripts_dest.mkdir(parents=True, exist_ok=True)
     scripts_src_dir = Path(src_dir) / "prompts/scripts"
     for script_src in sorted(scripts_src_dir.glob("*.py")):
         # A repó-karbantartó szkriptek nem a célprojekt eszközei
-        if script_src.name in ("install-helper.py", "sync-gemini-agents.py"):
+        if script_src.name in ("install-helper.py", "sync-gemini-agents.py",
+                               "lang-parity-check.py"):
             continue
         script_dest = scripts_dest / script_src.name
         shutil.copy(script_src, script_dest)
         os.chmod(script_dest, 0o755)
+    write_lang_keys(src_dir, scripts_dest)
+
+
+def write_lang_keys(src_dir, scripts_dest):
+    """A `status-keys.json` PROJEKT-nyelvi szeletét a scriptek MELLÉ írja
+    `lang-keys.json` néven (10.6). Ebből dolgozik a `lang_keys.py` betöltő, így a
+    kapu-scriptek nyelvfüggetlenek maradnak, a hívó skillek felülete pedig nem
+    változik — se flag, se helyőrző. A `lang` mező azért kerül bele, hogy utólag
+    is látható legyen, milyen nyelvre telepítettek (LG2 maradék kockázat)."""
+    keys = load_status_keys(src_dir)
+    payload = {"lang": PROJECT_LANG}
+    payload.update(keys)
+    (scripts_dest / "lang-keys.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 # ── Közös leírás-részletek build-time inline-olása a skillekbe (BD13/BD14) ────
 # A skillek `<!-- INCLUDE:shared/<fájl> -->` markert tartalmazhatnak. Mivel a
 # skillek platformonként eltérő helyre települnek, egy relatív hivatkozás
 # futásidőben nem oldódna fel egységesen — ezért a telepítő a marker helyére
-# a `prompts/shared/<fájl>` tartalmát ILLESZTI BE (build-time include), így a
+# a `prompts/shared-<PROMPT_LANG>/<fájl>` tartalmát ILLESZTI BE (build-time include), így a
 # telepített SKILL.md önmagában teljes. A megosztott fájl elején lévő
 # magyarázó HTML-kommentet (forrás-jegyzet) nem visszük át.
 # ── A `<platform-scripts-mappa>` helyőrző feloldása (BD15) ────────────────────
@@ -224,7 +247,16 @@ def substitute_scripts_dir(content, platform):
     return content.replace(_SCRIPTS_DIR_PLACEHOLDER, target)
 
 
-_INCLUDE_MARKER_RE = re.compile(r'[ \t]*<!--\s*INCLUDE:\s*(?P<path>[^\s]+?)\s*-->[ \t]*')
+# A marker körüli vízszintes whitespace KÜLÖN csoportban van, mert kétféleképpen
+# kell bánni vele (lásd `_marker_is_standalone`):
+#   - a saját sorában álló marker esetén a behúzás és a sorvégi szóköz ELTŰNIK a
+#     beillesztett blokkal együtt (ez a 8.1 óta a normál, blokk-szintű eset);
+#   - a SOR KÖZEPÉN álló markernél viszont meg kell ŐRIZNI, különben a marker
+#     elnyeli az előtte lévő szóközt (`A: <!-- … -->` → `A:<blokk>`). Erre a 9.4
+#     kiemelésnek van szüksége: a user-facing, szó szerint kimondandó mondatok
+#     jellemzően egy felsorolás-pont KÖZEPÉN állnak, körülöttük instrukcióval.
+_INCLUDE_MARKER_RE = re.compile(
+    r'(?P<lead>[ \t]*)<!--\s*INCLUDE:\s*(?P<path>[^\s]+?)\s*-->(?P<trail>[ \t]*)')
 _shared_include_cache = {}
 
 _lang_fallback_warned = set()
@@ -232,9 +264,9 @@ _lang_fallback_warned = set()
 def _resolve_include_path(src_dir, rel_path):
     """A marker útvonalát fizikai fájlra oldja fel.
 
-    - `shared/<f>`  → `prompts/shared/<f>` — nyelvfüggetlen (instrukciós blokk,
+    - `shared/<f>`  → `prompts/shared-<PROMPT_LANG>/<f>` — a PROMPT-nyelvvel mozog (instrukciós blokk,
       a prompt-nyelvvel együtt mozog, mert a hivatkozó fa is nyelvi).
-    - `lang/<f>`    → `prompts/shared/lang/<PROJECT_LANG>/<f>` — PROJEKT-nyelvű
+    - `lang/<f>`    → `prompts/lang/<PROJECT_LANG>/<f>` — PROJEKT-nyelvű
       blokk: kimondandó mondatok, fájlba írt sablonok, státusz-kulcsszavak.
 
     Ha a projekt-nyelvi változat még nem létezik (a kétnyelvűsítés fázisos),
@@ -243,34 +275,297 @@ def _resolve_include_path(src_dir, rel_path):
     """
     if rel_path.startswith("lang/"):
         name = rel_path[len("lang/"):]
-        primary = Path(src_dir) / "prompts/shared/lang" / PROJECT_LANG / name
+        primary = Path(src_dir) / "prompts/lang" / PROJECT_LANG / name
         if primary.exists() or PROJECT_LANG == "hu":
             return primary
-        fallback = Path(src_dir) / "prompts/shared/lang/hu" / name
+        fallback = Path(src_dir) / "prompts/lang/hu" / name
         if fallback.exists() and name not in _lang_fallback_warned:
             _lang_fallback_warned.add(name)
             print(f"  FIGYELEM: a(z) '{name}' projekt-nyelvi blokk nincs meg "
                   f"'{PROJECT_LANG}' nyelven — magyar változat kerül be.")
         return fallback
+    if rel_path.startswith("shared/"):
+        name = rel_path[len("shared/"):]
+        return Path(src_dir) / "prompts" / _lang_subdir("shared", PROMPT_LANG) / name
     return Path(src_dir) / "prompts" / rel_path
+
+_ANCHOR_LINE_RE = re.compile(r'^\s*<!--\s*ANCHOR:\s*(?P<name>\S+?)\s*-->\s*$')
+
+
+def _extract_anchor_section(text, anchor, include_path):
+    """A `<!-- ANCHOR:<anchor> -->` sortól a KÖVETKEZŐ `<!-- ANCHOR: -->` sorig
+    (vagy a fájl végéig) tartó törzs.
+
+    MIÉRT HTML-komment és nem `## <horgony>` címsor: a kiemelt blokkok
+    túlnyomó része **artefaktum-sablon** (`conventions.md`, `plan.md`,
+    `validation-report.md`, kérdés-fájlok), és ezek maguk is tele vannak `## `
+    címsorral. Egy `## ` alapú határoló ezért a sablon ELSŐ saját címsoránál
+    elvágná a blokkot — csendben, a hibát csak egy hiányos artefaktumban lehetne
+    észrevenni. A `<!-- ANCHOR: -->` sor markdown-tartalomban nem fordul elő,
+    tehát ütközésmentes határoló.
+
+    A horgony nélküli eset (teljes fájl) és ez a két hibakezelés SZÁNDÉKOSAN
+    különbözik (lásd `inline_shared_includes`):
+      - nem létező FÁJL  → a marker érintetlenül marad, a telepítés nem törik;
+      - létező fájl + nem létező HORGONY → `sys.exit(1)`.
+    Egy user-facing mondat vagy egy fájlba írandó sablon csendes kihagyása
+    súlyosabb, mint megállni: az elsőt a felhasználó azonnal látja a
+    telepítés végén, a másodikat csak hetekkel később, egy hibás artefaktumban.
+    """
+    lines = text.split('\n')
+    start = None
+    for i, line in enumerate(lines):
+        m = _ANCHOR_LINE_RE.match(line)
+        if m and m.group('name') == anchor:
+            start = i + 1
+            break
+    if start is None:
+        print(f"HIBA: a '{anchor}' horgony nincs meg a(z) {include_path} fájlban.",
+              file=sys.stderr)
+        print("       A nyelvi blokkok horgonyai: `<!-- ANCHOR:<szabály-ID>-<rövid-név> -->`.",
+              file=sys.stderr)
+        sys.exit(1)
+    end = len(lines)
+    for i in range(start, len(lines)):
+        if _ANCHOR_LINE_RE.match(lines[i]):
+            end = i
+            break
+    return '\n'.join(lines[start:end]).strip('\n')
+
 
 def _read_shared_include(src_dir, rel_path):
     """Beolvassa és cache-eli a marker által hivatkozott blokk tartalmát, a
     vezető magyarázó HTML-kommentet levágva. A cache kulcsa tartalmazza a
-    projekt-nyelvet, mert a `lang/` markerek feloldása attól függ."""
-    key = (str(src_dir), rel_path, PROJECT_LANG)
+    projekt-nyelvet ÉS a prompt-nyelvet, mert a `lang/` markerek feloldása az
+    egyiktől, a `shared/` markereké a másiktól függ.
+
+    A marker útvonala `<fájl>#<horgony>` alakú is lehet (8.1/8.2) — ilyenkor a
+    fájlnak csak a `<!-- ANCHOR:<horgony> -->` blokkja kerül be. Erre a
+    projekt-nyelvi blokkoknál van szükség: fájlonként EGY nyelvi fájl, sok
+    horgonnyal."""
+    file_part, _, anchor = rel_path.partition('#')
+    key = (str(src_dir), file_part, anchor, PROMPT_LANG, PROJECT_LANG)
     if key in _shared_include_cache:
         return _shared_include_cache[key]
-    include_path = _resolve_include_path(src_dir, rel_path)
+    include_path = _resolve_include_path(src_dir, file_part)
     with open(include_path, 'r', encoding='utf-8') as f:
         text = f.read()
-    # Vezető <!-- ... --> blokk (forrás-jegyzet) eltávolítása
-    text = re.sub(r'^\s*<!--.*?-->\s*', '', text, count=1, flags=re.DOTALL)
-    text = text.strip('\n')
+    # Vezető <!-- ... --> blokk (forrás-jegyzet) eltávolítása — de az ANCHOR
+    # markert SOHA nem esszük meg (az egy horgony, nem forrás-jegyzet).
+    if not _ANCHOR_LINE_RE.match(text.lstrip('\n').split('\n', 1)[0]):
+        text = re.sub(r'^\s*<!--.*?-->\s*', '', text, count=1, flags=re.DOTALL)
+    if anchor:
+        text = _extract_anchor_section(text, anchor, include_path)
+    else:
+        text = text.strip('\n')
     _shared_include_cache[key] = text
     return text
 
+# ── PROJEKT-nyelvi frontmatter: `description` + `role` (LG15/LG26) ──────────
+# A frontmatterbe nem lehet INCLUDE-olni, ezért ez a két mező build-time
+# BEHELYETTESÍTÉSSEL kerül be a `prompts/lang/<PROJECT_LANG>/descriptions.json`-ból.
+# Miért a PROJEKT nyelve és nem a promptok nyelve: ezzel a mezővel illeszti az
+# agent a FELHASZNÁLÓ kérését a skillhez/subagenthez, a felhasználó pedig a
+# projekt nyelvén ír. `EN` prompt + `HU` projekt esetén tehát magyar leíró kell,
+# különben kereszt-nyelvi illesztés történik — ami pont a gyenge modelleken
+# romlik el. A kulcs a frontmatter `name` mezője, ami NEM fordul (LG6), tehát
+# stabil. Agentnél az érték objektum: {"description": …, "role": …} — a `role`
+# is illesztő-felület, sőt a markdown-agent kódút a `description`-t ebből írja.
+_descriptions_cache = {}
+
+
+def load_descriptions(src_dir):
+    """A projekt-nyelvi leírások betöltése, cache-elve. Hiányzó nyelvi fájl
+    esetén `hu` fallback hangos figyelmeztetéssel (LG12); ha a `hu` sincs meg,
+    megállunk — leíró nélkül a skillek gyakorlatilag meghívhatatlanok."""
+    key = (str(src_dir), PROJECT_LANG)
+    if key in _descriptions_cache:
+        return _descriptions_cache[key]
+    path = Path(src_dir) / "prompts/lang" / PROJECT_LANG / "descriptions.json"
+    if not path.exists():
+        fallback = Path(src_dir) / "prompts/lang/hu/descriptions.json"
+        if not fallback.exists():
+            print(f"HIBA: nincs meg a {path} és a magyar tartalék sem.", file=sys.stderr)
+            sys.exit(1)
+        print(f"  FIGYELEM: a descriptions.json nincs meg '{PROJECT_LANG}' nyelven "
+              f"— magyar leírók kerülnek be.")
+        path = fallback
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    _descriptions_cache[key] = data
+    return data
+
+
+_FM_FIELD_RE_CACHE = {}
+
+
+def _yaml_quoted(value):
+    """Egysoros, idézőjelezett YAML skalár — a mai frontmatterek formája."""
+    return '"' + value.replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ') + '"'
+
+
+def _replace_fm_field(content, field, value):
+    """A frontmatter `<field>:` sorát cseréli. Csak az ELSŐ `---` blokkban
+    keres, hogy a törzsben lévő azonos kezdetű sorokat ne bántsa."""
+    lines = content.split('\n')
+    if not lines or lines[0].strip() != '---':
+        return content, False
+    for i in range(1, len(lines)):
+        if lines[i].strip() == '---':
+            break
+        if lines[i].startswith(field + ':'):
+            lines[i] = f"{field}: {_yaml_quoted(value)}"
+            return '\n'.join(lines), True
+    return content, False
+
+
+def substitute_lang_frontmatter(content, src_dir, kind, source_name):
+    """A `description` (skill) ill. `description` + `role` (agent) mező cseréje a
+    projekt-nyelvi értékre. Hiányzó kulcs → `sys.exit(1)`: leíró nélkül a skill
+    nem triggerel, tehát a csendes átengedés súlyosabb, mint a megállás."""
+    data = load_descriptions(src_dir)
+    lines = content.split('\n')
+    name = ""
+    if lines and lines[0].strip() == '---':
+        for line in lines[1:]:
+            if line.strip() == '---':
+                break
+            if line.startswith('name:'):
+                name = line[len('name:'):].strip().strip('"').strip("'")
+                break
+    if not name:
+        return content  # nincs frontmatter `name` — nincs mit illeszteni
+    if name not in data:
+        print(f"HIBA: a '{name}' ({source_name}) nincs a projekt-nyelvi "
+              f"descriptions.json-ban.", file=sys.stderr)
+        print("       Minden skill és agent `name`-jéhez kell leíró (11.4 kapu).",
+              file=sys.stderr)
+        sys.exit(1)
+    entry = data[name]
+    if kind == 'agent':
+        if not isinstance(entry, dict):
+            print(f"HIBA: a '{name}' agent-bejegyzésnek objektumnak kell lennie "
+                  f'({{"description": …, "role": …}}).', file=sys.stderr)
+            sys.exit(1)
+        content, _ = _replace_fm_field('\n'.join(lines), 'description', entry['description'])
+        if entry.get('role'):
+            content, _ = _replace_fm_field(content, 'role', entry['role'])
+        return content
+    if isinstance(entry, dict):
+        entry = entry.get('description', '')
+    content, _ = _replace_fm_field('\n'.join(lines), 'description', entry)
+    return content
+
+
+# ── PROJEKT-nyelvi helyőrző-tokenek (LG32) ─────────────────────────────────
+# A `<platform-scripts-mappa>` (BD15) minta kiterjesztése. Az artefaktum-szekció
+# nevek és a státusz-értékek TÚLNYOMÓ RÉSZBEN szövegközi hivatkozások az
+# instrukciós prózában (~440 hely), nem kiemelhető blokkok — INCLUDE marker
+# tehát nem jó rájuk. Literálként hagyva viszont csendes kapu-bukást okoznának:
+# `EN` prompt + `HU` projekt esetén az ágens angol szekciócímet írna, míg a
+# kapu-scriptek a `lang-keys.json`-ból a magyart keresik.
+#
+# Három családot ismerünk, a `status-keys.json` három csoportjának megfelelően:
+#   <sec:planned_changes>     → "Tervezett módosítások"   (artefaktum-szekció NEVE)
+#   <field:f_status>          → "Státusz"                 (mező-/oszlopnév)
+#   <status:ready_for_plan>   → "Tervezésre kész"         (státusz- vagy címke-érték)
+#
+# A token a CSUPASZ literált adja vissza — a `##` / `###` prefix a promptban
+# marad (`## <sec:planned_changes>`). Így ugyanaz a kulcs használható `##`,
+# `###` és mondat közbeni hivatkozásként is, és a prompt olvasható marad.
+_LANG_TOKEN_RE = re.compile(r'<(?P<group>sec|field|status):(?P<key>[a-z0-9_]+)>')
+_LANG_TOKEN_GROUPS = {"sec": "sections", "field": "fields", "status": "status"}
+_status_keys_cache = {}
+
+
+def load_status_keys(src_dir):
+    """A `prompts/lang/status-keys.json` PROJEKT-nyelvi szelete, cache-elve.
+    Hiányzó nyelvi szelet → `hu` tartalék + egyszeri figyelmeztetés (LG12);
+    hiányzó fájl → megállunk, mert a tokenek feloldatlanul a telepített promptba
+    szivárognának, és egy gyenge modell szó szerint kiírná őket az artefaktumba."""
+    key = (str(src_dir), PROJECT_LANG)
+    if key in _status_keys_cache:
+        return _status_keys_cache[key]
+    path = Path(src_dir) / "prompts/lang/status-keys.json"
+    if not path.exists():
+        print(f"HIBA: nincs meg a {path}.", file=sys.stderr)
+        sys.exit(1)
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    lang = PROJECT_LANG
+    if lang not in data:
+        if lang not in _lang_fallback_warned:
+            print(f"FIGYELEM: a status-keys.json nem tartalmaz '{lang}' szeletet — "
+                  f"magyar tartalékra esünk vissza.", file=sys.stderr)
+            _lang_fallback_warned.add(lang)
+        lang = "hu"
+    _status_keys_cache[key] = data[lang]
+    return data[lang]
+
+
+def resolve_lang_tokens(content, src_dir):
+    """A `<sec:…>` / `<field:…>` / `<status:…>` tokenek cseréje a projekt-nyelvi
+    literálra. ISMERETLEN KULCS → `sys.exit(1)`, beszédes hibával: a csendes
+    átengedés a telepített promptba vinné a tokent (ugyanaz a logika, mint 8.3
+    és 8.6)."""
+    if src_dir is None:
+        return content
+    keys = load_status_keys(src_dir)
+
+    def _repl(match):
+        group = _LANG_TOKEN_GROUPS[match.group('group')]
+        name = match.group('key')
+        try:
+            return keys[group][name]
+        except KeyError:
+            print(f"HIBA: a '{match.group(0)}' token kulcsa nincs meg a "
+                  f"status-keys.json '{PROJECT_LANG}' szeletének '{group}' "
+                  f"csoportjában.", file=sys.stderr)
+            sys.exit(1)
+
+    return _LANG_TOKEN_RE.sub(_repl, content)
+
+
+def prepare_skill_content(skill_file, src_dir, platform):
+    """MINDEN skill-transzformáció egy helyen (8.7). Két skill-író kódút van
+    (`write_markdown_skill` és a `process_copilot` saját ciklusa), és korábban
+    mindegyik maga hívta a lépéseket — ez előbb-utóbb elcsúszott volna. Sorrend:
+    projekt-nyelvi frontmatter → INCLUDE-feloldás → nyelvi tokenek → scripts-mappa
+    helyőrző. A token-feloldás az INCLUDE UTÁN fut, hogy a beemelt `lang/` és
+    `shared/` blokkokban lévő tokenek is feloldódjanak."""
+    with open(skill_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    if src_dir is not None:
+        content = substitute_lang_frontmatter(content, src_dir, 'skill', skill_file.name)
+        content = inline_shared_includes(content, src_dir)
+        content = resolve_lang_tokens(content, src_dir)
+    return substitute_scripts_dir(content, platform)
+
+
+def prepare_agent_content(agent_file, src_dir, platform):
+    """Ugyanaz az agent-promptokra: a `description` ÉS a `role` is projekt-nyelvi
+    (LG26). Mind a négy agent-kódút ezt használja."""
+    with open(agent_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    if src_dir is not None:
+        content = substitute_lang_frontmatter(content, src_dir, 'agent', agent_file.name)
+        content = inline_shared_includes(content, src_dir)
+        content = resolve_lang_tokens(content, src_dir)
+    return substitute_scripts_dir(content, platform)
+
+
 _MAX_INCLUDE_DEPTH = 5
+
+def _marker_is_standalone(match):
+    """Igaz, ha a marker (a körülötte lévő vízszintes whitespace-szel együtt) a
+    saját sorát tölti ki — tehát sem előtte, sem utána nincs más tartalom a
+    sorban. Csak ilyenkor szabad a whitespace-t elnyelni."""
+    text = match.string
+    before = text.rfind("\n", 0, match.start()) + 1
+    after = text.find("\n", match.end())
+    if after == -1:
+        after = len(text)
+    return not text[before:match.start()].strip() and not text[match.end():after].strip()
 
 def inline_shared_includes(content, src_dir, _depth=0):
     """A skill törzsében lévő `<!-- INCLUDE:shared/... -->` markereket a
@@ -290,8 +585,37 @@ def inline_shared_includes(content, src_dir, _depth=0):
             included = _read_shared_include(src_dir, rel_path)
         except OSError:
             return match.group(0)
-        return inline_shared_includes(included, src_dir, _depth + 1)
+        resolved = inline_shared_includes(included, src_dir, _depth + 1)
+        if _marker_is_standalone(match):
+            return resolved
+        return match.group('lead') + resolved + match.group('trail')
     return _INCLUDE_MARKER_RE.sub(_repl, content)
+
+# ── `@inherit` — a modell-választás ÁTENGEDÉSE a platformnak (MA1) ──────────
+# A `models.json`-ban a `"model": "@inherit"` érték (és az üres/hiányzó modell) azt
+# jelenti: NE írjunk `model:` mezőt a telepített agentbe. A subagent ilyenkor a
+# platform alapértelmezését, illetve a HÍVÓ (szülő) ágens modelljét örökli.
+#
+# Miért kell külön sentinel, és miért nem elég a kulcs törlése: a törlés esetén a
+# feloldás üres stringet adna, amiből `model: [effort=high]` lenne — érvénytelen
+# azonosító. A Cursor az ilyet CSENDBEN a szülő modelljére cserélve nyeli le, tehát
+# a hiba nem látszik, csak a viselkedésen (és a számlán). Az `auto` ugyanazt a
+# viselkedést adja, de KIMONDVA.
+#
+# Mire jó: a Cursor Team-en a harmadik feles modellek (`claude-*`, `gpt-*`) külön,
+# jóval kisebb API-keretből mennek, mint az első felesek (Auto pool). Ha minden
+# subagent nevesített Claude-modellt kap, a subagent-terhelés 100%-ban az API-keretre
+# esik, miközben az Auto-keret érintetlen marad. Az `auto` ezt oldja fel — a
+# nevesítés lehetősége viszont megmarad, platformonként és agentenként.
+# A sentinel `@`-cal kezdődik, hogy SOHA ne ütközzön valódi modell-azonosítóval.
+# Konkrét eset: a Cursoron az `auto` egy VALÓDI modell ("Auto (default)", lásd
+# `cursor-agent --list-models`) — ha a sentinel is `auto` lenne, a profil nem tudná
+# kifejezni, hogy „a Cursor auto-routerét kérem", mert a telepítő elhagyná a mezőt.
+OMIT_MODEL = "@inherit"
+
+def is_auto_model(model):
+    """Igaz, ha a modell-választást a platformra bízzuk (nincs `model:` mező)."""
+    return not model or str(model).strip().lower() == OMIT_MODEL
 
 def _build_alert(model, platform_name, effort=None):
     lines = [f"> **Recommended Model ({platform_name}):** {model}"]
@@ -302,7 +626,19 @@ def _build_alert(model, platform_name, effort=None):
 # A `model` mindig injektálódik (frontmatter mező + látható alert). Az `effort`
 # opcionális: ha None (pl. skilleknél, amik az orchestrátor-fő ágensek, nem
 # subagentek), nem kerül be — csak az agenteknél adjuk át.
+def _strip_model_field(content):
+    """`auto` eset: a `model:` sort NEM írjuk ki, és ha a forrásban lenne, kivesszük.
+    Alert sem kerül a törzsbe — nincs mit ajánlani."""
+    parts = content.split('---')
+    if len(parts) < 3:
+        return content
+    frontmatter, body = parts[1], '---'.join(parts[2:])
+    kept = [l for l in frontmatter.splitlines() if not l.strip().startswith('model:')]
+    return f"---{chr(10).join(kept)}\n---{body}"
+
 def inject_markdown_model(content, model, platform_name, effort=None):
+    if is_auto_model(model):
+        return _strip_model_field(content)
     parts = content.split('---')
     if len(parts) >= 3:
         frontmatter = parts[1]
@@ -354,7 +690,10 @@ def inject_markdown_model(content, model, platform_name, effort=None):
 # ide fűzzük hozzá. Érvénytelen azonosító esetén a Cursor csendben a szülő
 # ágens modelljére esik vissza — a hiba nem látszik, csak a viselkedésen.
 def inject_cursor_agent(content, model, effort, readonly=False):
-    model_spec = f"{model}[effort={effort}]" if effort else model
+    # `@inherit` (MA1): a modell-választást a Cursorra bízzuk — nincs `model:` mező, és
+    # az effort sem kerül sehova (a Cursor az effortot a modell-azonosítóba fűzve
+    # várja, tehát modell nélkül nincs hova tenni).
+    model_spec = model if is_auto_model(model) else (f"{model}[effort={effort}]" if effort else model)
     injected = inject_markdown_model(content, model_spec, "Cursor")
     parts = injected.split('---')
     if len(parts) < 3:
@@ -397,14 +736,9 @@ def inject_cursor_agent(content, model, effort, readonly=False):
 # subagent model/effort, Codex TOML model/model_reasoning_effort) — ott marad meg.
 def write_markdown_skill(skill_file, skills_dest, src_dir=None, platform=None):
     """Skill másolása modell-injektálás NÉLKÜL a <skills_dest>/bs-<stem>/SKILL.md alá.
-    A `<!-- INCLUDE:shared/... -->` markerek build-time inline-olódnak (BD14),
-    ha a `src_dir` meg van adva; a `<platform-scripts-mappa>` helyőrző a platform
-    tényleges scripts-mappájára cserélődik (BD15)."""
-    with open(skill_file, 'r', encoding='utf-8') as f:
-        content = f.read()
-    if src_dir is not None:
-        content = inline_shared_includes(content, src_dir)
-    content = substitute_scripts_dir(content, platform)
+    Minden tartalmi transzformáció a közös `prepare_skill_content()`-ben él
+    (8.7), hogy a Copilot saját skill-ciklusa se csússzon el tőle."""
+    content = prepare_skill_content(skill_file, src_dir, platform)
     skill_dest_dir = skills_dest / f"bs-{skill_file.stem}"
     skill_dest_dir.mkdir(parents=True, exist_ok=True)
     with open(skill_dest_dir / "SKILL.md", 'w', encoding='utf-8') as f:
@@ -470,7 +804,7 @@ def _build_codex_agent_toml(name, description, model, effort, developer_instruct
         f"name = {_toml_basic_string(name)}",
         f"description = {_toml_basic_string(description)}",
     ]
-    if model:
+    if model and not is_auto_model(model):
         lines.append(f"model = {_toml_basic_string(model)}")
     if effort:
         lines.append(f"model_reasoning_effort = {_toml_basic_string(effort)}")
@@ -494,13 +828,10 @@ def process_codex(src_dir, dest_path, models):
         effort = get_effort(models, "codex", agent_file.name)
         readonly = stem in READONLY_AGENTS
 
-        with open(agent_file, 'r', encoding='utf-8') as f:
-            content = f.read()
         # A subagent-promptok is kaphatnak `<!-- INCLUDE:shared/... -->` markert
-        # (BD14) — pl. a közös anti-„teszt-csalás" garde, amit a fixereknek szó
-        # szerint ugyanúgy kell látniuk, mint az orchestrátornak.
-        content = inline_shared_includes(content, src_dir)
-        content = substitute_scripts_dir(content, "codex")
+        # (BD14), és a `description`/`role` a PROJEKT nyelvét követi (LG26) —
+        # mindkettőt a közös prepare_agent_content() végzi.
+        content = prepare_agent_content(agent_file, src_dir, "codex")
 
         name, role, description, body = _split_agent_markdown(content)
         agent_name = name or stem
@@ -554,13 +885,36 @@ def process_antigravity(src_dir, dest_path, models):
         # írni. Külön `effort` mező nincs a sémában — csak látható ajánlásként
         # (alert) tesszük ki, a JSON-ba nem írjuk, hogy ne sugalljon nem létező
         # képességet.
-        data["model"] = model
+        # `@inherit` (MA1) → az Antigravity saját `inherit` tierje: ugyanaz a jelentés
+        # (a szülő ágens modellje), csak a séma nyelvén kimondva.
+        data["model"] = "inherit" if is_auto_model(model) else model
+
+        # A `description` a PROJEKT nyelvét követi (LG26); a mai tükörben ez a
+        # markdown `role:` mezőjével egyezik, ezért abból jön. (A `displayName`
+        # az agent NEVE, nem leíró — azt nem fordítjuk, LG6.) Az agent.json a prompt-nyelvű
+        # gemini-tükörből jön, ezért itt build-time cseréljük — különben
+        # `EN` prompt + `HU` projekt esetén angol leíró illesztené a magyar
+        # felhasználói kérést.
+        _lang_entry = load_descriptions(src_dir).get(agent_name)
+        if isinstance(_lang_entry, dict):
+            data["description"] = _lang_entry.get("role") or _lang_entry["description"]
+        elif _lang_entry is None:
+            print(f"HIBA: a '{agent_name}' nincs a projekt-nyelvi descriptions.json-ban.",
+                  file=sys.stderr)
+            sys.exit(1)
 
         try:
             sections = data["customAgentSpec"]["customAgent"]["systemPromptSections"]
             for section in sections:
                 if section.get("title") == "Instructions":
                     content = inline_shared_includes(section.get("content", ""), src_dir)
+                    # A nyelvi tokenek az INCLUDE UTÁN oldódnak fel — ugyanaz a
+                    # sorrend, mint a `prepare_agent_content`-ben (9.7.3). Az
+                    # Antigravity a gemini-tükörből dolgozik, ezért nem megy át a
+                    # `prepare_agent_content`-en: a feloldást itt kell elvégezni,
+                    # különben a telepített agent.json feloldatlan `<sec:…>`
+                    # tokent hordozna.
+                    content = resolve_lang_tokens(content, src_dir)
                     content = substitute_scripts_dir(content, "antigravity")
                     section["content"] = _build_alert(model, "Antigravity", effort) + content
         except KeyError:
@@ -595,13 +949,10 @@ def process_claude(src_dir, dest_path, models):
     for agent_file in agents_src.glob("*.md"):
         model = get_model(models, "claude", agent_file.name)
         effort = get_effort(models, "claude", agent_file.name)
-        with open(agent_file, 'r', encoding='utf-8') as f:
-            content = f.read()
         # A subagent-promptok is kaphatnak `<!-- INCLUDE:shared/... -->` markert
-        # (BD14) — pl. a közös anti-„teszt-csalás" garde, amit a fixereknek szó
-        # szerint ugyanúgy kell látniuk, mint az orchestrátornak.
-        content = inline_shared_includes(content, src_dir)
-        content = substitute_scripts_dir(content, "claude")
+        # (BD14), és a `description`/`role` a PROJEKT nyelvét követi (LG26) —
+        # mindkettőt a közös prepare_agent_content() végzi.
+        content = prepare_agent_content(agent_file, src_dir, "claude")
 
         new_content = inject_markdown_model(content, model, "Claude Code", effort)
 
@@ -633,13 +984,10 @@ def process_copilot(src_dir, dest_path, models):
         model = get_model(models, "copilot", agent_file.name)
         effort = get_effort(models, "copilot", agent_file.name)
 
-        with open(agent_file, 'r', encoding='utf-8') as f:
-            content = f.read()
         # A subagent-promptok is kaphatnak `<!-- INCLUDE:shared/... -->` markert
-        # (BD14) — pl. a közös anti-„teszt-csalás" garde, amit a fixereknek szó
-        # szerint ugyanúgy kell látniuk, mint az orchestrátornak.
-        content = inline_shared_includes(content, src_dir)
-        content = substitute_scripts_dir(content, "copilot")
+        # (BD14), és a `description`/`role` a PROJEKT nyelvét követi (LG26) —
+        # mindkettőt a közös prepare_agent_content() végzi.
+        content = prepare_agent_content(agent_file, src_dir, "copilot")
 
         new_content = inject_markdown_model(content, model, "Copilot", effort)
 
@@ -657,12 +1005,9 @@ def process_copilot(src_dir, dest_path, models):
         # Nincs modell-injektálás: a Copilot `.instructions.md` frontmatter nem
         # ismer `model` mezőt (az csak prompt-fájlnál van) → inert lenne. Lásd a
         # write_markdown_skill fölötti indoklást.
-        with open(skill_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-
-        # Build-time include-inline-olás (BD14) — a Copilot is teljes SKILL-t kap.
-        content = inline_shared_includes(content, src_dir)
-        content = substitute_scripts_dir(content, "copilot")
+        # Ugyanaz a transzformáció-lánc, mint a write_markdown_skill-ben (8.7):
+        # projekt-nyelvi frontmatter → INCLUDE-feloldás → scripts-mappa.
+        content = prepare_skill_content(skill_file, src_dir, "copilot")
 
         with open(instructions_dest / f"bs-{clean_name}.instructions.md", 'w', encoding='utf-8') as f:
             f.write(content)
@@ -686,13 +1031,10 @@ def process_cursor(src_dir, dest_path, models):
         effort = get_effort(models, "cursor", agent_file.name)
         readonly = _agent_stem(agent_file.name) in READONLY_AGENTS
 
-        with open(agent_file, 'r', encoding='utf-8') as f:
-            content = f.read()
         # A subagent-promptok is kaphatnak `<!-- INCLUDE:shared/... -->` markert
-        # (BD14) — pl. a közös anti-„teszt-csalás" garde, amit a fixereknek szó
-        # szerint ugyanúgy kell látniuk, mint az orchestrátornak.
-        content = inline_shared_includes(content, src_dir)
-        content = substitute_scripts_dir(content, "cursor")
+        # (BD14), és a `description`/`role` a PROJEKT nyelvét követi (LG26) —
+        # mindkettőt a közös prepare_agent_content() végzi.
+        content = prepare_agent_content(agent_file, src_dir, "cursor")
 
         new_content = inject_cursor_agent(content, model, effort, readonly)
 

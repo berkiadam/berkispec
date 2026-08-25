@@ -2,6 +2,13 @@
 #
 # init-project.sh — Skill és Agent integráció a támogatott ágensekhez
 #
+# ⛔ ELAVULT (LG19) — NE HASZNÁLD, ÉS NE FEJLESZD TOVÁBB.
+# Szimlink-alapú alternatív telepítési mód, amit soha nem használtunk, és amire
+# semmi nem hivatkozik. A támogatott telepítés: `./install.sh` (vagy
+# `install.ps1`) → `prompts/scripts/install-helper.py`. Ez a script NEM kap
+# nyelvi (prompt-/projekt-nyelv) támogatást, és a `prompts/skills` →
+# `prompts/skills-hu` átnevezés után az útvonalai szándékosan törtek maradnak.
+#
 
 set -euo pipefail
 

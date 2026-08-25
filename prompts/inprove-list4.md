@@ -257,7 +257,7 @@ A `lang/` **nem** a `shared-*/` alatt van, mert nem a prompt-nyelvvel mozog: a
 
 ---
 
-## 3. Rögzített döntések (LG1–LG22, LG24–LG29; az **LG23** a 4. szakaszban)
+## 3. Rögzített döntések (LG1–LG22, LG24–LG34; az **LG23** a 4. szakaszban)
 
 Ezek **lezárt irányválasztások**. A végrehajtás során ne nyisd újra őket; ha valamelyik
 kivitelezhetetlennek bizonyul, állj meg és kérdezz, ne dönts át csendben.
@@ -376,6 +376,79 @@ kivitelezhetetlennek bizonyul, állj meg és kérdezz, ne dönts át csendben.
   tehát aktívan **félrevezeti** a terv végrehajtóját — összekeverhető a `lang/<L>/`
   célszerkezettel. Törlendő: `berkispec`, `src/`, és az üres `prompts/templates/`.
 
+- [x] **LG30 — Az LG22 törlési köre kiegészül a `specification.md`-vel és a `.cursorrules`-zal.**
+  Mindkettő az elhagyott Node CLI generációjához tartozik: a `specification.md` (471 sor) a
+  CLI specifikációja (`./berkispec plan <cycle>`, `.berkispec/latest-prompt.md`, Codex CLI
+  hívás), utolsó módosítása a repó 2. commitja; a `.cursorrules` pedig ezt jelöli meg „hiteles
+  forrásként", és a törölt `src/`-re meg egy nem létező `plans/` mappára hivatkozik. Ugyanaz az
+  indok, mint az LG22-nél: **aktívan félrevezeti** az üres kontextusban induló ágenst. **Mindkettő
+  törlendő** (nem elavult-jelölés, nem átírás) — a gazda-projektre a `README.md` és a
+  `prompts/meta-improve-prompts.md` a hiteles forrás.
+
+- [x] **LG31 — Az LG16 minta KITERJESZTÉSE minden futásidejű repó-útvonalra.** A 7.4 maradék
+  hivatkozásai ugyanabba a hibaosztályba tartoztak, mint az LG16 fixer-esete: a **telepített**
+  prompt egy `prompts/…` repó-útvonalra küldte az ágenst, ami a célprojektben nem létezik (a
+  gyenge modell megpróbálja beolvasni, elbukik, improvizál). Ezért az útvonal **eltűnik**, és a
+  szöveg a **hívható néven** hivatkozik:
+  - subagent → a neve (`analyzer`, `analyzer-exec`, `doc-sync-planner`, `researcher`, `reviewer`),
+    „a platform telepített agent-definíciója" megjegyzéssel;
+  - fázis-skill → a slash-parancsa (`/bs-02-write-spec`, `/bs-quick-flow`, `/bs-add-cycles`);
+  - ahol tartalom kell (implement-/review-fixer), ott a 7.6 `shared-<L>/fix-mode-implement.md`
+    INCLUDE adja meg, nem hivatkozás.
+  **Következmény a 7.8-ra:** a „grep nulla találat" és a 16.1 byte-azonosság **nem tartható
+  együtt** — a 7.4 szükségszerűen 6 skill tartalmát módosítja (00, 03, 05, 06, 08, quick-flow).
+  A 7. szakasz ezért **két commit**: (a) tiszta átnevezés + kód, ahol a 16.1 byte-azonos; majd
+  (b) a 7.4/7.6/7.7 tartalmi javítás, ahol a keretet újraalapozzuk és a diffet átnézzük.
+
+- [x] **LG32 — A SZÖVEGKÖZI projekt-nyelvi literálok HELYŐRZŐ-TOKENT kapnak, build-time
+  feloldással** (a `<platform-scripts-mappa>` / BD15 minta kiterjesztése).
+  **A probléma:** a 9.1 az „artefaktum-szekció fejléc" és a „státusz-kulcsszó" osztályt
+  projekt-nyelvinek (tehát kiemelendőnek) minősíti, de ezek **túlnyomó részben szövegközi,
+  mondat belsejében álló hivatkozások** a magyar instrukciós prózában, nem kiemelhető blokkok.
+  Mért felület (`skills-hu` + `agents-hu` + `shared-hu`): **~296** előfordulás 17
+  szekciónévre, **~140** előfordulás 7 státusz-értékre/címkére — **összesen ~440**.
+  Blokk-kiemeléssel nem kezelhető, literálként hagyva pedig csendes kapu-bukást okoz:
+  `EN` prompt + `HU` projekt esetén az ágens `## Planned changes`-t írna, míg a kapu-scriptek
+  a `lang-keys.json`-ból `## Tervezett módosítások`-at keresnek (16.6/c).
+  **A döntés:** a prompt-forrásokban a literál helyére **ASCII helyőrző-token** kerül
+  (`<sec:planned_changes>`, `<status:draft>`), amit a telepítő **build-time** a
+  `status-keys.json` **PROJECT_LANG-szeletéből** old fel. Előnyök: egyetlen igazságforrás
+  (a 10.4 automatikusan teljesül), szövegközi helyen is működik, a paritás-kapu a
+  **token-halmazt** hasonlítja (11.12), a `hu` feloldás pedig **byte-azonos a maival** (LG9),
+  tehát a 16.1 keret a teljes cserét fedi.
+  **Miért ASCII, nem `<szekció:…>`:** a helyőrzőket nem fordítjuk (13.1), tehát a token a
+  **`en` fába is átkerül** — egy ékezetes token ~440 szándékos kivételt kényszerítene a 16.5
+  ékezet-grepre. A `<platform-scripts-mappa>` marad ékezetes (meglévő, egyetlen kivétel).
+  **Következmények:** (1) új **9.7** szakasz a mechanizmusnak és a cserének; (2) a
+  `status-keys.json` (10.3) **előrekerül** ide, mert a feloldás nélküle nem működik — a §10
+  maradéka (a scriptek i18n-je) a helyén marad; (3) a 9.3 leltárban a szövegközi
+  szekciónév/státusz **NEM kiemelési jelölt**, hanem **token-jelölt** — külön osztály;
+  (4) a `lang/<L>/` blokkokban ezek a fejlécek **literálként** állnak (ott már nyelv-specifikus
+  a fájl), és a 11.5 kapu ellenőrzi, hogy egyeznek a `status-keys.json`-nal.
+
+- [x] **LG33 — Az ANGOLUL ÍRT projekt-nyelvi literálok is a `status-keys.json`-ba kerülnek,
+  `hu` = `en` értékkel.** Érintettek: `Reviewed` / `Review Required` (schema artifact státusz a
+  `plan.md`-ben), `Must Fix` / `Suggestion` (finding-súlyosság az `analyze-report.md`-ben és a
+  `code-review.md`-ben), valamint a `dod-check.py` `VERDICT: PASS/FAIL/MANUAL` kulcsszava (10.2).
+  Ezek **projekt-nyelviek** (artefaktumba íródnak és kapu-script illeszt rájuk), de a magyar
+  értékük már ma is angol. Indok a felvételükre: (a) a szerződés így **egy helyen** van, és a
+  11.5 kapu rájuk is érvényes; (b) a `hu` érték byte-azonos marad (LG9), tehát a 16.1 nem sérül;
+  (c) ha egyszer mégis magyarítani kell őket, az egy JSON-érték átírása, nem 60 hely megkeresése.
+  **A tokenizálás (9.7.4) rájuk is kiterjed** — `<status:reviewed>`, `<status:must_fix>` stb.
+
+- [x] **LG34 — A 9.7.4 tokenizálás SZŰK KÖRŰ: a sablon-táblák OSZLOPFEJLÉCEI nem kapnak
+  tokent.** A 9.7.2 leltár zárásakor derült ki, hogy a `03-write-plan.md` plan-sablonjában 12
+  táblafejléc-sor áll, kb. 50 különböző oszlopnévvel (`| Komponens | Repo-útvonal / image |
+  Base URL | … |`, `| Kategória | Típus | Előfeltétel | Parancs | … |`). **Ezek a prompt-nyelvvel
+  mozognak** (a fordítás során angolra fordulnak). Indok: **egyetlen kapu-script sem illeszt
+  rájuk** — a `run-tests.py` a *szekciócímre* illeszt (`^#+\s*Gépi futtatási tábla`), a sorokat
+  utána **pozíció szerint** olvassa (`split("|")`), tehát az oszlopnév nyelve közömbös. A 9.1
+  „artefaktum-szekció fejléce" osztálya a `##`/`###` címsorokra szűkül. **Amit tokenizálunk:**
+  artefaktum-szekciófejléc, státusz-/címke-érték, és a `status-keys.json`-ban már meglévő
+  mezőnevek (`Státusz`, `Mód`, `Lefedve`, …). **Elfogadott maradék-kockázat:** `EN` prompt +
+  `HU` projekt esetén a plan.md tábláinak fejléce angol lehet (a modell az `output-language`
+  blokk hatására gyakran magyarra fordítja) — gépi következménye nincs.
+
 - [x] **LG24 — A rövidített úton (17.2) a 9.6 (`lang/en/`) BENNE MARAD, csak a 10. szakasz
   (script-i18n) halasztódik.** Indok: a `lang/en/` nélkül a paritás-kapu 11.1/11.3 pontja
   tartósan FAIL-t adna, tehát a 16.3 sosem teljesülne, és az `en/en` telepítés csendben
@@ -484,7 +557,7 @@ A jelenlegi kód három ponton **nem** a célállapot. Ezek a 7. szakasz teendő
 | `shared/<f>` marker | fixen `prompts/shared/<f>` | `prompts/shared-<PROMPT_LANG>/<f>` |
 | `lang/<f>` marker | `prompts/shared/lang/<PROJECT_LANG>/<f>` | `prompts/lang/<PROJECT_LANG>/<f>` |
 
-- [ ] **5.6 — A kódkomment átírása.** Az 5.1 konfig fölötti kommentblokk a projekt-nyelvet
+- [x] **5.6 — A kódkomment átírása.** Az 5.1 konfig fölötti kommentblokk a projekt-nyelvet
   „runtime beállításként" írja le, amit a `conventions.md` rögzít. Ez **nem a célállapot**
   (LG2/LG17): mindkét tengely build-time, a különbség csak a hatókörük. A kommentet írd át.
 
@@ -495,16 +568,17 @@ A jelenlegi kód három ponton **nem** a célállapot. Ezek a 7. szakasz teendő
 Ezt végezd el **legelőször**: kevesebb fájl marad, aminek az útvonalát ellenőrizni kell, és
 eltűnik a félrevezető `prompts/<language>/` minta. Nem funkcionális változás, saját commit.
 
-- [ ] **6.1 — Törlés:** `git rm -r src/ berkispec prompts/templates/`
-  *(a `prompts/templates/` csak egy `.gitkeep`-et tartalmaz).*
-- [ ] **6.2 — `README.md`:** a mappastruktúra-ábrából és minden hivatkozásból ki a `src/`, a
+- [x] **6.1 — Törlés:** `git rm -r src/ berkispec prompts/templates/ specification.md .cursorrules`
+  *(a `prompts/templates/` csak egy `.gitkeep`-et tartalmaz; a két gyökér-fájl az LG30.)*
+- [x] **6.2 — `README.md`:** a mappastruktúra-ábrából és minden hivatkozásból ki a `src/`, a
   `berkispec` launcher és a `prompts/templates/`. A TOC-ot is ellenőrizd.
-- [ ] **6.3 — `prompts/meta-improve-prompts.md`:** ugyanez, ha említi őket.
-- [ ] **6.4 — `init-project.sh` elavult-jelölése (LG19):** komment a fájl elejére, hogy elavult
+- [x] **6.3 — `prompts/meta-improve-prompts.md`:** ugyanez, ha említi őket.
+- [x] **6.4 — `init-project.sh` elavult-jelölése (LG19):** komment a fájl elejére, hogy elavult
   és az `install.sh` / `install.ps1` váltja ki; említés a `meta-improve-prompts.md`-ben. Az
   útvonalait **ne** javítsd, és **ne töröld** a fájlt.
-- [ ] **6.5 — Ellenőrzés:**
-  `grep -rIn "index.mjs\|prompts/templates" . | grep -v "^./.git/"` → nulla találat.
+- [x] **6.5 — Ellenőrzés:**
+  `grep -rIn "index.mjs\|prompts/templates\|specification.md\|berkispec plan" . | grep -v "^./.git/"`
+  → nulla találat (az `inprove-list*.md`-t leszámítva).
 
 ---
 
@@ -513,7 +587,7 @@ eltűnik a félrevezető `prompts/<language>/` minta. Nem funkcionális változ�
 Ez a lépés **atomi**: az átnevezés, a kódmódosítás és az összes útvonal-hivatkozás javítása
 együtt megy, különben a repó egy commitban törött állapotban áll.
 
-- [ ] **7.1 — `git mv` a három fára:**
+- [x] **7.1 — `git mv` a három fára:**
   ```bash
   git mv prompts/skills  prompts/skills-hu
   git mv prompts/agents  prompts/agents-hu
@@ -521,14 +595,14 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
   ```
   *(A `prompts/agents/gemini-agent/` együtt mozog az `agents-hu`-val.)*
 
-- [ ] **7.2 — `_lang_subdir` mindig prefixel.** A `hu` → suffix nélküli elágazás törlendő:
+- [x] **7.2 — `_lang_subdir` mindig prefixel.** A `hu` → suffix nélküli elágazás törlendő:
   `return f"{base}-{lang}"` mindkét nyelvre.
 
-- [ ] **7.3 — A `shared/` INCLUDE-prefix prompt-nyelv-tudatos lesz.** `shared/<f>` →
+- [x] **7.3 — A `shared/` INCLUDE-prefix prompt-nyelv-tudatos lesz.** `shared/<f>` →
   `prompts/shared-<PROMPT_LANG>/<f>`. **A 71 meglévő marker szövege NEM változik** — csak a
   feloldó. Egyúttal a `lang/<f>` prefix célja `prompts/lang/<PROJECT_LANG>/<f>` lesz (2.4).
 
-- [ ] **7.4 — Útvonal-hivatkozások javítása.** Mért leltár (a `inprove-list*.md` nélkül):
+- [x] **7.4 — Útvonal-hivatkozások javítása.** Mért leltár (a `inprove-list*.md` nélkül):
   - **`prompts/skills` — 64 találat, 19 fájlban:** `install.sh`, `install.ps1`,
     `prompts/scripts/init-project.sh`, `prompts/scripts/install-helper.py`,
     `prompts/meta-improve-prompts.md`, `README.md`, `.claude/settings.local.json` (**nem
@@ -543,12 +617,14 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
   - **`prompts/shared` — 3 fájlban:** `install-helper.py`, `meta-improve-prompts.md`, `README.md`.
   - **Kivétel:** az `init-project.sh` útvonalait **ne** javítsd (LG19).
 
-- [ ] **7.5 — `install.sh` / `install.ps1` konstansok.** `SKILLS_SRC` (sh 39. sor, ps1 66. sor)
-  és `AGENTS_SRC_DIR` (sh 37. sor) a prompt-nyelvből származik. A `sh`-ban ezek **`readonly`**,
-  tehát a deklarációt a nyelvválasztás **utánra** kell mozgatni (vagy elhagyni a `readonly`-t).
-  Az `install-helper.py` hívások: sh 372/414/456/498/561, ps1 395/440/485/530/595.
+- [x] **7.5 — `install.sh` / `install.ps1` konstansok — TÖRÖLVE, mert használaton kívül voltak.**
+  *(Tény-korrekció a végrehajtás közben:* a `SKILLS_SRC`, `AGENTS_SRC_DIR` és `AGENTS_GEMINI_SRC`
+  csak deklarálva volt, egyetlen hivatkozás sem volt rájuk sem a `sh`-ban, sem a `ps1`-ben —
+  tehát nem kellett nyelv-tudatossá tenni, hanem törölni. A forrásfát az `install-helper.py`
+  `_lang_subdir()`-je oldja fel.) Az `install-helper.py` hívások helye a §12-hez:
+  sh 372/414/456/498/561, ps1 395/440/485/530/595.
 
-- [ ] **7.6 — A fixer-wrapperek runtime hivatkozásának megszüntetése (LG16).** Az
+- [x] **7.6 — A fixer-wrapperek runtime hivatkozásának megszüntetése (LG16).** Az
   `implement-fixer.md` és a `review-fixer.md` ma azt írja: *„Olvasd be és kövesd a
   `prompts/skills/06-implement.md` fájlt"*. Teendő:
   1. a `06-implement.md` „Fix-mód (validate-hurok belépő)" szekciója kerüljön ki egy
@@ -563,47 +639,76 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
   **Figyelj:** ez tartalmi refaktor, tehát a 16.1 byte-azonosság **ezen a két agenten és a 06
   skillen nem fog teljesülni** — ez itt elvárt, nem hiba.
 
-- [ ] **7.7 — Mellékesen javítandó: 3 elavult `sdd-lightweight-flow` hivatkozás.** A
+- [x] **7.7 — Mellékesen javítandó: 3 elavult `sdd-lightweight-flow` hivatkozás.** A
   `00-init-project.md` (46. és 145. sor) és a `03-write-plan.md` (111. sor) a nem létező
   `prompts/skills/sdd-lightweight-flow.md`-re hivatkozik; a skill ma `quick-flow.md` /
   `/bs-quick-flow`. Javítsd, de a commit-üzenetben **külön jelöld**, mert ez tartalmi javítás,
   nem átnevezés.
 
-- [ ] **7.8 — Verifikáció még a kétnyelvűsítés előtt:**
+- [x] **7.8 — Verifikáció még a kétnyelvűsítés előtt:**
   ```bash
   grep -rIn "prompts/skills/\|prompts/agents/\|prompts/shared/" . \
     | grep -v "^./.git/" | grep -v -- "-hu/\|-en/" | grep -v inprove-list | grep -v init-project.sh
   ```
-  → nulla találat. **És** a 16.1 byte-azonosság teljesül a `hu`/`hu` telepítésre.
+  → nulla találat *(a `.claude/settings.local.json` nem verziókezelt lokális engedély-lista,
+  és az `init-project.sh` az LG19 miatt kivétel)*.
+  **A 16.1-ről lásd az LG31-et:** a byte-azonosság az **átnevezés + kód** commitra teljesült
+  (56/56 hash változatlan — ez fogta meg, hogy a `shared/` marker feloldása a `_lang_subdir`
+  nélkül csendben feloldatlanul hagyta volna mind az 56 skill INCLUDE-jait). A 7.4/7.6/7.7
+  tartalmi commit után a keret **újraalapozva**: ugyanaz az 56 fájl, és pontosan a 6 érintett
+  skill hasha változott (00-init-project, 03-write-plan, 05-analyze, 06-implement, 08-doc-sync,
+  quick-flow) — más nem.
 
 ---
 
 ## 8. Horgonyos INCLUDE + `description` behelyettesítés
 
-- [ ] **8.1 — A marker szintaxis kiterjesztése.** `<!-- INCLUDE:lang/<fájl>.md#<horgony> -->`
+- [x] **8.1 — A marker szintaxis kiterjesztése.** `<!-- INCLUDE:lang/<fájl>.md#<horgony> -->`
   A `_INCLUDE_MARKER_RE` `[^\s]+?`-t illeszt, tehát a `#horgony` **automatikusan bekerül** a
   `path` csoportba — a regexet nem kell módosítani, csak a feloldót.
+  > **Buktató a 9.4-hez (mért viselkedés):** a regex a marker körüli vízszintes whitespace-t is
+  > elfogyasztja (`[ \t]*…[ \t]*`), tehát egy **sor közepére** tett marker elnyeli az előtte
+  > lévő szóközt (`A: <!-- … -->` → `A:<blokk>`). A markereket ezért **mindig önálló sorba** tedd.
 
-- [ ] **8.2 — Horgony-vágás a feloldóban.** A `rel_path`-ot `#`-nél bontsd `(fájl, horgony)`-ra.
+- [x] **8.9 — ⚠ A 8.2 HORGONY-HATÁROLÓ KORRIGÁLVA: `## <horgony>` → `<!-- ANCHOR:<horgony> -->`.**
+  A 8.2 `## ` alapú határolója a **fő használati esetre nem működik**, és ez csak a 9.4 első
+  fájljánál derült ki (a 16.1 keret fogta meg): a kiemelt blokkok túlnyomó része
+  **artefaktum-sablon** (`conventions.md`, `plan.md`, `validation-report.md`, kérdés-fájlok),
+  amik maguk is tele vannak `## ` címsorral — a határoló ezért a sablon **első saját címsoránál**
+  elvágta a blokkot. A `00-init-project` 197 soros `conventions.md`-sablonjából **1 sor** jött át.
+  **Csendes hiba lett volna:** a telepítés lefut, a kimenet hiányos, és ez csak hetekkel később,
+  egy csonka `conventions.md`-ben derül ki.
+  A `<!-- ANCHOR:… -->` sor markdown-tartalomban nem fordul elő, tehát ütközésmentes határoló.
+  A blokk a horgony-sortól a **következő `<!-- ANCHOR: -->` sorig** (vagy a fájl végéig) tart;
+  a vezető forrás-jegyzet levágása az ANCHOR markert **nem** eszi meg. A `8.4` névkonvenció
+  (`<szabály-ID>-<rövid-név>`) és a `8.3` hibakezelés változatlan. *(Mind a négy ág újratesztelve:
+  `##`-t tartalmazó blokk átvitele, második horgony, hiányzó fájl → marker érintetlen, hiányzó
+  horgony → `exit 1`.)*
+
+- [x] **8.2 — Horgony-vágás a feloldóban.** A `rel_path`-ot `#`-nél bontsd `(fájl, horgony)`-ra.
   Horgony nélkül a mai viselkedés (teljes fájl, vezető HTML-komment levágva). Horgonnyal: a
-  nyelvi fájlban keresd meg a `## <horgony>` sort, és add vissza a **következő `## ` szintű
-  címsorig** tartó törzset, `strip('\n')`-nel. A `_shared_include_cache` kulcsa a horgonyt is
+  nyelvi fájlban keresd meg a horgony-sort, és add vissza a **következő horgony-sorig** tartó
+  törzset, `strip('\n')`-nel. *(A határoló alakja a **8.9** szerint `<!-- ANCHOR:… -->`, nem
+  `## <horgony>` — az eredeti megfogalmazás hibás volt.)* A `_shared_include_cache` kulcsa a horgonyt is
   tartalmazza.
 
-- [ ] **8.3 — Hibakezelés (a két eset szándékosan KÜLÖNBÖZIK).**
+- [x] **8.3 — Hibakezelés (a két eset szándékosan KÜLÖNBÖZIK).** *(Mind a három ág tesztelve:
+  horgony-kivágás, hiányzó fájl → marker érintetlen, hiányzó horgony → `exit 1` beszédes hibával.)*
   - Nem létező **fájl** → a mai viselkedés: a marker érintetlenül marad, a telepítés nem törik.
   - Létező fájl + **nem létező horgony** → **`sys.exit(1)`** beszédes hibával. Csendben kihagyni
     egy user-facing mondatot vagy egy fájlba írandó sablont súlyosabb, mint megállni.
   Ezt a különbséget írd bele kommentbe is.
 
-- [ ] **8.4 — Horgony-név konvenció:** `<szabály-ID>-<rövid-név>`, kisbetűs, kötőjeles — pl.
+- [x] **8.4 — Horgony-név konvenció:** `<szabály-ID>-<rövid-név>`, kisbetűs, kötőjeles — pl.
   `BD5-branch-prompt`, `CD1-template`, `DS22-gate-fail-question`. A szabály-ID-vel kezdés azért
   fontos, mert a paritás-kapu és a kereszthivatkozások így nyelvfüggetlenül azonosíthatók.
 
-- [ ] **8.5 — A `_MAX_INCLUDE_DEPTH = 5` marad.** A nyelvi fájlok **ne** tartalmazzanak további
+- [x] **8.5 — A `_MAX_INCLUDE_DEPTH = 5` marad.** A nyelvi fájlok **ne** tartalmazzanak további
   INCLUDE markert — ezt a paritás-kapu ellenőrzi (11.3).
 
-- [ ] **8.6 — `description` behelyettesítés (LG15).** A frontmatterbe nem lehet INCLUDE-olni,
+- [x] **8.6 — `description` (+ `role`) behelyettesítés (LG15/LG26).** *(A `prompts/lang/hu/descriptions.json`
+  a mai frontmatterekből generálva: 25 kulcs = 14 skill + 11 agent; az agent-értékek objektumok.
+  Ezért a `hu`/`hu` telepítés kimenete változatlan — a 16.1 keret byte-azonos maradt.)* A frontmatterbe nem lehet INCLUDE-olni,
   ezért a `description` a **projekt-nyelvből** kerül be behelyettesítéssel, a már működő
   `substitute_scripts_dir` mintájára:
   - forrás: `prompts/lang/<PROJECT_LANG>/descriptions.json` — `{"bs-brainstorm": "…", …}`,
@@ -624,7 +729,20 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
   - a paritás-kapu (11.4) ellenőrzi, hogy a `descriptions.json` kulcskészlete **pontosan** a fa
     `name` mezőinek halmaza, mindkét nyelven.
 
-- [ ] **8.7 — A skill-írás egységesítése (a 8.6 hibaosztály megszüntetése).** A `description`
+- [x] **8.8 — A SOR KÖZEPÉN álló marker whitespace-helyes (a 9.4 előfeltétele).** A 8.1
+  buktató-jegyzete („a markereket mindig önálló sorba tedd") **stílusszabály marad**, de nem
+  tartható a 9.4-ben: a 9.3 leltár szerint a user-facing, szó szerint kimondandó mondatok
+  (~69 db) **felsorolás-pontok KÖZEPÉN** állnak, körülöttük instrukcióval — ott a marker
+  szükségszerűen sor közepére kerül, és a régi regex elnyelte volna az előtte lévő szóközt.
+  Ezért a `lead` / `trail` whitespace **külön csoportba** került, és a `_marker_is_standalone()`
+  dönti el, melyik viselkedés jár:
+  - a **saját sorát kitöltő** marker esetén a behúzás és a sorvégi szóköz eltűnik (a mai,
+    blokk-szintű viselkedés — változatlan);
+  - a **sor közepén / elején / végén** álló marker esetén a whitespace **megmarad**.
+  *(Mind a négy eset tesztelve. A 16.1 keret byte-azonos maradt — ma egyetlen inline marker
+  sincs a fában, tehát a változás a jelenlegi kimenetet nem érinti.)*
+
+- [x] **8.7 — A skill-írás egységesítése (a 8.6 hibaosztály megszüntetése).** A `description`
   behelyettesítés az a harmadik dolog, amit két helyen kell elvégezni (az INCLUDE-feloldás és a
   `substitute_scripts_dir` után) — ez előbb-utóbb elcsúszik. **Emeld ki egy közös
   `prepare_skill_content(skill_file, src_dir, platform)` függvénybe** az INCLUDE-feloldást, a
@@ -633,6 +751,9 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
   automatikusan mind az 5 platformra érvényes.
   **Ez tartalmi refaktor a telepítőben, nem a promptokban — a 16.1 byte-azonosságnak
   teljesülnie KELL utána is** (a kimenet nem változik, csak a kód szerkezete).
+  *(Elvégezve: `prepare_skill_content()` + `prepare_agent_content()`; mind a 8 hívási hely
+  (5 platform skill- és agent-ciklusai) ezeket használja, és az antigravity `agent.json`
+  `description`-je is a projekt-nyelvből jön. A 16.1 utána byte-azonos.)*
 
 ---
 
@@ -653,6 +774,13 @@ felhasználóhoz szól**:
 | **Fájlba írt sablon** | ` ```md ` / ` ```text ` fence, aminek a tartalma artefaktumba kerül | a `cycle-design-input.md` teste, a roadmap ciklus-blokk, a `brainstorm-NN.md` csontváza |
 | **Artefaktum-szekció fejléce** | a spec/plan/tasks/riport `## …` címsorai, amikre a kapuk illesztenek | `## Tervezett módosítások`, `## Környezeti koordináták` |
 | **Státusz-kulcsszó** | státusz-mező értéke és címkéje | `Tervezésre kész`, `Státusz:` |
+
+> **A két alsó osztály KÉTFÉLE kezelést kap (LG32).** Ha a literál egy **kiemelendő blokkon
+> belül** áll (sablon-fence, idézetblokk), akkor a blokkal együtt megy a `lang/<L>/`-be, és ott
+> **literál** marad. Ha **szövegközi hivatkozás** az instrukciós prózában (a túlnyomó rész,
+> ~440 hely), akkor **NEM kiemelési jelölt**, hanem **token-jelölt**: `<sec:…>` / `<status:…>`
+> helyőrzőt kap, build-time feloldással — lásd a **9.7** szakaszt. A 9.3 leltárban a kettőt
+> **külön osztályként** jelöld.
 
 **NEM projekt-nyelvi** (a prompt-nyelvvel mozog, marad helyben):
 - minden instrukció, magyarázat, indoklás, garde, tiltás, ellenőrzőlista;
@@ -692,16 +820,179 @@ Magyar idézetsorok (`>` + `„`) és fájlba írt sablon-fence-ek darabszáma:
 > többsoros idézet, az artefaktum-szekció fejléc, és a szövegközi user-facing string. A valós
 > szám ennek a duplája is lehet.
 
-- [ ] **9.3 — Pontos leltár fájlonként.** Minden skill/agent/shared fájlon menj végig, és a 9.1
+- [x] **9.3 — Pontos leltár fájlonként.** Minden skill/agent/shared fájlon menj végig, és a 9.1
   osztályozás szerint készíts jelöltlistát. **Ezt írd be IDE**, fájlonként pipálható listaként —
   ez a folytatás horgonya, ha a munka több sessionra oszlik. A leltár készítése önmagában is
   komoly munkamenet; ne siettesd, és ne helyettesítsd greppel (ítéletet kíván).
 
-- [ ] **9.4 — Kiemelés fájlonként.** Minden fájlra:
+#### A leltár jelölései
+
+| Jel | Osztály | Hova megy |
+|---|---|---|
+| **K** | **kiemelési** jelölt — összefüggő blokk (idézet, sablon-fence) | `lang/<L>/<fájl>.md#<horgony>` + INCLUDE marker (9.4) |
+| **T** | **token**-jelölt — szövegközi literál (szekciónév, státusz) | `<sec:…>` / `<field:…>` / `<status:…>` helyben (9.7, LG32) |
+| **—** | nincs jelölt | a fájl teljes egészében prompt-nyelvi |
+
+A **T** oszlopban csak a **kulcs-jelölteket** soroljuk fel, nem az összes előfordulást — a
+darabszámokat a 9.7.2 tartja. Ahol egy T-literál a `status-keys.json`-ban **még nem szereplő**
+kulcsot igényel, ott **`(új kulcs)`** jelölés áll: ezeket a 9.7.1 kulcskészletébe fel kell venni.
+
+#### 9.3.1 `shared-hu/` — 17 fájl · **leltár KÉSZ**
+
+| ✓ | Fájl | K (kiemelési jelölt) | T (token-jelölt kulcsok) |
+|---|---|---|---|
+| [x] | `artifact-voice.md` | — | `Kockázatok és döntési pontok`, `Kockázatok` |
+| [x] | `context-check.md` | **25. sor** — a „kontextus nem friss" kérdés, szó szerint kimondandó → `#kontextus-nem-friss` | — |
+| [x] | `conventions-change.md` | — | `## Teszt-riportolás`, `## Sonar`, `## Teszt eszközök`, `## Merge stratégia`, `## Portok`, `## Env változók` *(mind `conventions.md`-fejléc, új kulcs)*, `Tervezett módosítások`, `Cél és megközelítés` (új kulcs) |
+| [x] | `fix-mode-implement.md` | — | `## Validációs javítások`, `## Review javítások`, `Implementálásra kész`, `Implementálás folyamatban` (új kulcs), `Validálásra kész`, `Definition of done`, a `check-log.md` **`Mód`** oszlopfejléce (új kulcs) |
+| [x] | `fix-mode-plan.md` | — | `Piszkozat`, `Nyitott kérdések vannak`, `Task írásra kész` |
+| [x] | `fix-mode-spec.md` | — | `Piszkozat`, `Nyitott kérdések vannak`, `Tervezésre kész` |
+| [x] | `fix-mode-tasks.md` | — | `Piszkozat`, `Implementálásra kész`, `Plan-lefedettség` |
+| [x] | `git-preflight.md` | **28. sor** — *„Commitáljam ezeket most, vagy folytassam?"* → `#commit-vagy-folytas` | `## Git és branching konvenciók`, `## Merge stratégia`, `Fő branch` (új kulcs), `Branch-elnevezési stratégia` (új kulcs), **és a 20. sor no-VCS flag-mondata** („NINCS verziókezelő…") — ezt a `00` írja a `conventions.md`-be, tehát illesztő literál (új kulcs) |
+| [x] | `input-from-prev.md` | **30–36. sor** — a tétel-formátum ` ```md ` fence (fájlba írt sablon) → `#tetel-formatum` | `Tervezett módosítások` *(a sablonon belül — ott **literál** marad)* |
+| [x] | `parallel-cycles.md` | — | — |
+| [x] | `path-format.md` | — | — |
+| [x] | `phase-commit.md` | — | — *(a `cycle-NN: <FÁZIS-TAG>` commit-üzenet és a `Commit: <sha> — …` visszajelzés nyelv-semleges: azonosító + fázis-tag)* |
+| [x] | `python-cmd.md` | — | — |
+| [x] | `quality-check-plan.md` | **73–138. sor** — a „Lezárási kapu" checklist-fence. **⚠ Ítéleti jelölt:** a 71. sor kimondja, hogy a listát *„a válaszodban ki kell írnod"* → felhasználói képernyőre kerül, tehát a 9.1 címzett-tesztje szerint projekt-nyelvi. **Feszültség az LG27-tel** (nyelv-jelölés nélküli fence = fordítható) — itt a címzett-teszt az erősebb; a döntést a 9.4 előtt rögzítsd. → `#lezarasi-kapu` | `Task írásra kész`, `Környezeti koordináták`, `Tervezett módosítások`, `Ellenőrzési stratégia`, `Teszt specifikáció`, `Spec-lefedettség`, `Fordított lefedettség`, `Konfiguráció-életút`, `Regressziós érintettség` (új kulcs), `Kockázatok és döntési pontok`, `Végrehajtási sorrend` (új kulcs), `Out of scope` |
+| [x] | `quality-check-spec.md` | — | `Definition of done`, `Out of scope`, `Hivatkozott fájlok`, `Kockázatok`, `Teszt specifikáció`, `Komponensek és viselkedés` |
+| [x] | `quality-check-tasks.md` | — | `Plan-lefedettség`, `Tervezett módosítások`, `Ellenőrzési stratégia`, `Regressziós érintettség`, `Kockázatok`, `## Teszt-riportolás`, `Out of scope` |
+| [x] | `questions-tasks.md` | **9–15. sor** — a `tasks-questions.md` csontváza ` ```md ` fence-ben → `#struktura` | `Implementálásra kész`, `Piszkozat` |
+
+**A shared pass három átvihető tanulsága** (a 9.1-et pontosítja, a további fájlokra is áll):
+
+1. **Az ágens→orchestrátor üzenet PROMPT-nyelvi.** A `fix-mode-*` visszatérési összefoglalói, a
+   `downstream-hatás:` mező (`nincs` / `van — …`) és a `fix-mode-implement.md` 56. sorának
+   *„ESZKALÁCIÓ: …"* mondata **nem** kerül a projektbe és **nem** a felhasználóhoz szól: két
+   prompt-nyelvi fájl közötti szerződés, tehát a prompt-nyelvvel mozog. **Nem jelölt.**
+2. **Az illusztratív ❌/✅ példapár prompt-nyelvi** (9.1), **akkor is**, ha artefaktum-mondatot
+   idéz (`artifact-voice.md` 21–24. sor): a példa az ágens tanítására szolgál, nem másolódik be.
+3. **A `conventions.md` fejlécei is T-jelöltek.** A 9.1 „artefaktum-szekció fejléce" kategóriája
+   nem szűkül a ciklus-artefaktumokra: a `conventions.md` a **projekt** fájlja, a fejléceit
+   kapu-script olvassa (10.2/a), tehát ugyanaz az osztály.
+
+#### 9.3.2 `agents-hu/` — 11 fájl · **leltár KÉSZ**
+
+> **A frontmatter `description:` / `role:` NEM tartozik ide** — azt a 8. szakasz már elvégezte
+> (`lang/<L>/descriptions.json`, LG15/LG26). Az `inputs:` / `outputs:` / `called_by:` listák
+> prompt-nyelviek (nem telepített felület, csak forrás-metaadat) — **nem jelöltek**.
+
+| ✓ | Fájl | K (kiemelési jelölt) | T (token-jelölt kulcsok) |
+|---|---|---|---|
+| [x] | `test-runner.md` | — *(a 124–151. sor Output-fence a hívó skillnek szóló visszatérési formátum → prompt-nyelvi, 1. tanulság; ugyanígy a 101–107. sor `EX1` blokk)* | `## Teszt-riportolás`, `## Sonar minőségellenőrzés`, `Teszt keretrendszer`, `Teszt struktúra` *(mind `conventions.md`, új kulcs)*, `Tesztelési stratégia`, `Regressziós érintettség`, `E2E infrastruktúra` (új kulcs), `### Gépi futtatási tábla` (új kulcs), `Kész` |
+| [x] | `analyzer.md` | — *(109–124. sor: a prompt kimondja, „ne írj fájlt" → a lista a skillnek megy)* | `## Lefedettségi mátrix (generált)` (új kulcs), `Lefedve (gépi)` (új kulcs), `Spec-lefedettség`, `Fordított lefedettség`, `Konfiguráció-életút`, `Környezeti koordináták`, `Komponensek és viselkedés`, `Teszt specifikáció`, `Tervezett módosítások`, `Out of scope` |
+| [x] | `analyzer-exec.md` | — *(86–102. sor: ugyanaz, agent→skill)* | `## Leltár` (új kulcs) **és a leltár-sor markerei**: `[ARTEFAKTUM]`, `[HORGONY]`, `[HANG-GYANÚ]`, `[TESZT-ÍGÉRET]`, `[DESZTRUKTÍV]` — ezeket az `analyze-gate-check.py` **generálja** és az agent **illeszti**, tehát (a)+(b) osztály, mind új kulcs; továbbá `Kockázatok és döntési pontok`, `Teszt specifikáció`, `Tervezett módosítások`, `Érintett komponensek` (új kulcs), `Konfiguráció-életút`, `Környezeti koordináták`, `Kockázatok` |
+| [x] | `doc-sync-planner.md` | — *(92–131. sor: a fő ágensnek visszaadott terv-struktúra; a `Csereszöveg` blokkok tartalma **dinamikus**, nem sablon)* | `## Projekt referenciák` (új kulcs), a `docs-generated/` fejléc-mezők: `Lefedve`, `Utolsó frissítés`, `Generátor/scope` (új kulcs), `Utolsó futás: cycle-NN`, `Csereszöveg` (új kulcs), a művelet-címkék `reconciliation` / `új` / `nincs teendő` — ezek a `doc-sync-plan.md`-be kerülnek (új kulcs), `Regressziós érintettség`, `Teszt specifikáció`, `Tesztelési stratégia`, `E2E infrastruktúra` |
+| [x] | `reviewer.md` | **59–74. sor** — a `code-review.md` teljes csontváza ` ```md ` fence-ben. **Ez valódi K:** projekt-artefaktumba íródik, és a 07 gépiesen parszolja → `#code-review-formatum`. **84. sor** — a lezárás-jelölés (`- [x] **MF-01** — … ✅ javítva`) szintén artefaktum-formátum → ugyanabba a horgonyba vagy `#lezaras-jeloles` | `## Összefoglaló`, `## Kritikus javítandók (Must Fix)`, `## Javasolt fejlesztések (Suggestions)` (új kulcs), a `„Nincs."` üres-szekció literál (78. sor, új kulcs), `✅ javítva` (új kulcs) |
+| [x] | `researcher.md` | — *(55–65. sor Output-fence: a hívó skillnek adott válasz-formátum, nem fájl → prompt-nyelvi)* | `Komponensek és viselkedés`, `Hivatkozott fájlok`, `Tervezett módosítások` |
+| [x] | `review-fixer.md` | — *(a 35. sor `ESZKALÁCIÓ:` és a 47. sor `FUTTATÁS BLOKKOLVA (EX1)` mondata orchestrátornak szól → 1. tanulság)* | `## Review javítások`, `## Validációs javítások` |
+| [x] | `implement-fixer.md` | — *(ua. — 33. és 45. sor)* | `## Validációs javítások` |
+| [x] | `tasks-fixer.md` | — | `Piszkozat`, `Implementálásra kész` *(a jelöltek túlnyomó része a beemelt `shared-hu/` fájlokban van — ott már leltározva)* |
+| [x] | `plan-fixer.md` | — | *(mind a beemelt `shared-hu/fix-mode-plan.md` + `quality-check-plan.md`-ben)* |
+| [x] | `spec-fixer.md` | — | *(mind a beemelt `shared-hu/fix-mode-spec.md` + `quality-check-spec.md`-ben)* |
+
+**Az agent pass két új tanulsága:**
+
+4. **A kapu-script által GENERÁLT sor-markerek is T-jelöltek.** Az `analyzer-exec` bemenete a
+   `## Leltár` blokk `[ARTEFAKTUM]` / `[HORGONY]` / `[HANG-GYANÚ]` / `[TESZT-ÍGÉRET]` /
+   `[DESZTRUKTÍV]` soraival: a szkript **írja** (10.2/b), az agent **illeszti** (10.2/a).
+   Ha a szkript angolra fordul, de a prompt magyarul keresi (vagy fordítva), az agent
+   **csendben nem talál semmit** — nem hibázik, csak üres marad. Ez a 10.2 leltár **hiányzó
+   tétele**: vedd fel a 9.7.1 kulcskészletbe.
+5. **A `docs-generated/` fejléc-mezői (`Lefedve`, `Utolsó frissítés`, `Generátor/scope`) és a
+   `doc-sync-plan.md` művelet-címkéi** ugyanígy projekt-nyelviek, és a 10.2-ben sem szerepelnek.
+
+#### 9.3.3 `skills-hu/` — 14 fájl · **leltár KÉSZ**
+
+> **Két visszatérő minta, amit a leltár készítése közben rögzítettünk** (mindkettő ítéleti, és
+> mindkettő sokat spórol):
+> - **A „Folytatás megszakított futás után" fence-ek (nyelv-jelölés nélkül) NEM K-jelöltek.** Ezek
+>   az ágensnek szóló döntési fák (`00`:286–298, `02`:259–269, `03`:133–143, `05`:111–135) —
+>   prompt-nyelviek, LG27 szerint fordulnak. A bennük álló státusz-literálok viszont **T**-jelöltek.
+> - **A „Váz" ↔ „Kész példa" párokban csak a VÁZ K-jelölt** (`08-doc-sync`). A „Kész példa"
+>   illusztráció, a 9.1 szerint prompt-nyelvi — nem másolódik fájlba.
+
+| ✓ | Fájl | K (kiemelési jelölt — sor) | T (token-jelölt kulcsok) |
+|---|---|---|---|
+| **✔ KIEMELVE** | `00-init-project.md` | **82–278** — a teljes `conventions.md` **sablon** (a legnagyobb egyedi blokk a repóban; két beágyazott fence: 184/192) → `#conventions-sablon`. **A kérdés-mondatok** (45, 46, 47, 48, 55 … ~16 db, `*„…"*` alakban, bullet közepén): user-facing → soronkénti inline INCLUDE. **333+** — a záró jelzés. *(286–298: prompt-nyelvi, lásd fent)* | a `conventions.md` **összes `##` fejléce** (a sablonon belül literál marad, a prózában token): `## Projekt áttekintés`, `## Tech stack`, `## Projekt referenciák`, `## Projekt struktúra`, `## Fejlesztési módszertan`, `## Git és branching konvenciók`, `## Merge stratégia`, `## Teszt struktúra`, `## Teszt keretrendszer`, `## Teszt-riportolás`, `## Naming konvenciók`, `## Portok és service-ek`, `## Környezeti változók`, `## Sonar minőségellenőrzés`, `## Kockázatok és ismert korlátok` (mind új kulcs); mező-nevek: `Alapértelmezett flow`, `Fő branch`, `Branch-elnevezési stratégia`, `Verziókezelő`, `Artefaktum-útvonal alapja`, `Riport-generálás kötelező`, `kör-mappa` / `test-report` jelölő-értékek (mind új kulcs); a **no-VCS flag-mondat** („NINCS verziókezelő (se GIT, se más), és nem is lesz.") |
+| [x] | `01-add-cycles.md` | **190–217** (roadmap ciklus-blokk sablon), **317–329**, **386–401** (`cycle-design-input.md` sablon) → három horgony. **Kérdés/jelzés-mondatok:** 90, 101, 104, 259, 270, 281, 286, 292, 297, 347, 360, 436, 461. *(50–60 és 64–79: prompt-nyelvi döntési fa/példa)* | `Kész`, `Piszkozat`, `Folyamatban` |
+| [x] | `02-write-spec.md` | **304–310** — `spec-questions.md` csontváza → `#spec-questions-struktura`. **Kérdés/jelzés:** 35, 326, 343. *(a 77–84. sori ✅/❌ tábla és a 279–287. sori példa-kérdések **illusztratívak** — nem jelöltek)* | `Tervezésre kész`, `Nyitott kérdések vannak`, `Piszkozat`, `Kész`, `Teszt specifikáció`, `Komponensek és viselkedés`, `Hivatkozott fájlok`, `Out of scope`, `Kockázatok`, `Definition of done`, `Regressziós érintettség` |
+| [x] | `03-write-plan.md` | **159–165** — `plan-questions.md` csontváza → `#plan-questions-struktura`. **Kérdés/jelzés:** 117, 184, 876. *(338–342: `[P-…]` példa-címsorok → illusztratív; 133–143: döntési fa)* | a plan `##`/`###` fejlécei: `Tervezett módosítások`, `Teszt specifikáció`, `Tesztelési stratégia`, `Ellenőrzési stratégia`, `Környezeti koordináták`, `Konfiguráció-életút`, `Spec-lefedettség`, `Fordított lefedettség`, `Regressziós érintettség`, `Kockázatok és döntési pontok`, `Végrehajtási sorrend`, `E2E infrastruktúra`, `### Gépi futtatási tábla`, `Érintett komponensek`, `Cél és megközelítés`; státuszok: `Task írásra kész`, `Piszkozat`, `Nyitott kérdések vannak`; `Reviewed` / `Review Required` schema-státusz (angol literál — **döntést kíván**, lásd lent) |
+| [x] | `04-write-tasks.md` | **111–116**, **182–216** (a `tasks.md` csoport/task sablonja — a legnagyobb itt), **234–239**, **265–269** → négy horgony. **Kérdés/jelzés:** 37, 324, 339. *(244–261: prompt-nyelvi)* | `Implementálásra kész`, `Task írásra kész`, `Plan-lefedettség`, `Tervezett módosítások`, `Ellenőrzési stratégia`, `Regressziós érintettség`, a záró csoportok nevei: `Regressziós tesztek felülvizsgálata`, `Dokumentáció` (új kulcs). **A `[RED]`/`[GREEN]`/`[CHECK]`/`[OPS]`/`TREG`/`TLAST`/`⟂` markerek NEM jelöltek** — azonosító-jellegűek, angolul maradnak (13.1) |
+| [x] | `05-analyze.md` | **357–431** — az `analyze-report.md` teljes struktúrája → `#analyze-report-struktura`. **Kérdés/jelzés:** 65, 466–467. *(111–135: döntési fa; **291: az `analyzer` subagentnek átadott fókusz-üzenet → prompt-nyelvi**, 1. tanulság)* | `## Lefedettségi mátrix (generált)`, `Lefedve (gépi)`, `## Leltár` + a leltár-markerek (lásd 9.3.2/4. tanulság), `Validált alap`, `Hurok-napló` (új kulcs), `Összefoglaló`, státuszok: `Piszkozat`, `Tervezésre kész`, `Task írásra kész`, `Implementálásra kész` |
+| [x] | `06-implement.md` | **196–209**, **226–232** — a `check-log.md` sablonjai → két horgony. **Kérdés/jelzés:** 38, 39, 266. *(72–84: prompt-nyelvi)* | `Implementálásra kész`, `Implementálás folyamatban`, `Validálásra kész`, `Kész`, a `check-log.md` oszlopfejlécei (köztük `Mód`), `## Validációs javítások`, `## Review javítások` |
+| [x] | `07-validate.md` | **525–619** — a `validation-report.md` teljes sablonja (a második legnagyobb blokk) → `#validation-report-sablon`. **764–768** — a `[VALIDATE · … · próba 3/3]` **user-facing** megállás-prefix → `#megallas-prefix`. **Kérdés/jelzés:** 49, 792, 840. *(162–167, 186–196, 802–832: ágensnek szóló ábra/checklist → prompt-nyelvi)* | `## Kör N`, `# Validation History`, `## Összegzés`, `### Lépések`, `### Bukott elemek`, `### A kör döntése`, `### Kódreview (RV1)`, `### Megjegyzések` *(a `round-log.py` írja — 10.2/b)*, `## Validációs javítások`, `## Review javítások`, `## Teszt-riportolás`, `Kész`, `Validálásra kész`, `Implementálásra kész`, a riport fejléc-mezői (`Jelenlegi státusz`, `Körök száma`, `Utolsó frissítés`) és értékeik (`folyamatban`, `eszkalálva`, `megállt`) — új kulcsok |
+| [x] | `08-doc-sync.md` | **Vázak (K):** 410–422, 425–434 (`Nem promótált jelöltek` napló), 465–474 (recept-blokk), 611–617 (`doc-sync-questions.md`), 644–647, 649–653 *(vegyes: a 649–653 „Kész példa" — kizárandó)*, 658–660, 665–671, 683–701, 706–708, 710–716, 721–757 (`test-conventions.md` teljes váza), 823–829 → **~10 horgony**. **Kérdés/jelzés:** 55, 872–873. **A „Kész példa" fence-ek (673–679, 771–816, 833–842, 847–849, 851–856) NEM K-jelöltek** | `## 0. Koordináták`, `## Lezárt eltérések`, `Utolsó frissítés: cycle-NN`, `Utolsó futás: cycle-NN`, `Utolsó felülvizsgálat`, `Gazda`, `Lefedve`, `Generátor/scope`, `**Indítás:**`, `**Példa hívás:**`, `Cél` / `Előfeltétel` / `Lépések` / `Elvárt eredmény`, `Hatókör` + `lokális` / `osztott-remote` értékek, `Kötelező riport (TR3)`, a `doc-sync-plan.md` művelet-címkéi (`reconciliation` / `új` / `nincs teendő`), `## DS22 Réteg 1 …`, `## Összesített státusz: …`, `## TC8 kapu …` — **túlnyomó részt új kulcs**; ez a fájl adja a `status-keys.json` `sections` szeletének nagyját |
+| [x] | `09-merge.md` | **Kérdés/jelzés:** 31, 130–131, 184–195 (a záró üzenet, a következő ciklus indító parancsaival) | `## Merge stratégia`, `## Git és branching konvenciók`, `Fő branch`, `Szolgáltató` (új kulcs), `Kész`, `Validálásra kész`, `Piszkozat`, `Kritikus javítandók (Must Fix)`, `Validált alap`, a roadmap lezárás-jelölése (`✅` / `(kész)` — új kulcs) |
+| [x] | `brainstorm.md` | **205–258** — a brainstorm munkafájl teljes csontváza → `#munkafajl-csontvaz`. **Kérdés:** 87 (`.gitignore` felajánlás) | `Folyamatban`, `Lezárva` (a munkafájl státuszai — új kulcs), `Státusz:`, `Utolsó frissítés`, `Indult` (új kulcs), és a munkafájl szekciónevei, ahol a próza rájuk hivatkozik (132, 140, 145, 157, 165, 185): `## 2. Feltárt tények`, `## 3. Alternatívák és trade-offok`, `## 4. Döntések`, `## 5. Nyitott kérdések`, `## 6. Javasolt ciklus-vágás`, `## 7. Napló` (mind új kulcs) |
+| [x] | `cycle-status.md` | — | — *(a TUI státusz-szavai — `Kész`/`Folyamatban`/`KÉSZ`/`KÉSZ*`/`FOLYAMATBAN`/`MÉG NEM FUTOTT` — **csak a `description`-ben** vannak, azt a 8. szakasz kezeli; a `cycle-status.py` oldalán a 10.2/a leltár)* |
+| [x] | `export-doc.md` | **79** — a `.gitignore` felajánló kérdés | `Lefedve` (a 20. sorban idézett fejléc-mező: `Lefedve: cycle-NN-ig · v3`) |
+| [x] | `quick-flow.md` | **31** — a flow-váltás javaslata (user-facing). *(a 73–80. sori `mermaid` fence: ábra a promptban, nem fájlba írt — **nem** jelölt; LG27 szerint a `mermaid` infostring a byte-azonos listán van)* | `Must Fix`, `Suggestion` |
+
+**A skill pass három tanulsága / nyitott pontja:**
+
+6. **A `00-init-project.md` `conventions.md`-sablonja a projekt-nyelvi felület GERINCE.** Ez az
+   egyetlen blokk adja a `status-keys.json` `sections` kulcsainak nagy részét, és minden más
+   fájl erre a fejléc-készletre hivatkozik. **A 9.4-et ezzel a fájllal kezdd**, és a 9.7.1
+   kulcskészletet ebből vezesd le — így a többi fájl leltára már kész kulcsokra hivatkozik.
+7. **A `Reviewed` / `Review Required` és a `Must Fix` / `Suggestion` — eldöntve (LG33).**
+   Ma angol literálok egy egyébként magyar artefaktumban, de projekt-nyelviek (artefaktumba
+   íródnak, kapu illeszt rájuk). **Bekerülnek a `status-keys.json`-ba `hu` = `en` = angol
+   értékkel**, és a 9.7.4 tokenizálás rájuk is kiterjed.
+8. **Két tartalmi hiba, amit a leltár felszínre hozott — NE javítsd itt (9.4 fegyelem), de
+   jegyezd fel:**
+   - a `cycle-status.md` 40. sora a `shared-hu/python-cmd.md` szövegét **szó szerint
+     duplikálja** az INCLUDE marker helyett;
+   - a `spec-questions.md` / `plan-questions.md` / `tasks-questions.md` csontváza **három helyen**
+     él (`02`:304–310, `03`:159–165, `shared-hu/questions-tasks.md`:9–15) — a kiemeléskor ez
+     **egyetlen** `lang/<L>/` horgonyba vonható, de az már tartalmi változás: külön kör.
+
+- [x] **9.4 — Kiemelés fájlonként.** Minden fájlra:
   1. a jelölt blokkok átmozgatása a `prompts/lang/hu/<fájlnév>.md`-be `## <horgony>`
      szekcióként, **szó szerint**;
   2. a helyükre `<!-- INCLUDE:lang/<fájlnév>.md#<horgony> -->` marker;
   3. a byte-azonossági teszt futtatása (16.1) — **fájlonként, nem a végén.**
+
+  **✅ A 9.4 KÉSZ — mind a 42 prompt-fájl feldolgozva.**
+  **73 horgony · 80 marker · `prompts/lang/hu/` 20 fájl · 16.1: 125/125 byte-azonos.**
+
+  | Fa | Fájl (blokk) |
+  |---|---|
+  | `skills-hu/` | `01-add-cycles` (16) · `08-doc-sync` (12) · `00-init-project` (8) · `04-write-tasks` (6) · `06-implement` (5) · `07-validate` (4) · `02-write-spec` (3) · `03-write-plan` (3) · `05-analyze` (2) · `09-merge` (2) · `brainstorm` (2) · `export-doc` (1) · `quick-flow` (1) · `cycle-status` (0) |
+  | `agents-hu/` | `reviewer` (2) — a többi agent jelöltjei a beemelt `shared-hu/` fájlokban vannak |
+  | `shared-hu/` | `context-check` · `git-preflight` · `input-from-prev` · `quality-check-plan` · `questions-tasks` (1–1) |
+  | közös | `common.md#ciklus-beazonositas` — **8 skillből** hivatkozva |
+
+  **Öt tanulság, ami a végrehajtás közben született (mind kódba/tervbe került):**
+  1. **A ```-fence a skillben marad, csak a BELSEJE kerül ki** — így a fence-paritás (11.8)
+     mindkét fában stimmel, és a skill olvasható marad.
+  2. **A behúzás a NYELVI blokkba költözik.** Ha a kiemelt sor be volt húzva, a marker a saját
+     sorába kerül, és a `_marker_is_standalone` elnyeli a behúzást (8.8) — a szóközöket a `lang/`
+     blokk elejére kell tenni. Sortartomány-kiemelésnél ez automatikus.
+  3. **A forrásfájl záró újsor-állapotát meg kell őrizni** — ha az utolsó blokk a fájl végéig ér,
+     a marker sora egyébként újsort tenne oda, ahol nem volt (`09-merge`).
+  4. **A TÖBB fájlban byte-azonosan előforduló user-facing mondat KÖZÖS horgonyt kap**
+     (`lang/hu/common.md`). Nyolc külön másolat a fordításnál garantáltan szétcsúszna (13.2.1),
+     és a paritás-kapu ezt **nem** venné észre: mindkét fában nyolc darab lenne, csak más szöveggel.
+  5. **⚠ A 16.1 NEM fogja meg a KIMARADT kiemelést.** Egy vissza nem cserélt literál byte-azonos
+     kimenetet ad — a keret definíció szerint néma rá. Két marker így is kimaradt (két `git
+     checkout --` visszavonta a közös-mondat cseréjét), és csak a **horgony ↔ marker
+     kereszt-ellenőrzés** mutatta ki. **Ez a 11.3 kapu dolga lesz** — addig fusson kézzel:
+
+  ```python
+  # horgony ↔ marker paritás (a 16.1 vak foltja)
+  import re, pathlib, collections
+  anchors, markers = collections.Counter(), collections.Counter()
+  for f in pathlib.Path("prompts/lang/hu").glob("*.md"):
+      for m in re.finditer(r'^<!-- ANCHOR:(\S+?) -->$', f.read_text(encoding="utf-8"), re.M):
+          anchors[f"{f.name}#{m.group(1)}"] += 1
+  for d in ("skills-hu", "agents-hu", "shared-hu"):
+      for f in pathlib.Path("prompts", d).glob("*.md"):
+          for m in re.finditer(r'<!-- INCLUDE:lang/(\S+?) -->', f.read_text(encoding="utf-8")):
+              markers[m.group(1)] += 1
+  assert not set(anchors) - set(markers), "árva horgony"
+  assert not set(markers) - set(anchors), "hivatkozott, de nem létező horgony"
+  ```
 
   > **A kiemelés SZÓ SZERINTI.** Ne javíts, ne fogalmazz át, ne egységesíts közben — az külön
   > kör. Ha hibát találsz, jegyezd fel, de ne javítsd itt: a byte-azonosság a védőháló, és
@@ -712,24 +1003,215 @@ Magyar idézetsorok (`>` + `„`) és fájlba írt sablon-fence-ek darabszáma:
 Mivel a projekt-nyelv nem kerül a projektbe (LG17), **kizárólag ez a bedrótozott blokk** hordozza
 az információt arról, milyen nyelven kell írni.
 
-- [ ] **9.5.1 — `prompts/lang/<L>/output-language.md`** megírása. Tartalmi minimum:
+- [x] **9.5.1 — `prompts/lang/<L>/output-language.md`** megírása. Tartalmi minimum:
   - az artefaktumok nyelve;
   - a felhasználóhoz szóló mondatok nyelve;
   - hogy a **kód, azonosító, kapcsoló, fájlnév marad angol**;
   - hogy a nyelvi keverés hiba.
-- [ ] **9.5.2 — A blokk a CÉLNYELVEN legyen megírva.** `EN` prompt + `HU` projekt esetén a skill
+- [x] **9.5.2 — A blokk a CÉLNYELVEN legyen megírva.** `EN` prompt + `HU` projekt esetén a skill
   élén egy **magyar** bekezdés áll. A szabály így egyszerre utasítás **és nyelvi horgony** — ez
   mérhetően jobban tart, mint egy angolul megfogalmazott „write in Hungarian".
-- [ ] **9.5.3 — Minden skill és minden agent élére** kerüljön be, a `context-check.md` mintájára
+- [x] **9.5.3 — Minden skill és minden agent élére** kerüljön be, a `context-check.md` mintájára
   (`<!-- INCLUDE:lang/output-language.md -->`), közvetlenül a H1 után.
-- [ ] **9.5.4 — Az agentek se maradjanak ki.** A `reviewer`, `analyzer`, `analyzer-exec`,
+- [x] **9.5.4 — Az agentek se maradjanak ki.** A `reviewer`, `analyzer`, `analyzer-exec`,
   `doc-sync-planner` és a fixerek **artefaktumba írnak** (`code-review.md`, `analyze-report.md`,
   riportok), tehát nekik is kell.
 
-- [ ] **9.6 — A `lang/en/` blokkok.** A `lang/hu/` kész fájljainak fordítása `lang/en/`-be,
+> **✅ A 9.5 KÉSZ.** `prompts/lang/hu/output-language.md` (39 sor) · a marker **mind a 14 skill
+> és mind a 11 agent** H1-je után · a `quick-flow.md` bedrótozott nyelv-mondata kivezetve.
+> A 16.1 keret **mind a 125 bejegyzésen** változott — ez a 16.1-ben **előre jelzett, elvárt
+> kivétel**; a keret újraalapozva. A telepített kimenetben **nincs feloldatlan marker**.
+
+- [x] **9.5.5 — A BEDRÓTOZOTT nyelv-mondatok kivezetése (a 9.3 leltár találata).** A
+  `quick-flow.md` **70. sora** ma szó szerint kimondja: *„A ciklus-dokumentumok … nyelve a
+  projekt konvenciójához igazodva **magyar**"*. Ez a 9.5 blokk **konkurens, hardcode-olt
+  változata**: `EN` prompt + `EN` projekt esetén az `en` fába lefordítva („Hungarian") **aktívan
+  hazudna**, és pont az a hibaosztály, ami ellen a 9.5 készül. Ezért: a mondat **kikerül**, a
+  helyére a 9.5.3 `output-language` INCLUDE lép. Grepeld végig a többi fájlt is ugyanerre a
+  mintára (`nyelve`, `magyarul`, `magyar`), mielőtt a 9.6-ra lépsz.
+
+- [x] **9.6 — A `lang/en/` blokkok.** A `lang/hu/` kész fájljainak fordítása `lang/en/`-be,
   **azonos fájlnevekkel és azonos horgonyokkal**. A státusz-kulcsszavak és az artefaktum-szekció
   fejlécek fordítását a 10. szakasz `status-keys.json`-jával kell egyeztetni — ugyanaz a string
   ne legyen két helyen kétféle (ezt a 11.5 kapu ellenőrzi).
+
+  > **✅ A 9.6 KÉSZ (2026-08-25).** `prompts/lang/en/` — **21 `.md` + `descriptions.json`**,
+  > a `lang/hu/` teljes tükre. **73 horgony**, fájlonként **azonos sorrendben**; a fence-,
+  > táblázat- és címsorszám fájlonként egyezik (a 11.7/11.8 kapu előzetes kézi futtatása).
+  >
+  > **A `descriptions.json` is ide tartozik** (a `lang/hu/`-ban él, LG15/LG26): 25 bejegyzés
+  > (14 skill string + 11 agent `description`+`role`), kulcs- és szerkezet-paritással.
+  > Enélkül az `en` projekt-nyelvű telepítés `hu` leírókra esett vissza — a telepítő
+  > figyelmeztetése ezt jelezte.
+  >
+  > **Verifikáció:** (a) magyar ékezet a `lang/en/` fán → **0 találat** (a 16.5 mintája);
+  > (b) a `status-keys.json` `hu` → `en` érték-illesztés fájlonként ellenőrizve (a 11.5
+  > előfutára) — a talált egyetlen valós eltérés (`Test specification` sortörésen át) javítva,
+  > a maradék 10 találat mind részszó-egyezés (`Kör` a `körönkénti`-ben, `Kész` a `Készen`-ben);
+  > (c) próbatelepítés **mind az 5 platformra `hu` prompt + `en` projekt** nyelvvel:
+  > **0 LG12-figyelmeztetés, 0 feloldatlan token, 0 feloldatlan INCLUDE**, és a telepített
+  > `description` mindenhol angol; (d) a `hu`/`hu` 16.1 keret **70/70 + 55/55 változatlan**.
+  >
+  > **⚠ Amit a 9.6 felszínre hozott a §10-nek** (a `lang/en/` blokkok angol artefaktum-stringeket
+  > vezetnek be, amiket a kapu-scriptek MA magyarul keresnek — ezek a 10.2 leltár hiányzó
+  > tételei): `report-gate-check.py` → `## Teszt-riportolás`, `**Riport-generálás kötelező:**`,
+  > `**Artefaktum-útvonal alapja:**` + a `kör-mappa` / `test-report` jelölő-értékek;
+  > `round-log.py` → `## Kör N` (`ROUND_RE`) és `**Körök száma:**`; `run-tests.py` → a
+  > `### Gépi futtatási tábla` szekciócím és a `--type gyors` / `nehez` **CLI-értékek**, amik
+  > a plan run-táblájának `Típus` oszlopában is állnak; `failure-counter.py` → a
+  > `# Validation History` fejléc (ez angol, tehát nyelvfüggetlen).
+
+### 9.7 Projekt-nyelvi helyőrző-tokenek (LG32)
+
+> **Ez a szakasz a 9.4 UTÁN fut.** A blokk-kiemelés legyen kész, mert a `lang/<L>/`-be
+> áthelyezett blokkokban a fejlécek **literálként** maradnak (a fájl ott már nyelv-specifikus) —
+> tokent csak az a szöveg kap, ami a **prompt-fában marad**.
+
+**A tokenek alakja** (ASCII, ékezet nélkül — LG32) — **három család, a `status-keys.json`
+három csoportjának megfelelően**:
+
+| Token | Csoport | Példa (hu → en) |
+|---|---|---|
+| `<sec:<kulcs>>` | `sections` — artefaktum-szekció **neve** | `<sec:planned_changes>` → `Tervezett módosítások` / `Planned changes` |
+| `<field:<kulcs>>` | `fields` — mező- vagy oszlopnév | `<field:f_status>` → `Státusz` / `Status` |
+| `<status:<kulcs>>` | `status` — státusz- vagy címke-**érték** | `<status:ready_for_plan>` → `Tervezésre kész` / `Ready for planning` |
+
+**A token a CSUPASZ literált adja vissza, `##` prefix NÉLKÜL** — a prefix a promptban marad
+(`## <sec:planned_changes>`). *(Ez eltér a szakasz első vázlatától, ahol a `<sec:…>` a teljes
+fejlécet adta volna és külön `<secname:…>` kellett volna a csupasz névhez.) Indok: ugyanaz a
+szekciónév `##`, `###` és **mondat közbeni** hivatkozásként is előfordul — a prefix nélküli
+érték mindhárom helyen ugyanazzal a kulccsal használható, és a prompt olvasható marad.*
+
+> **9.7.1 + 9.7.3 KÉSZ.** `prompts/lang/status-keys.json`: **129 kulcs** (73 `sections`,
+> 27 `fields`, 29 `status`), `hu` és `en` szelettel. A feloldó (`load_status_keys()` +
+> `resolve_lang_tokens()`) a `prepare_skill_content` / `prepare_agent_content` láncban fut,
+> **az INCLUDE-feloldás UTÁN** — így a beemelt `lang/` és `shared/` blokkok tokenjei is
+> feloldódnak. Ismeretlen kulcs → `exit 1`; hiányzó nyelvi szelet → `hu` tartalék +
+> figyelmeztetés; hiányzó fájl → `exit 1`. Mindkét nyelv és a hibaág tesztelve; a 16.1
+> **125/125 byte-azonos** (a feloldó inert, amíg nincs token a fákban).
+
+- [x] **9.7.1 — `prompts/lang/status-keys.json` létrehozása** a 10.3 szerkezetével, **`hu` és
+  `en` szelettel együtt**. A `hu` értékek **byte-azonosak a maiakkal** (LG9) — ez a 16.1 keret
+  feltétele. A kulcskészlet forrása a 10.2 leltár (szekció-fejlécek + státusz-értékek) **plusz**
+  a 9.7.2 mérésben előkerülő, kapu-script által nem olvasott, de artefaktumba írt fejlécek
+  (`Out of scope`, `Kockázatok`, `Komponensek és viselkedés`, `Hivatkozott fájlok`,
+  `Definition of done`). *Ezzel a 10.3 teendő teljesül — ott csak vissza kell hivatkozni.*
+
+- [x] **9.7.2 — Pontos, kulcsonkénti előfordulás-leltár.** Kulcsonként a fájl:sor lista, hogy a
+  csere ellenőrizhető legyen és a 9.7.4 után igazolható a nulla maradék. Kiindulási mérés
+  (`grep -ro` a három `*-hu` fán, 2026-08-24):
+
+  | Kulcs-jelölt | Előfordulás | | Kulcs-jelölt | Előfordulás |
+  |---|---:|---|---|---:|
+  | `Teszt specifikáció` | 34 | | `Piszkozat` | 32 |
+  | `Teszt-riportolás` | 28 | | `Validációs javítások` | 28 |
+  | `Tervezett módosítások` | 27 | | `Task írásra kész` | 26 |
+  | `Tervezésre kész` | 24 | | `Implementálásra kész` | 24 |
+  | `Review javítások` | 23 | | `Tesztelési stratégia` | 21 |
+  | `Out of scope` | 17 | | `Környezeti koordináták` | 16 |
+  | `Kockázatok` | 15 | | `Definition of done` | 15 |
+  | `Nyitott kérdések vannak` | 14 | | `Spec-lefedettség` | 13 |
+  | `Konfiguráció-életút` | 12 | | `Fordított lefedettség` | 12 |
+  | `Komponensek és viselkedés` | 11 | | `Validálásra kész` | 11 |
+  | `Hivatkozott fájlok` | 10 | | `Státusz:` | 9 |
+  | `Ellenőrzési stratégia` | 7 | | `Plan-lefedettség` | 7 |
+
+  **⚠️ Ez is alsó korlát:** a lista a 10.2-ből és a 9.2 mérésből indul, de nem teljes — a
+  leltárt fájlonként végigolvasva kell zárni (ítéletet kíván, nem greppel helyettesíthető).
+
+  > **✅ A LELTÁR ZÁRVA (2026-08-25).** A zárás **fájlonkénti végigolvasással** történt, két
+  > gépi segédlettel: (a) a `status-keys.json` minden `hu` értékének **szóhatáros** keresése a
+  > három `*-hu` fán (a puszta `grep` téves találatainak kiszűrésére — az `új`, `lokális`, `Kör`,
+  > `Cél`, `Mód` szavak köznévi előfordulása a találatok ~90%-a volt), és (b) a **sablon-fence-ek
+  > címsorainak** kigyűjtése (fence-állapot követéssel, az escape-elt ` \`\`\`md ` fence-eket is
+  > beleértve). A (b) hozta a leltár **hiányzó tételeit**: a `02`/`03` artefaktum-sablonjai a 9.4
+  > kiemelésekor a prompt-fában maradtak (mert instrukciós prózát is tartalmaznak), így a
+  > címsoraik közül azok, amikre kapu nem illeszt, kimaradtak a 9.3 T-listájából.
+  >
+  > **13 új `sections` kulcs** (a 9.7.1 készlet 129 → **142** kulcsra nőtt): `objective`,
+  > `architecture_flow` (`02` spec-sablon) · `components_endpoints`, `rest_calls_examples`,
+  > `test_api_users`, `other_parameters`, `network_access_prereqs`, `new_dependencies`,
+  > `config_build_changes`, `schema_artifacts`, `unit_tests`, `integration_tests`, `e2e_tests`
+  > (`03` plan-sablon). Mind `hu` **és** `en` értékkel; a `hu` byte-azonos a maival (LG9).
+  >
+  > **A leltár zárásának két döntése:** a táblafejlécek **nem** kapnak tokent (**LG34**), és az
+  > **agent→skill visszatérési formátumok** (`test-runner` Output-fence, `analyzer` /
+  > `analyzer-exec` / `researcher` riport-vázai) továbbra sem jelöltek — ez a 9.3.2 **1.
+  > tanulságának** közvetlen alkalmazása.
+
+- [x] **9.7.3 — A feloldó az `install-helper.py`-ban.** A `<platform-scripts-mappa>` feloldó
+  (`_SCRIPTS_DIR_PLACEHOLDER`, ~208–230. sor) **mintájára**, ugyanabban a transzformációs
+  láncban (`prepare_skill_content()` — így mind az 5 platform kapja, LG28):
+  - `_load_status_keys(src_dir)` — a `prompts/lang/status-keys.json` beolvasása, cache-elve;
+  - `resolve_lang_tokens(content, src_dir)` — a `<sec:…>` / `<field:…>` / `<status:…>`
+    tokenek cseréje a **`PROJECT_LANG` szeletéből**;
+  - **ismeretlen kulcs → `sys.exit(1)`** beszédes hibával (a 8.6 / LG26 mintája). Csendes
+    „marad a token" **tilos**: az a telepített promptba szivárogna, és a gyenge modell szó
+    szerint kiírná a `<sec:...>`-t az artefaktumba;
+  - hiányzó `PROJECT_LANG`-szelet → `hu` fallback + egyszeri figyelmeztetés (LG12);
+  - **az agentekre is fusson le** (nem csak a skillekre) — a 9.5.4 indoka itt is áll: a
+    `reviewer` / `analyzer` / `doc-sync-planner` / fixerek artefaktumba írnak.
+
+- [x] **9.7.4 — A csere elvégzése a `*-hu` fákon**, fájlonként. A csere **mechanikus**
+  (literál → token), tartalmi javítás nélkül — ugyanaz a fegyelem, mint a 9.4-ben.
+  **Amit NEM cserélünk:**
+  - a `lang/hu/` blokkokba már áthelyezett szöveg (ott literál a helyes — LG32/4);
+  - a `status-keys.json` maga;
+  - a **példa-szövegek**, amik nem az artefaktum fejlécére hivatkoznak, hanem a szót
+    köznévként használják (pl. „a kockázatokat mérd fel") — **ítélet kell**, a 9.1
+    határeset-szabálya szerint;
+  - a `conventions.md` szekciónevei, **amíg** a 9.7.1 kulcskészlet nem tartalmazza őket
+    (a `## Git és branching konvenciók`, `## Sonar`, `## Merge stratégia`, `## Portok` —
+    ezek a **projekt-fájl** fejlécei, tehát a 10.2 (a) osztálya; ha bekerülnek a kulcskészletbe,
+    ide is tartoznak).
+
+  > **✅ A CSERE KÉSZ (2026-08-25).** **945 token · 121 külön kulcs · 38 fájl**
+  > (`<sec:>` 457 · `<field:>` 111 · `<status:>` 377). A 16.1 byte-azonosság **fájlonként**
+  > futott: **70/70 skill-hash + 55/55 agent-hash változatlan** (az agent-keret a
+  > `prepare_agent_content` kimenetére készült — a skill-keret az agenteket nem fedi).
+  >
+  > **Az alkalmazott elhatárolás** (a 9.1 határeset-szabályának operatív alakja): tokent kap a
+  > literál, ha **megnevezésként** áll — címsor, `backtick`, `„idézőjel"`, **félkövér** címke,
+  > vagy sablon-mező —, és marad, ha **ragozott vagy köznévi prózába** ágyazódik
+  > (*„a Teszt specifikációjában", „a Hurok-naplóját", „ne állítsd Tervezésre késznek"*).
+  > A ragozott alakok tokenizálása szövegátírást igényelne, azt pedig a 9.4/9.7.4 fegyelme
+  > tiltja (byte-azonosság) — **külön kör**, ha a 16.6 éles próba indokolja.
+  >
+  > **Egy kódhiba is kiderült és javítva lett:** a `process_antigravity` az agent.json
+  > tükrökön **nem futtatta** a `resolve_lang_tokens`-t (csak az INCLUDE-ot és a
+  > scripts-mappa helyőrzőt) — az Antigravity-telepítés feloldatlan `<sec:…>` tokent
+  > szállított volna, amint a §14 szinkronizálja a tükröket. A hívás bekerült, a
+  > `prepare_agent_content`-tel azonos sorrendben.
+  >
+  > **21 kulcs a készletben ma nem token-alakban él** — ezek a `lang/hu/` blokkokba kiemelt
+  > sablonokban (a `conventions.md` fejlécei, a `code-review.md` váza, a `test-conventions.md`
+  > váza) **literálként** állnak, illetve kapu-scriptek olvassák (`blocking_findings`,
+  > `failed_conditions`). Ez **helyes** (LG32/4) — a 11.12 kapu tehát **ne** követelje meg
+  > minden kulcs token-alakú használatát.
+
+- [x] **9.7.5 — Verifikáció fájlonként:**
+  1. **16.1 byte-azonosság** — a `hu`/`hu` feloldás után a 70 hash **változatlan**. Ez a csere
+     legfőbb védőhálója: bármilyen elírás a tokenben vagy a kulcsban azonnal kiderül.
+  2. **nulla maradék:** a 9.7.2 literálok grepje a `*-hu` fákon már csak a 9.7.4 kivétel-listán
+     ad találatot;
+  3. **nulla feloldatlan token** a telepített kimenetben: `grep -r "<sec:\|<field:\|<status:"`
+     a próbatelepítés célmappáin → **0 találat** (16.2 kiegészítése).
+
+  > **✅ Mind a három teljesül.** (1) 70/70 + 55/55 hash változatlan, minden lépés után.
+  > (2) A maradék literálok mind a kivétel-listára esnek: `lang/hu/` blokkok, „Kész példa"
+  > illusztrációk, agent→skill visszatérési formátumok, ragozott próza, frontmatter
+  > `inputs:`/`outputs:` metaadat, és a **`gemini-agent/` tükrök** (ezek a §14 hatóköre — ma
+  > amúgy is elcsúszottak, lásd 14.3: a `sync-gemini-agents.py --check` a 9.4/9.5 óta 11
+  > agentre `exit 1`-et ad). (3) Próbatelepítés **mind az 5 platformra** (`hu`/`hu`):
+  > 190 fájl, **0 feloldatlan nyelvi token, 0 feloldatlan INCLUDE marker**. Ráadásként
+  > `hu` prompt + **`en` projekt** telepítés is lefutott: a tokenek az `en` szeletre oldódnak
+  > fel (`Planned changes`, `Ready for tasks`), és csak a `lang/en/` hiányára jön a várt
+  > LG12-figyelmeztetés (§9.6).
+
+- [x] **9.7.6 — A 13.1 kiegészítése:** a `<sec:…>` / `<field:…>` / `<status:…>` tokenek
+  **NEM fordulnak** (mint minden helyőrző) — a fordítás során **byte-azonosan** kerülnek át az
+  `en` fába. Ez a fordítás legnagyobb kockázatát is csökkenti: a fordítónak nincs is mit
+  elrontania a kapu-illesztő stringeken.
 
 ---
 
@@ -749,7 +1231,22 @@ A `prompts/scripts/*.py`-ban **279 egyedi magyar string** van. Nem egyformák:
 | **(b) Artefaktum-ÍRÓ** | riport-szekciót ír a projektbe | **kötelező** | `write_text` / `f.write` / riport-összeállítás |
 | **(c) Konzol-üzenet** | a futtatónak és az agentnek szól | opcionális (LG10) | `print(...)`, artefaktum-írás nélkül |
 
-- [ ] **10.2 — Az (a) és (b) osztály leltárának véglegesítése.** Az alábbi lista a **biztosan
+> **⚠ A 9.6 zárásakor felszínre került, MA HIÁNYZÓ tételek** (mind (a)+(b) osztály — a script
+> írja ÉS illeszti; a `lang/en/` blokkok már az angol alakot hordozzák, tehát a §10 nélkül az
+> `en` projekt ezeken a pontokon csendben elhasal):
+> - `report-gate-check.py`: `## Teszt-riportolás` (`SECTION_RE`), `**Riport-generálás kötelező:**`
+>   (`REQUIRED_FLAG_RE`), `**Artefaktum-útvonal alapja:**` (`PATH_BASE_RE`) + a `BASE_ROUND` /
+>   `BASE_FLAT` **érték-halmazok** (`kör-mappa`, `körmappa`, `kör`, `gyökér` …);
+> - `round-log.py`: `## Kör N` (`ROUND_RE`) és a `**Körök száma:**` fejléc-mező;
+> - `run-tests.py`: a `### Gépi futtatási tábla` szekciócím **és** a `--type gyors|nehez`
+>   **CLI-választék**, ami a plan run-táblájának `Típus` oszlop-értékeivel párban áll —
+>   ez a kettő **együtt** fordul, vagy egyik sem;
+> - `tc8-gate-check.py`: a `test-conventions.md` 0./1./2./3. szekciócímei és a `Cél` /
+>   `Előfeltétel` / `Lépések` / `Elvárt eredmény` mezőnevek (TC10/b).
+>
+> **A `# Validation History` (failure-counter.py) NEM tétel** — ma is angol, tehát nyelvfüggetlen.
+
+- [x] **10.2 — Az (a) és (b) osztály leltárának véglegesítése.** Az alábbi lista a **biztosan
   teherhordó** találatokat tartalmazza; ellenőrizd és egészítsd ki.
 
   **Státusz-értékek (a):** `validate-gate-check.py` — `Validálásra kész`, `Task írásra kész`,
@@ -774,7 +1271,11 @@ A `prompts/scripts/*.py`-ban **279 egyedi magyar string** van. Nem egyformák:
   `## Összesített státusz: …`; `tc8-gate-check.py` — `## TC8 kapu …`; `dod-check.py` —
   `VERDICT: PASS/FAIL/MANUAL` (az angol kulcsszó marad, a magyarázat fordul).
 
-- [ ] **10.3 — `prompts/lang/status-keys.json`.** Szerkezet:
+- [x] **10.3 — `prompts/lang/status-keys.json`.** *(Kész: a **9.7.1** hozta létre — LG32 —, a
+  **9.7.2** zárása pedig 129 → **142** kulcsra bővítette. Az alábbi leírás a szerkezetet
+  rögzíti.)* *(Ezt a fájlt a **9.7.1** hozza létre — LG32;
+  itt csak a szerkezet referenciája áll. Ha a 9.7.1 kész, ez a pont automatikusan teljesül.)*
+  Szerkezet:
   ```json
   {
     "hu": { "status": { "done": "Kész", "ready_for_plan": "Tervezésre kész",
@@ -789,25 +1290,98 @@ A `prompts/scripts/*.py`-ban **279 egyedi magyar string** van. Nem egyformák:
   A `hu` értékek **byte-azonosak a maiakkal** (LG9) — ez a visszamenőleges kompatibilitás
   feltétele.
 
-- [ ] **10.4 — Egyetlen igazságforrás.** A 10.3 `sections` értékei és a `lang/<L>/` blokkokban
+- [x] **10.4 — Egyetlen igazságforrás.** A 10.3 `sections` értékei és a `lang/<L>/` blokkokban
   szereplő ugyanazon fejlécek **nem csúszhatnak el**. A 11.5 kapu ezt gépiesen ellenőrzi.
+  *(A **prompt-fában** ez az LG32 tokenizálás után szerkezetileg garantált: ott már nincs
+  literál, csak `<sec:…>` token. Ez a pont így a `lang/<L>/` blokkokra és a scriptekre szűkül.)*
 
-- [ ] **10.5 — Közös betöltő (LG18).** `prompts/scripts/lang_keys.py` (aláhúzós név, hogy
+  > **✅ A 11.5 kapu leszállította a `lang/<L>/` felét (2026-08-25).** A szabály, amit
+  > implementál: *ha egy kulcs értéke LITERÁLKÉNT szerepel az egyik nyelv blokkjában, akkor a
+  > párjának is szerepelnie kell a másikéban* — **szóhatáros** kereséssel, mert a puszta
+  > részszó-egyezés a találatok ~90%-át adta (`Kör` a `körönkénti`-ben, `Kész` a `Készen`-ben).
+  > A **meg nem jelenő kulcs nem hiba**: 21 kulcs kizárólag `<sec:…>`/`<status:…>` token
+  > alakban él (azt a 11.12 őrzi), kettőt pedig csak kapu-script olvas (`blocking_findings`,
+  > `failed_conditions`). **A scriptek fele a 10.5–10.7-tel zárul.**
+
+- [x] **10.5 — Közös betöltő (LG18).** `prompts/scripts/lang_keys.py` (aláhúzós név, hogy
   importálható modul legyen, ne a kötőjeles CLI-mintát kövesse): `load_keys()` a **saját
   mappájában** lévő `lang-keys.json`-t olvassa (`Path(__file__).parent / "lang-keys.json"`),
   cache-elve. Hiányzó fájl → `hu` fallback + egyszeri figyelmeztetés a stderr-re. **Nincs
   `conventions.md`-olvasás és nincs kötelező CLI-flag** — a nyelv telepítéskor eldőlt (LG17).
   A `--project-lang` opcionális **felülbírálásként** megmaradhat fejlesztéshez és teszthez.
 
-- [ ] **10.6 — A telepítő írja ki a `lang-keys.json`-t.** A `copy_helper_scripts` egészüljön ki:
+- [x] **10.6 — A telepítő írja ki a `lang-keys.json`-t.** A `copy_helper_scripts` egészüljön ki:
   a `status-keys.json`-ból a **választott projekt-nyelv szeletét** írja a scriptek célmappájába
   `lang-keys.json` néven: `{"lang": "hu", "status": {…}, "sections": {…}}`. A `lang` mező azért
   kell, hogy utólag is látható legyen, milyen nyelvre telepítettek (LG2 maradék kockázat).
   **A hívó skilleket NEM kell módosítani** — se flag, se helyőrző. Ez a döntés fő haszna:
   nulla skill-felület.
 
-- [ ] **10.7 — A hardcode-olt stringek cseréje** a `lang_keys.load_keys()` értékeire a 10.2
+- [x] **10.7 — A hardcode-olt stringek cseréje** a `lang_keys.load_keys()` értékeire a 10.2
   leltár szerinti scriptekben.
+
+  > **✅ A §10 KÉSZ (2026-08-25) — a scriptek i18n-je zárva.** Ezzel az LG1 mind a négy
+  > nyelvkombinációja működik, nem csak telepítés-, hanem FUTÁS-szinten is.
+  >
+  > **Mit szállított a 10.2 leltár.** Egy szóhatáros literál-kereső futott a
+  > `prompts/scripts/*.py`-on (a három repó-karbantartó script kihagyva), és a találatokat
+  > az ILLESZTŐ/ÍRÓ kontextus alapján osztályozta: **50 teherhordó hely** 10 scriptben.
+  > A leltár három olyan tételt is felszínre hozott, ami a terv 10.2 listájában NEM
+  > szerepelt: `cycle-status.py` státusz-listái (5 hely), `analyze-gate-check.py`
+  > `REQUIRED_PLAN_TABLES`/`REQUIRED_TASKS_TABLES` (4 kötelező-szekció név — enélkül az
+  > `en` projekt minden futásban 4 hamis „hiányzó szekció" Must Fix-et kapott), és a
+  > `validate-gate-check.py` `get_status()` `Státusz:` címkéje.
+  >
+  > **10.5 — `prompts/scripts/lang_keys.py`.** `sec()` / `fld()` / `st()` accessorok,
+  > háromlépcsős feloldás: (1) `lang-keys.json` a script mellett (telepített eset),
+  > (2) `../lang/status-keys.json` `hu` szelete (repóban futtatott eset — **ez a terv
+  > szerinti `hu` fallback**, duplikált szótár nélkül), (3) egyik sem → egyszeri stderr
+  > figyelmeztetés, és a kulcs-lekérdezés beszédes `SystemExit`-tel áll meg. Ismeretlen
+  > kulcs is `SystemExit` — ugyanaz az elv, mint a 9.7.3 token-feloldójában: csendben
+  > rossz nyelven illeszteni rosszabb, mint megállni. `--project-lang` helyett
+  > `load_keys(project_lang=...)` a fejlesztői felülbírálás.
+  >
+  > **10.6 — `write_lang_keys()`** a `copy_helper_scripts` végén. Nulla skill-felület:
+  > se flag, se helyőrző. 20/20 telepítésben ott a szelet, a helyes nyelvvel (a 16.2 alá
+  > bekerült két új kritérium ezt és a kulcs-létezést gépiesen őrzi).
+  >
+  > **10.7 — 10 script.** Új kulcs kellett hozzá: **142 → 166** (`status-keys.json`).
+  > A hozzáadott kulcsok a script által ÍRT felület: kör-blokk mezői (`f_trigger`,
+  > `f_report_folder`, `f_final_result`, `f_rounds`), kör-típusok (`round_type_full/light`),
+  > a `## Összegzés`/`## Validálási riport` címek, a lefedettségi mátrix és a
+  > `test-conventions.md` tábla-fejlécei, valamint a lépés-tábla oszlopnevei.
+  >
+  > **Két elv, ami végig vezette a cserét:**
+  > 1. **A BEMENET nyelvfüggetlen, a KIMENET projekt-nyelvi.** Ahol a script szinonima-
+  >    halmazt fogad (`normalize_type`, `BASE_ROUND`/`BASE_FLAT`, `_HEADER_CELLS`,
+  >    `PRECOND_ENV_RE`, a roadmap `(kész|done|lezárva)` jelölője), ott **mindkét nyelv
+  >    alakja bennmaradt**, és csak a visszaadott/kiírt érték lett nyelvi. Így egy magyarul
+  >    indult dokumentum `en` újratelepítés után sem esik ki.
+  > 2. **A konzol-üzenet (c osztály) magyar maradt** — LG10. Kivétel, ahol az üzenet
+  >    megmondja az agentnek, MIT írjon az artefaktumba (`report-gate-check.py` migrációs
+  >    őre, `tc8-gate-check.py` mezőnév-listái): ott a mezőnév tokenből jön.
+  >
+  > **Amit a 11.5 kapu itt fogott meg.** A négy új tábla-fejléc kulcs `en` értékét
+  > először magamtól fordítottam (`Referring tasks`, `OK`, `What ran`, `Reason`,
+  > `What it checks`) — a kapu jelezte, hogy a `lang/en/` sablonokban MÁS szó áll
+  > (`Referencing tasks`, `In order`, `What it ran`, `Justification`, `What it verifies`).
+  > **Az átnézett fordítás az igazságforrás, nem a kulcs**: a kulcs igazodott hozzá.
+  > Ez a 10.4 „egyetlen igazságforrás" pont gyakorlati bizonyítéka.
+  >
+  > **Regresszió-mérés.** A `HEAD` és a módosított scriptek ugyanarra a magyar
+  > fixture-re (spec/plan/tasks/conventions/test-conventions) futtatva **byte-azonos**
+  > kimenetet adnak — egyetlen szándékos eltéréssel: az `analyze-gate-check.py`
+  > mátrix-fejléce `## Lefedettségi mátrix (generált — …)` helyett
+  > `## Lefedettségi mátrix (generált) — …`, mert a `(generált)` most a kulcs része,
+  > és így egyezik a skill által várt szekciócímmel. A `round-log.py` teljes
+  > open→step→close ciklusa szintén byte-azonos. Ugyanaz a fixture `en` szeletre
+  > lefordítva a kapukon végigfut, hamis hiányzó-szekció riasztás nélkül.
+  >
+  > **Nyitva maradt, tudatosan (LG10 + LG34).** A kapu-scriptek konzol-üzenetei
+  > magyarul szólnak `en` projektben is. Ez nem szivárgás az artefaktumba — az agent az
+  > `output-language` blokk szerint a projekt nyelvén ír —, de a futtató embernek magyar
+  > szöveget mutat. Ha ez zavaró lesz, a (c) osztály külön, önálló lépésben fordítható;
+  > a szerkezet (`lang_keys`) készen áll rá.
 
 ---
 
@@ -817,7 +1391,59 @@ A `sync-gemini-agents.py` mintájára: `--check` módban `exit 1` eltérésnél,
 olvasásra formázott riport. **Ez a kapu tartja életben a kétnyelvűséget** — enélkül a két fa
 csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
 
-- [ ] **11.1 — Fájllista-paritás.** `skills-hu/` ↔ `skills-en/`, `agents-hu/` ↔ `agents-en/`,
+> **✅ A 11. SZAKASZ KÉSZ (2026-08-25).** `prompts/scripts/lang-parity-check.py` — mind a 12
+> ellenőrzés benne van, két üzemmóddal (LG25). Mai állapot: **default → exit 0** (21 fájlpár,
+> 43 WARN: a még le nem fordított `*-en` fák és a féloldalas gemini-tükrök), **`--strict` →
+> exit 1** (a 11.1 fájlhalmaz-paritás a §13 zárásáig definíció szerint bukik). A telepítő
+> **nem másolja** a célprojektbe (a `copy_helper_scripts` kizárja, mint az
+> `install-helper.py`-t és a `sync-gemini-agents.py`-t).
+>
+> **Hibainjektálással tesztelve** — mind kiderült: kihagyott szekció (11.7 + 11.5), eltűnt
+> szabály-ID (11.6), ismeretlen token-kulcs (11.12), suffix nélküli `prompts/skills/` mappa
+> (11.2), gyengített imperatívusz (11.10).
+>
+> **A kapu a saját munkánkban is talált egy valódi hibát:** a 9.6-ban írt
+> `lang/en/output-language.md` a magyar **`SOHA` ne fordítsd le** mondatot kisbetűs
+> *„never translate these"*-re fordította — pontosan az a gyengülés, ami ellen a 11.10
+> készült. Javítva (`NEVER`).
+>
+> **Két ponton pontosítottuk a tervet a megvalósítás közben:**
+> 1. **11.10 — a magyar `SOHA` ugyanabba az osztályba tartozik, mint a `NEVER`.** A 11.10
+>    felsorolása ezt nem tartalmazta; enélkül minden `SOHA` → `NEVER` fordítás hamis FAIL
+>    lett volna. A kapu csoportonként számol: `TILOS`/`SOHA`/`FORBIDDEN`/`NEVER` egy csoport.
+> 2. **11.8/a — a `lang/<L>/` blokkokban a fence TARTALMA is projekt-nyelvi** (az
+>    infostring-sorozat viszont ott is kötelezően egyezik). Indok: a nyelvi blokkok definíció
+>    szerint artefaktum-sablonok, és a bennük álló ` ```bash ` fence-ek **helyőrző-magyarázatot**
+>    tartalmaznak (`<a környezet felhúzása: …>`), a beemelt slash-parancsok argumentum-címkéi
+>    pedig fordulnak (`ciklus:` → `cycle:`). A byte-azonosság ott tehát rossz kérdés — a
+>    prompt-fákon viszont változatlanul él (LG27 listája szerint).
+>
+> **Két féloldalas-állapot kezelés (LG25 szelleme), ami nélkül a kapu ma használhatatlan
+> lenne:** (a) az **árva horgony** irány (11.3) csak akkor FAIL, ha az adott nyelvnek már van
+> prompt-fája — különben a §13 alatt mind a 73 `lang/en/` horgony árvának látszana; (b) a
+> `descriptions.json` kulcskészletét (11.4) a **referencia-fa** `name:` mezőihez mérjük, ha az
+> adott nyelvnek még nincs fája — a `name` úgyis nyelvfüggetlen (LG6).
+
+> **A §13 fordítása három további pontosítást kényszerített ki a kapun** (mind a három azért,
+> mert a szabály eredeti alakja a 16.5 nyelvi tisztasággal ütközött volna):
+> - **11.8/b — a `mermaid` fence FORDÍTHATÓ.** A 9.3.3 a `mermaid`-et a byte-azonos listára
+>   tette; a `quick-flow` ábrája viszont **a promptban áll, nem artefaktumba íródik**, tehát a
+>   címkéi próza. A node-id-k és a nyíl-szintaxis byte-azonossága továbbra is elvárás — azt a
+>   fordító nem is bántotta.
+> - **11.8/c — a DUPLA idézőjeles string a parancs-fence-ben TARTALOM.** Két valós eset:
+>   `git commit -m "cycle-NN: 06-implement - kész, validálásra kész"` és
+>   `echo "MAR_BENNE"` (sentinel, amit az ágens olvas vissza). Az **egyszeres** idézőjelet
+>   szándékosan nem maszkoljuk (`grep -qxF '.bs-brainstorm/*'` — az minta, tehát szemantika).
+> - **11.10/b — az `ÁLLJ MEG` a `STOP` magyar párja**, egy csoportba tartoznak. A `quick-flow`
+>   magyarul `⛔ ÁLLJ MEG`-et ír ott, ahol az angol természetesen `⛔ STOP`.
+>
+> **És egy VALÓDI fordítási hibát is megfogott a kapu a delegált munkában:** a `quick-flow`
+> fordítója a magyar **kisbetűs** „szigorúan tilos" fordulatot két helyen `strictly FORBIDDEN`-re
+> **erősítette**. A 13.2.2 azt követeli, hogy az utasítás-erősség ne **gyengüljön** — az
+> erősítés viszont átrendezi a hangsúly-eloszlást (a gyenge modell a kiemelt tiltásokat
+> rangsorolja), ezért visszaállítva kisbetűsre.
+
+- [x] **11.1 — Fájllista-paritás.** `skills-hu/` ↔ `skills-en/`, `agents-hu/` ↔ `agents-en/`,
   `agents-hu/gemini-agent/` ↔ `agents-en/gemini-agent/`, `shared-hu/` ↔ `shared-en/`,
   `lang/hu/` ↔ `lang/en/`: azonos fájlnév-készlet. Hiányzó vagy extra fájl → FAIL.
   A pár-képzés a `_lang_subdir` logikáját tükrözze (`<base>-<lang>`), **ne** hardcode-olt
@@ -826,46 +1452,48 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
   WARN-ként listázódnak, és a 11.3–11.10 ellenőrzések csak a **mindkét oldalon létező**
   párokra futnak — így a kapu a fájlonként haladó 13. szakasz alatt is használható marad.
 
-- [ ] **11.2 — Aszimmetria-őr (LG5).** FAIL, ha létezik `prompts/skills`, `prompts/agents` vagy
+- [x] **11.2 — Aszimmetria-őr (LG5).** FAIL, ha létezik `prompts/skills`, `prompts/agents` vagy
   `prompts/shared` **suffix nélküli** mappa. Ez fogja meg, ha egy félbehagyott rebase vagy egy
   figyelmetlen commit visszahozza a régi szerkezetet.
 
-- [ ] **11.3 — INCLUDE-marker leltár.** A markerek halmaza legyen azonos a nyelvi párokban;
+- [x] **11.3 — INCLUDE-marker leltár.** *(A 9.4 tanulsága szerint ez a kapu **a `hu` fán belül** is
+  kell: horgony ↔ marker kereszt-ellenőrzés mindkét irányban — a 16.1 a kimaradt kiemelésre vak.)*
+  A markerek halmaza legyen azonos a nyelvi párokban;
   minden hivatkozott `lang/<fájl>#<horgony>` **létezzen mindkét nyelvi mappában**; a `lang/`
   fájlok **ne** tartalmazzanak INCLUDE markert (8.5).
 
-- [ ] **11.4 — Frontmatter-paritás.** `name:` **byte-azonos** (LG6); a `prerequisites`, `output`,
+- [x] **11.4 — Frontmatter-paritás.** `name:` **byte-azonos** (LG6); a `prerequisites`, `output`,
   `prev`, `next`, `subagents`, `shared`, `phase` kulcsok jelenléte és **elemszáma** azonos.
   A `description`-re: a `lang/<L>/descriptions.json` kulcskészlete **pontosan** a fa `name`
   mezőinek halmaza legyen, mindkét nyelven (8.6). Az **agent**-bejegyzések objektumok, és
   mindkét nyelven tartalmazzák a `description` **és** a `role` kulcsot (LG26).
 
-- [ ] **11.5 — Státusz- és szekció-kulcsok.** A `status-keys.json` minden nyelvén ugyanazok a
+- [x] **11.5 — Státusz- és szekció-kulcsok.** A `status-keys.json` minden nyelvén ugyanazok a
   kulcsok; és minden ott szereplő érték **elő is forduljon** a hozzá tartozó `lang/<L>/`
   blokkokban. Ez fogja meg a 10.4 kétigazság-hibát.
 
-- [ ] **11.6 — Szabály-ID leltár.** A `([A-Z]{2,3}\d+[a-z]?(?:/[a-z])?)` minta szerinti
+- [x] **11.6 — Szabály-ID leltár.** A `([A-Z]{2,3}\d+[a-z]?(?:/[a-z])?)` minta szerinti
   azonosítók halmaza legyen azonos a nyelvi párokban. Ez fogja meg, ha a fordításból kimarad egy
   szabály. (A használt prefixek listája: 1.5.)
 
-- [ ] **11.7 — Szekció-szerkezet.** A `##`/`###` címsorok **száma és sorrendje** fájlonként
+- [x] **11.7 — Szekció-szerkezet.** A `##`/`###` címsorok **száma és sorrendje** fájlonként
   egyezzen. Ez a legjobb egyszerű detektora annak, hogy a fordító kihagyott vagy összevont egy
   szekciót.
 
-- [ ] **11.8 — Kódblokk-paritás (fence-alapú, LG27).** A ``` fence-ek **száma és
+- [x] **11.8 — Kódblokk-paritás (fence-alapú, LG27).** A ``` fence-ek **száma és
   infostring-sorozata** egyezzen. Tartalom-ellenőrzés az infostring szerint:
   - **byte-azonos:** `bash`, `sh`, `python`, `json`, `yaml`, `toml`, `regex`, `diff`, **és
     minden fel nem sorolt infostring** (biztonságos default) — parancsot nem fordítunk;
   - **fordítható (nincs tartalom-ellenőrzés):** `md`, `text`, és a nyelv-jelölés nélküli fence
     — ezek az illusztratív, fájlba nem kerülő példák (9.1), amik prompt-nyelviek.
 
-- [ ] **11.9 — Integráció.** A repóban **nincs CI és nincs pre-commit hook** (1.6). Ezért:
+- [x] **11.9 — Integráció.** A repóban **nincs CI és nincs pre-commit hook** (1.6). Ezért:
   dokumentáld a `meta-improve-prompts.md`-ben **kötelező kézi lépésként** a
   `sync-gemini-agents.py --check` mellett, és írd bele a 17.3 folytatási receptbe is.
   A commit-előtti futás a **default** módot használja, a PR zárása és a 16.3 a **`--strict`**-et
   (LG25).
 
-- [ ] **11.10 — Imperatívusz-kapu (a fordítás legfőbb kockázata, gépiesen).** A fordítás
+- [x] **11.10 — Imperatívusz-kapu (a fordítás legfőbb kockázata, gépiesen).** A fordítás
   legvalószínűbb minőségi hibája, hogy **gyengül az utasítás-erősség** (`TILOS` → `should not`),
   ami pont a gyenge modellek dolgát rontja el (1.1). Ez **mérhető jelentés-értés nélkül**:
   számold meg a „kemény padló" jelöléseket mindkét nyelvi változatban, és követelj egyezést:
@@ -874,15 +1502,80 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
   *(Ha egy eltérés indokolt — pl. két magyar mondat egy angolba olvad —, azt a fordító
   jegyezze fel a 13.3 listában, és a kapu kapjon rá explicit kivétel-bejegyzést.)*
 
-- [ ] **11.11 — Amit NEM tud ellenőrizni.** Írd bele a script docstringjébe: a fordítás
+- [x] **11.12 — Nyelvi token-paritás (LG32).** A `<sec:…>` / `<field:…>` / `<status:…>`
+  tokenek **halmaza és darabszáma** legyen azonos a nyelvi párokban (`skills-hu/X.md` ↔
+  `skills-en/X.md`), és **minden előforduló kulcs létezzen** a `status-keys.json` mindkét
+  nyelvi szeletében. Eltérés → FAIL. Ez a 11.5-nél erősebb: azt is megfogja, ha a fordító egy
+  tokent véletlenül literálra oldott fel (a leggyakoribb várható fordítási hiba ezen a
+  felületen), mert akkor a token eltűnik az `en` oldalról.
+
+- [x] **11.11 — Amit NEM tud ellenőrizni.** Írd bele a script docstringjébe: a fordítás
   *jelentés*-helyességét nem ellenőrzi, azt csak emberi review. A kapu a szerkezeti és leltár-
   hibákat fogja meg.
+
+  > **✅ A maradék kockázat SZŰKÍTVE — 11.13 kapu (2026-08-25).** A jelentés-helyesség
+  > továbbra is emberi review dolga, de a fordítás leggyakoribb **csendes** vesztesége
+  > gépiesen megfogható: egy `/bs-*` parancsnév, egy `[CHECK]`/`[RED]` task-marker vagy egy
+  > `failure-counter.py`-szerű fájlhivatkozás úgy tűnik el az angol oldalról, hogy a mondat
+  > nyelvtanilag hibátlan marad — csak MÁS viselkedést telepít.
+  >
+  > A **11.13** ezért a nyelvfüggetlen tokenek **halmaz**-paritását őrzi mind a 63 fájlpáron.
+  > Szándékosan **halmaz, nem darabszám**: a backtick-csoportosítás nyelvenként eltérhet
+  > (`` `x.py --flag` `` egy spanban vs. kettőben), az még nem tartalmi eltérés — ez a
+  > pontosítás egy valódi álriasztásból jött (`failure-counter.py` hu=15 en=17 backtickelt
+  > előfordulás, miközben a teljes darabszám mindkét oldalon 24).
+  >
+  > **A mai állapot: 0 eltérés** a négy fán (`skills`, `agents`, `shared`, `lang`) — vagyis a
+  > §13 fordítás egyetlen szabály-ID-t, parancsnevet, markert és fájlútvonalat sem ejtett el.
+  > Hibainjektálással ellenőrizve, hogy valódi eltéréskor bukik.
+
+  > **Egy egyszeri, NEM kapusított átnézés is futott — a „megfordított feltétel" gyanújára.**
+  > A fájlpárokat a (11.7 által igazolt) címsor-szerkezet mentén blokkokra vágva, blokkonként
+  > összevetve a tagadás-sűrűséget és a küszöb-számokat. **6 blokk kapott tagadás-jelölést,
+  > mind a három különböző eset kézzel átnézve — mindegyik álriasztás:**
+  > *„megerősítés-kérés **nélkül**" ↔ „**without** asking"* (a magyar tagadást névutó hordozza),
+  > és kétszer *„**nem**-TDD" ↔ „**non**-TDD"*. Valódi polaritás-fordulás nincs.
+  >
+  > **Ezt szándékosan NEM tettem kapuvá.** A szám-alapú jele használhatatlanul zajos: a magyar
+  > kiírja a számneveket (*„két forrás"* ↔ *„2 sources"*), így 160 fölötti álriasztást ad. Egy
+  > kapu, ami ennyit hibázik, nem véd — kiképzi a karbantartót, hogy figyelmen kívül hagyja.
+  > A 11.13 azért lett kapu, mert a jele **nulla zajú**.
 
 ---
 
 ## 12. A telepítő
 
-- [ ] **12.1 — `install.sh`: két nyelvi kérdés.** A platform-választó mintájára (a *„Melyik AI
+> **✅ A 12. SZAKASZ KÉSZ (2026-08-25).** `install.sh` és `install.ps1` egyaránt.
+>
+> - **12.1/12.2 — a két nyelvi kérdés** a platform-választó után (`2/b. lépés`), külön
+>   magyarázattal, hogy melyik tengely mit jelent (*„amit az ágens olvas"* vs *„amit az ágens
+>   ír"*). Default: prompt = **English**, projekt = **Magyar** (LG7). Az öt helper-hívás
+>   mindkét scriptben megkapja a 4. és 5. argumentumot.
+> - **12.3 — a záró összefoglaló** kiírja mindkét nyelvet, és **külön figyelmeztet**, hogy
+>   bedrótozódtak, tehát csak újratelepítéssel változtathatók. Emellett `projekt = English`
+>   választásnál a nyelvi kérdés után **azonnal** jelez, hogy a kapu-scriptek üzenetei még
+>   magyarok (a §10 hiánya — a 17.2 rövidített út elvárása).
+> - **12.4 — nem interaktív mód:** `--platform`, `--prompt-lang`, `--project-lang`, `--path`,
+>   `--force`, `--help` (a `.ps1`-ben `param()` blokkal, `-Platform` … `-Help`). **Flag nélkül a
+>   régi interaktív út fut változatlanul**; részleges megadásnál a hiányzókat kérdezi. Az
+>   ütközés-kezelés `--force` nélkül **megáll** (`exit 1`), nem ír felül csendben — a
+>   kölcsönös-kizárás kérdése (Codex ↔ Antigravity) ugyanígy.
+> - **12.5 — nem igényelt változtatást, csak ellenőrzést:** a `00-init-project` **nem kérdez**
+>   projekt-nyelvet, és a `conventions.md` sablonjában sincs nyelvi mező (a Tech stack
+>   `**Nyelv:**` sora a *programozási* nyelv — az `en` blokkban helyesen `**Language:**`).
+>   A 7.7 `sdd-lightweight-flow` hivatkozások már a §7-ben javítva lettek.
+>
+> **Verifikáció:** `install.sh` nem-interaktív módban **4 nyelvkombináció × 5 platform = 20
+> futás, mind exit 0**, és a telepített `bs-02-write-spec` mind a négy kombinációban a **kért**
+> nyelvpárt hordozza (`en/hu` → angol prompt + `Tervezésre kész`; `hu/en` → magyar prompt +
+> `Ready for planning`). A `--force` nélküli ütközés `exit 1`-gyel megáll, `--force`-szal
+> felülír. A `--prompt-lang xx` és az ismeretlen platform `exit 2`-t ad.
+> *(A `.ps1` futtatása ezen a gépen nem lehetséges — nincs `pwsh` —, ezért statikus
+> ellenőrzés futott: zárójel-egyensúly, a `param()` blokk helye, az öt helper-hívás
+> nyelvi argumentuma, a `Ask-Languages`/`Get-LangLabel`/`Show-Usage`/`Initialize-FromParams`
+> megléte és bekötése. **Ezt Windowson egyszer futtatva érdemes visszaigazolni.**)*
+
+- [x] **12.1 — `install.sh`: két nyelvi kérdés.** A platform-választó mintájára (a *„Melyik AI
   agent platformot használod?"* blokk, ~180–200. sor), **a platform-kérdés után**:
   ```
   Milyen nyelvűek legyenek a promptok?   1) English [default]   2) Magyar
@@ -892,16 +1585,16 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
   Az `install-helper.py` **öt** hívása (372/414/456/498/561. sor) kapja meg őket 4. és 5.
   argumentumként.
 
-- [ ] **12.2 — `install.ps1`: ugyanez** `Read-Host`-tal (minta: a ~210. sor környéki
+- [x] **12.2 — `install.ps1`: ugyanez** `Read-Host`-tal (minta: a ~210. sor környéki
   platform-választó). `$SKILLS_SRC` a 66. sorban; a helper-hívások a 395/440/485/530/595. sorban.
 
-- [ ] **12.3 — Visszajelzés a telepítés végén (LG2 maradék kockázat).** A záró összefoglaló írja
+- [x] **12.3 — Visszajelzés a telepítés végén (LG2 maradék kockázat).** A záró összefoglaló írja
   ki **hangosan mindkét nyelvet**, és jelezze, hogy ezek a telepített promptokba
   **bedrótozódtak**, tehát utólag csak újratelepítéssel változtathatók. Mivel a projektben
   semmilyen nyelvi mező nem él (LG17), ez az **egyetlen** hely, ahol a felhasználó szembesül a
   választásával — nem elhagyható kozmetika.
 
-- [ ] **12.4 — Nem interaktív mód (LG20).** Ma nincs ilyen: se `getopts`, se `usage`, minden
+- [x] **12.4 — Nem interaktív mód (LG20).** Ma nincs ilyen: se `getopts`, se `usage`, minden
   választ `read -r` kér be (a `.ps1`-ben `Read-Host`). Az új, minimális mód:
   - `--platform <claude|codex|antigravity|cursor|copilot>`, `--prompt-lang <hu|en>`,
     `--project-lang <hu|en>`, `--path <cél>`, `--help`;
@@ -912,7 +1605,7 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
     ne írjon felül csendben;
   - ugyanez a `.ps1`-ben, `param(...)` blokkal.
 
-- [ ] **12.5 — `00-init-project.md` takarítás.** Ne kérdezzen projekt-nyelvet, és a
+- [x] **12.5 — `00-init-project.md` takarítás.** Ne kérdezzen projekt-nyelvet, és a
   `conventions.md` sablonjába se generálj nyelvi mezőt (LG17). *(A 7.7 szerinti két elavult
   `sdd-lightweight-flow` hivatkozás javítása szintén ebben a fájlban van.)*
 
@@ -932,23 +1625,68 @@ szakasz megvan, mert akkor a fordítandó felület már csak az instrukciós pr�
 - a szabály-ID-k (`VD5`, `DS22`, `BS18`) és a rájuk hivatkozó szövegek;
 - fájl- és mappanevek (`spec.md`, `docs-generated/`, `cycle-NN-<name>`);
 - parancsok, kódblokkok, JSON/YAML kulcsok, regexek (a 11.8 byte-azonosságot követel);
-- a `<platform-scripts-mappa>` és minden helyőrző;
+- a `<platform-scripts-mappa>` és minden helyőrző — **beleértve a `<sec:…>` / `<field:…>` /
+  `<status:…>` projekt-nyelvi tokeneket** (LG32, 9.7.6): ezek **byte-azonosan** kerülnek át;
+- a **kapu-scriptek CLI-értékei** a példa-parancsokban (`run-tests.py --type gyors|nehez`) —
+  ezek a script `choices` listájából jönnek, a fordításuk a §10 dolga, nem a §13-é;
 - az INCLUDE markerek (a *tartalmuk* lehet nyelvi, a *marker* nem).
 
 ### 13.2 Fordítási szabályok
 
-- [ ] **13.2.1 — Glosszárium ELŐBB, és IDE írd.** A fordítás megkezdése előtt készíts szótárat a
-  visszatérő szakkifejezésekre, és **ebbe a fájlba** írd be (ne a fejedben tartsd). Kiindulás:
-  ciklus → cycle, fázis → phase, kapu → gate, hurok → loop, önjavító → self-healing, bukás →
-  failure, finding → finding, artefaktum → artifact, kiemelés → extraction, tervezési dokumentum
-  → design document, lefedettség → coverage, kör → round, előfeltétel → prerequisite.
+- [x] **13.2.1 — Glosszárium ELŐBB, és IDE írd.** A fordítás megkezdése előtt készíts szótárat a
+  visszatérő szakkifejezésekre, és **ebbe a fájlba** írd be (ne a fejedben tartsd).
   **Inkonzisztens szakszó-fordítás a leggyakoribb hibaforrás egy ilyen korpuszban.**
-- [ ] **13.2.2 — Az imperatívuszok erőssége nem gyengülhet.** `TILOS` → `FORBIDDEN` / `NEVER`,
+
+  > **A glosszárium a 9.6 (`lang/en/`) megkezdésekor készült, és a §13-ra is ez érvényes.**
+  > Ahol a szó **artefaktum-felület** (szekciónév, státusz, mezőnév), ott **nem itt** dől el a
+  > fordítás, hanem a `status-keys.json` `en` szeletében — a glosszárium a **prózára** vonatkozik.
+
+  | Magyar | Angol | Megjegyzés |
+  |---|---|---|
+  | ciklus | cycle | a `cycle-NN-<name>` azonosító sosem fordul |
+  | fázis | phase | `phase 03`, `phase-closing commit` |
+  | kapu | gate | `mechanikus kapu` → *mechanical gate* |
+  | hurok | loop | `önjavító hurok` → *self-healing loop* |
+  | kör | round | `teljes kör` / `könnyű kör` → *full round* / *light round* |
+  | bukás, bukott | failure, failed | `bukott elem` → *failed item* |
+  | artefaktum | artifact | |
+  | tervezési dokumentum | design document | a `spec.md`/`plan.md`/`tasks.md` gyűjtőneve |
+  | lefedettség | coverage | `fordított lefedettség` → *reverse coverage* |
+  | előfeltétel | prerequisite | |
+  | kiemelés (9.4) | extraction | csak a tervben, promptban nem fordul elő |
+  | horgony | anchor | az `ANCHOR:` marker neve sosem fordul |
+  | helyőrző | placeholder | |
+  | csereszöveg | replacement text | `<field:f_replacement_text>` |
+  | eltérés (`design-drift`) | deviation | |
+  | recept, regiszter | recipe, register | `test-conventions.md` = *recipe register* |
+  | promótálás | promotion | `promótált tétel` → *promoted item* |
+  | váz, csontváz | skeleton | |
+  | minőségellenőrzés | quality check | a `## Sonar minőségellenőrzés` fejléc a kulcskészletből jön |
+  | lezárási kapu | closing gate | |
+  | kérdés-nyilvántartó | question register | a `*-questions.md` fájlok |
+  | súlyosság | severity | |
+  | hatókör | scope | `osztott-remote` → *shared-remote* (kulcskészlet) |
+  | szerződés | contract | `szerződés-integritás` → *contract integrity* |
+  | munkafa | working tree | `tiszta munkafa` → *clean working tree* |
+  | visszaintegrálás | back-integration | |
+  | eszkaláció | escalation | `ESZKALÁCIÓ:` prefix — prompt-nyelvi, fordul |
+  | takarítás | cleanup | |
+  | riport | report | |
+  | jelölő, marker | marker | a `[analyze-loop]` / `[validate-loop]` marker maga sosem fordul |
+  | megerősítés | confirmation | `explicit megerősítés` → *explicit confirmation* |
+  | ütközés | conflict | |
+  | számláló | counter | |
+  | fejléc-blokk | header block | a `docs-generated/` doksik `Lefedve:` sora |
+  | felhasználó | user | a promptban **Felhasználó**/**felhasználó** egyaránt → *user* |
+  | `downstream-hatás:` | `downstream-effect:` | a fixer → orchestrátor szerződés-mező (D11); az `nincs`/`van —` értékek is fordulnak (`none`/`yes —`) |
+  | `Knn` (kérdés-azonosító) | `Qnn` | a `*-questions.md` tételei; a `lang/en/` blokkok is `Qnn`-t használnak |
+  | `<FÁZIS-TAG>` | `<PHASE-TAG>` | a commit-üzenet helyőrzője; a kitöltött érték (`02-spec`) nyelvfüggetlen |
+- [x] **13.2.2 — Az imperatívuszok erőssége nem gyengülhet.** `TILOS` → `FORBIDDEN` / `NEVER`,
   **nem** `should not`. A `⛔` és `🔴` jelölések maradnak. A gyenge modellek pont ezeken a
   pontokon romlanak el (1.1).
-- [ ] **13.2.3 — Szerkezet-megőrzés.** Ugyanannyi `##`/`###` címsor, ugyanabban a sorrendben
+- [x] **13.2.3 — Szerkezet-megőrzés.** Ugyanannyi `##`/`###` címsor, ugyanabban a sorrendben
   (11.7), ugyanannyi táblázat és kódblokk (11.8).
-- [ ] **13.2.4 — Fájlonként fordíts, és fájlonként futtasd a paritás-kaput.** Ne halmozz.
+- [x] **13.2.4 — Fájlonként fordíts, és fájlonként futtasd a paritás-kaput.** Ne halmozz.
 
 ### 13.3 Fájlonkénti fordítási lista
 
@@ -968,44 +1706,58 @@ Megoszlás: **fő ágens 28 fájl / ~453700 karakter · subagent 14 fájl / 2194
 **Ez az első lépés**, mert minden skill beemeli: itt dől el a terminológia. A 13.2.1 glosszáriumot
 **ezzel párhuzamosan** véglegesítsd — amit itt eldöntesz, azt a többi 25 fájl követi.
 
+> **✅ A 13.3.1 KÉSZ (2026-08-25) — mind a 17 fájl.** `prompts/shared-en/`, fájlonként futtatott
+> paritás-kapuval (13.2.4). Magyar ékezet a fán: **0 találat** (16.5). A `hu`/`hu` 16.1 keret
+> változatlan. **A glosszárium három tétellel bővült** a fordítás közben: `downstream-hatás:` →
+> `downstream-effect:` (fixer → orchestrátor szerződés-mező, D11), `Knn` → `Qnn`,
+> `<FÁZIS-TAG>` → `<PHASE-TAG>` — ezeket a 05/07 skill fordításának **kötelezően követnie kell**,
+> mert a fixerek és az orchestrátor ezeken a stringeken keresztül beszélnek.
+
 | ✓ | Fájl | Karakter | Ki fordítja |
 |---|---|---:|---|
-| [ ] | `quality-check-plan.md` | 18558 | **fő ágens** |
-| [ ] | `fix-mode-implement.md` | ~4000 | **fő ágens** *(a 7.6-ban jön létre)* |
-| [ ] | `quality-check-tasks.md` | 11986 | **fő ágens** |
-| [ ] | `quality-check-spec.md` | 10716 | **fő ágens** |
-| [ ] | `phase-commit.md` | 5558 | **fő ágens** |
-| [ ] | `git-preflight.md` | 5033 | **fő ágens** |
-| [ ] | `fix-mode-tasks.md` | 4882 | **fő ágens** |
-| [ ] | `fix-mode-plan.md` | 4328 | **fő ágens** |
-| [ ] | `input-from-prev.md` | 4121 | **fő ágens** |
-| [ ] | `fix-mode-spec.md` | 3371 | **fő ágens** |
-| [ ] | `parallel-cycles.md` | 3258 | **fő ágens** |
-| [ ] | `artifact-voice.md` | 3082 | **fő ágens** |
-| [ ] | `conventions-change.md` | 2934 | **fő ágens** |
-| [ ] | `path-format.md` | 1987 | **fő ágens** |
-| [ ] | `questions-tasks.md` | 1434 | **fő ágens** |
-| [ ] | `context-check.md` | 1240 | **fő ágens** |
-| [ ] | `python-cmd.md` | 436 | **fő ágens** |
+| [x] | `quality-check-plan.md` | 18558 | **fő ágens** |
+| [x] | `fix-mode-implement.md` | 6725 | **fő ágens** *(a 7.6-ban létrejött)* |
+| [x] | `quality-check-tasks.md` | 11986 | **fő ágens** |
+| [x] | `quality-check-spec.md` | 10716 | **fő ágens** |
+| [x] | `phase-commit.md` | 5558 | **fő ágens** |
+| [x] | `git-preflight.md` | 5033 | **fő ágens** |
+| [x] | `fix-mode-tasks.md` | 4882 | **fő ágens** |
+| [x] | `fix-mode-plan.md` | 4328 | **fő ágens** |
+| [x] | `input-from-prev.md` | 4121 | **fő ágens** |
+| [x] | `fix-mode-spec.md` | 3371 | **fő ágens** |
+| [x] | `parallel-cycles.md` | 3258 | **fő ágens** |
+| [x] | `artifact-voice.md` | 3082 | **fő ágens** |
+| [x] | `conventions-change.md` | 2934 | **fő ágens** |
+| [x] | `path-format.md` | 1987 | **fő ágens** |
+| [x] | `questions-tasks.md` | 1434 | **fő ágens** |
+| [x] | `context-check.md` | 1240 | **fő ágens** |
+| [x] | `python-cmd.md` | 436 | **fő ágens** |
 
 #### 13.3.2 `agents-hu/` → `agents-en/` — 11 fájl, 82603 karakter
 
 Az 5 fixer a fő ágensnél: a D13 fix-mód szerződéseket hordozzák, és a 7.6 refaktor után a
 `shared-<L>/fix-mode-*.md` blokkokra hivatkoznak. A 6 read-only agent delegálható.
 
+> **✅ A 13.3.2 KÉSZ (2026-08-25) — mind a 11 agent.** Az 5 fixer a fő ágenstől, a 6 read-only
+> agent **fájlonként egy-egy bounded subagenttől** (LG23), a 13.2.1 glosszárium + a 13.2
+> szabályok átadásával. Minden fájlra futott a paritás-kapu: **0 szerkezeti eltérés**, magyar
+> ékezet **0 találat**, és a `<sec:>`/`<field:>`/`<status:>` **token-darabszám fájlonként
+> egyezik** (a 11.12 kapu a legfontosabb védőháló a delegált fordításnál — ez fogja meg, ha a
+> fordító egy tokent literálra oldott volna fel).
+
 | ✓ | Fájl | Karakter | Ki fordítja |
 |---|---|---:|---|
-| [ ] | `test-runner.md` | 15310 | subagent |
-| [ ] | `analyzer.md` | 13769 | subagent |
-| [ ] | `analyzer-exec.md` | 11495 | subagent |
-| [ ] | `doc-sync-planner.md` | 10474 | subagent |
-| [ ] | `reviewer.md` | 7022 | subagent |
-| [ ] | `researcher.md` | 6202 | subagent |
-| [ ] | `review-fixer.md` | 4436 | **fő ágens** |
-| [ ] | `implement-fixer.md` | 4144 | **fő ágens** |
-| [ ] | `tasks-fixer.md` | 3657 | **fő ágens** |
-| [ ] | `plan-fixer.md` | 3218 | **fő ágens** |
-| [ ] | `spec-fixer.md` | 2876 | **fő ágens** |
+| [x] | `test-runner.md` | 15310 | subagent |
+| [x] | `analyzer.md` | 13769 | subagent |
+| [x] | `analyzer-exec.md` | 11495 | subagent |
+| [x] | `doc-sync-planner.md` | 10474 | subagent |
+| [x] | `reviewer.md` | 7022 | subagent |
+| [x] | `researcher.md` | 6202 | subagent |
+| [x] | `review-fixer.md` | 4436 | **fő ágens** |
+| [x] | `implement-fixer.md` | 4144 | **fő ágens** |
+| [x] | `tasks-fixer.md` | 3657 | **fő ágens** |
+| [x] | `plan-fixer.md` | 3218 | **fő ágens** |
+| [x] | `spec-fixer.md` | 2876 | **fő ágens** |
 
 #### 13.3.3 `skills-hu/` → `skills-en/` — 14 fájl, 503619 karakter
 
@@ -1014,56 +1766,125 @@ dolgozik (`analyze-gate-check.py`, `validate-gate-check.py`, `report-gate-check.
 `ds22-gate-check.py`, `tc8-gate-check.py`, `run-tests.py`, `round-log.py`) — lásd a 10.2 leltárt.
 Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
 
+> **✅ A 13.3.3 KÉSZ (2026-08-25) — mind a 14 skill.** Delegálva (LG23): `00-init-project`,
+> `01-add-cycles`, `06-implement`, `09-merge`, `brainstorm`, `quick-flow`, `export-doc`,
+> `cycle-status`. Fő ágenstől: `04-write-tasks`, `02-write-spec`, `05-analyze`, `08-doc-sync`,
+> `07-validate`, `03-write-plan`.
+>
+> **A §13 EGÉSZE KÉSZ: 42/42 fájl.** `lang-parity-check.py --strict` → **exit 0** (63 fájlpár,
+> 0 WARN). Magyar ékezet a négy `en` fán → **0 találat** (16.5). A `hu`/`hu` 16.1 keret a teljes
+> §13 alatt **változatlan** (70/70 skill + 55/55 agent).
+
 | ✓ | Fájl | Karakter | Ki fordítja |
 |---|---|---:|---|
-| [ ] | `03-write-plan.md` | 87752 | **fő ágens** |
-| [ ] | `07-validate.md` | 83455 | **fő ágens** |
-| [ ] | `08-doc-sync.md` | 71567 | **fő ágens** |
-| [ ] | `05-analyze.md` | 41157 | **fő ágens** |
-| [ ] | `02-write-spec.md` | 36033 | **fő ágens** |
-| [ ] | `01-add-cycles.md` | 32516 | subagent |
-| [ ] | `quick-flow.md` | 28761 | subagent |
-| [ ] | `04-write-tasks.md` | 28443 | **fő ágens** |
-| [ ] | `06-implement.md` | 27886 | subagent |
-| [ ] | `00-init-project.md` | 25944 | subagent |
-| [ ] | `brainstorm.md` | 17171 | subagent |
-| [ ] | `09-merge.md` | 13792 | subagent |
-| [ ] | `export-doc.md` | 5997 | subagent |
-| [ ] | `cycle-status.md` | 3145 | subagent |
+| [x] | `03-write-plan.md` | 87752 | **fő ágens** |
+| [x] | `07-validate.md` | 83455 | **fő ágens** |
+| [x] | `08-doc-sync.md` | 71567 | **fő ágens** |
+| [x] | `05-analyze.md` | 41157 | **fő ágens** |
+| [x] | `02-write-spec.md` | 36033 | **fő ágens** |
+| [x] | `01-add-cycles.md` | 32516 | subagent |
+| [x] | `quick-flow.md` | 28761 | subagent |
+| [x] | `04-write-tasks.md` | 28443 | **fő ágens** |
+| [x] | `06-implement.md` | 27886 | subagent |
+| [x] | `00-init-project.md` | 25944 | subagent |
+| [x] | `brainstorm.md` | 17171 | subagent |
+| [x] | `09-merge.md` | 13792 | subagent |
+| [x] | `export-doc.md` | 5997 | subagent |
+| [x] | `cycle-status.md` | 3145 | subagent |
 
 ---
 
 ## 14. Gemini `agent.json` tükrök
 
-- [ ] **14.1 — `agents-en/gemini-agent/` létrehozása** — 11 × `agent.json`, az `agents-en/*.md`
+- [x] **14.1 — `agents-en/gemini-agent/` létrehozása** — 11 × `agent.json`, az `agents-en/*.md`
   törzsével.
-- [ ] **14.2 — `sync-gemini-agents.py` nyelv-tudatosítása.** Ma `prompts/agents/<n>.md` →
+- [x] **14.2 — `sync-gemini-agents.py` nyelv-tudatosítása.** Ma `prompts/agents/<n>.md` →
   `prompts/agents/gemini-agent/<n>/agent.json`. **Futtassa mindkét fát egymás után** (nem
   `--prompt-lang` flaggel), így egy futás mindkét nyelvet szinkronban tartja, és a `--check`
   egyszerre ellenőriz mindent.
-- [ ] **14.3 — FIGYELEM: már ma is előfordul elcsúszás.** A tükrök a `.md` szerkesztésekor
+- [x] **14.3 — FIGYELEM: már ma is előfordul elcsúszás.** A tükrök a `.md` szerkesztésekor
   csendben elavulnak. **Futtasd a `--check`-et a munka elején és végén is.**
+
+> **✅ A 14. SZAKASZ KÉSZ (2026-08-25).** A 14.2 már a §7-ben elkészült (a script minden
+> `prompts/agents-*` fát végigfuttat), így egyetlen `sync-gemini-agents.py` futás elvégezte a
+> 14.1-et is: **11 új `agents-en/gemini-agent/*/agent.json`** + a **11 elavult `agents-hu` tükör**
+> újraszinkronja. `--check` → **exit 0 mindkét nyelvre** (16.4 teljesül).
+>
+> **⚠ Amit a 14.3 figyelmeztetése konkrétan takart — nem elméleti kockázat volt.** Az elavult
+> `agents-hu` tükrökből **hiányzott a 9.5 `output-language` blokk és a 9.7 tokenizálás minden
+> eredménye**: az Antigravity-felhasználók agent-promptjai a nyelvi horgony NÉLKÜL települtek
+> (a `reviewer` prompt 6565 helyett 8329 karakter a javítás után). A szinkron ezt **javította** —
+> a `hu`/`hu` antigravity agent-kimenet ezért (és csak ezért) változott.
+>
+> **Egy robusztussági hibát is javítottunk:** a `--check` **traceback-kel állt le**, ha a
+> `gemini-agent/` mappa hiányzott (pontosan az `agents-en` esete) — így a 14.3 „futtasd a
+> `--check`-et a munka elején" szabálya használhatatlan lett volna egy új nyelvi fán. Most a
+> hiányzó tükör-mappa **drift** (`exit 1`), nem összeomlás.
 
 ---
 
 ## 15. Dokumentáció
 
-- [ ] **15.1 — `README.md`.** Új szekció a két nyelvi beállításról: a 4 kombináció táblázata
+> **✅ A 15. SZAKASZ KÉSZ (2026-08-25).**
+> - **15.1 — `README.md`:** új *„Nyelvi beállítások — két független tengely"* szekció a
+>   2. Installáció alatt (a két tengely táblája, a **4 kombináció** mikor-melyik magyarázattal,
+>   a bedrótozás és a „nincs migrációs teendő" kimondva, az átszivárgás-kockázat + az
+>   `output-language` blokk mint válasz, és a `projekt = English` mai korlátja). A telepítési
+>   lépések kaptak egy 5. pontot (a két kérdés) és egy **flag-táblát** a nem interaktív módhoz
+>   (`install.sh` ↔ PowerShell megfelelők, defaultok). A mappastruktúra-ábra kiegészült a három
+>   `-en` fával és a `lang/` mappával (`status-keys.json`, `hu/`, `en/`). TOC frissítve.
+> - **15.2 — `prompts/meta-improve-prompts.md`:** a prompt-fájl tábla elé egy figyelmeztető
+>   blokk került (a tábla a `-hu` fát nevezi meg, de minden sorának van `-en` párja), a
+>   szimmetrikus mappaszerkezet ábrája, és **három konkrét szabály prompt-módosításhoz**:
+>   a szerkezeti változást mindkét fán át kell vezetni (`lang-parity-check.py` őrzi), az
+>   artefaktum-nevek tokenek (új név → előbb kulcs a JSON-ba), a user-facing mondatok a
+>   `lang/<L>/` horgonyaiban élnek. *(A 11.9 kötelező kézi kapuk blokkja már korábban bekerült.)*
+> - **15.3 — ez a munkafájl:** végig valós időben pipálva; a 9.3 leltár, a 13.2.1 glosszárium
+>   és a szakaszonkénti eredmény-blokkok itt vannak.
+
+- [x] **15.1 — `README.md`.** Új szekció a két nyelvi beállításról: a 4 kombináció táblázata
   (2.3), hogy **mindkettő telepítéskor dől el és bedrótozódik** (LG2/LG17 — utólag csak
   újratelepítéssel változtatható, és a projektben semmilyen nyelvi mező nem él), valamint az
   átszivárgás-kockázat + az `output-language` blokk mint válasz. A TOC-ot is frissítsd. A
   telepítés-szekció kapja meg a két új kérdést és a flag-alapú módot.
-- [ ] **15.2 — `prompts/meta-improve-prompts.md`.** A prompt-fájlok táblája és a mappaszerkezet
+- [x] **15.2 — `prompts/meta-improve-prompts.md`.** A prompt-fájlok táblája és a mappaszerkezet
   egészüljön ki a `skills-hu`/`skills-en` (stb.) szimmetrikus fákkal és a `lang/` mappával; a
   `lang-parity-check.py` kerüljön be kötelező ellenőrzési lépésként (11.9).
-- [ ] **15.3 — Ez a munkafájl.** Végrehajtás közben pipálj **valós időben**, és a 9.3 pontos
+- [x] **15.3 — Ez a munkafájl.** Végrehajtás közben pipálj **valós időben**, és a 9.3 pontos
   leltárát, valamint a 13.2.1 glosszáriumot **ide** írd — ezek a folytatás horgonyai.
 
 ---
 
 ## 16. Elfogadási kritériumok
 
-- [ ] **16.1 — Byte-azonossági keret (`hu`/`hu` regresszió).** Ez a legfontosabb védőháló, és
+> **✅ A 16.1–16.5 TELJESÜL (2026-08-25) — és megismételhetően, egy scriptből.**
+>
+> ```bash
+> ./prompts/scripts/acceptance-check.sh --baseline   # a 16.1 alapfelvétele a módosítás ELŐTT
+> ./prompts/scripts/acceptance-check.sh              # 16.1–16.5, egy futásban
+> ```
+>
+> A 16.2 explicit *„scriptelve"* elvárása miatt az egész elfogadási sor scriptbe került — kézzel
+> futtatva mindig kimarad valamelyik. A script a **valódi `install.sh`-t** hívja (nem az
+> `install-helper.py`-t közvetlenül), tehát a telepítő flag-módját is teszteli. `.sh`, ezért a
+> `copy_helper_scripts` (ami csak `*.py`-t másol) **automatikusan kihagyja** a célprojektből.
+>
+> **Mai eredmény: 7/7 ✓**
+> | Kritérium | Eredmény |
+> |---|---|
+> | 16.1 byte-azonosság | **125 hash változatlan** (5 platform × 14 skill + 5 × 11 agent) |
+> | 16.2 próbatelepítés | **20 futás** (4 nyelvkombináció × 5 platform) **exit 0**, 0 feloldatlan INCLUDE, 0 feloldatlan token, **224/224** telepített `SKILL.md`-ben van `description` |
+> | 16.3 paritás-kapu | `--check --strict` → **exit 0** (63 fájlpár) |
+> | 16.4 gemini tükrök | `--check` → **exit 0** mindkét prompt-nyelvre |
+> | 16.5 nyelvi tisztaság | **0** magyar ékezet a négy `en` fán |
+>
+> **⚠ A 16.1 keret kiterjesztve:** a terv 56 → 70 fájlt említ (skillek), a script **125 hash**-t
+> számol, mert az **agent-kimenetet is fedi** (`prepare_agent_content`, 5 × 11). A 9.7 és a §13
+> alatt épp az agent-oldalon volt a legtöbb változás — ott vak lett volna a keret.
+>
+> **A 16.6 NEM automatizálható** (egy valódi projekt teljes ciklusa) — kézzel futtatandó, lásd lent.
+
+- [x] **16.1 — Byte-azonossági keret (`hu`/`hu` regresszió).** Ez a legfontosabb védőháló, és
   **minden kiemelési lépés után** (9.4) futtatandó. A pillanatfelvételt a módosítás **előtt**
   készítsd:
 
@@ -1099,27 +1920,32 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
   tartalom is változott. A `m.skills_src_dir(".")` hívás a `_lang_subdir`-en keresztül mindig a
   helyes fát találja meg.
 
+  **A 9.7 tokenizálás NEM kivétel:** a `hu`/`hu` feloldás byte-azonos a mai literálokkal
+  (LG9/LG32), tehát a keret a teljes ~440 elemű cserét fedi — ez a csere legfőbb védőhálója.
+
   **Két ismert, ELVÁRT kivétel:** a 7.6 fixer-refaktor (tartalmi változás a `06-implement.md`-n
   és a két fixeren) és a 9.5.3 `output-language` beemelés (minden skill élére új blokk).
   Ezeknél a hash **szükségszerűen** változik; a keretet ilyenkor újra kell alapozni.
 
-- [ ] **16.2 — Négy kombinációs próbatelepítés, scriptelve (LG20).** `hu/hu`, `en/hu`, `hu/en`,
+- [x] **16.2 — Négy kombinációs próbatelepítés, scriptelve (LG20).** `hu/hu`, `en/hu`, `hu/en`,
   `en/en` × 5 platform = 20 futtatás, a flag-alapú módon egy ciklusból, dobható célmappákba.
   **A 17.2 rövidített úton ez `hu/hu` + `en/hu`-ra szűkül (10 futtatás), és a `lang-keys.json`
   ellenőrzése a §10-hez csúszik (LG24).**
   Mind a 20 fusson le hibátlanul, és ellenőrizd:
   - **nincs feloldatlan `<!-- INCLUDE:` marker** a telepített fájlokban;
+  - **nincs feloldatlan nyelvi token** (LG32): `grep -r "<sec:\|<field:\|<status:"` a
+    célmappákon → **0 találat**;
   - **nincs `hu` fallback figyelmeztetés** (LG12) — ha van, hiányzik egy nyelvi blokk;
   - **minden telepített skill/agent frontmatterében van `description`**, és az a **projekt**
     nyelvén (LG15) — ez az egyik legkönnyebben elrontható pont;
   - a másolt scriptek mellett ott van a **`lang-keys.json`** a helyes `lang` értékkel (LG18).
 
-- [ ] **16.3 — `lang-parity-check.py --check --strict` → exit 0** (LG25 — a záró futás a
+- [x] **16.3 — `lang-parity-check.py --check --strict` → exit 0** (LG25 — a záró futás a
   szigorú mód; a napi commit-előtti futás a defaultot használja).
 
-- [ ] **16.4 — `sync-gemini-agents.py --check` → exit 0** mindkét prompt-nyelvre.
+- [x] **16.4 — `sync-gemini-agents.py --check` → exit 0** mindkét prompt-nyelvre.
 
-- [ ] **16.5 — Nyelvi tisztaság-ellenőrzés az `en` fákon.** Grep magyar ékezetekre:
+- [x] **16.5 — Nyelvi tisztaság-ellenőrzés az `en` fákon.** Grep magyar ékezetekre:
   ```bash
   grep -rn "[áéíóöőúüűÁÉÍÓÖŐÚÜŰ]" prompts/skills-en prompts/agents-en prompts/shared-en
   ```
@@ -1132,6 +1958,36 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
   (a) a `spec.md`/`plan.md` **magyar** lett, (b) a kapuk lefutottak, (c) nincs angol átszivárgás
   az artefaktumokban. **Ha (c) sérül, a 9.5 `output-language` blokk erősítendő** — ez a
   legvalószínűbb hibapont az egész tervben.
+
+  > **Előkészítve (2026-08-25) — ez az EGYETLEN nyitott tétel, és a tiéd.** Amit gépiesen
+  > lehetett, az lefutott: a 16.1–16.5 zöld (10/10), és az `en/hu` telepítés kimenetén
+  > ellenőrizve, hogy a skill törzse angol, az `output-language` blokk viszont **magyarul**
+  > mondja ki a szabályt (nyelvi horgony), és a `lang/` sablonok magyarok. Amit ez **nem**
+  > tud megmutatni: hogy a modell tartja-e magát hozzá egy valódi ciklusban.
+  >
+  > **Recept:**
+  >
+  > ```bash
+  > cd <egy meglévő projekt>
+  > <a berkispec repó>/install.sh --platform claude --prompt-lang en --project-lang hu
+  > ```
+  >
+  > Majd `/bs-write-spec` → `/bs-write-plan` → `/bs-write-tasks` → `/bs-analyze`, és a
+  > végén három kérdés:
+  >
+  > | # | Mit nézel | Hol bukik, ha bukik |
+  > |---|---|---|
+  > | a | A `spec.md` / `plan.md` / `tasks.md` **magyar**-e — a címsorok, a tábla-cellák és a felsorolások is | angol címsor a magyar dokumentumban |
+  > | b | A kapuk **lefutottak**-e (az `05` mechanikus kapuja adott-e leltárat és mátrixot) | a kapu „hiányzó szekció" Must Fix-et ad, pedig a szekció ott van → nyelvi elcsúszás |
+  > | c | Van-e **angol átszivárgás**: fél-angol bekezdés, angol tábla-fejléc, angolul megfogalmazott kérdés a felhasználó felé | ez a legvalószínűbb hibapont |
+  >
+  > **Ha (c) sérül:** a javítás helye a `prompts/lang/hu/output-language.md` (és az `en` párja)
+  > — a blokk **erősítendő**, nem a skillek. Egy helyen javítasz, és mind a 14 skill + 11 agent
+  > élén frissül, mert build-time INCLUDE-dal kerül be.
+  >
+  > **Ha (b) sérül:** az a `lang/hu/` sablon szekciócíme és a `status-keys.json` `hu` értéke
+  > közti elcsúszás — a 11.5 kapu ezt szóhatárosan őrzi, de csak a `lang/` blokkokra; egy
+  > kézzel átírt projekt-artefaktum kívül esik rajta.
 
 ---
 
@@ -1146,6 +2002,7 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
 | 2 | **8.** Horgonyos INCLUDE + `description` | kis, önálló kód, azonnal tesztelhető |
 | 3 | **9.1–9.4** Leltár + kiemelés | fájlonként, 16.1 byte-azonossággal |
 | 4 | **9.5** `output-language` blokk | a kiemelés után, mert ugyanabba a `lang/` mappába megy |
+| 4b | **9.7** projekt-nyelvi tokenek (LG32) | a 9.4 után (a `lang/` blokkokban literál marad), és a §11 ELŐTT, hogy a 11.12 kapu a végleges felületet lássa. Idehozza a `status-keys.json`-t (10.3). |
 | 5 | **11.** `lang-parity-check.py` | ettől kezdve minden további lépés után fut (default mód; `--strict` a záráskor — LG25) |
 | 6 | **13.** Az `en` fák | fájlonként, a 13.3 lista szerint (részletekben végezhető) |
 | 7 | **9.6** `lang/en/` | a projekt-nyelvi blokkok angolul |
@@ -1163,7 +2020,12 @@ helyesek. A **9.6 (`lang/en/`) viszont BENNE MARAD (LG24)**, különben a parit�
 11.1/11.3 pontja tartósan FAIL-t adna, és az `en/en` telepítés csendben `hu` fallbackre esne.
 Minimális út:
 
-**6 → 7 → 8 → 9.1–9.6 → 11 → 13 → 14 → 12 → 15 → 16**
+**6 → 7 → 8 → 9.1–9.6 → 9.7 → 11 → 13 → 14 → 12 → 15 → 16**
+
+A **9.7 a rövidített úton is BENNE VAN** (LG32): nélküle az `EN` prompt magyar szekciónév-
+literálokat hordozna (16.5 FAIL ~440 helyen), vagy angolra fordítva csendben megbuktatná a
+kapukat a `HU` projekten (16.6/c). A `status-keys.json`-nak itt még **csak a `sections` /
+`status` értékei** kellenek — a scriptek átállítása (10.5–10.7) továbbra is halasztható.
 
 Amit ez a rövidítés módosít az elfogadási soron:
 - **16.2** → csak `hu/hu` + `en/hu` (10 futtatás), a `lang-keys.json`-ellenőrzés a §10-hez csúszik;
@@ -1172,21 +2034,27 @@ Amit ez a rövidítés módosít az elfogadási soron:
 
 ### 17.3 Commit- és branch-stratégia (LG21)
 
-- [ ] **Előfeltétel (LG29): a munkafa rendezése két commitban a `main`-en.**
+- [x] **Előfeltétel (LG29): a munkafa rendezése két commitban a `main`-en.**
   1. kétnyelvűsítéstől független tartalmi munka: `cycle-status.md` átnevezés, `08-doc-sync.md`,
      `context-check.md`, `cycle-status.py`, `README.md`, `jegyzet.md`;
   2. a kétnyelvűsítés előkészítése: az `install-helper.py` nyelvi vezetékezése (5.1–5.4) +
      ez a tervfájl.
-- [ ] Nyiss **egy feature branch-et friss `main`-ről** (`git switch main && git pull && git
+- [x] Nyiss **egy feature branch-et friss `main`-ről** (`git switch main && git pull && git
   switch -c feature/bilingual-prompts`) — a `main` a teljes
   migráció alatt működő állapotban marad, és a végén **egy PR**-ként olvad be.
-- [ ] A branch-en belül a 17.1 lépései **külön commitok**. A **7. szakasz átnevezés saját, atomi
+- [x] A branch-en belül a 17.1 lépései **külön commitok**. A **7. szakasz átnevezés saját, atomi
   commit** (`git mv` + `_lang_subdir` + `shared/` prefix-feloldás + a 64/9/3 útvonal-javítás), és
   a commit-üzenetben **külön jelöld** a 7.7 tartalmi javítást, mert az nem átnevezés.
-- [ ] **Minden commit előtt** fusson a 16.1 byte-azonosság (ahol értelmezhető — lásd a 16.1 két
+
+  > **✅ Teljesült (2026-08-25).** A `feature/bilingual-prompts` **38 commitja** szakaszonként
+  > halad; az átnevezés a `8bd758c` **atomi** commit (csak `git mv` + a feloldó kódja, a
+  > markerek szövege változatlan), a 7.7 tartalmi javítás pedig a rákövetkező `b8f1880`
+  > commitban áll, saját, külön jelölt bekezdéssel.
+- [x] **Minden commit előtt** fusson a 16.1 byte-azonosság (ahol értelmezhető — lásd a 16.1 két
   elvárt kivételét) és — amint létezik — a `lang-parity-check.py --check` + a
   `sync-gemini-agents.py --check` (a paritás-kapu **default** módban; a PR zárásakor
-  **`--strict`** — LG25).
+  **`--strict`** — LG25). *(A 11.9 óta ez a recept a `prompts/meta-improve-prompts.md`
+  „KÉTNYELVŰ REPÓ" blokkjában is ott áll, kimásolható parancsokkal.)*
 
 ### 17.4 Hogyan folytasd friss kontextusban
 
@@ -1211,7 +2079,8 @@ Amit ez a rövidítés módosít az elfogadási soron:
 - **Nincs kitüntetett, suffix nélküli fa** (LG5) — a magyar is prefixelt.
 - **Nem javítunk tartalmi hibát a kiemelés közben** (9.4) — az külön kör.
 - **Nem fordítjuk a (c) osztályú konzol-üzeneteket** (LG10) az első körben.
-- **A rövidített úton nem halasztjuk a `lang/en/`-t** (LG24) — csak a script-i18n-t (§10).
+- **A rövidített úton nem halasztjuk a `lang/en/`-t** (LG24) és a **9.7 tokenizálást** (LG32) —
+  csak a scriptek átállítását (§10.5–10.7).
 - **Nem élesztjük fel a Node CLI-t** (LG22) — törlendő.
 - **Nem nyelvesítjük az `init-project.sh`-t** (LG19) — elavult.
 - **Nincs nyelvi mező a `conventions.md`-ben** (LG17), és nincs migrációs szabály (LG8).

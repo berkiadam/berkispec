@@ -2,7 +2,32 @@
 # BerkiSpec Installer (Windows PowerShell)
 # Telepíti a BerkiSpec agent-eket és skill-eket a célprojektbe.
 # Supports: Google Antigravity CLI, Claude Code, GitHub Copilot (CLI & IDE)
+#
+# Nem interaktív mód (LG20): ha EGYETLEN paramétert sem adsz meg, a régi
+# interaktív út fut változatlanul. Részleges megadásnál a megadottakat
+# használjuk, a többit interaktívan kérdezzük.
+#   .\install.ps1 -Platform claude -PromptLang en -ProjectLang hu -Path C:\projekt
 # ─────────────────────────────────────────────────────────────────────────────
+param(
+    [ValidateSet("claude", "codex", "antigravity", "cursor", "copilot")]
+    [string]$Platform = "",
+
+    # Az ágens INSTRUKCIÓINAK nyelve (default: en) — LG7
+    [ValidateSet("hu", "en")]
+    [string]$PromptLang = "",
+
+    # Amit az ágens ÍR a projektbe és neked (default: hu) — LG7
+    [ValidateSet("hu", "en")]
+    [string]$ProjectLang = "",
+
+    [string]$Path = "",
+
+    # Ütközésnél felülír. Enélkül nem interaktív módban MEGÁLLUNK — a csendes
+    # felülírás visszafordíthatatlan kárt okozhat egy scriptelt telepítésben.
+    [switch]$Force,
+
+    [switch]$Help
+)
 
 # ── Színek és stílusok ──────────────────────────────────────────────────────
 $ESC = [char]27
@@ -61,16 +86,27 @@ function Save-History {
     }
 }
 
-$AGENTS_SRC_DIR = Join-Path $SCRIPT_DIR "prompts/agents"
-$AGENTS_GEMINI_SRC = Join-Path $SCRIPT_DIR "prompts/agents/gemini-agent"
-$SKILLS_SRC = Join-Path $SCRIPT_DIR "prompts/skills"
-
+# A prompt-forrásmappákat NEM itt oldjuk fel: a nyelvenkénti fát
+# (`prompts/skills-<lang>` stb.) az install-helper.py `_lang_subdir()`-je
+# választja ki. Korábban itt három változó állt, de egyik sem volt használatban.
 # Globális állapot változók
 $PROJECT_PATH = ""
 $PLATFORM_CHOICE = "" # "antigravity" vagy "claude" vagy "copilot" vagy "cursor"
 $INSTALL_STATUS = ""  # "done" vagy "skipped"
 $CONFLICT_ANSWER = 0
 $PYTHON_CMD = ""
+
+# ── Nyelvi választás (LG1/LG7) ──────────────────────────────────────────────
+# KÉT FÜGGETLEN tengely, mindkettő `hu` | `en`:
+#   PROMPT_LANG_CHOICE  — milyen nyelvű INSTRUKCIÓT kap az ágens (default: en)
+#   PROJECT_LANG_CHOICE — milyen nyelven ÍR a projektbe és a felhasználónak (default: hu)
+# Mindkettő BUILD-TIME dől el és bedrótozódik a telepített promptba (LG2); a
+# projektben semmilyen nyelvi mező nem marad (LG17), tehát utólag csak
+# újratelepítéssel változtatható. Ezért írja ki a záró összefoglaló hangosan.
+$PROMPT_LANG_CHOICE = ""
+$PROJECT_LANG_CHOICE = ""
+$NON_INTERACTIVE = $false
+$FORCE_OVERWRITE = $false
 
 # ── Segédfüggvények ─────────────────────────────────────────────────────────
 function Write-Info { param([string]$msg) Write-Host "  ${CYAN}ℹ${RESET}  $msg" }
@@ -301,6 +337,81 @@ function Handle-Conflict {
     }
 }
 
+# Nyelvi kód → ember-olvasható címke.
+function Get-LangLabel {
+    param([string]$code)
+    switch ($code) {
+        "en" { return "English" }
+        "hu" { return "Magyar" }
+        default { return $code }
+    }
+}
+
+# ── 2/b. lépés: Nyelvi választás (LG1/LG7) ──────────────────────────────────
+# A két tengely FÜGGETLEN. A default az `EN` prompt + `HU` projekt: az angol
+# instrukció olcsóbb tokenben és a gyenge modellek pontosabban követik,
+# miközben a leadott dokumentáció magyar marad.
+function Ask-Languages {
+    # Paraméterrel megadott értéket nem kérdezünk újra.
+    if (-not [string]::IsNullOrWhiteSpace($script:PROMPT_LANG_CHOICE) -and
+        -not [string]::IsNullOrWhiteSpace($script:PROJECT_LANG_CHOICE)) {
+        return
+    }
+
+    Write-Step "2/b. lépés: Nyelvek kiválasztása"
+    Write-Host ""
+    Write-Host "  ${GRAY}Két külön beállítás — nem ugyanaz, és nem is kell egyezniük.${RESET}"
+    Write-Host ""
+
+    if ([string]::IsNullOrWhiteSpace($script:PROMPT_LANG_CHOICE)) {
+        Write-Host "  ${WHITE}Milyen nyelvűek legyenek a PROMPTOK?${RESET}"
+        Write-Host "  ${GRAY}(amit az ágens olvas — a te dokumentumaidat nem érinti)${RESET}"
+        Write-Host ""
+        Write-Host "  ${CYAN}1)${RESET} English ${GRAY}[alapértelmezett]${RESET}"
+        Write-Host "  ${CYAN}2)${RESET} Magyar"
+        Write-Host ""
+        while ($true) {
+            Write-Host -NoNewline "  ${MAGENTA}❯${RESET} Választás [1-2, Enter = 1]: "
+            $choice = Read-Host
+            if ([string]::IsNullOrWhiteSpace($choice) -or $choice -eq "1") { $script:PROMPT_LANG_CHOICE = "en"; break }
+            if ($choice -eq "2") { $script:PROMPT_LANG_CHOICE = "hu"; break }
+            Write-Warn "Kérlek válassz 1 vagy 2 közül."
+        }
+        Write-Host ""
+    }
+
+    if ([string]::IsNullOrWhiteSpace($script:PROJECT_LANG_CHOICE)) {
+        Write-Host "  ${WHITE}Milyen nyelvű legyen a PROJEKT?${RESET}"
+        Write-Host "  ${GRAY}(amit az ágens ÍR: spec.md, plan.md, riportok, és amit neked válaszol)${RESET}"
+        Write-Host ""
+        Write-Host "  ${CYAN}1)${RESET} Magyar ${GRAY}[alapértelmezett]${RESET}"
+        Write-Host "  ${CYAN}2)${RESET} English"
+        Write-Host ""
+        while ($true) {
+            Write-Host -NoNewline "  ${MAGENTA}❯${RESET} Választás [1-2, Enter = 1]: "
+            $choice = Read-Host
+            if ([string]::IsNullOrWhiteSpace($choice) -or $choice -eq "1") { $script:PROJECT_LANG_CHOICE = "hu"; break }
+            if ($choice -eq "2") { $script:PROJECT_LANG_CHOICE = "en"; break }
+            Write-Warn "Kérlek válassz 1 vagy 2 közül."
+        }
+        Write-Host ""
+    }
+
+    $pl = Get-LangLabel $script:PROMPT_LANG_CHOICE
+    $jl = Get-LangLabel $script:PROJECT_LANG_CHOICE
+    Write-Success "Prompt nyelve: ${BOLD}$pl${RESET} · Projekt nyelve: ${BOLD}$jl${RESET}"
+
+    # A §10 óta a kapu-scriptek a `lang-keys.json`-ból illesztenek: az artefaktum-
+    # oldal nyelvhelyes, csak a konzol-üzenet maradt magyar (LG10).
+    if ($script:PROJECT_LANG_CHOICE -eq "en") {
+        Write-Host ""
+        Write-Warn "A projekt nyelve ${BOLD}English${RESET}: a kapu-scriptek ${BOLD}konzol-üzenetei${RESET} magyarok."
+        Write-Host "  ${GRAY}Az artefaktumokat ez nem érinti — a kapuk a telepített lang-keys.json"
+        Write-Host "  angol szekciónevei szerint illesztenek és írnak. Csak a futtatónak szóló"
+        Write-Host "  kimenet marad magyar.${RESET}"
+    }
+}
+
 # Igaz, ha a megadott mappák közül legalább egy már létezik és nem üres.
 function Has-ExistingContent {
     param(
@@ -324,6 +435,21 @@ function Ask-Conflict {
         [string]$type
     )
 
+    # Nem interaktív módban NEM kérdezünk és NEM írunk felül csendben (LG20):
+    # `-Force` nélkül megállunk.
+    if ($script:NON_INTERACTIVE) {
+        if ($script:FORCE_OVERWRITE) {
+            $script:CONFLICT_ANSWER = 0
+            Write-Warn "Felülírás (-Force): ${DIM}$target${RESET} ($type)"
+        } else {
+            Write-Error "Már létezik: $target ($type)."
+            Write-Host "  ${GRAY}Nem interaktív módban nem írom felül. Adj meg ${BOLD}-Force${RESET}${GRAY}-ot,"
+            Write-Host "  vagy futtasd a scriptet paraméterek nélkül, interaktív módban.${RESET}"
+            exit 1
+        }
+        return
+    }
+
     $script:CONFLICT_ANSWER = Handle-Conflict $target $type
 }
 
@@ -342,6 +468,14 @@ function Check-MutualExclusion {
         Write-Warn "Úgy tűnik, a(z) ${BOLD}${other_name}${RESET} már telepítve van ebbe a projektbe."
         Write-Host "  ${GRAY}A Codex és az Antigravity a közös ${BOLD}.agents/skills/${RESET}${GRAY} mappát használja,"
         Write-Host "  ezért a folytatás felülírhatja a(z) ${other_name} skilljeit.${RESET}"
+        if ($script:NON_INTERACTIVE) {
+            if ($script:FORCE_OVERWRITE) {
+                Write-Warn "Folytatás (-Force)."
+                return
+            }
+            Write-Error "Nem interaktív módban megállok. Adj meg -Force-ot, ha tudatosan felülírod."
+            exit 1
+        }
         Write-Host -NoNewline "    ${YELLOW}?${RESET} Biztosan folytatod? [${BOLD}i${RESET}/${BOLD}n${RESET}]: "
         $answer = Read-Host
         switch ($answer.ToLower()) {
@@ -393,7 +527,7 @@ function Install-Antigravity {
 
     Write-Info "Fájlok másolása és modellek konfigurálása..."
     $helper_script = Join-Path $SCRIPT_DIR "prompts/scripts/install-helper.py"
-    & $script:PYTHON_CMD $helper_script "antigravity" $SCRIPT_DIR $script:PROJECT_PATH
+    & $script:PYTHON_CMD $helper_script "antigravity" $SCRIPT_DIR $script:PROJECT_PATH $script:PROMPT_LANG_CHOICE $script:PROJECT_LANG_CHOICE
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Antigravity ágensek és skillek sikeresen konfigurálva és másolva!"
         $script:INSTALL_STATUS = "done"
@@ -438,7 +572,7 @@ function Install-Claude {
 
     Write-Info "Fájlok másolása és modellek konfigurálása..."
     $helper_script = Join-Path $SCRIPT_DIR "prompts/scripts/install-helper.py"
-    & $script:PYTHON_CMD $helper_script "claude" $SCRIPT_DIR $script:PROJECT_PATH
+    & $script:PYTHON_CMD $helper_script "claude" $SCRIPT_DIR $script:PROJECT_PATH $script:PROMPT_LANG_CHOICE $script:PROJECT_LANG_CHOICE
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Claude ágensek és skillek sikeresen konfigurálva és másolva!"
         $script:INSTALL_STATUS = "done"
@@ -483,7 +617,7 @@ function Install-Copilot {
 
     Write-Info "Fájlok másolása és modellek konfigurálása..."
     $helper_script = Join-Path $SCRIPT_DIR "prompts/scripts/install-helper.py"
-    & $script:PYTHON_CMD $helper_script "copilot" $SCRIPT_DIR $script:PROJECT_PATH
+    & $script:PYTHON_CMD $helper_script "copilot" $SCRIPT_DIR $script:PROJECT_PATH $script:PROMPT_LANG_CHOICE $script:PROJECT_LANG_CHOICE
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Copilot ágensek és skillek sikeresen konfigurálva és másolva!"
         $script:INSTALL_STATUS = "done"
@@ -528,7 +662,7 @@ function Install-Cursor {
 
     Write-Info "Fájlok másolása és modellek konfigurálása..."
     $helper_script = Join-Path $SCRIPT_DIR "prompts/scripts/install-helper.py"
-    & $script:PYTHON_CMD $helper_script "cursor" $SCRIPT_DIR $script:PROJECT_PATH
+    & $script:PYTHON_CMD $helper_script "cursor" $SCRIPT_DIR $script:PROJECT_PATH $script:PROMPT_LANG_CHOICE $script:PROJECT_LANG_CHOICE
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Cursor rule-ok és command-ok sikeresen konfigurálva és másolva!"
         $script:INSTALL_STATUS = "done"
@@ -593,7 +727,7 @@ function Install-Codex {
 
     Write-Info "Fájlok másolása és modellek konfigurálása..."
     $helper_script = Join-Path $SCRIPT_DIR "prompts/scripts/install-helper.py"
-    & $script:PYTHON_CMD $helper_script "codex" $SCRIPT_DIR $script:PROJECT_PATH
+    & $script:PYTHON_CMD $helper_script "codex" $SCRIPT_DIR $script:PROJECT_PATH $script:PROMPT_LANG_CHOICE $script:PROJECT_LANG_CHOICE
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Codex subagentek (TOML) és skillek sikeresen konfigurálva és másolva!"
         $script:INSTALL_STATUS = "done"
@@ -639,6 +773,17 @@ function Show-Summary {
     Write-Host "  ${GREEN}${BOLD}🎉 Telepítés kész!${RESET}"
     Write-Host ""
     Write-Host "  ${WHITE}Projekt:${RESET}  ${BOLD}$($script:PROJECT_PATH)${RESET}"
+
+    # ── Nyelvi visszajelzés (12.3 / LG2) ──
+    # Ez az EGYETLEN hely, ahol a felhasználó szembesül a nyelvi választásával:
+    # a projektbe semmilyen nyelvi mező nem kerül (LG17).
+    $pl = Get-LangLabel $script:PROMPT_LANG_CHOICE
+    $jl = Get-LangLabel $script:PROJECT_LANG_CHOICE
+    Write-Host "  ${WHITE}Prompt nyelve:${RESET}  ${BOLD}$pl${RESET} ${GRAY}(amit az ágens olvas)${RESET}"
+    Write-Host "  ${WHITE}Projekt nyelve:${RESET} ${BOLD}$jl${RESET} ${GRAY}(amit az ágens ír: spec.md, plan.md, riportok, válaszok)${RESET}"
+    Write-Host ""
+    Write-Host "  ${YELLOW}⚠${RESET}  ${GRAY}Mindkét nyelv ${BOLD}bedrótozódott${RESET}${GRAY} a telepített promptokba."
+    Write-Host "     A projektben nincs nyelvi beállítás, ezért a váltás csak ${BOLD}újratelepítéssel${RESET}${GRAY} lehetséges.${RESET}"
 
     if ($script:PLATFORM_CHOICE -eq "antigravity") {
         Write-Host "  ${WHITE}Platform:${RESET} ${BOLD}Google Antigravity CLI${RESET}"
@@ -714,7 +859,61 @@ function Show-Summary {
 }
 
 # ── Főprogram ───────────────────────────────────────────────────────────────
+# ── Használat (LG20) ────────────────────────────────────────────────────────
+function Show-Usage {
+    Write-Host @"
+BerkiSpec telepito
+
+Hasznalat:
+  .\install.ps1                       interaktiv mod (valtozatlan, ez a default)
+  .\install.ps1 [parameterek]         nem interaktiv / reszlegesen elore kitoltott mod
+
+Parameterek:
+  -Platform <nev>        claude | codex | antigravity | cursor | copilot
+  -PromptLang <nyelv>    hu | en    - az agens INSTRUKCIOINAK nyelve   (default: en)
+  -ProjectLang <nyelv>   hu | en    - amit az agens IR a projektbe     (default: hu)
+  -Path <utvonal>        a celprojekt konyvtara
+  -Force                 utkozesnel felulir (enelkul nem interaktiv modban MEGALL)
+  -Help                  ez a sugo
+
+Megjegyzes:
+  Ha EGYETLEN parametert sem adsz meg, a regi interaktiv ut fut valtozatlanul.
+  A ket nyelvi beallitas FUGGETLEN, es a telepitett promptokba BEDROTOZODIK -
+  utolag csak ujratelepitessel valtoztathato.
+
+Pelda:
+  .\install.ps1 -Platform claude -PromptLang en -ProjectLang hu -Path C:\projekt
+"@
+}
+
+# A param() blokk értékeinek átvétele a script-scope állapotba (LG20).
+function Initialize-FromParams {
+    if ($Help) { Show-Usage; exit 0 }
+
+    if (-not [string]::IsNullOrWhiteSpace($Platform))    { $script:PLATFORM_CHOICE = $Platform;     $script:NON_INTERACTIVE = $true }
+    if (-not [string]::IsNullOrWhiteSpace($PromptLang))  { $script:PROMPT_LANG_CHOICE = $PromptLang; $script:NON_INTERACTIVE = $true }
+    if (-not [string]::IsNullOrWhiteSpace($ProjectLang)) { $script:PROJECT_LANG_CHOICE = $ProjectLang; $script:NON_INTERACTIVE = $true }
+    if ($Force) { $script:FORCE_OVERWRITE = $true; $script:NON_INTERACTIVE = $true }
+
+    if (-not [string]::IsNullOrWhiteSpace($Path)) {
+        if (-not (Test-Path $Path -PathType Container)) {
+            Write-Error "A megadott celprojekt nem letezik: $Path"
+            exit 2
+        }
+        $script:PROJECT_PATH = (Resolve-Path $Path).Path
+        $script:NON_INTERACTIVE = $true
+    }
+
+    # Nem interaktív módban a hiányzó nyelvi értékek a defaultra esnek (LG7).
+    if ($script:NON_INTERACTIVE) {
+        if ([string]::IsNullOrWhiteSpace($script:PROMPT_LANG_CHOICE))  { $script:PROMPT_LANG_CHOICE = "en" }
+        if ([string]::IsNullOrWhiteSpace($script:PROJECT_LANG_CHOICE)) { $script:PROJECT_LANG_CHOICE = "hu" }
+    }
+}
+
 function Main {
+    Initialize-FromParams
+
     # Python detektálása
     $python_cmd = ""
     if (Get-Command "python" -ErrorAction SilentlyContinue) {
@@ -730,8 +929,9 @@ function Main {
 
     Show-Logo
     Show-Welcome
-    Ask-ProjectPath
-    Ask-AgentPlatform
+    if ([string]::IsNullOrWhiteSpace($script:PROJECT_PATH)) { Ask-ProjectPath }
+    if ([string]::IsNullOrWhiteSpace($script:PLATFORM_CHOICE)) { Ask-AgentPlatform }
+    Ask-Languages
     Create-Symlinks
     # A célmappa megjegyzése a következő futtatáshoz (lásd `history` fájl).
     if (-not [string]::IsNullOrWhiteSpace($script:PROJECT_PATH)) {

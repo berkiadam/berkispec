@@ -43,6 +43,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from lang_keys import sec
+
 CHEAT_PATTERNS = [
     (r"\.skip\s*\(", "teszt kihagyása (.skip)"),
     (r"\bxit\s*\(|\bxdescribe\s*\(|\bfit\s*\(\s*$", "kihagyott/kizárt teszt (xit/xdescribe)"),
@@ -81,7 +83,8 @@ def parse_test_paths(conventions):
         text = Path(conventions).read_text(encoding="utf-8")
     except Exception:
         return []
-    m = re.search(r"^#+\s*Teszt struktúra.*$", text, re.MULTILINE | re.IGNORECASE)
+    m = re.search(r"^#+\s*" + re.escape(sec("cv_test_structure")) + r".*$",
+                  text, re.MULTILINE | re.IGNORECASE)
     if not m:
         return []
     tail = text[m.end():]

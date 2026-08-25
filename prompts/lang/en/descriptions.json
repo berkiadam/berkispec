@@ -1,0 +1,60 @@
+{
+  "bs-init-project": "berkispec - 00. Use it at the very first start of the project (Phase 00), or if the root 'conventions.md' is missing/incomplete. Together with the developer it records the global project conventions (tech stack, tests, development flow, git merge strategy) in 'conventions.md' — this is the prerequisite of every further phase.",
+  "bs-add-cycles": "berkispec - 01. Use it after initialization (Phase 01) to plan development cycles (roadmap), to reschedule existing ones or to add a new cycle — splitting the work into logical, independently testable units. Input: 'conventions.md', optionally a brainstorm session ('brainstorm: NN' — it distils 'cycle-design-input.md' from the working file of '/bs-brainstorm', BS18). It creates or updates 'specs/roadmap.md' with 'Done' status.",
+  "bs-write-spec": "berkispec - 02. Use it when starting a cycle (Phase 02) based on the roadmap, to specify the functional/business requirements. It works on the git branch of the cycle (the branch was created in phase 01 from 'main'), and creates 'spec.md' ('Ready for planning') + 'spec-questions.md'. Prerequisite: 'specs/roadmap.md' status 'Done'.",
+  "bs-write-plan": "berkispec - 03. Use it when the spec.md of the cycle is 'Ready for planning' (Phase 03), to work out the detailed technical implementation plan (code base analysis, the researcher subagent if needed). It creates 'plan.md' ('Ready for tasks') + 'plan-questions.md'.",
+  "bs-write-tasks": "berkispec - 04. Use it when plan.md is 'Ready for tasks' (Phase 04), to split the technical plan into well-structured, individually executable and measurable items (DoD). It creates 'tasks.md' ('Ready for implementation') + 'tasks-questions.md' if needed.",
+  "bs-analyze": "berkispec - 05. Use it before the implementation (Phase 05), when tasks.md is 'Ready for implementation'. A cross-phase consistency gate between spec.md/plan.md/tasks.md: with subagents (analyzer, *-fixer) it identifies and automatically fixes the contradictions. It creates 'analyze-report.md' (PASS/FAIL).",
+  "bs-implement": "berkispec - 06. Use it when analyze-report.md is 'PASS' (Phase 06), for the actual code development. It carries out the planned code changes based on the task list, and maintains 'tasks.md' along the way until it reaches the 'Ready for validation' state.",
+  "bs-validate": "berkispec - 07. Use it after the implementation (Phase 07), when tasks.md is 'Ready for validation'. Test, lint and build verification AND code review in a single self-healing loop (test-runner, reviewer, implement-fixer, review-fixer subagents). It creates 'validation-report.md' and 'code-review.md'; on PASS it sets the status of spec.md/plan.md/tasks.md to 'Done'.",
+  "bs-doc-sync": "berkispec - 08. Use it after validation, before the merge (Phase 08), when tasks.md/plan.md/spec.md are all 'Done'. It synchronizes the code changes into the 'docs-generated/' system documentation and into the affected component READMEs (doc-sync-planner subagent, against design drift), maintains the 'specs/test-conventions.md' register of recurring test expectations, and creates 'doc-sync-plan.md'.",
+  "bs-merge": "berkispec - 09. Use it as the last step of the cycle (Phase 09), when the code, the review and the documentation are all 'Done'. Merging the branch of the cycle according to the merge strategy of 'conventions.md' (opening a PR or a local merge), with mandatory user confirmation.",
+  "bs-brainstorm": "berkispec - helper command. Exploratory ideation and joint design about the project BEFORE THE SPEC — when the direction of the topic, the way to implement it or its split into cycles is not clear yet (e.g. 'how should central cert management work?'). It converses, contrasts alternatives, and persists the material of the session into the '.bs-brainstorm/brainstorm-NN-<slug>.md' working file. It writes no code and NOTHING outside the working file; at the end it hands over to the '/bs-add-cycles' or the '/bs-quick-flow' skill.",
+  "bs-cycle-status": "berkispec - helper command. Checking the status of the cycles. It lists the cycles of the project (Done/In progress), and shows the progress of their phases in detail on an interactive TUI or when given as an argument (DONE, DONE*, IN PROGRESS, NOT RUN YET). It is not a phase: it is not part of the 00-09 process, it can be called at any time.",
+  "bs-export-doc": "berkispec - helper command. It produces a versioned PDF from markdown documents (together with the mermaid diagrams) into the 'export/' folder in the root of the project. Without a parameter from the 'docs-generated/architecture.md' and 'system-overview.md' files, otherwise from the named file(s). The version number is independent per file: the last one + 1, starting from v1.",
+  "bs-quick-flow": "berkispec - quick-flow. A simplified, three-phase SDD flow (spec.md → task.md → implementation) for SMALL, well-bounded tasks that can be solved in 3-4 steps — configuration, a simpler script, a smaller fix, a local modification. Do NOT use it for a task that requires substantial coding, a feature touching several components or complex design — recommend the full berki spec process instead (01-add-cycles).",
+  "analyzer-exec": {
+    "description": "Read-only EXECUTABILITY diagnosis of the plan.md/tasks.md pair before the implementation (the judgement-heavy checks of category 6: a test promised in prose, artifact ownership, the completeness of a destructive operation, anchor symbols, artifact voice). The 05-analyze skill calls it, IN PARALLEL with the `analyzer`.",
+    "role": "Executability and artifact-ownership analyst specialist agent"
+  },
+  "analyzer": {
+    "description": "Read-only cross-phase SEMANTIC consistency diagnosis between spec.md/plan.md/tasks.md/conventions.md, before the implementation (categories 1–5: duplication, ambiguity, under-specification, convention conflict, coverage interpretation). Category 6 is carried by analyzer-exec, in parallel. The 05-analyze skill calls it.",
+    "role": "Cross-phase consistency analyst specialist agent"
+  },
+  "doc-sync-planner": {
+    "description": "A read-only diagnostician that produces the per-file checkable plan of updating docs-generated/ and the finished replacement texts (doc-sync-plan.md). The 08-doc-sync skill calls it.",
+    "role": "Documentation-sync diagnostician agent (read-only planner)"
+  },
+  "implement-fixer": {
+    "description": "The fixing entry point of the 07-validate self-healing loop: it delegates to the Fix mode of 06-implement to fix the test/Sonar/DoD failures (## Validation fixes). The 07-validate skill calls it.",
+    "role": "Implement Fix-mode executor wrapper (the 06-phase fixer of the validate loop)"
+  },
+  "plan-fixer": {
+    "description": "The 03-plan Fix-mode entry point of the 05-analyze self-healing loop (a thin wrapper around the Fix mode of 03-write-plan). The 05-analyze skill calls it.",
+    "role": "Plan Fix-mode executor wrapper (the 03-phase fixer of the analyze loop)"
+  },
+  "researcher": {
+    "description": "A read-only code base and documentation researcher that returns a concise path+summary list (context saving, not raw file content) — except when the caller explicitly asks for literal values (command, URL, JSON payload, signature), which it returns verbatim. Phases 00/01/02/03/06 and the bs-brainstorm helper command call it for exploration.",
+    "role": "Code base and documentation researcher specialist agent (context guard)"
+  },
+  "review-fixer": {
+    "description": "The fixing entry point of the review branch of 07-validate: it delegates to the Fix mode of 06-implement based on ## Review fixes. The 07-validate skill calls it.",
+    "role": "Review Fix-mode executor wrapper (the review branch of the self-healing loop of 07)"
+  },
+  "reviewer": {
+    "description": "A read-only code review diagnostician: it examines the diff of the cycle branch and produces test-report/code-review.md (Must Fix / Suggestion). The 07-validate skill calls it, as step 2 of the full round (the static layer, next to Sonar).",
+    "role": "Code review specialist agent"
+  },
+  "spec-fixer": {
+    "description": "The 02-spec Fix-mode entry point of the 05-analyze self-healing loop (a thin wrapper around the Fix mode of 02-write-spec). The 05-analyze skill calls it.",
+    "role": "Spec Fix-mode executor wrapper (the 02-phase fixer of the analyze loop)"
+  },
+  "tasks-fixer": {
+    "description": "The 04-tasks Fix-mode entry point of the 05-analyze self-healing loop (a thin wrapper around the Fix mode of 04-write-tasks). The 05-analyze skill calls it.",
+    "role": "Tasks Fix-mode executor wrapper (the 04-phase fixer of the analyze loop)"
+  },
+  "test-runner": {
+    "description": "Mechanical execution and factual summary of tests/Sonar/E2E (it does not decide on PASS/FAIL). 07-validate — and indirectly the re-validate of 09 — calls it.",
+    "role": "Test and code-quality runner specialist agent (mechanical executor — it reports facts, it does not decide)"
+  }
+}

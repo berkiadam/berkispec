@@ -44,11 +44,22 @@ import re
 import sys
 from pathlib import Path
 
+from lang_keys import fld
+
+# A táblázat-FEJLÉC celláinak felismerése: a halmaz NYELVFÜGGETLEN — a magyar
+# alakokat is bennhagyjuk, hogy egy korábban magyarul indult dokumentum
+# fejléce `en` telepítés után se essen adat-sornak (10.7).
+_HEADER_CELLS_BASE = {"id", "mit ellenőriz", "recept", "utolsó futás",
+                      "előfeltétel"} | {fld(k).lower() for k in
+                      ("f_what_it_checks", "f_recipe", "f_last_run", "f_prerequisite")}
+_HEADER_CELLS = _HEADER_CELLS_BASE | {"bizonyíték", fld("f_evidence").lower()}
+
 # ── Szekció-felismerés ────────────────────────────────────────────────────────
 SECTION_RE = re.compile(r"^##\s*(\d)\.")
 RECIPE_HEADING_RE = re.compile(r"^###\s*(R\d+)\b")
 RECIPE_REF_RE = re.compile(r"\bR\d+\b")
-LAST_RUN_RE = re.compile(r"Utolsó futás:\s*\**\s*(cycle-\d+)", re.IGNORECASE)
+LAST_RUN_RE = re.compile(re.escape(fld("f_last_run")) + r":\s*\**\s*(cycle-\d+)",
+                         re.IGNORECASE)
 CYCLE_NUM_RE = re.compile(r"cycle-(\d+)")
 
 # Backtick-idézett tokenek — csak ezekből keresünk útvonalat (a szabad szöveg
@@ -223,8 +234,7 @@ def check_dangling_refs(lines, section_of, fenced):
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         looks_like_header = not refs and not LAST_RUN_RE.search(line) and \
             not CYCLE_NUM_RE.search(line) and \
-            any(c.lower() in ("id", "mit ellenőriz", "recept", "utolsó futás",
-                              "előfeltétel") for c in cells)
+            any(c.lower() in _HEADER_CELLS_BASE for c in cells)
         if looks_like_header:
             continue
         rows.append({
@@ -311,8 +321,7 @@ def check_last_run(lines, section_of, fenced, marker, stale_after):
         if not is_table_data_row(line):
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if any(c.lower() in ("id", "mit ellenőriz", "recept", "utolsó futás",
-                             "előfeltétel") for c in cells):
+        if any(c.lower() in _HEADER_CELLS_BASE for c in cells):
             continue
         m = CYCLE_NUM_RE.search(line)
         items.append({"kind": f"{section_of[i]}. szekció tétel",
@@ -338,7 +347,10 @@ def check_last_run(lines, section_of, fenced, marker, stale_after):
 
 
 # ── 5. Kötelező riport-sor (TC9 / TR3) ──────────────────────────────────────
-REPORT_LINE_RE = re.compile(r"\*\*Kötelező riport\s*\(TR3\):\*\*\s*(.*)$", re.IGNORECASE)
+# A mezőnév zárójeles utótagja elé `\s*` kell (a mai viselkedés megőrzése).
+REPORT_LINE_RE = re.compile(
+    r"\*\*" + re.escape(fld("f_required_report")).replace(r"\ \(", r"\s*\(")
+    + r":\*\*\s*(.*)$", re.IGNORECASE)
 # Parancs-gyanús jelek a riport-sorban (a parancs a conventions.md dolga, TC1).
 COMMAND_HINT_RE = re.compile(
     r"\b(npm|npx|yarn|pnpm|pytest|python3?|go|mvn|gradle|allure|playwright|"
@@ -370,8 +382,9 @@ def check_report_line(lines, section_of, fenced):
 
 
 # ── 6. Futtatható koordináták (TC11) ────────────────────────────────────────
-START_FIELD_RE = re.compile(r"\*\*Indítás:?\*\*", re.IGNORECASE)
-CALL_FIELD_RE = re.compile(r"\*\*Példa hívás:?\*\*", re.IGNORECASE)
+START_FIELD_RE = re.compile(r"\*\*" + re.escape(fld("f_startup")) + r":?\*\*", re.IGNORECASE)
+CALL_FIELD_RE = re.compile(r"\*\*" + re.escape(fld("f_example_call")) + r":?\*\*",
+                           re.IGNORECASE)
 # Végpont-jel: a recept HTTP/CLI hívást érint → a példa hívás kötelező.
 ENDPOINT_HINT_RE = re.compile(r"https?://|\bcurl\b|\bendpoint\b|\bREST\b|\bgRPC\b|\.http\b",
                               re.IGNORECASE)
@@ -403,10 +416,10 @@ def check_runnable(lines, section_of, fenced):
         text = "\n".join(block)
         problems = []
         if not START_FIELD_RE.search(text):
-            problems.append("hiányzik az `**Indítás:**` mező (ha nem kell környezet, "
+            problems.append(f"hiányzik az `**{fld('f_startup')}:**` mező (ha nem kell környezet, "
                             "írd ki: `N/A — nem igényel futó környezetet`)")
         if ENDPOINT_HINT_RE.search(text) and not CALL_FIELD_RE.search(text):
-            problems.append("végpontot érint, de nincs `**Példa hívás:**` blokkja "
+            problems.append(f"végpontot érint, de nincs `**{fld('f_example_call')}:**` blokkja "
                             "(teljes URL + header + payload + várt válasz)")
         results.append({"id": rid, "line": lineno,
                         "status": "FAIL" if problems else "PASS",
@@ -432,8 +445,7 @@ def check_self_contained(lines, section_of, fenced):
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         if len(cells) < 2:
             continue
-        if any(c.lower() in ("id", "mit ellenőriz", "recept", "utolsó futás",
-                             "előfeltétel", "bizonyíték") for c in cells):
+        if any(c.lower() in _HEADER_CELLS for c in cells):
             continue
         desc = cells[1]
         problems = []
@@ -441,8 +453,8 @@ def check_self_contained(lines, section_of, fenced):
             problems.append("spec-szekció sorszámmal kezdődik (a másik dokumentum "
                             "számozása itt értelmezhetetlen)")
         if CYCLE_REF_RE.search(desc):
-            problems.append("ciklusra hivatkozik a leírásban (a ciklus az `Utolsó futás` / "
-                            "`Bizonyíték` oszlopba tartozik)")
+            problems.append(f"ciklusra hivatkozik a leírásban (a ciklus az "
+                            f"`{fld('f_last_run')}` / `{fld('f_evidence')}` oszlopba tartozik)")
         if problems:
             results.append({"line": i + 1, "section": section_of[i],
                             "id": cells[0], "desc": desc, "problems": problems})
@@ -451,8 +463,11 @@ def check_self_contained(lines, section_of, fenced):
 
 # ── 8. Lógó előfeltétel (TC11) ──────────────────────────────────────────────
 # „…fut”, „…aktív”, „…indítva” típusú előfeltétel R-ID hivatkozás nélkül.
-PRECOND_ENV_RE = re.compile(r"\b(fut|futnia|aktív|indítva|elindítva|elérhető|feláll)\b",
-                            re.IGNORECASE)
+# A szótár NYELVFÜGGETLEN: mindkét nyelv környezeti igéit felismeri.
+PRECOND_ENV_RE = re.compile(
+    r"\b(fut|futnia|aktív|indítva|elindítva|elérhető|feláll"
+    r"|running|runs|active|started|launched|available|up)\b",
+    re.IGNORECASE)
 
 
 def check_dangling_preconditions(lines, section_of, fenced):
@@ -467,8 +482,7 @@ def check_dangling_preconditions(lines, section_of, fenced):
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         if len(cells) < 4:
             continue
-        if any(c.lower() in ("id", "mit ellenőriz", "recept", "utolsó futás",
-                             "előfeltétel", "bizonyíték") for c in cells):
+        if any(c.lower() in _HEADER_CELLS for c in cells):
             continue
         precond = cells[3]
         if not precond or precond in ("-", "–", "—"):
@@ -481,11 +495,13 @@ def check_dangling_preconditions(lines, section_of, fenced):
 # ── 9. Tétel-részletezés (TC10/b) ───────────────────────────────────────────
 ITEM_HEADING_RE = re.compile(r"^###\s*([LI]\d+)\b")
 ITEM_ID_RE = re.compile(r"^[LI]\d+$")
-DETAIL_FIELDS = (
-    ("Cél", re.compile(r"\*\*Cél:?\*\*", re.IGNORECASE)),
-    ("Lépések", re.compile(r"\*\*Lépések:?\*\*", re.IGNORECASE)),
-    ("Elvárt eredmény", re.compile(r"\*\*Elvárt eredmény:?\*\*", re.IGNORECASE)),
-)
+def _field_pattern(key):
+    label = fld(key)
+    return (label, re.compile(r"\*\*" + re.escape(label) + r":?\*\*", re.IGNORECASE))
+
+
+DETAIL_FIELDS = (_field_pattern("f_goal"), _field_pattern("f_steps"),
+                 _field_pattern("f_expected_result"))
 
 
 def check_item_details(lines, section_of, fenced):
@@ -779,7 +795,8 @@ def main():
             overall_pass = False
             print(f"- **FAIL** {r['section']}. szekció `{r['id']}` (sor {r['line']}) — "
                   f"{r['reason']}. A promótált teszt reprodukálható leírása kötelező: "
-                  "Cél / Előfeltétel / Lépések / Elvárt eredmény (TC10/b).")
+                  f"{fld('f_goal')} / {fld('f_prerequisite')} / {fld('f_steps')} / "
+                  f"{fld('f_expected_result')} (TC10/b).")
     ok_details = sum(1 for r in details if r["status"] == "PASS")
     if details:
         print(f"- Részletezett tétel: {ok_details}/{len(details)}")

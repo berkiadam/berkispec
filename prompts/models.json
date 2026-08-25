@@ -1,5 +1,30 @@
 {
+  "_comment": [
+    "JSON-ban nincs komment, ezért a magyarázatok `_comment` / `_model_values` kulcsokban",
+    "élnek. A feloldó (install-helper.py `_resolve_agent_config`) NEVESÍTETT kulcsokat keres",
+    "(`default`, `deep_reasoning_agent`, `research_agent`, illetve agent-neveket), ezért az",
+    "aláhúzással kezdődő kulcsokat egyszerűen nem látja.",
+    "",
+    "FELOLDÁS: model = <agent saját bejegyzése>.model, ha van; különben a tierjének .model",
+    "(AGENT_MODEL_KEYS), különben default.model. Az `effort` ugyanígy, de a lánc végén `high`.",
+    "A legtöbb agent CSAK `effort`-ot ad meg — a modelljük a tierből jön.",
+    "",
+    "`@inherit` (MA1) — MINDEN platformon érvényes érték: a modell-választást a platformra bízzuk,",
+    "a telepített agentbe NEM kerül `model` mező, tehát a subagent a HÍVÓ ágens modelljét",
+    "örökli. A kulcs TÖRLÉSE nem ekvivalens ezzel: abból `model: [effort=high]` lenne,",
+    "azaz érvénytelen azonosító — amit egyes platformok csendben lenyelnek.",
+    "",
+    "A sentinel azért `@`-cal kezdődik, hogy ne ütközzön valódi modell-azonosítóval:",
+    "a Cursoron az `auto` egy VALÓDI modell (a router), nem a mező elhagyása."
+  ],
   "antigravity": {
+    "_model_values": [
+      "ÉRTÉKKÉSZLET — a `model` itt TIER-ENUM, nem modellnév:",
+      "  inherit | flash | pro",
+      "  auto  → a telepítő `inherit`-re fordítja (ugyanaz a jelentés, a séma nyelvén)",
+      "FIGYELEM: modellnév (pl. \"Claude Opus 4.6\") ÉRVÉNYTELEN — a subagent némán",
+      "az `inherit` alapértelmezésre esik vissza, a hiba csak a viselkedésen látszik."
+    ],
     "deep_reasoning_agent": {
       "model": "pro",
       "effort": "high"
@@ -38,6 +63,13 @@
     }
   },
   "copilot": {
+    "_model_values": [
+      "ÉRTÉKKÉSZLET — a Copilot MEGJELENÍTETT NEVET vár, nem model-ID-t:",
+      "  \"Claude Opus 4.8\" | \"Claude Sonnet 5\" | \"Claude Haiku 4.5\" | \"GPT-5.6\" …",
+      "  auto  → nem kerül `model` mező a telepített agentbe",
+      "A pontos, aktuális lista a Copilot modellválasztójában látható — az itt felsoroltak",
+      "csak a MA használt értékek, nem a teljes készlet."
+    ],
     "deep_reasoning_agent": {
       "model": "Claude Opus 4.8",
       "effort": "high"
@@ -76,6 +108,20 @@
     }
   },
   "claude": {
+    "_model_values": [
+      "ÉRTÉKKÉSZLET — Anthropic model-ID. Az alábbi ID-k TELJESEK úgy, ahogy vannak —",
+      "dátum-utótagot ne fűzz hozzájuk:",
+      "  claude-fable-5    (1M kontextus, a legképesebb)",
+      "  claude-opus-5     (1M)   ← az Anthropic ajánlott alapértelmezése",
+      "  claude-opus-4-8 | claude-opus-4-7 | claude-opus-4-6   (1M)",
+      "  claude-sonnet-5 | claude-sonnet-4-6                    (1M)",
+      "  claude-haiku-4-5                                       (200K)",
+      "  auto  → nem kerül `model` mező (a subagent a hívó modelljét örökli)",
+      "A Claude Code ezen felül rövid aliasokat is ismer (opus | sonnet | haiku).",
+      "MEGJEGYZÉS: a `research_agent` alatti érték dátum-utótagos alakot használ",
+      "(`claude-haiku-4-5-20251001`) — mindkét alak forgalomban van; ha egységesíted,",
+      "a `claude-haiku-4-5` a táblázat szerinti kanonikus alak."
+    ],
     "deep_reasoning_agent": {
       "model": "claude-opus-4-8",
       "effort": "high"
@@ -114,44 +160,80 @@
     }
   },
   "cursor": {
+    "_model_values": [
+      "ÉRTÉKKÉSZLET — a HITELES listát a `cursor-agent --list-models` adja (204 modell).",
+      "NE tippelj azonosítót: érvénytelen ID esetén a Cursor CSENDBEN mást választ — a hiba",
+      "nem látszik, csak a viselkedésen és a számlán. (Így bukott meg az `auto-smart`: az a",
+      "`~/.cursor/cli-config.json` chat-választójának belső neve, a modell-listában NINCS benne.)",
+      "",
+      "  auto              <- MA EZ AKTIV. „Auto (default)\" — a Cursor routere.",
+      "  composer-2.5 | composer-2.5-fast     a Cursor saját modelljei (Auto keret)",
+      "  cursor-grok-4.6-low|medium|high|xhigh (+ -fast)   Cursor-hosztolt Grok (Auto keret)",
+      "  claude-opus-5-* | claude-sonnet-5-* | gpt-* | gemini-*   harmadik feles -> API keret",
+      "  @inherit          nincs `model` mező a telepített agentben (a platform dönt)",
+      "",
+      "A paraméteres modellek szögletes zárójeles felülbírálást is elfogadnak, pl.",
+      "`claude-opus-4-8[context=1m,effort=high,fast=false]` — a telepítő az `effort` mezőből",
+      "fűzi hozzá. Ha az `effort` értéke `null`, NEM fűz utótagot (az `auto` nem ért effortot).",
+      "",
+      "MIÉRT `auto` MINDENHOL (MA1): Cursor Team-en a harmadik feles modellek külön, jóval",
+      "kisebb API-keretből mennek, mint az első felesek (Auto pool). Nevesített Claude-modell",
+      "mellett a TELJES subagent-terhelés az API-keretre esik, miközben az Auto-keret",
+      "érintetlen marad — egyetlen validate-ciklus is kimerítheti.",
+      "",
+      "MIÉRT NEM `@inherit` (a mező elhagyása) CURSORON: MÉRÉSSEL CÁFOLVA. 2026-08-25-én a fő",
+      "chat Auto-n futott, a subagent-definícióban nem volt `model` mező, a subagent mégis az",
+      "API-keretbe futott és spawn-szinten elbukott. A Cursor tehát NEM a hívó modelljét adja",
+      "a model nélküli subagentnek. Cursoron a modellt KI KELL MONDANI.",
+      "",
+      "EREDETI EFFORT-SZÁNDÉK (ha nevesített, effortot értő modellre váltasz vissza):",
+      "  deep_reasoning_agent=high · default=high · research_agent=low · reviewer=medium",
+      "  doc-sync-planner=medium · az öt fixer és a test-runner=low"
+    ],
     "deep_reasoning_agent": {
-      "model": "claude-opus-5",
-      "effort": "high"
+      "model": "auto",
+      "effort": null
     },
     "default": {
-      "model": "claude-sonnet-5",
-      "effort": "high"
+      "model": "auto",
+      "effort": null
     },
     "research_agent": {
-      "model": "claude-sonnet-5",
-      "effort": "low"
+      "model": "auto",
+      "effort": null
     },
     "reviewer": {
-      "effort": "medium"
+      "effort": null
     },
     "doc-sync-planner": {
-      "effort": "medium"
+      "effort": null
     },
     "spec-fixer": {
-      "effort": "low"
+      "effort": null
     },
     "plan-fixer": {
-      "effort": "low"
+      "effort": null
     },
     "tasks-fixer": {
-      "effort": "low"
+      "effort": null
     },
     "implement-fixer": {
-      "effort": "low"
+      "effort": null
     },
     "review-fixer": {
-      "effort": "low"
+      "effort": null
     },
     "test-runner": {
-      "effort": "low"
+      "effort": null
     }
   },
   "codex": {
+    "_model_values": [
+      "ÉRTÉKKÉSZLET — OpenAI model-ID (a `model_reasoning_effort` külön TOML-mező):",
+      "  gpt-5.6-sol | gpt-5.6-luna | gpt-5.4-mini   ← a MA használt értékek",
+      "  auto  → a `model =` sor kimarad a TOML-ból",
+      "A felsorolás NEM teljes: az aktuális készletet a Codex CLI dokumentációja adja."
+    ],
     "deep_reasoning_agent": {
       "model": "gpt-5.6-sol",
       "effort": "high"

@@ -19,7 +19,8 @@ Két szakasz:
     · spec.md: minden DoD-pontnak van `DoD-NN` azonosítója, egyediek,
       és nincs köztük nyitott `- [ ]` (DI1)
     · validate-input-from-prev.md: nincs nyitott `[ ]` tétel (IP1)
-    · test-report/code-review.md: nincs nyitott `- [ ] **MF-NN**` (RV1)
+    · test-report/code-review.md: a jelentés befejezett (a fejléc státusza nem
+      `Folyamatban` — RV-INC), és nincs benne nyitott `- [ ] **MF-NN**` (RV1)
     · validation-report.md: van legalább egy `## Kör N` blokk, a körök száma
       nem kevesebb a `# Validation History` futásainál (VD9-guard), és
       minden körhöz létezik a `validate/round-NN/` mappa (TR5)
@@ -37,7 +38,9 @@ import re
 import sys
 from pathlib import Path
 
-FIX_SECTIONS = ("## Validációs javítások", "## Review javítások")
+from lang_keys import fld, sec, st
+
+FIX_SECTIONS = (f"## {sec('validation_fixes')}", f"## {sec('review_fixes')}")
 
 
 def read(path):
@@ -53,7 +56,7 @@ def get_status(path):
         return None
     for line in text.splitlines():
         clean = line.strip().lstrip("-").strip().replace("**", "").replace("*", "").replace("`", "").strip()
-        if re.match(r"^[Ss]tátusz\s*:", clean):
+        if re.match(r"^" + re.escape(fld("f_status")) + r"\s*:", clean, re.IGNORECASE):
             return clean.split(":", 1)[1].strip().lower()
     return None
 
@@ -91,10 +94,11 @@ def check_tasks(cycle, rep, stage):
         return
     status = get_status(path) or "—"
     if stage == "start":
-        if "validálásra kész" in status:
+        if st("ready_for_validate").lower() in status:
             rep.ok(f"tasks.md státusz: {status}")
         else:
-            rep.bad(f"tasks.md státusz: '{status}' — a 07 `Validálásra kész`-t vár (vissza a 06-ra)")
+            rep.bad(f"tasks.md státusz: '{status}' — a 07 "
+                    f"`{st('ready_for_validate')}`-t vár (vissza a 06-ra)")
         if "[validate-loop]" in status:
             rep.info("`[validate-loop]` marker → megszakadt önjavító hurok folytatása")
         return
@@ -121,7 +125,8 @@ def check_dod(cycle, rep, stage):
     ids = re.findall(r"\bDoD-(\d+)\b", text)
     if not ids:
         # van-e egyáltalán DoD szekció checkboxokkal?
-        m = re.search(r"^#+\s*Definition of done.*$", text, re.MULTILINE | re.IGNORECASE)
+        m = re.search(r"^#+\s*" + re.escape(sec("definition_of_done")) + r".*$",
+                      text, re.MULTILINE | re.IGNORECASE)
         if m:
             tail = text[m.end():]
             nxt = re.search(r"^#+\s", tail, re.MULTILINE)
@@ -178,6 +183,14 @@ def check_review(cycle, rep, stage, require_review):
         else:
             rep.info("test-report/code-review.md: még nincs (a review nem futott ebben a körben)")
         return
+    status = get_status(path)
+    if status is not None:
+        head = status.split("|")[0].strip()
+        if head == st("in_progress").lower():
+            rep.bad(f"code-review.md: a jelentés befejezetlen ({fld('f_status')}: "
+                    f"{st('in_progress')}) — a reviewer futása megszakadt, a review-kapu "
+                    "(RV1) nem zárható le vele; a kiírt findingok részlegesek (RV-INC)")
+            return
     open_mf = re.findall(r"^\s*- \[ \].*$", text, re.MULTILINE)
     if open_mf:
         ids = [m.group(0) for l in open_mf for m in [re.search(r"MF-\d+", l)] if m]
@@ -195,10 +208,11 @@ def check_report(cycle, rep, stage):
     if text is None:
         rep.bad("test-report/validation-report.md nem található (VD9)")
         return
-    rounds = re.findall(r"^## Kör (\d+) —", text, re.MULTILINE)
+    rounds = re.findall(r"^## " + re.escape(sec("round")) + r" (\d+) —", text, re.MULTILINE)
     runs = re.findall(r"^\s*- \*\*Run \d+", text, re.MULTILINE)
     if not rounds:
-        rep.bad("validation-report.md: nincs `## Kör N` blokk — a riport üres (VD9-guard)")
+        rep.bad(f"validation-report.md: nincs `## {sec('round')} N` blokk — "
+                f"a riport üres (VD9-guard)")
     elif len(rounds) < len(runs):
         rep.bad(f"validation-report.md: {len(rounds)} kör-blokk, de {len(runs)} futás a History-ban "
                 "— hiányzó kör-blokk(ok)")
@@ -218,16 +232,18 @@ def check_start_statuses(cycle, rep):
     spec = get_status(cycle / "spec.md")
     if plan is None:
         rep.info("plan.md: nincs státusz-sor")
-    elif plan in ("task írásra kész", "kész"):
+    elif plan in (st("ready_for_tasks").lower(), st("done").lower()):
         rep.ok(f"plan.md státusz: {plan}")
     else:
-        rep.bad(f"plan.md státusz: '{plan}' — várt: `Task írásra kész` vagy `Kész`")
+        rep.bad(f"plan.md státusz: '{plan}' — várt: "
+                f"`{st('ready_for_tasks')}` vagy `{st('done')}`")
     if spec is None:
         rep.info("spec.md: nincs státusz-sor")
-    elif spec in ("tervezésre kész", "kész"):
+    elif spec in (st("ready_for_plan").lower(), st("done").lower()):
         rep.ok(f"spec.md státusz: {spec}")
     else:
-        rep.bad(f"spec.md státusz: '{spec}' — várt: `Tervezésre kész` vagy `Kész`")
+        rep.bad(f"spec.md státusz: '{spec}' — várt: "
+                f"`{st('ready_for_plan')}` vagy `{st('done')}`")
 
 
 def _force_utf8_output():
