@@ -1766,7 +1766,34 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
 
 ## 16. Elfogadási kritériumok
 
-- [ ] **16.1 — Byte-azonossági keret (`hu`/`hu` regresszió).** Ez a legfontosabb védőháló, és
+> **✅ A 16.1–16.5 TELJESÜL (2026-08-25) — és megismételhetően, egy scriptből.**
+>
+> ```bash
+> ./prompts/scripts/acceptance-check.sh --baseline   # a 16.1 alapfelvétele a módosítás ELŐTT
+> ./prompts/scripts/acceptance-check.sh              # 16.1–16.5, egy futásban
+> ```
+>
+> A 16.2 explicit *„scriptelve"* elvárása miatt az egész elfogadási sor scriptbe került — kézzel
+> futtatva mindig kimarad valamelyik. A script a **valódi `install.sh`-t** hívja (nem az
+> `install-helper.py`-t közvetlenül), tehát a telepítő flag-módját is teszteli. `.sh`, ezért a
+> `copy_helper_scripts` (ami csak `*.py`-t másol) **automatikusan kihagyja** a célprojektből.
+>
+> **Mai eredmény: 7/7 ✓**
+> | Kritérium | Eredmény |
+> |---|---|
+> | 16.1 byte-azonosság | **125 hash változatlan** (5 platform × 14 skill + 5 × 11 agent) |
+> | 16.2 próbatelepítés | **20 futás** (4 nyelvkombináció × 5 platform) **exit 0**, 0 feloldatlan INCLUDE, 0 feloldatlan token, **224/224** telepített `SKILL.md`-ben van `description` |
+> | 16.3 paritás-kapu | `--check --strict` → **exit 0** (63 fájlpár) |
+> | 16.4 gemini tükrök | `--check` → **exit 0** mindkét prompt-nyelvre |
+> | 16.5 nyelvi tisztaság | **0** magyar ékezet a négy `en` fán |
+>
+> **⚠ A 16.1 keret kiterjesztve:** a terv 56 → 70 fájlt említ (skillek), a script **125 hash**-t
+> számol, mert az **agent-kimenetet is fedi** (`prepare_agent_content`, 5 × 11). A 9.7 és a §13
+> alatt épp az agent-oldalon volt a legtöbb változás — ott vak lett volna a keret.
+>
+> **A 16.6 NEM automatizálható** (egy valódi projekt teljes ciklusa) — kézzel futtatandó, lásd lent.
+
+- [x] **16.1 — Byte-azonossági keret (`hu`/`hu` regresszió).** Ez a legfontosabb védőháló, és
   **minden kiemelési lépés után** (9.4) futtatandó. A pillanatfelvételt a módosítás **előtt**
   készítsd:
 
@@ -1809,7 +1836,7 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
   és a két fixeren) és a 9.5.3 `output-language` beemelés (minden skill élére új blokk).
   Ezeknél a hash **szükségszerűen** változik; a keretet ilyenkor újra kell alapozni.
 
-- [ ] **16.2 — Négy kombinációs próbatelepítés, scriptelve (LG20).** `hu/hu`, `en/hu`, `hu/en`,
+- [x] **16.2 — Négy kombinációs próbatelepítés, scriptelve (LG20).** `hu/hu`, `en/hu`, `hu/en`,
   `en/en` × 5 platform = 20 futtatás, a flag-alapú módon egy ciklusból, dobható célmappákba.
   **A 17.2 rövidített úton ez `hu/hu` + `en/hu`-ra szűkül (10 futtatás), és a `lang-keys.json`
   ellenőrzése a §10-hez csúszik (LG24).**
@@ -1822,12 +1849,12 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
     nyelvén (LG15) — ez az egyik legkönnyebben elrontható pont;
   - a másolt scriptek mellett ott van a **`lang-keys.json`** a helyes `lang` értékkel (LG18).
 
-- [ ] **16.3 — `lang-parity-check.py --check --strict` → exit 0** (LG25 — a záró futás a
+- [x] **16.3 — `lang-parity-check.py --check --strict` → exit 0** (LG25 — a záró futás a
   szigorú mód; a napi commit-előtti futás a defaultot használja).
 
-- [ ] **16.4 — `sync-gemini-agents.py --check` → exit 0** mindkét prompt-nyelvre.
+- [x] **16.4 — `sync-gemini-agents.py --check` → exit 0** mindkét prompt-nyelvre.
 
-- [ ] **16.5 — Nyelvi tisztaság-ellenőrzés az `en` fákon.** Grep magyar ékezetekre:
+- [x] **16.5 — Nyelvi tisztaság-ellenőrzés az `en` fákon.** Grep magyar ékezetekre:
   ```bash
   grep -rn "[áéíóöőúüűÁÉÍÓÖŐÚÜŰ]" prompts/skills-en prompts/agents-en prompts/shared-en
   ```
