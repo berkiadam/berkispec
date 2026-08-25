@@ -5,6 +5,15 @@ import re
 import subprocess
 from pathlib import Path
 
+from lang_keys import fld, st
+
+# A státusz-összehasonlítás mindenhol KISBETŰS, ezért a kulcsokat is így vesszük.
+_S_DONE = st("done").lower()
+_S_READY_PLAN = st("ready_for_plan").lower()
+_S_READY_TASKS = st("ready_for_tasks").lower()
+_S_READY_IMPL = st("ready_for_implement").lower()
+_S_READY_VALIDATE = st("ready_for_validate").lower()
+
 # Színek ANSI escape kódokkal
 GREEN = "\033[92m"
 YELLOW = "\033[93m"
@@ -84,7 +93,8 @@ def get_status_from_file(file_path):
         for line in content.splitlines():
             line_clean = line.strip().lstrip('-').strip().replace('**', '').replace('*', '').replace('`', '').strip()
             # Ha a megtisztított sor "Státusz:" vagy "státusz:" kezdetű
-            if re.match(r'^[Ss]tátusz\s*:', line_clean):
+            if re.match(r'^' + re.escape(fld("f_status")) + r'\s*:', line_clean,
+                        re.IGNORECASE):
                 parts = line_clean.split(':', 1)
                 if len(parts) > 1:
                     return parts[1].strip().lower()
@@ -134,7 +144,7 @@ def is_roadmap_cycle_closed(cycle_name):
         if not line.lstrip().startswith('#'):
             continue
         if re.search(rf'cycle[-\s]*0*{num}\b', line, re.IGNORECASE):
-            if '✅' in line or re.search(r'\((?:kész|done|lezárva)\)', line, re.IGNORECASE):
+            if '✅' in line or re.search(r'\((?:kész|done|lezárva|closed)\)', line, re.IGNORECASE):
                 return True
     return False
 
@@ -183,7 +193,8 @@ def analyze_cycle(cycle_path):
         # 1. Spec
         spec_status = get_status_from_file(spec_file)
         if spec_status:
-            if spec_status in ["tervezésre kész", "task írásra kész", "implementálásra kész", "validálásra kész", "kész"]:
+            if spec_status in [_S_READY_PLAN, _S_READY_TASKS, _S_READY_IMPL,
+                               _S_READY_VALIDATE, _S_DONE]:
                 phases.append(("Specifikáció (spec.md)", "KÉSZ"))
             else:
                 phases.append(("Specifikáció (spec.md)", "FOLYAMATBAN"))
@@ -193,7 +204,7 @@ def analyze_cycle(cycle_path):
         # 2. Plan
         plan_status = get_status_from_file(plan_file)
         if plan_status:
-            if plan_status in ["task írásra kész", "implementálásra kész", "validálásra kész", "kész"]:
+            if plan_status in [_S_READY_TASKS, _S_READY_IMPL, _S_READY_VALIDATE, _S_DONE]:
                 phases.append(("Tervezés (plan.md)", "KÉSZ"))
             else:
                 phases.append(("Tervezés (plan.md)", "FOLYAMATBAN"))
@@ -203,7 +214,7 @@ def analyze_cycle(cycle_path):
         # 3. Tasks
         tasks_status = get_status_from_file(tasks_file)
         if tasks_status:
-            if tasks_status in ["implementálásra kész", "validálásra kész", "kész"]:
+            if tasks_status in [_S_READY_IMPL, _S_READY_VALIDATE, _S_DONE]:
                 phases.append(("Task lista (tasks.md)", "KÉSZ"))
             else:
                 phases.append(("Task lista (tasks.md)", "FOLYAMATBAN"))
@@ -224,7 +235,7 @@ def analyze_cycle(cycle_path):
                     analyze_done = False
             phases.append(("Konzisztencia (analyze-report.md)",
                            "KÉSZ" if analyze_done else "FOLYAMATBAN"))
-        elif tasks_status in ["implementálásra kész", "validálásra kész", "kész"]:
+        elif tasks_status in [_S_READY_IMPL, _S_READY_VALIDATE, _S_DONE]:
             # nincs riport, de a tasks státusza már túllépett az analyze-on
             phases.append(("Konzisztencia (analyze-report.md)", INDIRECT))
         else:
@@ -232,9 +243,9 @@ def analyze_cycle(cycle_path):
 
         # 5. Megvalósítás
         if tasks_status:
-            if tasks_status in ["validálásra kész", "kész"]:
+            if tasks_status in [_S_READY_VALIDATE, _S_DONE]:
                 phases.append(("Megvalósítás (kód írás)", "KÉSZ"))
-            elif tasks_status == "implementálásra kész":
+            elif tasks_status == _S_READY_IMPL:
                 phases.append(("Megvalósítás (kód írás)", "FOLYAMATBAN"))
             else:
                 phases.append(("Megvalósítás (kód írás)", "MÉG NEM FUTOTT"))
@@ -265,10 +276,10 @@ def analyze_cycle(cycle_path):
                 phases.append(("Validálás + review (test-report)", "KÉSZ"))
             else:
                 phases.append(("Validálás + review (test-report)", "FOLYAMATBAN"))
-        elif tasks_status == "kész":
+        elif tasks_status == _S_DONE:
             # nincs riport, de a 07 lezárta a ciklus státuszait
             phases.append(("Validálás + review (test-report)", INDIRECT))
-        elif tasks_status == "validálásra kész":
+        elif tasks_status == _S_READY_VALIDATE:
             phases.append(("Validálás + review (test-report)", "FOLYAMATBAN"))
         else:
             phases.append(("Validálás + review (test-report)", "MÉG NEM FUTOTT"))
@@ -289,7 +300,7 @@ def analyze_cycle(cycle_path):
         # 8. Merge — a 09 tényleges kimeneteiből (roadmap-lezárás, beolvasztott ciklus-ág),
         # NEM a doc-sync-plan.md puszta létezéséből: az a terv legyártásakor jön létre,
         # üres checkboxokkal, tehát semmit nem mond a merge-ről.
-        if tasks_status != "kész" or doc_status not in ("KÉSZ", INDIRECT):
+        if tasks_status != _S_DONE or doc_status not in ("KÉSZ", INDIRECT):
             phases.append(("Merge", "MÉG NEM FUTOTT"))
         elif is_roadmap_cycle_closed(cycle_path.name):
             phases.append(("Merge", "KÉSZ"))
@@ -317,7 +328,7 @@ def analyze_cycle(cycle_path):
         # 2. Tasks
         tasks_status = get_status_from_file(tasks_file)
         if tasks_status:
-            if tasks_status == "kész":
+            if tasks_status == _S_DONE:
                 phases.append(("Feladatlista (tasks.md)", "KÉSZ"))
             else:
                 phases.append(("Feladatlista (tasks.md)", "FOLYAMATBAN"))
@@ -326,7 +337,7 @@ def analyze_cycle(cycle_path):
 
         # 3. Megvalósítás
         if tasks_status:
-            if tasks_status == "kész":
+            if tasks_status == _S_DONE:
                 phases.append(("Megvalósítás (kód + doksi)", "KÉSZ"))
             else:
                 phases.append(("Megvalósítás (kód + doksi)", "FOLYAMATBAN"))
@@ -352,7 +363,7 @@ def print_cycle_phases(cycle_path):
     print(f"{BOLD}Típus:{RESET}  {flow_str}")
     
     status_color = GREEN if overall == "KÉSZ" else YELLOW
-    print(f"{BOLD}Státusz:{RESET} {status_color}{overall}{RESET}\n")
+    print(f"{BOLD}{fld('f_status')}:{RESET} {status_color}{overall}{RESET}\n")
     
     print(f"{BOLD}Fázisok részletesen:{RESET}")
     for phase_name, p_status in phases:

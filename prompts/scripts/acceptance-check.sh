@@ -82,6 +82,27 @@ total="$(find "${WORK}/inst" -name SKILL.md | wc -l)"
 withdesc="$(grep -l '^description:' $(find "${WORK}/inst" -name SKILL.md) 2>/dev/null | wc -l)"
 [ "${withdesc}" -eq "${total}" ]; say $? "minden telepített SKILL.md-ben van description (${withdesc}/${total})"
 
+# 10.6 — a kapu-scriptek nyelvi szelete a scriptek MELLÉ települ, a helyes nyelven,
+# és a kapu-scriptek minden `sec()/fld()/st()` kulcsa létezik a szeletben (10.7).
+read -r cnt badlang missing <<<"$(python3 - "${WORK}/inst" <<'PYEOF3'
+import json, pathlib, re, sys
+root = pathlib.Path(sys.argv[1])
+files = sorted(root.rglob("lang-keys.json"))
+bad = [str(f) for f in files
+       if json.loads(f.read_text(encoding="utf-8")).get("lang") != f.parts[len(root.parts)].split("-")[1]]
+used = set()
+for py in pathlib.Path("prompts/scripts").glob("*.py"):
+    src = py.read_text(encoding="utf-8")
+    for fn, grp in (("sec", "sections"), ("fld", "fields"), ("st", "status")):
+        used |= {(grp, k) for k in re.findall(fn + r'\("(\w+)"\)', src)}
+missing = sorted({f"{g}:{k}" for f in files for g, k in used
+                  if k not in json.loads(f.read_text(encoding="utf-8")).get(g, {})})
+print(len(files), ",".join(bad) or "-", ",".join(missing) or "-")
+PYEOF3
+)"
+[ "${cnt}" -eq 20 ] && [ "${badlang}" = "-" ]; say $? "lang-keys.json mind a 20 telepítésben, a helyes nyelven (${cnt}/20)"
+[ "${missing}" = "-" ]; say $? "a kapu-scriptek minden nyelvi kulcsa létezik a szeletben"
+
 echo "── 16.3 nyelvi paritás-kapu"
 python3 prompts/scripts/lang-parity-check.py --strict --check >/dev/null 2>&1
 say $? "lang-parity-check.py --check --strict → exit 0"

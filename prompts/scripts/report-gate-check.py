@@ -70,15 +70,23 @@ import re
 import sys
 from pathlib import Path
 
+from lang_keys import fld, sec
 
-SECTION_RE = re.compile(r"^##\s+Teszt-riportolás\s*$", re.IGNORECASE)
+_SEC_REPORTING = sec("cv_test_reporting")
+_F_REQUIRED = fld("f_report_required")
+_F_PATH_BASE = fld("f_artifact_path_base")
+
+SECTION_RE = re.compile(r"^##\s+" + re.escape(_SEC_REPORTING) + r"\s*$", re.IGNORECASE)
 NEXT_SECTION_RE = re.compile(r"^##\s+")
-REQUIRED_FLAG_RE = re.compile(r"\*\*Riport-generálás kötelező:\*\*\s*(\w+)", re.IGNORECASE)
+REQUIRED_FLAG_RE = re.compile(r"\*\*" + re.escape(_F_REQUIRED) + r":\*\*\s*(\w+)",
+                              re.IGNORECASE)
 SEPARATOR_ROW_RE = re.compile(r"^\|[\s:|-]+\|$")
-PATH_BASE_RE = re.compile(r"\*\*Artefaktum-útvonal alapja:\*\*\s*([\w-]+)", re.IGNORECASE)
-BASE_ROUND = {"kör-mappa", "kor-mappa", "körmappa", "round", "kör"}
+PATH_BASE_RE = re.compile(r"\*\*" + re.escape(_F_PATH_BASE) + r":\*\*\s*([\w-]+)",
+                          re.IGNORECASE)
+BASE_ROUND = {"kör-mappa", "kor-mappa", "körmappa", "round", "kör",
+              "round-folder", "roundfolder"}
 BASE_FLAT = {"test-report", "testreport", "flat", "gyökér", "gyoker"}
-EMPTY_VALUES = {"", "-", "–", "—", "n/a", "na", "nincs"}
+EMPTY_VALUES = {"", "-", "–", "—", "n/a", "na", "nincs", "none"}
 
 
 def extract_section(text):
@@ -171,7 +179,7 @@ def main():
 
     section = extract_section(conv.read_text(encoding="utf-8"))
     if section is None:
-        print(f"HIBA: a {conv} nem tartalmaz `## Teszt-riportolás` szekciót. "
+        print(f"HIBA: a {conv} nem tartalmaz `## {_SEC_REPORTING}` szekciót. "
               f"Ez a 00-init kötelező szekciója — pótold a felhasználóval egyeztetve, "
               f"mielőtt a validálás lezárul.", file=sys.stderr)
         return 2
@@ -186,14 +194,14 @@ def main():
     base_value = base.group(1).lower() if base else None
     if base_value is None:
         print(
-            "HIBA (TR5/b migrációs őr): a `## Teszt-riportolás` szekcióból hiányzik az\n"
-            "  **Artefaktum-útvonal alapja:** mező.\n\n"
+            f"HIBA (TR5/b migrációs őr): a `## {_SEC_REPORTING}` szekcióból hiányzik az\n"
+            f"  **{_F_PATH_BASE}:** mező.\n\n"
             "Az utolsó oszlop jelentése 2026-08-07-én megváltozott (test-report/ gyökér →\n"
             "kör-mappa), a formátum viszont nem — ezért a kapu nem találgat. Írd be a\n"
-            f"`{conv}` `## Teszt-riportolás` szekciójába a **Riport-generálás kötelező:**\n"
+            f"`{conv}` `## {_SEC_REPORTING}` szekciójába a **{_F_REQUIRED}:**\n"
             "mező mellé az alábbiak közül a helyeset:\n\n"
-            "  **Artefaktum-útvonal alapja:** kör-mappa     (mai séma: test-report/validate/round-NN/)\n"
-            "  **Artefaktum-útvonal alapja:** test-report    (régi, flat séma)\n\n"
+            f"  **{_F_PATH_BASE}:** kör-mappa     (mai séma: test-report/validate/round-NN/)\n"
+            f"  **{_F_PATH_BASE}:** test-report    (régi, flat séma)\n\n"
             "Ha a ciklus most tér át a mai sémára, a `conventions.md` frissítése a ciklus\n"
             "része (kell rá task) — lásd a 03-write-plan „Kapu-konfiguráció együtt mozog\" szabályát.",
             file=sys.stderr,
@@ -202,19 +210,19 @@ def main():
     if base_value in BASE_FLAT:
         args.report_subdir = "test-report"
         print("MEGJEGYZÉS: a conventions.md a RÉGI, flat sémát deklarálja "
-              "(`Artefaktum-útvonal alapja: test-report`) — a kapu a ciklus "
+              f"(`{_F_PATH_BASE}: test-report`) — a kapu a ciklus "
               "`test-report/` mappájához oldja fel az útvonalakat, a --report-subdir "
               "értékét figyelmen kívül hagyja.")
     elif base_value not in BASE_ROUND:
-        print(f"HIBA: ismeretlen `Artefaktum-útvonal alapja:` érték: `{base_value}`. "
+        print(f"HIBA: ismeretlen `{_F_PATH_BASE}:` érték: `{base_value}`. "
               f"Elfogadott: `kör-mappa` vagy `test-report`.", file=sys.stderr)
         return 2
 
     rows = parse_rows(section)
     if not rows:
-        print(f"HIBA: a `## Teszt-riportolás` szekcióban nincs kitöltött táblázat. "
+        print(f"HIBA: a `## {_SEC_REPORTING}` szekcióban nincs kitöltött táblázat. "
               f"Vagy deklarálj artefaktumokat, vagy írd be explicit: "
-              f"`**Riport-generálás kötelező:** nem` + indoklás.", file=sys.stderr)
+              f"`**{_F_REQUIRED}:** nem` + indoklás.", file=sys.stderr)
         return 2
 
     report_dir = cycle / args.report_subdir
@@ -234,7 +242,7 @@ def main():
     if not checked:
         print("HIBA: a táblázat minden sora üres artefaktumot deklarál — "
               "így a kapu nem ellenőriz semmit. Töltsd ki, vagy állítsd a "
-              "`**Riport-generálás kötelező:**` mezőt `nem`-re, indoklással.", file=sys.stderr)
+              f"`**{_F_REQUIRED}:**` mezőt `nem`-re, indoklással.", file=sys.stderr)
         return 2
 
     if failures:
@@ -242,7 +250,7 @@ def main():
         for kategoria, eszkoz, artefakt in failures:
             print(f"  ✗ {kategoria} ({eszkoz}) → {artefakt}")
         print("A validálás NEM zárható PASS-ra. Futtasd a conventions.md "
-              "`## Teszt-riportolás` táblájában megadott riport-generáló parancsot, "
+              f"`## {_SEC_REPORTING}` táblájában megadott riport-generáló parancsot, "
               f"és másold az artefaktumot ebbe a kör-mappába: {report_dir}")
         return 1
 

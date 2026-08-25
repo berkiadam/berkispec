@@ -1246,7 +1246,7 @@ A `prompts/scripts/*.py`-ban **279 egyedi magyar string** van. Nem egyformák:
 >
 > **A `# Validation History` (failure-counter.py) NEM tétel** — ma is angol, tehát nyelvfüggetlen.
 
-- [ ] **10.2 — Az (a) és (b) osztály leltárának véglegesítése.** Az alábbi lista a **biztosan
+- [x] **10.2 — Az (a) és (b) osztály leltárának véglegesítése.** Az alábbi lista a **biztosan
   teherhordó** találatokat tartalmazza; ellenőrizd és egészítsd ki.
 
   **Státusz-értékek (a):** `validate-gate-check.py` — `Validálásra kész`, `Task írásra kész`,
@@ -1303,22 +1303,85 @@ A `prompts/scripts/*.py`-ban **279 egyedi magyar string** van. Nem egyformák:
   > alakban él (azt a 11.12 őrzi), kettőt pedig csak kapu-script olvas (`blocking_findings`,
   > `failed_conditions`). **A scriptek fele a 10.5–10.7-tel zárul.**
 
-- [ ] **10.5 — Közös betöltő (LG18).** `prompts/scripts/lang_keys.py` (aláhúzós név, hogy
+- [x] **10.5 — Közös betöltő (LG18).** `prompts/scripts/lang_keys.py` (aláhúzós név, hogy
   importálható modul legyen, ne a kötőjeles CLI-mintát kövesse): `load_keys()` a **saját
   mappájában** lévő `lang-keys.json`-t olvassa (`Path(__file__).parent / "lang-keys.json"`),
   cache-elve. Hiányzó fájl → `hu` fallback + egyszeri figyelmeztetés a stderr-re. **Nincs
   `conventions.md`-olvasás és nincs kötelező CLI-flag** — a nyelv telepítéskor eldőlt (LG17).
   A `--project-lang` opcionális **felülbírálásként** megmaradhat fejlesztéshez és teszthez.
 
-- [ ] **10.6 — A telepítő írja ki a `lang-keys.json`-t.** A `copy_helper_scripts` egészüljön ki:
+- [x] **10.6 — A telepítő írja ki a `lang-keys.json`-t.** A `copy_helper_scripts` egészüljön ki:
   a `status-keys.json`-ból a **választott projekt-nyelv szeletét** írja a scriptek célmappájába
   `lang-keys.json` néven: `{"lang": "hu", "status": {…}, "sections": {…}}`. A `lang` mező azért
   kell, hogy utólag is látható legyen, milyen nyelvre telepítettek (LG2 maradék kockázat).
   **A hívó skilleket NEM kell módosítani** — se flag, se helyőrző. Ez a döntés fő haszna:
   nulla skill-felület.
 
-- [ ] **10.7 — A hardcode-olt stringek cseréje** a `lang_keys.load_keys()` értékeire a 10.2
+- [x] **10.7 — A hardcode-olt stringek cseréje** a `lang_keys.load_keys()` értékeire a 10.2
   leltár szerinti scriptekben.
+
+  > **✅ A §10 KÉSZ (2026-08-25) — a scriptek i18n-je zárva.** Ezzel az LG1 mind a négy
+  > nyelvkombinációja működik, nem csak telepítés-, hanem FUTÁS-szinten is.
+  >
+  > **Mit szállított a 10.2 leltár.** Egy szóhatáros literál-kereső futott a
+  > `prompts/scripts/*.py`-on (a három repó-karbantartó script kihagyva), és a találatokat
+  > az ILLESZTŐ/ÍRÓ kontextus alapján osztályozta: **50 teherhordó hely** 10 scriptben.
+  > A leltár három olyan tételt is felszínre hozott, ami a terv 10.2 listájában NEM
+  > szerepelt: `cycle-status.py` státusz-listái (5 hely), `analyze-gate-check.py`
+  > `REQUIRED_PLAN_TABLES`/`REQUIRED_TASKS_TABLES` (4 kötelező-szekció név — enélkül az
+  > `en` projekt minden futásban 4 hamis „hiányzó szekció" Must Fix-et kapott), és a
+  > `validate-gate-check.py` `get_status()` `Státusz:` címkéje.
+  >
+  > **10.5 — `prompts/scripts/lang_keys.py`.** `sec()` / `fld()` / `st()` accessorok,
+  > háromlépcsős feloldás: (1) `lang-keys.json` a script mellett (telepített eset),
+  > (2) `../lang/status-keys.json` `hu` szelete (repóban futtatott eset — **ez a terv
+  > szerinti `hu` fallback**, duplikált szótár nélkül), (3) egyik sem → egyszeri stderr
+  > figyelmeztetés, és a kulcs-lekérdezés beszédes `SystemExit`-tel áll meg. Ismeretlen
+  > kulcs is `SystemExit` — ugyanaz az elv, mint a 9.7.3 token-feloldójában: csendben
+  > rossz nyelven illeszteni rosszabb, mint megállni. `--project-lang` helyett
+  > `load_keys(project_lang=...)` a fejlesztői felülbírálás.
+  >
+  > **10.6 — `write_lang_keys()`** a `copy_helper_scripts` végén. Nulla skill-felület:
+  > se flag, se helyőrző. 20/20 telepítésben ott a szelet, a helyes nyelvvel (a 16.2 alá
+  > bekerült két új kritérium ezt és a kulcs-létezést gépiesen őrzi).
+  >
+  > **10.7 — 10 script.** Új kulcs kellett hozzá: **142 → 166** (`status-keys.json`).
+  > A hozzáadott kulcsok a script által ÍRT felület: kör-blokk mezői (`f_trigger`,
+  > `f_report_folder`, `f_final_result`, `f_rounds`), kör-típusok (`round_type_full/light`),
+  > a `## Összegzés`/`## Validálási riport` címek, a lefedettségi mátrix és a
+  > `test-conventions.md` tábla-fejlécei, valamint a lépés-tábla oszlopnevei.
+  >
+  > **Két elv, ami végig vezette a cserét:**
+  > 1. **A BEMENET nyelvfüggetlen, a KIMENET projekt-nyelvi.** Ahol a script szinonima-
+  >    halmazt fogad (`normalize_type`, `BASE_ROUND`/`BASE_FLAT`, `_HEADER_CELLS`,
+  >    `PRECOND_ENV_RE`, a roadmap `(kész|done|lezárva)` jelölője), ott **mindkét nyelv
+  >    alakja bennmaradt**, és csak a visszaadott/kiírt érték lett nyelvi. Így egy magyarul
+  >    indult dokumentum `en` újratelepítés után sem esik ki.
+  > 2. **A konzol-üzenet (c osztály) magyar maradt** — LG10. Kivétel, ahol az üzenet
+  >    megmondja az agentnek, MIT írjon az artefaktumba (`report-gate-check.py` migrációs
+  >    őre, `tc8-gate-check.py` mezőnév-listái): ott a mezőnév tokenből jön.
+  >
+  > **Amit a 11.5 kapu itt fogott meg.** A négy új tábla-fejléc kulcs `en` értékét
+  > először magamtól fordítottam (`Referring tasks`, `OK`, `What ran`, `Reason`,
+  > `What it checks`) — a kapu jelezte, hogy a `lang/en/` sablonokban MÁS szó áll
+  > (`Referencing tasks`, `In order`, `What it ran`, `Justification`, `What it verifies`).
+  > **Az átnézett fordítás az igazságforrás, nem a kulcs**: a kulcs igazodott hozzá.
+  > Ez a 10.4 „egyetlen igazságforrás" pont gyakorlati bizonyítéka.
+  >
+  > **Regresszió-mérés.** A `HEAD` és a módosított scriptek ugyanarra a magyar
+  > fixture-re (spec/plan/tasks/conventions/test-conventions) futtatva **byte-azonos**
+  > kimenetet adnak — egyetlen szándékos eltéréssel: az `analyze-gate-check.py`
+  > mátrix-fejléce `## Lefedettségi mátrix (generált — …)` helyett
+  > `## Lefedettségi mátrix (generált) — …`, mert a `(generált)` most a kulcs része,
+  > és így egyezik a skill által várt szekciócímmel. A `round-log.py` teljes
+  > open→step→close ciklusa szintén byte-azonos. Ugyanaz a fixture `en` szeletre
+  > lefordítva a kapukon végigfut, hamis hiányzó-szekció riasztás nélkül.
+  >
+  > **Nyitva maradt, tudatosan (LG10 + LG34).** A kapu-scriptek konzol-üzenetei
+  > magyarul szólnak `en` projektben is. Ez nem szivárgás az artefaktumba — az agent az
+  > `output-language` blokk szerint a projekt nyelvén ír —, de a futtató embernek magyar
+  > szöveget mutat. Ha ez zavaró lesz, a (c) osztály külön, önálló lépésben fordítható;
+  > a szerkezet (`lang_keys`) készen áll rá.
 
 ---
 

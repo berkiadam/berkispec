@@ -96,6 +96,8 @@ import re
 import sys
 from pathlib import Path
 
+from lang_keys import fld, sec
+
 
 PLAN_ID_IN_HEADING_RE = re.compile(r"^#{2,4}\s+.*?\[(P-[A-Za-z0-9][A-Za-z0-9-]*)\]", re.MULTILINE)
 PLAN_ID_TOKEN_RE = re.compile(r"\[(P-[A-Za-z0-9][A-Za-z0-9-]*)\]")
@@ -116,12 +118,12 @@ STATUS_TASK_RE = re.compile(
 )
 
 REQUIRED_PLAN_TABLES = [
-    ("Spec-lefedettség", "03", "a spec tesztesetei és DoD-pontjai leképezésének táblája (TP1)"),
-    ("Fordított lefedettség", "03", "a plan-képességek spec-forrásának táblája (SC1)"),
-    ("Környezeti koordináták", "03", "a ciklus konkrét koordinátái: URL-ek, portok, indító parancsok, példa REST hívások, teszt-/API-userek jelszóval, paraméterek (KO1)"),
+    (sec("spec_coverage"), "03", "a spec tesztesetei és DoD-pontjai leképezésének táblája (TP1)"),
+    (sec("reverse_coverage"), "03", "a plan-képességek spec-forrásának táblája (SC1)"),
+    (sec("environment_coords"), "03", "a ciklus konkrét koordinátái: URL-ek, portok, indító parancsok, példa REST hívások, teszt-/API-userek jelszóval, paraméterek (KO1)"),
 ]
 REQUIRED_TASKS_TABLES = [
-    ("Plan-lefedettség", "04", "a plan-szekció → task fordított tábla (PID1)"),
+    (sec("plan_coverage"), "04", "a plan-szekció → task fordított tábla (PID1)"),
 ]
 
 
@@ -212,7 +214,7 @@ def check_plan_coverage(tasks_text, known_ids, referenced, f):
     inside = False
     for line in tasks_text.splitlines():
         if line.startswith("## "):
-            inside = "Plan-lefedettség" in line
+            inside = sec("plan_coverage") in line
             continue
         if inside:
             coverage_mentions.update(PLAN_ID_TOKEN_RE.findall(line))
@@ -253,7 +255,7 @@ def check_dod(spec_text, f):
     unlabeled = 0
     for line in spec_text.splitlines():
         if line.startswith("## "):
-            inside = "Definition of done" in line
+            inside = sec("definition_of_done") in line
             continue
         if not inside:
             continue
@@ -376,12 +378,12 @@ def check_executed_artifacts(plan_text, tasks_text, repo_root, f, plan_only=Fals
         line for _, _, line in task_lines(tasks_text) if "[CHECK]" in line or "[OPS]" in line
     )
     candidates = _candidate_paths(check_task_text)
-    for path in _candidate_paths(section_text(plan_text, "Ellenőrzési stratégia")):
+    for path in _candidate_paths(section_text(plan_text, sec("verification_strategy"))):
         if path not in candidates:
             candidates.append(path)
     if not candidates:
         return
-    planned_section = section_text(plan_text, "Tervezett módosítások")
+    planned_section = section_text(plan_text, sec("planned_changes"))
     creating_tasks = "\n".join(
         line for _, _, line in task_lines(tasks_text) if "[RED]" in line or "[GREEN]" in line
     )
@@ -615,7 +617,7 @@ def table_rows_by_header(text, required_headers):
 def dod_ids(spec_text):
     """A spec `Definition of done` szekciójának `DoD-NN` azonosítói, sorrendben."""
     out = []
-    for line in section_body(spec_text, "Definition of done").splitlines():
+    for line in section_body(spec_text, sec("definition_of_done")).splitlines():
         m = DOD_BULLET_RE.match(line)
         if not m:
             continue
@@ -645,12 +647,12 @@ def check_coverage_chain(spec_text, plan_text, tasks_text, known_ids, f, plan_on
         return  # a D1 check már jelezte, hogy nincs azonosított DoD-pont
 
     # S3 — a Fordított lefedettség sorai azonosítsák a plan-szekciót ID-val
-    reverse_rows = table_rows(plan_text, "Fordított lefedettség")
+    reverse_rows = table_rows(plan_text, sec("reverse_coverage"))
     if not reverse_rows:
         # EGY aggregált megállapítás, nem DoD-onként egy: a gyökérok ugyanaz, és
         # egy 15 DoD-os ciklusban a per-DoD változat 15 azonos tételt szórna a
         # `Must Fix` listába (a fixer ugyanattól a hiánytól kapná meg 15-szer).
-        if "Fordított lefedettség" in plan_text:
+        if sec("reverse_coverage") in plan_text:
             f.add("C1", "03", f"a `Fordított lefedettség` tábla üres (vagy csak sablonsorokat tartalmaz) — enélkül a `DoD-NN → [P-…] → task` lefedettségi lánc nem zárható, és a lefedettségi mátrix nem generálható ({len(dods)} DoD-pont érintett)")
         # ha a tábla teljesen hiányzik, azt már az S1 jelezte — ne duplikáljuk
         return
@@ -676,7 +678,7 @@ def check_coverage_chain(spec_text, plan_text, tasks_text, known_ids, f, plan_on
 
     # C3 (TP1) — minden DoD-pont szerepel a Spec-lefedettség tábla 1. oszlopában
     spec_cov_sources = set()
-    for cells in table_rows(plan_text, "Spec-lefedettség"):
+    for cells in table_rows(plan_text, sec("spec_coverage")):
         if cells:
             spec_cov_sources.update(DOD_RE.findall(cells[0]))
     for dod in dods:
@@ -718,7 +720,8 @@ def check_coverage_chain(spec_text, plan_text, tasks_text, known_ids, f, plan_on
             continue
         matrix.append((dod, ", ".join(f"`[{p}]`" for p in pids), ", ".join(sorted(set(tasks))), "✓"))
 
-    f.note("MÁTRIX-FEJ", "| DoD | Plan szekció | Task(ok) | Lefedve (gépi) |")
+    f.note("MÁTRIX-FEJ", f"| DoD | {fld('f_plan_section')} | {fld('f_tasks')} | "
+           f"{sec('covered_machine')} |")
     for dod, pids, tasks, ok in matrix:
         f.note("MÁTRIX", f"| `DoD-{dod}` | {pids} | {tasks} | {ok} |")
 
@@ -728,11 +731,12 @@ def check_coverage_chain(spec_text, plan_text, tasks_text, known_ids, f, plan_on
     inside = False
     for line in tasks_text.splitlines():
         if line.startswith("## "):
-            inside = "Plan-lefedettség" in line
+            inside = sec("plan_coverage") in line
             continue
         if inside:
             coverage_mentions.update(PLAN_ID_TOKEN_RE.findall(line))
-    f.note("PID-FEJ", "| Plan szekció (ID) | Hivatkozó taskok | Rendben |")
+    f.note("PID-FEJ", f"| {fld('f_plan_section_id')} | {fld('f_referring_tasks')} | "
+           f"{fld('f_ok')} |")
     for pid in known_ids:
         tasks = tmap.get(pid, [])
         if tasks:
@@ -746,7 +750,7 @@ def check_coverage_chain(spec_text, plan_text, tasks_text, known_ids, f, plan_on
 def check_config_lifecycle(plan_text, f):
     """C4 (KF1) — a `Konfiguráció-életút` tábla egyetlen cellája sem lehet üres:
     az utolsó oszlop (`Ha hiányzik`) kötelezően fail-fast vagy konkrét default."""
-    rows = table_rows(plan_text, "Konfiguráció-életút")
+    rows = table_rows(plan_text, sec("config_lifecycle"))
     if not rows:
         rows = table_rows_by_header(plan_text, ["paraméter", "ha hiányzik"])
     for cells in rows:
@@ -769,7 +773,7 @@ def check_env_coordinates(plan_text, f):
     hívás, teszt-user + jelszó, paraméter). Két gépies hibája van: placeholder
     az érték helyén, és üres táblacella. Mindkettő azt jelenti, hogy a 04 és a
     `test-runner` egy hiányzó adattal fut neki — ezért blokkol."""
-    body = section_body(plan_text, "Környezeti koordináták")
+    body = section_body(plan_text, sec("environment_coords"))
     if not body.strip():
         return  # a szekció teljes hiányát az S1 jelezte
     for m in KO1_PLACEHOLDER_RE.finditer(body):
@@ -952,10 +956,11 @@ def check_test_section_volume(spec_text, plan_text, f):
     ugyanazt a tartalmat kapja meg, PLUSZ a végrehajtási részleteket (parancs,
     fixture, környezet-felkészítés), tehát a zsugorodás gyakorlatilag mindig
     összevonást vagy elhagyást jelent."""
-    spec_tests = section_body(spec_text, "Teszt specifikáció")
+    spec_tests = section_body(spec_text, sec("test_specification"))
     if not spec_tests.strip():
         return
-    plan_tests = section_body(plan_text, "Tesztelési stratégia") + "\n" + section_body(plan_text, "Teszt specifikáció")
+    plan_tests = (section_body(plan_text, sec("testing_strategy")) + "\n"
+                  + section_body(plan_text, sec("test_specification")))
     s, pl = _content_line_count(spec_tests), _content_line_count(plan_tests)
     if s < 5:
         return  # túl kicsi minta
@@ -1033,17 +1038,19 @@ def check_path_format(docs, repo_root, f):
 # egyet sem nevezi meg a plan/tasks, MIKÖZBEN a ciklus a riport-struktúrához
 # hozzáér — és a `conventions.md` nem szerepel a tervezett módosítások közt.
 
-REPORT_SECTION_RE = re.compile(r"^##\s+Teszt-riportolás\s*$", re.IGNORECASE | re.MULTILINE)
+REPORT_SECTION_RE = re.compile(r"^##\s+" + re.escape(sec("cv_test_reporting")) + r"\s*$",
+                               re.IGNORECASE | re.MULTILINE)
 TEST_REPORT_PATH_RE = re.compile(r"test-report/[\w./-]*")
-EMPTY_ARTIFACT_VALUES = {"", "-", "–", "—", "n/a", "na", "nincs"}
+EMPTY_ARTIFACT_VALUES = {"", "-", "–", "—", "n/a", "na", "nincs", "none"}
 CONVENTIONS_REF_RE = re.compile(r"(?<!test-)conventions\.md")
 
 
 def declared_report_artifacts(conventions_text):
     """A `conventions.md` `## Teszt-riportolás` táblájának utolsó oszlopa."""
-    body = section_body(conventions_text, "Teszt-riportolás")
+    body = section_body(conventions_text, sec("cv_test_reporting"))
     out = []
-    for cells in table_rows_by_header(body, ["teszt-kategória"]) or table_rows(body, "Teszt-riportolás"):
+    for cells in (table_rows_by_header(body, [fld("f_test_category").lower()])
+                  or table_rows(body, sec("cv_test_reporting"))):
         value = cells[-1].strip().strip("`").strip() if cells else ""
         if value and value.lower() not in EMPTY_ARTIFACT_VALUES:
             out.append(value)
@@ -1081,7 +1088,8 @@ def check_gate_config_moves(plan_text, tasks_text, conventions_path, f):
     # FIGYELEM: `"conventions.md" in "test-conventions.md"` IGAZ — a két regiszter
     # összekeverése épp az a hiba, amit ez a check keres, ezért a mintának
     # kizárnia kell a `test-` prefixet.
-    plans_conventions = bool(CONVENTIONS_REF_RE.search(section_body(plan_text, "Tervezett módosítások")))
+    plans_conventions = bool(
+        CONVENTIONS_REF_RE.search(section_body(plan_text, sec("planned_changes"))))
     if plans_conventions:
         f.note("KAPU-KONFIG", f"a ciklus a riport-struktúrához hozzáér, és a `conventions.md` szerepel a tervezett módosítások közt — rendben (GC1). Nem hivatkozott deklarált artefaktum: {', '.join(missing[:3])}")
         return
@@ -1190,9 +1198,10 @@ def main():
     rest = [(k, m) for k, m in f.inventory if not kind_is_table(k)]
 
     if matrix:
-        print("\n## Lefedettségi mátrix (generált — DoD → plan-szekció → task)")
+        print(f"\n## {sec('coverage_matrix')} — DoD → plan-szekció → task")
         print("Az orchestrátor ezt SZÓ SZERINT fűzi az analyze-report.md megfelelő szekciójába;")
-        print("az analyzernek nem kell újra levezetnie. A `Lefedve (gépi)` oszlop a LÁNC")
+        print(f"az analyzernek nem kell újra levezetnie. A `{sec('covered_machine')}` "
+              f"oszlop a LÁNC")
         print("meglétét jelenti — a lefedés TARTALMI elégségességét az analyzer ítéli meg.")
         for row in matrix:
             print(row)

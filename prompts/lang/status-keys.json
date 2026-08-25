@@ -86,7 +86,9 @@
       "cv_env_vars": "Környezeti változók",
       "cv_env_vars_short": "Env változók",
       "cv_sonar": "Sonar minőségellenőrzés",
-      "cv_risks_limits": "Kockázatok és ismert korlátok"
+      "cv_risks_limits": "Kockázatok és ismert korlátok",
+      "validation_report": "Validálási riport",
+      "steps_execution_order": "Lépések (végrehajtási sorrendben)"
     },
     "fields": {
       "f_status": "Státusz",
@@ -115,7 +117,27 @@
       "f_steps": "Lépések",
       "f_expected_result": "Elvárt eredmény",
       "f_scope": "Hatókör",
-      "f_required_report": "Kötelező riport (TR3)"
+      "f_required_report": "Kötelező riport (TR3)",
+      "f_trigger": "Indító",
+      "f_report_folder": "Riport-mappa",
+      "f_final_result": "Végeredmény",
+      "f_rounds": "Körök",
+      "f_time": "Idő",
+      "f_step": "Lépés",
+      "f_what_ran": "Mit futtatott",
+      "f_result": "Eredmény",
+      "f_reason": "Indoklás",
+      "f_severity": "Súlyosság",
+      "f_count": "Darab",
+      "f_what_it_checks": "Mit ellenőriz",
+      "f_recipe": "Recept",
+      "f_evidence": "Bizonyíték",
+      "f_test_category": "Teszt-kategória",
+      "f_plan_section": "Plan szekció",
+      "f_tasks": "Task(ok)",
+      "f_plan_section_id": "Plan szekció (ID)",
+      "f_referring_tasks": "Hivatkozó taskok",
+      "f_ok": "Rendben"
     },
     "status": {
       "draft": "Piszkozat",
@@ -146,7 +168,9 @@
       "not_promotable": "nem promótálandó",
       "none_marker": "Nincs.",
       "fixed_marker": "✅ javítva",
-      "no_vcs_flag": "NINCS verziókezelő (se GIT, se más), és nem is lesz."
+      "no_vcs_flag": "NINCS verziókezelő (se GIT, se más), és nem is lesz.",
+      "round_type_full": "TELJES",
+      "round_type_light": "KÖNNYŰ"
     }
   },
   "en": {
@@ -236,7 +260,9 @@
       "cv_env_vars": "Environment variables",
       "cv_env_vars_short": "Env variables",
       "cv_sonar": "Sonar quality check",
-      "cv_risks_limits": "Risks and known limitations"
+      "cv_risks_limits": "Risks and known limitations",
+      "validation_report": "Validation report",
+      "steps_execution_order": "Steps (in execution order)"
     },
     "fields": {
       "f_status": "Status",
@@ -265,7 +291,27 @@
       "f_steps": "Steps",
       "f_expected_result": "Expected result",
       "f_scope": "Scope",
-      "f_required_report": "Mandatory report (TR3)"
+      "f_required_report": "Mandatory report (TR3)",
+      "f_trigger": "Trigger",
+      "f_report_folder": "Report folder",
+      "f_final_result": "Final result",
+      "f_rounds": "Rounds",
+      "f_time": "Time",
+      "f_step": "Step",
+      "f_what_ran": "What it ran",
+      "f_result": "Result",
+      "f_reason": "Justification",
+      "f_severity": "Severity",
+      "f_count": "Count",
+      "f_what_it_checks": "What it verifies",
+      "f_recipe": "Recipe",
+      "f_evidence": "Evidence",
+      "f_test_category": "Test category",
+      "f_plan_section": "Plan section",
+      "f_tasks": "Task(s)",
+      "f_plan_section_id": "Plan section (ID)",
+      "f_referring_tasks": "Referencing tasks",
+      "f_ok": "In order"
     },
     "status": {
       "draft": "Draft",
@@ -296,7 +342,9 @@
       "not_promotable": "not to promote",
       "none_marker": "None.",
       "fixed_marker": "✅ fixed",
-      "no_vcs_flag": "NO version control (neither GIT nor anything else), and none is planned."
+      "no_vcs_flag": "NO version control (neither GIT nor anything else), and none is planned.",
+      "round_type_full": "FULL",
+      "round_type_light": "LIGHT"
     }
   }
 }

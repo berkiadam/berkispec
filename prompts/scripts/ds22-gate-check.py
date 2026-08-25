@@ -11,6 +11,8 @@ import re
 import sys
 from pathlib import Path
 
+from lang_keys import fld
+
 RENAME_RE_TEMPLATE = r"\b{}\b"
 
 
@@ -94,7 +96,7 @@ def check_coverage_markers(docs_dir, marker, changed_files):
             results.append({"file": rel_path, "status": "MISSING_FILE"})
             continue
         head = "\n".join(path.read_text(encoding="utf-8").splitlines()[:10])
-        m = re.search(r"\*\*Utolsó frissítés:\*\*\s*([\w.-]+)", head)
+        m = re.search(r"\*\*" + re.escape(fld("f_last_updated")) + r":\*\*\s*([\w.-]+)", head)
         if not m:
             results.append({"file": rel_path, "status": "MISSING_HEADER"})
             continue

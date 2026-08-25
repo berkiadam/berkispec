@@ -198,6 +198,20 @@ def copy_helper_scripts(src_dir, scripts_dest):
         script_dest = scripts_dest / script_src.name
         shutil.copy(script_src, script_dest)
         os.chmod(script_dest, 0o755)
+    write_lang_keys(src_dir, scripts_dest)
+
+
+def write_lang_keys(src_dir, scripts_dest):
+    """A `status-keys.json` PROJEKT-nyelvi szeletét a scriptek MELLÉ írja
+    `lang-keys.json` néven (10.6). Ebből dolgozik a `lang_keys.py` betöltő, így a
+    kapu-scriptek nyelvfüggetlenek maradnak, a hívó skillek felülete pedig nem
+    változik — se flag, se helyőrző. A `lang` mező azért kerül bele, hogy utólag
+    is látható legyen, milyen nyelvre telepítettek (LG2 maradék kockázat)."""
+    keys = load_status_keys(src_dir)
+    payload = {"lang": PROJECT_LANG}
+    payload.update(keys)
+    (scripts_dest / "lang-keys.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 # ── Közös leírás-részletek build-time inline-olása a skillekbe (BD13/BD14) ────
 # A skillek `<!-- INCLUDE:shared/<fájl> -->` markert tartalmazhatnak. Mivel a

@@ -48,6 +48,8 @@ import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from lang_keys import sec
+
 TABLE_ROW_RE = re.compile(r"^\|(?!\s*-)(.+)\|\s*$")
 EMPTY = ("", "-", "—", "n/a", "na", "nincs")
 
@@ -58,7 +60,8 @@ def strip_cell(cell):
 
 def parse_matrix(plan_text):
     """A gépi futtatási tábla sorai dict-ként. Üres lista = nincs tábla."""
-    m = re.search(r"^#+\s*Gépi futtatási tábla.*$", plan_text, re.MULTILINE | re.IGNORECASE)
+    m = re.search(r"^#+\s*" + re.escape(sec("machine_run_table")) + r".*$",
+                  plan_text, re.MULTILINE | re.IGNORECASE)
     if not m:
         return []
     tail = plan_text[m.end():]
