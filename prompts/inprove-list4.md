@@ -1931,6 +1931,36 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
   az artefaktumokban. **Ha (c) sérül, a 9.5 `output-language` blokk erősítendő** — ez a
   legvalószínűbb hibapont az egész tervben.
 
+  > **Előkészítve (2026-08-25) — ez az EGYETLEN nyitott tétel, és a tiéd.** Amit gépiesen
+  > lehetett, az lefutott: a 16.1–16.5 zöld (10/10), és az `en/hu` telepítés kimenetén
+  > ellenőrizve, hogy a skill törzse angol, az `output-language` blokk viszont **magyarul**
+  > mondja ki a szabályt (nyelvi horgony), és a `lang/` sablonok magyarok. Amit ez **nem**
+  > tud megmutatni: hogy a modell tartja-e magát hozzá egy valódi ciklusban.
+  >
+  > **Recept:**
+  >
+  > ```bash
+  > cd <egy meglévő projekt>
+  > <a berkispec repó>/install.sh --platform claude --prompt-lang en --project-lang hu
+  > ```
+  >
+  > Majd `/bs-write-spec` → `/bs-write-plan` → `/bs-write-tasks` → `/bs-analyze`, és a
+  > végén három kérdés:
+  >
+  > | # | Mit nézel | Hol bukik, ha bukik |
+  > |---|---|---|
+  > | a | A `spec.md` / `plan.md` / `tasks.md` **magyar**-e — a címsorok, a tábla-cellák és a felsorolások is | angol címsor a magyar dokumentumban |
+  > | b | A kapuk **lefutottak**-e (az `05` mechanikus kapuja adott-e leltárat és mátrixot) | a kapu „hiányzó szekció" Must Fix-et ad, pedig a szekció ott van → nyelvi elcsúszás |
+  > | c | Van-e **angol átszivárgás**: fél-angol bekezdés, angol tábla-fejléc, angolul megfogalmazott kérdés a felhasználó felé | ez a legvalószínűbb hibapont |
+  >
+  > **Ha (c) sérül:** a javítás helye a `prompts/lang/hu/output-language.md` (és az `en` párja)
+  > — a blokk **erősítendő**, nem a skillek. Egy helyen javítasz, és mind a 14 skill + 11 agent
+  > élén frissül, mert build-time INCLUDE-dal kerül be.
+  >
+  > **Ha (b) sérül:** az a `lang/hu/` sablon szekciócíme és a `status-keys.json` `hu` értéke
+  > közti elcsúszás — a 11.5 kapu ezt szóhatárosan őrzi, de csak a `lang/` blokkokra; egy
+  > kézzel átírt projekt-artefaktum kívül esik rajta.
+
 ---
 
 ## 17. Végrehajtási sorrend
