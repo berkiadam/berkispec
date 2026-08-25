@@ -1529,6 +1529,18 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
   > §13 fordítás egyetlen szabály-ID-t, parancsnevet, markert és fájlútvonalat sem ejtett el.
   > Hibainjektálással ellenőrizve, hogy valódi eltéréskor bukik.
 
+  > **Egy egyszeri, NEM kapusított átnézés is futott — a „megfordított feltétel" gyanújára.**
+  > A fájlpárokat a (11.7 által igazolt) címsor-szerkezet mentén blokkokra vágva, blokkonként
+  > összevetve a tagadás-sűrűséget és a küszöb-számokat. **6 blokk kapott tagadás-jelölést,
+  > mind a három különböző eset kézzel átnézve — mindegyik álriasztás:**
+  > *„megerősítés-kérés **nélkül**" ↔ „**without** asking"* (a magyar tagadást névutó hordozza),
+  > és kétszer *„**nem**-TDD" ↔ „**non**-TDD"*. Valódi polaritás-fordulás nincs.
+  >
+  > **Ezt szándékosan NEM tettem kapuvá.** A szám-alapú jele használhatatlanul zajos: a magyar
+  > kiírja a számneveket (*„két forrás"* ↔ *„2 sources"*), így 160 fölötti álriasztást ad. Egy
+  > kapu, ami ennyit hibázik, nem véd — kiképzi a karbantartót, hogy figyelmen kívül hagyja.
+  > A 11.13 azért lett kapu, mert a jele **nulla zajú**.
+
 ---
 
 ## 12. A telepítő
