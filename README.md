@@ -19,6 +19,7 @@
   - [2. Installáció](#2-installáció)
     - [Telepítés lépései:](#telepítés-lépései)
     - [Támogatott platformok és ágensek:](#támogatott-platformok-és-ágensek)
+    - [Nyelvi beállítások — két független tengely](#nyelvi-beállítások--két-független-tengely)
     - [Hogyan lehet használni?](#hogyan-lehet-használni)
   - [3. Quick start](#3-quick-start)
     - [A keretrendszer működési elve:](#a-keretrendszer-működési-elve)
@@ -148,6 +149,26 @@ A BerkiSpec keretrendszer beállítása a célprojektben rendkívül egyszerű �
    * *Tipp:* Az útvonal beírása közben a **Tab** billentyűvel automatikusan kiegészítheted a mappaneveket, míg a **Tab kétszeri megnyomásával** kilistázhatod az aktuális könyvtár tartalmát.
    * **Újratelepítéskor a legutóbbi célmappa automatikusan fel van kínálva** — Linux/macOS-en előre kitöltve jelenik meg (Enter = elfogadás, nyilakkal szerkeszthető), Windowson a script kiírja és üres Enterre elfogadja. A telepítő ehhez a repo gyökerében lévő **`history`** fájlt használja (`LAST_PROJECT_PATH`, `LAST_PLATFORM`, `LAST_INSTALL`). A fájl gépfüggő, ezért a `.gitignore` kizárja; ha a benne tárolt mappa időközben megszűnt, a script jelzi és újat kér.
 4. Válaszd ki az általad használt AI agent platformot (1–6).
+5. Válaszd ki a **két nyelvet** — lásd a *Nyelvi beállítások* szekciót lentebb. Mindkettőnél van alapértelmezés, Enterrel elfogadható:
+   * **Promptok nyelve** (amit az ágens *olvas*): `1) English [alapértelmezett]` / `2) Magyar`
+   * **Projekt nyelve** (amit az ágens *ír*): `1) Magyar [alapértelmezett]` / `2) English`
+
+**Nem interaktív (scriptelt) telepítés.** Ha **egyetlen** flaget sem adsz meg, a fenti interaktív út fut változatlanul. Flagekkel viszont automatizálható:
+
+```bash
+./install.sh --platform claude --prompt-lang en --project-lang hu --path ~/projekt
+```
+
+| Flag (`install.sh`) | PowerShell | Érték | Alapértelmezés |
+|---|---|---|---|
+| `--platform` | `-Platform` | `claude` \| `codex` \| `antigravity` \| `cursor` \| `copilot` | — (kérdezi) |
+| `--prompt-lang` | `-PromptLang` | `hu` \| `en` | `en` |
+| `--project-lang` | `-ProjectLang` | `hu` \| `en` | `hu` |
+| `--path` | `-Path` | a célprojekt könyvtára | — (kérdezi) |
+| `--force` | `-Force` | ütközésnél felülír | — |
+| `--help` | `-Help` | súgó | — |
+
+Részlegesen megadott flagek esetén a megadottakat használja, a többit interaktívan kérdezi. **Ütközésnél `--force` nélkül a nem interaktív mód MEGÁLL** — nem ír felül csendben.
 
 ### Támogatott platformok és ágensek:
 A keretrendszer öt népszerű fejlesztő platformra képes beállítani a környezetet:
@@ -168,6 +189,34 @@ A keretrendszer öt népszerű fejlesztő platformra képes beállítani a körn
    * A subagenteket a `.codex/agents/<név>.toml` **TOML** fájlokként hozza létre (natív `model` + `model_reasoning_effort` mezőkkel; a read-only agentek `sandbox_mode = "read-only"`-t kapnak).
    * A skilleket a `.agents/skills/bs-<név>/SKILL.md` alá helyezi — a Codex a projekt-szintű skilleket innen olvassa.
    * ⚠️ **Figyelem:** a Codex és az Antigravity **közös** `.agents/skills/` mappát használ, ezért egy projektbe a kettő közül csak az egyik telepíthető. A telepítő figyelmeztet és rákérdez, ha a másik már jelen van.
+
+### Nyelvi beállítások — két független tengely
+
+A keretrendszer **két, egymástól független** nyelvi beállítást ismer. Nem ugyanaz a kettő, és **nem is kell egyezniük**:
+
+| Beállítás | Mit határoz meg | Alapértelmezés |
+|---|---|---|
+| **Prompt nyelve** | Milyen nyelven vannak az **instrukciók, amiket az ágens olvas** (a `skills-*` / `agents-*` / `shared-*` fa nyelve). A te dokumentumaidat nem érinti. | **English** |
+| **Projekt nyelve** | Milyen nyelven **ír az ágens**: `spec.md`, `plan.md`, `tasks.md`, `conventions.md`, riportok, `docs-generated/` — és amit **neked válaszol** a chatben. | **Magyar** |
+
+**A négy kombináció:**
+
+| Prompt | Projekt | Mikor ez a jó |
+|---|---|---|
+| **EN** | **HU** | *Az alapértelmezés.* Magyar csapat, magyar leadandó dokumentáció — de az ágens angol instrukciót kap, ami olcsóbb tokenben és amit a gyengébb/olcsóbb modellek pontosabban követnek. |
+| HU | HU | Ha a prompt-szöveget is magyarul akarod olvasni/karbantartani. |
+| EN | EN | Nemzetközi projekt. |
+| HU | EN | Ritka, de érvényes: magyar karbantartó, angol leadandó. |
+
+**Mindkettő telepítéskor dől el, és BEDRÓTOZÓDIK a telepített promptokba.** A projektbe **semmilyen nyelvi mező nem kerül** — sem a `conventions.md`-be, sem máshova —, ezért:
+
+- utólag **csak újratelepítéssel** változtatható;
+- meglévő projektnél **nincs migrációs teendő**: amíg nem telepítesz újra, minden a régiben marad;
+- a telepítő **záró összefoglalója kiírja mindkét nyelvet** — ez az egyetlen hely, ahol szembesülsz a választásoddal.
+
+> **A fő kockázat: nyelvi átszivárgás.** Angol instrukció + magyar projekt esetén a modell (különösen a gyengébb) hajlamos angol szavakat szivárogtatni a magyar dokumentumba, vagy az egész artefaktumot angolul megírni. Az ez elleni fő fegyver az **`output-language` blokk**: minden skill és minden agent legelejére — közvetlenül a H1 után — bekerül egy blokk, amely **a projekt nyelvén** mondja ki, hogy mit kell azon a nyelven írni (artefaktumok, a felhasználónak szóló mondatok), mi marad angol (azonosítók, fájlnevek, parancsok, szabály-ID-k), és hogy **a keverés javítandó hiba**. A célnyelven megfogalmazott szabály egyszerre utasítás és nyelvi horgony — mérhetően jobban tart, mint egy angolul megfogalmazott „write in Hungarian".
+
+> **⚠️ Jelenlegi korlát — `projekt = English`:** a determinisztikus kapu-scriptek (riport-kapu, DoD-ellenőrzés, kör-napló) üzenetei és a bennük keresett artefaktum-stringek **még magyarok**. Angol projekt-nyelvvel ezek egy része hibázhat; a telepítő ezt a választásnál külön jelzi. Az `EN` prompt + `HU` projekt (az alapértelmezés) teljes értékűen működik.
 
 ### Hogyan lehet használni?
 A telepítés után az adott platform automatikusan beolvassa a symlinkelt definíciókat:
@@ -258,6 +307,12 @@ berkispec/                            # repo gyökér
     │   ├── quality-check-{spec,plan,tasks}.md  # a 02/03/04 minőségellenőrzése; a skill ÉS a hozzá tartozó fixer-agent is beemeli (D13)
     │   ├── fix-mode-{spec,plan,tasks}.md       # a 02/03/04 Fix-mód (analyze-hurok belépő) szekciója; a skill ÉS a {spec,plan,tasks}-fixer agent is beemeli (D13)
     │   └── questions-tasks.md        # a 04 kérdés-nyilvántartó rendje (tasks-questions.md); a skill és a tasks-fixer is beemeli
+    ├── skills-en/ · agents-en/ · shared-en/   # ugyanaz a három fa ANGOL prompt-nyelven — azonos fájlnevek, azonos szerkezet (teljes szimmetria: NINCS suffix nélküli, kitüntetett fa)
+    ├── lang/                         # PROJEKT-nyelvi tartalom — az egyetlen hely, ahol a két nyelv találkozik
+    │   ├── status-keys.json          # a projekt-nyelvi szekciónevek / mezőnevek / státusz-értékek szótára (`hu` + `en` szelet); ebből oldódnak fel a `<sec:…>` / `<field:…>` / `<status:…>` tokenek build-time
+    │   ├── hu/                       # a magyar projekt-nyelvi blokkok (user-facing mondatok, artefaktum-sablonok) + `descriptions.json` (skill/agent leírók)
+    │   │   └── <skill|agent|shared>.md   # `<!-- ANCHOR:<horgony> -->` szekciókkal; a promptban `<!-- INCLUDE:lang/<fájl>.md#<horgony> -->` marker hivatkozza
+    │   └── en/                       # ugyanez angolul — azonos fájlnevek, azonos horgonyok
     ├── scripts/                      # automatizációs scriptek (a telepítő minden *.py-t átmásol a célprojektbe)
     │   ├── install-helper.py         # a telepítő motorja (modell- + effort-hozzárendelés, fájlmásolás, `INCLUDE:shared/…` inline-olás (BD14), `<platform-scripts-mappa>` feloldása (BD15)) — NEM kerül a célprojektbe
     │   ├── cycle-status.py           # a cycle-status skill futtató scriptje

@@ -1734,15 +1734,32 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
 
 ## 15. Dokumentáció
 
-- [ ] **15.1 — `README.md`.** Új szekció a két nyelvi beállításról: a 4 kombináció táblázata
+> **✅ A 15. SZAKASZ KÉSZ (2026-08-25).**
+> - **15.1 — `README.md`:** új *„Nyelvi beállítások — két független tengely"* szekció a
+>   2. Installáció alatt (a két tengely táblája, a **4 kombináció** mikor-melyik magyarázattal,
+>   a bedrótozás és a „nincs migrációs teendő" kimondva, az átszivárgás-kockázat + az
+>   `output-language` blokk mint válasz, és a `projekt = English` mai korlátja). A telepítési
+>   lépések kaptak egy 5. pontot (a két kérdés) és egy **flag-táblát** a nem interaktív módhoz
+>   (`install.sh` ↔ PowerShell megfelelők, defaultok). A mappastruktúra-ábra kiegészült a három
+>   `-en` fával és a `lang/` mappával (`status-keys.json`, `hu/`, `en/`). TOC frissítve.
+> - **15.2 — `prompts/meta-improve-prompts.md`:** a prompt-fájl tábla elé egy figyelmeztető
+>   blokk került (a tábla a `-hu` fát nevezi meg, de minden sorának van `-en` párja), a
+>   szimmetrikus mappaszerkezet ábrája, és **három konkrét szabály prompt-módosításhoz**:
+>   a szerkezeti változást mindkét fán át kell vezetni (`lang-parity-check.py` őrzi), az
+>   artefaktum-nevek tokenek (új név → előbb kulcs a JSON-ba), a user-facing mondatok a
+>   `lang/<L>/` horgonyaiban élnek. *(A 11.9 kötelező kézi kapuk blokkja már korábban bekerült.)*
+> - **15.3 — ez a munkafájl:** végig valós időben pipálva; a 9.3 leltár, a 13.2.1 glosszárium
+>   és a szakaszonkénti eredmény-blokkok itt vannak.
+
+- [x] **15.1 — `README.md`.** Új szekció a két nyelvi beállításról: a 4 kombináció táblázata
   (2.3), hogy **mindkettő telepítéskor dől el és bedrótozódik** (LG2/LG17 — utólag csak
   újratelepítéssel változtatható, és a projektben semmilyen nyelvi mező nem él), valamint az
   átszivárgás-kockázat + az `output-language` blokk mint válasz. A TOC-ot is frissítsd. A
   telepítés-szekció kapja meg a két új kérdést és a flag-alapú módot.
-- [ ] **15.2 — `prompts/meta-improve-prompts.md`.** A prompt-fájlok táblája és a mappaszerkezet
+- [x] **15.2 — `prompts/meta-improve-prompts.md`.** A prompt-fájlok táblája és a mappaszerkezet
   egészüljön ki a `skills-hu`/`skills-en` (stb.) szimmetrikus fákkal és a `lang/` mappával; a
   `lang-parity-check.py` kerüljön be kötelező ellenőrzési lépésként (11.9).
-- [ ] **15.3 — Ez a munkafájl.** Végrehajtás közben pipálj **valós időben**, és a 9.3 pontos
+- [x] **15.3 — Ez a munkafájl.** Végrehajtás közben pipálj **valós időben**, és a 9.3 pontos
   leltárát, valamint a 13.2.1 glosszáriumot **ide** írd — ezek a folytatás horgonyai.
 
 ---

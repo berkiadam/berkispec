@@ -39,6 +39,34 @@ Minden ciklus mappája: `specs/cycle-NN-<cycle-name>/`
 
 ## A prompt fájlok
 
+> **⚠ A repó KÉTNYELVŰ — a lenti tábla a `-hu` fát nevezi meg, de MINDEN sorának van `-en` párja.**
+> A szerkezet **teljesen szimmetrikus** (LG5): nincs suffix nélküli, kitüntetett fa.
+>
+> ```
+> prompts/
+> ├── skills-hu/  · agents-hu/  · shared-hu/    # a magyar prompt-nyelvi fa
+> ├── skills-en/  · agents-en/  · shared-en/    # az angol — AZONOS fájlnevek, AZONOS szerkezet
+> ├── lang/                                     # a PROJEKT-nyelvi tartalom (a két tengely itt találkozik)
+> │   ├── status-keys.json                      # szekciónév / mezőnév / státusz szótár (`hu` + `en` szelet)
+> │   ├── hu/  ·  en/                           # projekt-nyelvi blokkok + `descriptions.json`
+> └── scripts/                                  # nyelvfüggetlen
+> ```
+>
+> **Két nyelvi tengely, egymástól függetlenül:** a **prompt-nyelv** dönti el, melyik `-<lang>`
+> fából telepítünk; a **projekt-nyelv** azt, hogy a `lang/<L>/` blokkok és a `status-keys.json`
+> melyik szelete kerül be. Mindkettő **build-time** dől el és bedrótozódik (LG2) — a projektben
+> semmilyen nyelvi mező nem marad (LG17).
+>
+> **Amit egy prompt-módosításnál tudni kell:**
+> - a **szerkezeti** változást (címsor, kódblokk, INCLUDE-marker, szabály-ID, nyelvi token,
+>   imperatívusz-darabszám) **mindkét fán** át kell vezetni — ezt a `lang-parity-check.py` őrzi;
+> - az **artefaktum-szekciónevek, mezőnevek és státusz-értékek** a promptban **NEM literálok**,
+>   hanem `<sec:…>` / `<field:…>` / `<status:…>` tokenek, amiket a telepítő old fel a
+>   `lang/status-keys.json`-ból. **Új szekciónév → előbb kulcs a JSON-ba, csak utána token.**
+> - a **user-facing mondatok és az artefaktum-sablonok** nem a promptban élnek, hanem a
+>   `lang/<L>/<fájl>.md` horgonyaiban, `<!-- INCLUDE:lang/<fájl>.md#<horgony> -->` markerrel
+>   behivatkozva — ezeket **mindkét nyelven** szerkeszteni kell.
+
 | Fájl | Fázis | Bemenet | Kimenet |
 |------|-------|---------|---------|
 | `prompts/skills-hu/brainstorm.md` | *(nem fázis — a flow előtt)* | téma szabad szöveggel / `folytassuk a NN-est` | `.bs-brainstorm/brainstorm-NN-<slug>.md` (Cél · Tények forrással · Alternatívák · Döntések · Nyitott kérdések · Javasolt ciklus-vágás · Napló) — átadás a `01`-nek (BS18) |
