@@ -1560,12 +1560,12 @@ szakasz megvan, mert akkor a fordítandó felület már csak az instrukciós pr�
   | `downstream-hatás:` | `downstream-effect:` | a fixer → orchestrátor szerződés-mező (D11); az `nincs`/`van —` értékek is fordulnak (`none`/`yes —`) |
   | `Knn` (kérdés-azonosító) | `Qnn` | a `*-questions.md` tételei; a `lang/en/` blokkok is `Qnn`-t használnak |
   | `<FÁZIS-TAG>` | `<PHASE-TAG>` | a commit-üzenet helyőrzője; a kitöltött érték (`02-spec`) nyelvfüggetlen |
-- [ ] **13.2.2 — Az imperatívuszok erőssége nem gyengülhet.** `TILOS` → `FORBIDDEN` / `NEVER`,
+- [x] **13.2.2 — Az imperatívuszok erőssége nem gyengülhet.** `TILOS` → `FORBIDDEN` / `NEVER`,
   **nem** `should not`. A `⛔` és `🔴` jelölések maradnak. A gyenge modellek pont ezeken a
   pontokon romlanak el (1.1).
-- [ ] **13.2.3 — Szerkezet-megőrzés.** Ugyanannyi `##`/`###` címsor, ugyanabban a sorrendben
+- [x] **13.2.3 — Szerkezet-megőrzés.** Ugyanannyi `##`/`###` címsor, ugyanabban a sorrendben
   (11.7), ugyanannyi táblázat és kódblokk (11.8).
-- [ ] **13.2.4 — Fájlonként fordíts, és fájlonként futtasd a paritás-kaput.** Ne halmozz.
+- [x] **13.2.4 — Fájlonként fordíts, és fájlonként futtasd a paritás-kaput.** Ne halmozz.
 
 ### 13.3 Fájlonkénti fordítási lista
 
@@ -1645,23 +1645,18 @@ dolgozik (`analyze-gate-check.py`, `validate-gate-check.py`, `report-gate-check.
 `ds22-gate-check.py`, `tc8-gate-check.py`, `run-tests.py`, `round-log.py`) — lásd a 10.2 leltárt.
 Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
 
-> **⏳ A 13.3.3 FOLYAMATBAN (2026-08-25): 10/14 kész.** Delegálva és visszaellenőrizve:
-> `00-init-project`, `01-add-cycles`, `06-implement`, `09-merge`, `brainstorm`, `quick-flow`,
-> `export-doc`, `cycle-status`. Fő ágenstől: `04-write-tasks`, `02-write-spec`.
-> **Hátra: `03-write-plan` · `07-validate` · `08-doc-sync` · `05-analyze`** (mind fő ágens,
-> ~284 000 karakter). A `13.3` tábla pipái mutatják a pontos állást — ez a folytatás horgonya.
+> **✅ A 13.3.3 KÉSZ (2026-08-25) — mind a 14 skill.** Delegálva (LG23): `00-init-project`,
+> `01-add-cycles`, `06-implement`, `09-merge`, `brainstorm`, `quick-flow`, `export-doc`,
+> `cycle-status`. Fő ágenstől: `04-write-tasks`, `02-write-spec`, `05-analyze`, `08-doc-sync`,
+> `07-validate`, `03-write-plan`.
 >
-> **A `hu`/`hu` 16.1 keret a teljes §13 alatt változatlan** (70/70 skill + 55/55 agent) — a
-> fordítás definíció szerint nem érinti a magyar kimenetet, tehát ez a regresszió-védőháló
-> minden lépés után futtatható.
->
-> **Az `en`/`en` próbatelepítés ma 4 platformon lefut** (claude, codex, cursor, copilot):
-> 0 figyelmeztetés, 0 feloldatlan token, 0 feloldatlan INCLUDE. Az **antigravity `exit 1`-et ad**,
-> mert az `agents-en/gemini-agent/` még nem létezik — ez a **§14** hatóköre, nem hiba.
+> **A §13 EGÉSZE KÉSZ: 42/42 fájl.** `lang-parity-check.py --strict` → **exit 0** (63 fájlpár,
+> 0 WARN). Magyar ékezet a négy `en` fán → **0 találat** (16.5). A `hu`/`hu` 16.1 keret a teljes
+> §13 alatt **változatlan** (70/70 skill + 55/55 agent).
 
 | ✓ | Fájl | Karakter | Ki fordítja |
 |---|---|---:|---|
-| [ ] | `03-write-plan.md` | 87752 | **fő ágens** |
+| [x] | `03-write-plan.md` | 87752 | **fő ágens** |
 | [x] | `07-validate.md` | 83455 | **fő ágens** |
 | [x] | `08-doc-sync.md` | 71567 | **fő ágens** |
 | [x] | `05-analyze.md` | 41157 | **fő ágens** |
