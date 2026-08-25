@@ -1675,14 +1675,30 @@ Egy elmosott szekciónév itt **kapu-bukást** okoz, nem stílushibát.
 
 ## 14. Gemini `agent.json` tükrök
 
-- [ ] **14.1 — `agents-en/gemini-agent/` létrehozása** — 11 × `agent.json`, az `agents-en/*.md`
+- [x] **14.1 — `agents-en/gemini-agent/` létrehozása** — 11 × `agent.json`, az `agents-en/*.md`
   törzsével.
-- [ ] **14.2 — `sync-gemini-agents.py` nyelv-tudatosítása.** Ma `prompts/agents/<n>.md` →
+- [x] **14.2 — `sync-gemini-agents.py` nyelv-tudatosítása.** Ma `prompts/agents/<n>.md` →
   `prompts/agents/gemini-agent/<n>/agent.json`. **Futtassa mindkét fát egymás után** (nem
   `--prompt-lang` flaggel), így egy futás mindkét nyelvet szinkronban tartja, és a `--check`
   egyszerre ellenőriz mindent.
-- [ ] **14.3 — FIGYELEM: már ma is előfordul elcsúszás.** A tükrök a `.md` szerkesztésekor
+- [x] **14.3 — FIGYELEM: már ma is előfordul elcsúszás.** A tükrök a `.md` szerkesztésekor
   csendben elavulnak. **Futtasd a `--check`-et a munka elején és végén is.**
+
+> **✅ A 14. SZAKASZ KÉSZ (2026-08-25).** A 14.2 már a §7-ben elkészült (a script minden
+> `prompts/agents-*` fát végigfuttat), így egyetlen `sync-gemini-agents.py` futás elvégezte a
+> 14.1-et is: **11 új `agents-en/gemini-agent/*/agent.json`** + a **11 elavult `agents-hu` tükör**
+> újraszinkronja. `--check` → **exit 0 mindkét nyelvre** (16.4 teljesül).
+>
+> **⚠ Amit a 14.3 figyelmeztetése konkrétan takart — nem elméleti kockázat volt.** Az elavult
+> `agents-hu` tükrökből **hiányzott a 9.5 `output-language` blokk és a 9.7 tokenizálás minden
+> eredménye**: az Antigravity-felhasználók agent-promptjai a nyelvi horgony NÉLKÜL települtek
+> (a `reviewer` prompt 6565 helyett 8329 karakter a javítás után). A szinkron ezt **javította** —
+> a `hu`/`hu` antigravity agent-kimenet ezért (és csak ezért) változott.
+>
+> **Egy robusztussági hibát is javítottunk:** a `--check` **traceback-kel állt le**, ha a
+> `gemini-agent/` mappa hiányzott (pontosan az `agents-en` esete) — így a 14.3 „futtasd a
+> `--check`-et a munka elején" szabálya használhatatlan lett volna egy új nyelvi fán. Most a
+> hiányzó tükör-mappa **drift** (`exit 1`), nem összeomlás.
 
 ---
 

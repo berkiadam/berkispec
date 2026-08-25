@@ -62,6 +62,13 @@ def sync_tree(agents_dir, check):
             target.write_text(json.dumps(skeleton, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         drift.append(f"{md_path.stem} (új agent.json)")
 
+    # `--check` módban a tükör-mappa hiánya DRIFT, nem összeomlás: a fenti ciklus
+    # már felvette a hiányzó agent.json-okat a drift-listába, itt csak nincs mit
+    # végigjárni. (Enélkül a 14.3 „futtasd a --check-et a munka elején" szabálya
+    # használhatatlan: egy új nyelvi fán a kapu traceback-kel állt le.)
+    if not gemini_dir.is_dir():
+        return drift
+
     for agent_dir in sorted(gemini_dir.iterdir()):
         if not agent_dir.is_dir():
             continue
