@@ -19,7 +19,8 @@ Használat:
 
 Két üzemmód (LG25):
   DEFAULT  — csak a MINDKÉT oldalon létező fájlpárokra futtatja a 11.3–11.12
-             ellenőrzéseket; a féloldalas fájlokat WARN-ként listázza. Így a
+             ellenőrzéseket (11.13-mal együtt); a féloldalas fájlokat WARN-ként
+             listázza. Így a
              fájlonként haladó fordítási szakasz (§13) alatt is használható.
   --strict — a 11.1 fájlhalmaz-paritás is kötelező (a 16.3 és a PR zárása ezt
              követeli meg).
@@ -38,6 +39,16 @@ from pathlib import Path
 INCLUDE_RE = re.compile(r"<!--\s*INCLUDE:\s*(?P<path>[^\s]+?)\s*-->")
 ANCHOR_RE = re.compile(r"^<!--\s*ANCHOR:\s*(?P<name>\S+?)\s*-->\s*$", re.MULTILINE)
 RULE_ID_RE = re.compile(r"\b([A-Z]{2,3}\d+[a-z]?(?:/[a-z])?)\b")
+
+# 11.13 — NYELVFÜGGETLEN tokenek: ezek egyik nyelven sem fordulnak, tehát a két
+# oldalon ugyanannak a HALMAZNAK kell megjelennie. Darabszámot szándékosan NEM
+# nézünk: a backtick-csoportosítás nyelvenként eltérhet (`x.py --flag` egy
+# spanban vs. két spanban), az még nem tartalmi eltérés.
+NEUTRAL_TOKENS = {
+    "bs-parancs": re.compile(r"/bs-[a-z0-9-]+"),
+    "task-marker": re.compile(r"\[(?:RED|GREEN|CHECK|OPS|analyze-loop|validate-loop)\]"),
+    "útvonal": re.compile(r"(?<![\w/.-])[\w.-]*[\w-]\.(?:md|py|json|sh|ps1|xml|yml|toml)\b"),
+}
 TOKEN_RE = re.compile(r"<(sec|field|status):([a-z0-9_]+)>")
 TOKEN_GROUPS = {"sec": "sections", "field": "fields", "status": "status"}
 HEADING_RE = re.compile(r"^(#{1,6})\s+\S", re.MULTILINE)
@@ -429,10 +440,11 @@ def check_status_keys(prompts_dir, langs, ref, rep):
 def check_pair(prompts_dir, base, name, ref, lang, keys, rep):
     """A fájlpárra futó ellenőrzések: 11.3 (marker-halmaz), 11.4 (frontmatter),
     11.6 (szabály-ID), 11.7 (szekció-szerkezet), 11.8 (fence), 11.10
-    (imperatívusz), 11.12 (nyelvi token)."""
+    (imperatívusz), 11.12 (nyelvi token), 11.13 (nyelvfüggetlen token)."""
     a_path = tree_dir(prompts_dir, base, ref) / name
     b_path = tree_dir(prompts_dir, base, lang) / name
     a, b = a_path.read_text(encoding="utf-8"), b_path.read_text(encoding="utf-8")
+    a_text, b_text = a, b
     where = f"{base}-{lang}/{name}" if base != "lang" else f"lang/{lang}/{name}"
 
     # 11.3 — a markerek halmaza azonos (a `lang/<f>#<horgony>` a nyelvi mappán
@@ -510,6 +522,18 @@ def check_pair(prompts_dir, base, name, ref, lang, keys, rep):
                 if key not in keys.get(slice_lang, {}).get(TOKEN_GROUPS[group], {}):
                     rep.fail("11.12", where, f"a(z) `<{group}:{key}>` kulcs nincs a "
                              f"status-keys.json '{slice_lang}' szeletében")
+
+    # 11.13 — nyelvfüggetlen tokenek halmaz-paritása: `/bs-*` parancsnév,
+    # task-/státusz-marker, fájlútvonal. Ezek a fordításban a leggyakoribb
+    # CSENDES veszteségek: egy kihagyott `failure-counter.py` hivatkozás vagy
+    # egy elmaradt `[CHECK]` marker nyelvtanilag hibátlan mondatot hagy maga
+    # után, de más viselkedést telepít.
+    for label, rx in NEUTRAL_TOKENS.items():
+        sa, sb = set(rx.findall(a_text)), set(rx.findall(b_text))
+        for tok in sorted(sa ^ sb):
+            side = ref if tok in sa else lang
+            rep.fail("11.13", where, f"a(z) `{tok}` {label} csak a {side} oldalon "
+                     f"szerepel — a nyelvfüggetlen tokenek nem tűnhetnek el fordításkor")
 
 
 def check_unknown_tokens(prompts_dir, langs, keys, rep):

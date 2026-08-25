@@ -1513,6 +1513,22 @@ csendben szétcsúszik. Amint létezik, minden további lépés után fusson.
   *jelentés*-helyességét nem ellenőrzi, azt csak emberi review. A kapu a szerkezeti és leltár-
   hibákat fogja meg.
 
+  > **✅ A maradék kockázat SZŰKÍTVE — 11.13 kapu (2026-08-25).** A jelentés-helyesség
+  > továbbra is emberi review dolga, de a fordítás leggyakoribb **csendes** vesztesége
+  > gépiesen megfogható: egy `/bs-*` parancsnév, egy `[CHECK]`/`[RED]` task-marker vagy egy
+  > `failure-counter.py`-szerű fájlhivatkozás úgy tűnik el az angol oldalról, hogy a mondat
+  > nyelvtanilag hibátlan marad — csak MÁS viselkedést telepít.
+  >
+  > A **11.13** ezért a nyelvfüggetlen tokenek **halmaz**-paritását őrzi mind a 63 fájlpáron.
+  > Szándékosan **halmaz, nem darabszám**: a backtick-csoportosítás nyelvenként eltérhet
+  > (`` `x.py --flag` `` egy spanban vs. kettőben), az még nem tartalmi eltérés — ez a
+  > pontosítás egy valódi álriasztásból jött (`failure-counter.py` hu=15 en=17 backtickelt
+  > előfordulás, miközben a teljes darabszám mindkét oldalon 24).
+  >
+  > **A mai állapot: 0 eltérés** a négy fán (`skills`, `agents`, `shared`, `lang`) — vagyis a
+  > §13 fordítás egyetlen szabály-ID-t, parancsnevet, markert és fájlútvonalat sem ejtett el.
+  > Hibainjektálással ellenőrizve, hogy valódi eltéréskor bukik.
+
 ---
 
 ## 12. A telepítő
