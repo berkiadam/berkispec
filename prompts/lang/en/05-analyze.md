@@ -74,6 +74,8 @@ _Audit trail per iteration — the anchor for continuing after an interruption._
 
 ### Iteration 1
 - **FAIL categories:** <categories>
+- **Open items:** <AF-NN / AX-NN identifiers>
+- **Surviving items (TS):** <which identifiers came back as "NOT resolved", and in which consecutive round — from the 2nd iteration onward; or "none">
 - **Target phase:** <phase> (earliest affected)
 - **Fix:** <summary of the fixer subagent in one line>
 - **Open questions:** <PHASE/Qnn list or "none">

@@ -86,7 +86,7 @@ Add vissza a hívó skillnek (ne írj fájlt; a 05-analyze skill írja az `analy
 
 ```md
 ## Must Fix
-- [ ] <kategória (6.x)> — <leírás> → célfázis: <fázis> (`fájl:hely`)
+- [ ] **AX-NN** — <kategória (6.x)> — <leírás> → célfázis: <fázis> (`fájl:hely`)
 
 ## Suggestions
 - <kategória (6.x)> — <leírás> (`fájl:hely`)
@@ -103,5 +103,7 @@ Add vissza a hívó skillnek (ne írj fájlt; a 05-analyze skill írja az `analy
 ```
 
 - Ha nincs `<status:must_fix>`, a szekció maradjon meg üres listával vagy „<status:none_marker>" jelzéssel — determinisztikus parszolás végett (a hurok ebből ismeri fel a konvergenciát).
+- **Minden `<status:must_fix>` tétel kötelezően `AX-NN` azonosítót kap** (`AX-01`, `AX-02`, …). Az azonosító **stabil**: a 2. futástól **ne számozd újra** a tételeket — a még nyitottak megtartják a számukat, az újak a sor végén folytatódnak, és az `Előző kör Must Fix tételei` blokkban ugyanazzal az azonosítóval hivatkozz rájuk. Erre épül az orchestrátor **túlélés-szabálya** (ha ugyanaz az azonosító két egymást követő iterációt túlél, az **döntést** jelez, nem javítható hibát) — parafrazeált szöveggel ez nem működik.
+  > A prefix **`AX`**, nem `AF` — az orchestrátor a te listádat és az `analyzer`-ét összefésüli, és az azonosítók nem ütközhetnek.
 - **Az `Érintett DoD-sorok` blokk azért kell,** mert a lefedettségi mátrixot a kapu generálja: a `✓` ott csak azt jelenti, hogy a **lánc megvan**. Ha egy taskra végrehajthatósági `<status:must_fix>` esett, a sor valójában nem lefedett — ezt te jelzed, és az orchestrátor javítja a riportban.
 - **A 2. futástól** megkaphatod az előző kör `<status:must_fix>` listáját (a rád tartozó tételekkel) — ilyenkor a jelentésed **első blokkja** tételenként igazolja, hogy megoldódott-e.

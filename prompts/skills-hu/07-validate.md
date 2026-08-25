@@ -110,6 +110,13 @@ A validáció bármikor megszakadhat. Újraindítás (ismételt futtatás) eset�
 2. **Beragadt erőforrások**: Ha a korábbi megszakított futásból beragadt teszt konténerek vagy folyamatok miatt portütközést tapasztalsz, lődd ki azokat, vagy keress új szabad portot a korábban leírt módon.
 3. **Duplikált taskok elkerülése**: Ha a futás FAIL-lel zárul, és javító feladatokat kell felvenned a `tasks.md` `## <sec:validation_fixes>` / `## <sec:review_fixes>` szekciójába, mindig ellenőrizd, hogy a konkrét teszthiba, Sonar-javítás vagy `MF-NN` finding nem szerepel-e már elvégzetlen taskként (egy korábbi félbeszakadt validáció okán). Ha már ott van, ne vedd fel duplán.
 
+3/b. **A megszakadt diagnoszta-futás részleletei (RV-INC):** ha az előző kör egy **diagnoszta subagent futása közben** szakadt meg (`reviewer`, `test-runner`, `analyzer`), a subagent már elvégzett munkája jellemzően **nincs teljes egészében a lemezen** — a jelentését a futás során írja ki, nem egyetlen záró művelettel. Mielőtt az új körben újraindítod:
+   - **Nézd meg a részleges artefaktumot.** A `reviewer` inkrementálisan ír (RV-INC): ha a `test-report/code-review.md` fejlécében `<field:f_status>` = `<status:in_progress>` áll, a benne lévő findingok valósak, csak hiányosak — **ne dobd el és ne írd felül őket**.
+   - **Kérdezd meg a felhasználót egy sorban:** *„A megszakadt `<subagent>` futásából ismert-e olyan részlelet (a platform naplójából vagy transcriptjéből), amit át kell adnom az új futásnak?"*
+   - A kapott tételeket **és** a részleges artefaktum findingjait add át az új subagent bemenetében **„ellenőrizendő tételek"** blokként — nem kész findingként, hanem célzott ellenőrzési pontként.
+
+   **Guard:** ha nincs ilyen részlelet, folytasd — ez nem hiba. Ezek nélkül viszont az új futás **vakon indul**, és egy már bizonyított hibát is elnézhet.
+
 4. **Megszakadt önjavító hurok felismerése (`[validate-loop]` marker + <sec:validation_history>):** ha a `tasks.md` státusza `<status:ready_for_implement> [validate-loop]` markert visel, egy korábbi validate-hurok szakadt meg — **ne** kezdj tiszta lapról. Derítsd ki a hurok állapotát:
    - Kérdezd le a napló állapotát: `failure-counter.py <validation-report.md> --status` — ez adja meg az utolsó futást, a megrekedt itemeket és a számlálókat (hányadik próbánál tartott). Kézzel ne parse-old.
    - Olvasd be a `tasks.md` `## <sec:validation_fixes>` **és** `## <sec:review_fixes>` szekcióját: vannak-e még elvégzetlen `[ ]` javító-taskok?
@@ -320,13 +327,27 @@ A subagent jelentése alapján:
 > A review a **gyors tesztek után, de a nehéz tesztek előtt** fut: a diff ilyenkor már fordul és unit-szinten zöld, tehát nem félkész kódot nézünk, viszont a findingjai még azelőtt javíthatók, hogy bármi drágát futtattunk volna rá.
 
 1. **Indítsd a `reviewer` subagentet** (`agents/reviewer.md` rendszerprompt), átadva neki:
-   - a ciklus branch és a fő branch közötti `git diff`-et (a `conventions.md` Merge stratégiájában megnevezett target branch-hez képest) — **a diffet te futtatod le és adod át**, ne bízd a subagentre: több platformon nem tud parancsot futtatni (EX1),
+   - a ciklus branch és a fő branch közötti `git diff`-et (a `conventions.md` Merge stratégiájában megnevezett target branch-hez képest) — **a diffet te futtatod le és adod át**, ne bízd a subagentre: több platformon nem tud parancsot futtatni (EX1). **A diffet szűkítsd a forráskódra (RV-SC)** — ez a fázis egyik legnagyobb token-tétele:
+     ```
+     git diff <target>...HEAD -- . ':(exclude)specs/**' ':(exclude)*.lock' ':(exclude)package-lock.json'
+     ```
+     Egészítsd ki a `conventions.md`-ben **generáltként** megnevezett könyvtárakkal (tipikusan `dist/`, `build/`, `docs-generated/`). Indok: a tervezési dokumentumok diffjének átnézése **tiszta duplikáció** — a `spec.md`-t és a `plan.md`-t a reviewer amúgy is **teljes fájlként, külön** megkapja, és a „spec eltérés" ítéletet azok **aktuális** tartalmához méri, nem a változásukhoz; a generált kimenet és a lockfile-ok pedig nem review-tárgyak. **A teszteket NE zárd ki** — a teszt-kód review-ja a legértékesebbek közé tartozik (egy hiányzó mock-stub például csak ott látszik).
    - a `conventions.md`-t, a `plan.md`-t és a `spec.md`-t,
    - **ha már volt review ebben a fázisban:** az előző `test-report/code-review.md`-t, azzal az explicit kéréssel, hogy a **még nyitott** `<status:must_fix>` findingokra fókuszáljon, és a lezártakat jelölje lezártként (inkrementális re-review — ne írja újra nulláról a jelentést).
 2. A subagent a jelentést a **`specs/cycle-NN-<cycle-name>/test-report/code-review.md`** fájlba menti.
-   > **Ha a subagent nem fut le, vagy nem készít `code-review.md`-t:** ez **nem** kód-bug, ezért **nem indítasz fixert**. Próbáld újra egyszer; ha másodszorra sem sikerül, **STOP + humán** a „Hol járunk" fejléccel, és kérdezd meg, hogy próbáljam-e újra, vagy végezzem el a review-t közvetlenül a `reviewer.md` szempontjai szerint a fő ágensben.
+   > **Ha a subagent nem fut le, vagy nem készít `code-review.md`-t:** ez **nem** kód-bug, ezért **nem indítasz fixert**. A teendőt a **hiba típusa** dönti el — ne mérlegelj, nézd meg a hibaüzenet szövegét:
+   > - **Platform-korlát** (a szövegben kvóta/keret/limit szerepel — pl. „usage limit", „quota exceeded", „reached its usage limit", vagy egy keret-reset dátum): **NE próbáld újra.** A második hívás determinisztikusan ugyanabba fut, és egy kört pazarol el. Ugorj azonnal a STOP + humán ágra, és a kérdésbe **másold be a hibaüzenetet szó szerint** (a reset-dátummal együtt) — a döntés (admin-engedély, várakozás a resetig, másik modell-pool) a felhasználóé, nem a tiéd.
+   > - **Minden más hiba** (időtúllépés, egyszeri összeomlás, üres válasz): próbáld újra **egyszer**.
+   >
+   > Ha a subagent így sem futtatható: **STOP + humán** a „Hol járunk" fejléccel — kérdezd meg, hogy próbáljam-e újra, vagy végezzem el a review-t közvetlenül a `reviewer.md` szempontjai szerint a fő ágensben.
+   >
+   > **🔴 Ha a fallback ágra mész (a review a fő ágensben készül), a jelentés eredetét KÖTELEZŐ jelölni.** A fallback más modellen és szűkebb kontextusban fut, mint a `reviewer` subagent, ezért rendszeresen gyengébb lelet — aki később a riportot olvassa, ezt lássa:
+   > - a `code-review.md` fejlécébe egy sor: **Készítette:** fő ágens (fallback) — a reviewer subagent nem volt futtatható: <ok>;
+   > - a kör lépés-táblájában a lépés neve `kódreview (2/b, RV1) — fallback: fő ágens` legyen, **soha ne** `reviewer subagent`;
+   > - az `## <sec:closing_summary>` szekcióba írd be, hogy a subagent-review pótlása ajánlott.
 3. **Értékeld a jelentést:**
-   - **Nincs lezáratlan `- [ ]` a `<sec:critical_fixes>` szekcióban** → a review-kapu ✓. Ha a Sonar is zöld, a statikus réteg zöld → mehet a 3. lépés (nehéz tesztek).
+   - **A fejlécben `<field:f_status>` = `<status:in_progress>`** → a reviewer **nem fejezte be** a jelentést (megszakadt futás — RV-INC). A review-kapu **nem zárható le vele**: sem zöldre, sem FAIL-re. A már kiírt findingok viszont **valósak, csak hiányosak** — ne dobd el és ne írd felül őket; kezeld a lépést a 2. pont hiba-ága szerint, és a részleges findingokat vidd tovább a következő review bemenetébe. A `validate-gate-check.py` ezt gépileg is elbukja.
+   - **Nincs lezáratlan `- [ ]` a `<sec:critical_fixes>` szekcióban** (és a fejléc `<status:done>`) → a review-kapu ✓. Ha a Sonar is zöld, a statikus réteg zöld → mehet a 3. lépés (nehéz tesztek).
    - **Van lezáratlan `<status:must_fix>`** → a **kör FAIL** (nem külön hurok!): a findingok a kör bukott elemei közé kerülnek, és a naplózásnál `--failed-item`-ként adod át őket.
      > **🔴 Item-név review-findingnál:** a `code-review.md`-ben szereplő finding **azonosítója** legyen (`MF-01`, `MF-02`, …), soha ne a parafrazeált szövege — a leállási korlát szó szerinti névegyezésre épül (ugyanaz a szabály, mint a `DoD-NN`-nél). Ha a reviewer nem adott azonosítót, **pótold a `code-review.md`-ben** sorfolytonosan, mielőtt naplózol.
    - **`Suggestions` szekció:** **nem blokkol.** Ha egy javaslat a ciklus scope-ján belül van és kockázat nélkül alkalmazható, javítsd direktben (a következő kör úgyis leteszteli); ha scope-on kívül esik vagy bizonytalan, hagyd a listában jövőbeli ciklusnak — ne kezdj scope creepet. A `Suggestions` **soha nem** kerül a `--failed-item`-ek közé.

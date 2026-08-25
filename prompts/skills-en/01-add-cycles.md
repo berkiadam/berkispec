@@ -7,7 +7,8 @@ prerequisites:
 output:
   - "specs/roadmap.md status: <status:done>"
   - "specs/cycle-NN-<name>/cycle-design-input.md (empty template, filled in by the user — optional, CD1; filled in when there is brainstorm input, BS18)"
-  - "specs/cycle-NN-<name>/spec-input-from-prev.md and/or plan-input-from-prev.md (only if there is info to hand over, IP1)"
+  - "specs/cycle-NN-<name>/spec-input-from-prev.md — ALWAYS created, with an empty template as well (IP1)"
+  - "specs/cycle-NN-<name>/plan-input-from-prev.md (only if there is info to hand over, IP1)"
 prev: bs-init-project  # or bs-brainstorm (BS18 — brainstorm input)
 next: bs-write-spec
 subagents:
@@ -150,6 +151,7 @@ Based on the HLD/LLD, determine the development cycles, and describe them in the
 During cycle planning, information regularly comes up that **doesn't belong in the roadmap** (a roadmap entry is short: behavior, affected components, prerequisites, test criterion), but is valuable to later phases. **Don't discard it** — write it into the appropriate handoff file in the cycle's folder:
 
 - **`spec-input-from-prev.md`** — for **02-write-spec**: behavioral detail, concrete error case, data field, business rule, acceptance criterion that the user mentioned during the interview but that doesn't fit into the roadmap entry.
+  > **🔴 You ALWAYS create this file** — with the template, even if not a single item was collected (with an empty list in that case). This is the **one single exception** to rule 4. **It has no prerequisite whatsoever:** it does not depend on whether there was a `/bs-brainstorm` session, on which mode you are running in (A/B), or on how much was said during the interview. If there is nothing to hand over, the empty list **is itself the information** — this is how 02 knows that the channel was there and that nothing was missed. **Do not fill it with invented items** just so that it is not empty.
 - **`plan-input-from-prev.md`** — for **03-write-plan**: technical constraint, information about an existing component or infrastructure, known integration limit that the user mentioned here.
 
 **In mode A** (full roadmap planning) the cycle folder may not exist yet — in that case, write the item into the folder of the cycle it concerns, creating the folder. If the item concerns **multiple cycles**, it doesn't belong here: it should go into the relevant cycle entries in `roadmap.md`.

@@ -109,10 +109,10 @@ Add vissza a hívó skillnek (ne írj fájlt; a 05-analyze skill írja az `analy
 
 ```md
 ## Előző kör Must Fix tételei (csak a 2. futástól)
-- <tétel> → igazolva | NEM oldódott meg — <miért>
+- **AF-NN** → igazolva | NEM oldódott meg — <miért>
 
 ## Must Fix
-- [ ] <kategória> — <leírás> → célfázis: <fázis> (`fájl:hely`)
+- [ ] **AF-NN** — <kategória> — <leírás> → célfázis: <fázis> (`fájl:hely`)
 
 ## Suggestions
 - <kategória> — <leírás> (`fájl:hely`)
@@ -125,5 +125,6 @@ Add vissza a hívó skillnek (ne írj fájlt; a 05-analyze skill írja az `analy
 ```
 
 - Ha nincs `<status:must_fix>`, a szekció maradjon meg üres listával vagy „<status:none_marker>" jelzéssel — determinisztikus parszolás végett (a hurok ebből ismeri fel a konvergenciát).
+- **Minden `<status:must_fix>` tétel kötelezően `AF-NN` azonosítót kap** (`AF-01`, `AF-02`, …). Az azonosító **stabil**: a 2. futástól **ne számozd újra** a tételeket — a még nyitottak megtartják a számukat, az újak a sor végén folytatódnak, és az `Előző kör Must Fix tételei` blokkban ugyanazzal az azonosítóval hivatkozz rájuk. Erre épül az orchestrátor **túlélés-szabálya** (ha ugyanaz az azonosító két egymást követő iterációt túlél, az **döntést** jelez, nem javítható hibát) — parafrazeált szöveggel ez nem működik.
 - **A lefedettségi mátrixot NE írd ki** — azt a mechanikus kapu generálja, és az orchestrátor fűzi a riportba (AG4). Te csak az `Érintett DoD-sorok` blokkban jelzed, melyik sor nem elégséges tartalmilag.
 - Ha több kategória is FAIL, jelezd, melyik a **legkorábbi érintett fázis** (02 < 03 < 04) — az orchestrátor oda indítja a fixert, majd onnan deriválja le újra a downstream fázisokat.

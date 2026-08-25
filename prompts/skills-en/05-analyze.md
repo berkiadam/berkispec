@@ -161,6 +161,14 @@ The diagnosis looks for problems in **5 categories** (done by the `analyzer` sub
   - `analyzer-exec` → the **`## <sec:inventory>`** (`<status:mk_artifact>` / `<status:mk_anchor>` / `<status:mk_tone_suspect>` / `<status:mk_test_promise>` / `<status:mk_destructive>`, AG3): this replaces the repo and document exploration, which was the main cost of category 6;
   - `analyzer` → the **`## <sec:coverage_matrix>`** (AG4): the `DoD-NN → [P-…] → task` chain ready-made, so that it does not derive it again.
 - You merge the output of the two subagents (see "The two analyzer subagents"), and decide about PASS / FAIL based on that.
+
+  > **🔴 If one of the analyzer subagents does not run, or does not give a findings list:** **do not silently carry out the cross-examination yourself** — the whole value of the phase is that the diagnosis is **independent** of the orchestrator. The **type of the error** decides what to do — do not deliberate, look at the text of the error message:
+  > - **A platform limit** (the text mentions a quota/allowance/limit — e.g. "usage limit", "quota exceeded", "reached its usage limit", or an allowance reset date): **do NOT retry.** The second call runs deterministically into the same thing. Jump straight to the STOP + human branch, and **copy the error message verbatim** into the question (together with the reset date) — the decision (an admin permission, waiting for the reset, another model pool) belongs to the user.
+  > - **Every other error** (a timeout, a one-off crash, an empty answer): retry **once**. If only **one** of the subagents failed, restart **only that one** — do not discard the findings list of the other.
+  >
+  > If it cannot be run even so: **STOP + human** — ask whether I should retry it, or carry out the missing categories directly in the main agent according to the aspects of `analyzer` / `analyzer-exec`.
+  >
+  > **If you go down the fallback branch, marking the origin of the diagnosis is MANDATORY.** The main agent works on a different model and in a narrower context than the subagent, and on top of that it is the orchestrator itself — so the diagnosis **loses its independence**, and is systematically a weaker finding set. One line should go into the header of `analyze-report.md`: **Diagnosis:** the main agent (fallback) — <subagent> could not be run: <reason>. A PASS produced this way is **not of full value** — note there that making up for the subagent diagnosis is recommended.
 - You start the fixing fixer subagents also as Task tool subagents, with their own wrapper prompt (`agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`) — see "The self-healing loop".
 - **The `*-input-from-prev.md` files (IP1) are inputs too:** the subagent reads the `spec-`/`plan-`/`tasks-input-from-prev.md` files in the folder of the cycle (whichever exists), and reports an open `[ ]` item **as a coverage gap**. The reason: an open item means that an earlier phase handed over a piece of information that the consuming phase neither built in nor dropped — this is just as much a gap as a requirement without a task.
 
@@ -276,6 +284,18 @@ In case of a FAIL you do **not** simply hand control back to the user. Instead, 
 
    > **A `PASS` can only be given from a full analyzer run** — the `git diff` gives the focus, not the scope.
 
+6.a **The survival rule (per-item escalation) — TS.** Before you start a new iteration, look at the **first block** of the analyzer's report (`Previous round's Must Fix items`), and collect those `AF-NN` / `AX-NN` items that came back marked `NOT resolved`.
+   - **Keep the survival counter in the Loop log:** write out the identifiers of the surviving items for each iteration. The survival count of an item is which **consecutive** iteration it came back in as `NOT resolved`.
+   - **If an item survives the SECOND consecutive iteration as well, do not hand it to the fixer a third time.** After two unsuccessful fixing attempts the most likely explanation is not that the fixer is clumsy, but that the item **requires a genuine decision** (a technology base, a configuration path, a test scope) that the fixer by definition must not make — see the "genuine decision" rule of the fix mode. In that case:
+     1. **turn it into a question:** add it as a `Qnn` into the `*-questions.md` file of the target phase, if the fixer has not done so already;
+     2. **ask the user** with the phase-header format, **one by one**;
+     3. carry the answer over (`[x]` + the decision), then **restart the fixer** with the question now answered.
+
+     This corresponds to the question stop of point 4: it is **not a new iteration, and does not consume `X`.**
+   - **Note in the Loop log:** `TS — <identifier> survived the 2nd round as well → turned into a question`.
+
+   > **Why it is needed.** `max X` is a **loop-level** limit: it does not notice when the fixer brings in a big package while leaving the same few items untouched round after round. In that case the loop burns all three iterations, and the user gets a `3/3 (given up)` report at the end — instead of having received the few concrete questions in the second round, after which the loop could have converged. In 07 the same role is filled by the per-item stop counter (VD4) and the escalation heuristic (VD5).
+
 ### The two analyzer subagents (E) — parallel start and merging
 
 The diagnosis is done by **two subagents**, with scopes independent of each other. **Start them in a single message so that they can run in parallel** — this way the elapsed time of the phase is that of the slower one, not their sum.
@@ -303,8 +323,9 @@ The file list is **focus, not a narrowing** (the same principle as with the docu
 
 - The **system prompt** of the fixer subagent is the fixer wrapper of the target phase: `agents/spec-fixer.md` (02), `agents/plan-fixer.md` (03), `agents/tasks-fixer.md` (04). The wrapper **contains** the Fix mode section of the phase and the quality gate of the phase (from a shared source, inlined at build time) — there is no duplicated fixing logic, and the own gates of the phase take effect automatically.
 - **The fixer does not read a phase skill (D13).** Every rule is in the wrapper; if a fixer does announce reading the skill, that is an error (it tempts to re-run the whole phase instead of a targeted fix).
-- **The input** to the subagent: the `<status:must_fix>` list filtered for the target phase (category + description + `file:location`) + the documents of the target phase.
+- **The input** to the subagent: the `<status:must_fix>` list filtered for the target phase **together with the `AF-NN` / `AX-NN` identifiers** (identifier + category + description + `file:location`) + the documents of the target phase. **Do not drop and do not rewrite** the identifiers — the survival rule (TS) builds on a literal identifier match.
 - **The output** from the subagent: (a) a summary of the (mechanical) fixes made, (b) the **`downstream-effect:`** field (`none` / `yes — <what affects the next phase>`, D11), and (c) the identifiers of the **<status:op_new>** questions added to `*-questions.md` — of those points that need a real decision. The subagent **does not ask the user directly** (it has no interactive channel); it only collects and returns. Asking is your business (D2).
+- **A completeness check on return.** Compare the list you handed over with the fixer's summary: **every** identifier handed over must appear either as fixed, or as a `Qnn` question, or with an explicit "I could not handle it" justification. **If an identifier is silently missing**, do not start an analyzer run for it: ask the fixer back in one sentence what happened to it. Otherwise a silently omitted item looks as if the fixer had tried and failed — and the TS counter would give a false picture.
 
 ### The `max X` loop counter + stopping
 

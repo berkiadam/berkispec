@@ -7,7 +7,8 @@ prerequisites:
 output:
   - "specs/roadmap.md státusz: <status:done>"
   - "specs/cycle-NN-<name>/cycle-design-input.md (üres sablon, a felhasználó tölti ki — opcionális, CD1; brainstorm-bemenet esetén feltöltve, BS18)"
-  - "specs/cycle-NN-<name>/spec-input-from-prev.md és/vagy plan-input-from-prev.md (csak ha van átadandó infó, IP1)"
+  - "specs/cycle-NN-<name>/spec-input-from-prev.md — MINDIG létrejön, üres sablonnal is (IP1)"
+  - "specs/cycle-NN-<name>/plan-input-from-prev.md (csak ha van átadandó infó, IP1)"
 prev: bs-init-project  # vagy bs-brainstorm (BS18 — brainstorm-bemenet)
 next: bs-write-spec
 subagents:
@@ -149,6 +150,7 @@ A HLD/LLD alapján határozd meg a fejlesztési ciklusokat, és írd le őket a 
 A ciklustervezés során rendszeresen elhangzik olyan információ, ami **nem a roadmap-be való** (a roadmap-bejegyzés rövid: viselkedés, érintett komponensek, előfeltételek, teszt kritérium), de a következő fázisoknak értékes. **Ne dobd el** — írd a ciklus mappájában lévő megfelelő átadó fájlba:
 
 - **`spec-input-from-prev.md`** — a **02-write-spec**-nek: viselkedési részlet, konkrét hibaeset, adatmező, üzleti szabály, elfogadási feltétel, amit az interjú során a felhasználó elmondott, de a roadmap-bejegyzésbe nem fér bele.
+  > **🔴 Ezt a fájlt MINDIG létrehozod** — a sablonnal, akkor is, ha nem gyűlt össze egyetlen tétel sem (ilyenkor üres listával). Ez a 4. szabály **egyetlen kivétele**. **Nincs semmilyen előfeltétele:** nem függ attól, hogy volt-e `/bs-brainstorm` session, melyik módban futsz (A/B), és mennyi hangzott el az interjún. Ha nincs mit átadni, az üres lista **maga az információ** — a 02 ebből tudja, hogy a csatorna megvolt, és nem maradt le semmiről. **Ne tölts bele kitalált tételeket**, csak hogy ne legyen üres.
 - **`plan-input-from-prev.md`** — a **03-write-plan**-nek: technikai megkötés, meglévő komponens- vagy infrastruktúra-információ, ismert integrációs korlát, amit a felhasználó itt mondott el.
 
 **A. módban** (teljes roadmap tervezés) a ciklus mappája még nem feltétlenül létezik — ilyenkor a tételt annak a ciklusnak a mappájába írd, amelyikre vonatkozik, a mappát létrehozva. Ha a tétel **több ciklust** érint, az nem ide tartozik: a `roadmap.md` megfelelő ciklus-bejegyzéseibe menjen.

@@ -19,7 +19,8 @@ Két szakasz:
     · spec.md: minden DoD-pontnak van `DoD-NN` azonosítója, egyediek,
       és nincs köztük nyitott `- [ ]` (DI1)
     · validate-input-from-prev.md: nincs nyitott `[ ]` tétel (IP1)
-    · test-report/code-review.md: nincs nyitott `- [ ] **MF-NN**` (RV1)
+    · test-report/code-review.md: a jelentés befejezett (a fejléc státusza nem
+      `Folyamatban` — RV-INC), és nincs benne nyitott `- [ ] **MF-NN**` (RV1)
     · validation-report.md: van legalább egy `## Kör N` blokk, a körök száma
       nem kevesebb a `# Validation History` futásainál (VD9-guard), és
       minden körhöz létezik a `validate/round-NN/` mappa (TR5)
@@ -182,6 +183,14 @@ def check_review(cycle, rep, stage, require_review):
         else:
             rep.info("test-report/code-review.md: még nincs (a review nem futott ebben a körben)")
         return
+    status = get_status(path)
+    if status is not None:
+        head = status.split("|")[0].strip()
+        if head == st("in_progress").lower():
+            rep.bad(f"code-review.md: a jelentés befejezetlen ({fld('f_status')}: "
+                    f"{st('in_progress')}) — a reviewer futása megszakadt, a review-kapu "
+                    "(RV1) nem zárható le vele; a kiírt findingok részlegesek (RV-INC)")
+            return
     open_mf = re.findall(r"^\s*- \[ \].*$", text, re.MULTILINE)
     if open_mf:
         ids = [m.group(0) for l in open_mf for m in [re.search(r"MF-\d+", l)] if m]

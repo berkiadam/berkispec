@@ -591,6 +591,32 @@ def inline_shared_includes(content, src_dir, _depth=0):
         return match.group('lead') + resolved + match.group('trail')
     return _INCLUDE_MARKER_RE.sub(_repl, content)
 
+# ── `@inherit` — a modell-választás ÁTENGEDÉSE a platformnak (MA1) ──────────
+# A `models.json`-ban a `"model": "@inherit"` érték (és az üres/hiányzó modell) azt
+# jelenti: NE írjunk `model:` mezőt a telepített agentbe. A subagent ilyenkor a
+# platform alapértelmezését, illetve a HÍVÓ (szülő) ágens modelljét örökli.
+#
+# Miért kell külön sentinel, és miért nem elég a kulcs törlése: a törlés esetén a
+# feloldás üres stringet adna, amiből `model: [effort=high]` lenne — érvénytelen
+# azonosító. A Cursor az ilyet CSENDBEN a szülő modelljére cserélve nyeli le, tehát
+# a hiba nem látszik, csak a viselkedésen (és a számlán). Az `auto` ugyanazt a
+# viselkedést adja, de KIMONDVA.
+#
+# Mire jó: a Cursor Team-en a harmadik feles modellek (`claude-*`, `gpt-*`) külön,
+# jóval kisebb API-keretből mennek, mint az első felesek (Auto pool). Ha minden
+# subagent nevesített Claude-modellt kap, a subagent-terhelés 100%-ban az API-keretre
+# esik, miközben az Auto-keret érintetlen marad. Az `auto` ezt oldja fel — a
+# nevesítés lehetősége viszont megmarad, platformonként és agentenként.
+# A sentinel `@`-cal kezdődik, hogy SOHA ne ütközzön valódi modell-azonosítóval.
+# Konkrét eset: a Cursoron az `auto` egy VALÓDI modell ("Auto (default)", lásd
+# `cursor-agent --list-models`) — ha a sentinel is `auto` lenne, a profil nem tudná
+# kifejezni, hogy „a Cursor auto-routerét kérem", mert a telepítő elhagyná a mezőt.
+OMIT_MODEL = "@inherit"
+
+def is_auto_model(model):
+    """Igaz, ha a modell-választást a platformra bízzuk (nincs `model:` mező)."""
+    return not model or str(model).strip().lower() == OMIT_MODEL
+
 def _build_alert(model, platform_name, effort=None):
     lines = [f"> **Recommended Model ({platform_name}):** {model}"]
     if effort is not None:
@@ -600,7 +626,19 @@ def _build_alert(model, platform_name, effort=None):
 # A `model` mindig injektálódik (frontmatter mező + látható alert). Az `effort`
 # opcionális: ha None (pl. skilleknél, amik az orchestrátor-fő ágensek, nem
 # subagentek), nem kerül be — csak az agenteknél adjuk át.
+def _strip_model_field(content):
+    """`auto` eset: a `model:` sort NEM írjuk ki, és ha a forrásban lenne, kivesszük.
+    Alert sem kerül a törzsbe — nincs mit ajánlani."""
+    parts = content.split('---')
+    if len(parts) < 3:
+        return content
+    frontmatter, body = parts[1], '---'.join(parts[2:])
+    kept = [l for l in frontmatter.splitlines() if not l.strip().startswith('model:')]
+    return f"---{chr(10).join(kept)}\n---{body}"
+
 def inject_markdown_model(content, model, platform_name, effort=None):
+    if is_auto_model(model):
+        return _strip_model_field(content)
     parts = content.split('---')
     if len(parts) >= 3:
         frontmatter = parts[1]
@@ -652,7 +690,10 @@ def inject_markdown_model(content, model, platform_name, effort=None):
 # ide fűzzük hozzá. Érvénytelen azonosító esetén a Cursor csendben a szülő
 # ágens modelljére esik vissza — a hiba nem látszik, csak a viselkedésen.
 def inject_cursor_agent(content, model, effort, readonly=False):
-    model_spec = f"{model}[effort={effort}]" if effort else model
+    # `@inherit` (MA1): a modell-választást a Cursorra bízzuk — nincs `model:` mező, és
+    # az effort sem kerül sehova (a Cursor az effortot a modell-azonosítóba fűzve
+    # várja, tehát modell nélkül nincs hova tenni).
+    model_spec = model if is_auto_model(model) else (f"{model}[effort={effort}]" if effort else model)
     injected = inject_markdown_model(content, model_spec, "Cursor")
     parts = injected.split('---')
     if len(parts) < 3:
@@ -763,7 +804,7 @@ def _build_codex_agent_toml(name, description, model, effort, developer_instruct
         f"name = {_toml_basic_string(name)}",
         f"description = {_toml_basic_string(description)}",
     ]
-    if model:
+    if model and not is_auto_model(model):
         lines.append(f"model = {_toml_basic_string(model)}")
     if effort:
         lines.append(f"model_reasoning_effort = {_toml_basic_string(effort)}")
@@ -844,7 +885,9 @@ def process_antigravity(src_dir, dest_path, models):
         # írni. Külön `effort` mező nincs a sémában — csak látható ajánlásként
         # (alert) tesszük ki, a JSON-ba nem írjuk, hogy ne sugalljon nem létező
         # képességet.
-        data["model"] = model
+        # `@inherit` (MA1) → az Antigravity saját `inherit` tierje: ugyanaz a jelentés
+        # (a szülő ágens modellje), csak a séma nyelvén kimondva.
+        data["model"] = "inherit" if is_auto_model(model) else model
 
         # A `description` a PROJEKT nyelvét követi (LG26); a mai tükörben ez a
         # markdown `role:` mezőjével egyezik, ezért abból jön. (A `displayName`

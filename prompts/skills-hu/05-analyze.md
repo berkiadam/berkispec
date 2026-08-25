@@ -161,6 +161,14 @@ A diagnózis **5 kategóriában** keres problémát (a `analyzer` subagent végz
   - `analyzer-exec` → a **`## <sec:inventory>`** (`<status:mk_artifact>` / `<status:mk_anchor>` / `<status:mk_tone_suspect>` / `<status:mk_test_promise>` / `<status:mk_destructive>`, AG3): ez váltja ki a repó- és dokumentum-felderítést, ami a 6. kategória fő költsége volt;
   - `analyzer` → a **`## <sec:coverage_matrix>`** (AG4): a `DoD-NN → [P-…] → task` lánc készen, hogy ne vezesse le újra.
 - A két subagent kimenetét te fésülöd össze (lásd „A két analyzer-subagent"), és ez alapján döntesz PASS / FAIL-ról.
+
+  > **🔴 Ha valamelyik analyzer subagent nem fut le, vagy nem ad megállapítás-listát:** **ne végezd el csendben magad a kereszt-vizsgálatot** — a fázis egész értéke az, hogy a diagnózis **független** a vezénylőtől. A teendőt a **hiba típusa** dönti el — ne mérlegelj, nézd meg a hibaüzenet szövegét:
+  > - **Platform-korlát** (a szövegben kvóta/keret/limit szerepel — pl. „usage limit", „quota exceeded", „reached its usage limit", vagy egy keret-reset dátum): **NE próbáld újra.** A második hívás determinisztikusan ugyanabba fut. Ugorj azonnal a STOP + humán ágra, és a kérdésbe **másold be a hibaüzenetet szó szerint** (a reset-dátummal együtt) — a döntés (admin-engedély, várakozás a resetig, másik modell-pool) a felhasználóé.
+  > - **Minden más hiba** (időtúllépés, egyszeri összeomlás, üres válasz): próbáld újra **egyszer**. Ha csak az **egyik** subagent bukott, kizárólag **azt** indítsd újra — a másik megállapítás-listáját ne dobd el.
+  >
+  > Ha így sem futtatható: **STOP + humán** — kérdezd meg, hogy próbáljam-e újra, vagy végezzem el a hiányzó kategóriákat közvetlenül az `analyzer` / `analyzer-exec` szempontjai szerint a fő ágensben.
+  >
+  > **Ha a fallback ágra mész, a diagnózis eredetét KÖTELEZŐ jelölni.** A fő ágens más modellen és szűkebb kontextusban dolgozik, mint a subagent, ráadásul ő maga a vezénylő — tehát a diagnózis **elveszti a függetlenségét**, és rendszeresen gyengébb lelet. Az `analyze-report.md` fejlécébe kerüljön egy sor: **Diagnózis:** fő ágens (fallback) — a(z) <subagent> nem volt futtatható: <ok>. Egy így született PASS **nem teljes értékű** — írd oda, hogy a subagent-diagnózis pótlása ajánlott.
 - A javító fixer-subagenteket szintén Task tool subagent-ként indítod, a saját wrapper-promptjukkal (`agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`) — lásd „Az önjavító hurok".
 - **A `*-input-from-prev.md` fájlok (IP1) is bemenetek:** a subagent beolvassa a ciklus mappájában lévő `spec-`/`plan-`/`tasks-input-from-prev.md` fájlokat (amelyik létezik), és **nyitott `[ ]` tételt lefedettségi hiányként** jelez. Indoklás: egy nyitott tétel azt jelenti, hogy egy korábbi fázis átadott egy információt, amit a fogyasztó fázis se be nem épített, se el nem vetett — ez ugyanolyan rés, mint egy task nélküli követelmény.
 
@@ -276,6 +284,18 @@ FAIL esetén **nem** adod vissza egyszerűen a vezérlést a felhasználónak. H
 
    > **A `PASS` kizárólag teljes analyzer-futásból adható** — a `git diff` a fókuszt adja, nem a hatókört.
 
+6.a **Túlélés-szabály (per-item eszkaláció) — TS.** Mielőtt új iterációt indítanál, nézd meg az analyzer jelentésének **első blokkját** (`Előző kör Must Fix tételei`), és gyűjtsd ki azokat az `AF-NN` / `AX-NN` tételeket, amelyek `NEM oldódott meg` jelöléssel jöttek vissza.
+   - **Vezesd a túlélés-számlálót a Hurok-naplóban:** iterációnként írd ki a fennmaradt tételek azonosítóit. Egy tétel túlélés-száma az, hogy hányadik **egymást követő** iterációban jött vissza `NEM oldódott meg`-ként.
+   - **Ha egy tétel a MÁSODIK egymást követő iterációt is túléli, ne add oda harmadszor is a fixernek.** Két sikertelen javítási kísérlet után a legvalószínűbb magyarázat nem az, hogy a fixer ügyetlen, hanem hogy a tétel **valódi döntést igényel** (technológiai alap, konfigurációs út, teszt-hatókör), amit a fixer definíció szerint nem hozhat meg — lásd a fix-mód „valódi döntés" szabályát. Ilyenkor:
+     1. **alakítsd kérdéssé:** vedd fel `Knn`-ként a célfázis `*-questions.md` fájljába, ha a fixer még nem tette meg;
+     2. **kérdezd meg a felhasználót** a fázis-fejléces formátummal, **egyesével**;
+     3. a választ vezesd át (`[x]` + döntés), majd **indítsd újra a fixert** a most már megválaszolt kérdéssel.
+
+     Ez a 4. pont kérdés-megállásának felel meg: **nem új iteráció, és nem fogyaszt `X`-et.**
+   - **Jegyezd fel a Hurok-naplóba:** `TS — <azonosító> a 2. kört is túlélte → kérdéssé alakítva`.
+
+   > **Miért kell.** A `max X` **hurok-szintű** korlát: nem veszi észre, ha a fixer nagy csomagot visz be, közben viszont ugyanazt a néhány tételt körről körre érintetlenül hagyja. A hurok ilyenkor elégeti mind a három iterációt, és a felhasználó a végén egy `3/3 (feladva)` riportot kap — ahelyett, hogy a második körben megkapta volna a néhány konkrét kérdést, ami után a hurok konvergálhatott volna. A 07-ben ugyanezt a szerepet a per-item leállási számláló (VD4) és az eszkalációs heurisztika (VD5) tölti be.
+
 ### A két analyzer-subagent (E) — párhuzamos indítás és összefésülés
 
 A diagnózist **két subagent** végzi, egymástól független hatókörrel. **Egyetlen üzenetben indítsd őket, hogy párhuzamosan futhassanak** — a fázis eltelt ideje így a kettő közül a lassabbé, nem az összegük.
@@ -303,8 +323,9 @@ A fájllista **fókusz, nem szűkítés** (ugyanaz az elv, mint a dokumentum-dif
 
 - A fixer-subagent **rendszerpromptja** a célfázis fixer-wrappere: `agents/spec-fixer.md` (02), `agents/plan-fixer.md` (03), `agents/tasks-fixer.md` (04). A wrapper **tartalmazza** a fázis Fix-mód szekcióját és a fázis minőségi kapuját (közös forrásból, build-time beemelve) — nincs duplikált javító logika, és a fázis saját kapui automatikusan érvényesülnek.
 - **A fixer nem olvas fázis-skillt (D13).** A wrapperben minden szabály benne van; ha egy fixer mégis a skill beolvasását jelenti be, az hiba (a teljes fázis újrafuttatására csábít egy célzott javítás helyett).
-- **Bemenet** a subagentnek: a célfázisra szűrt `<status:must_fix>` lista (kategória + leírás + `fájl:hely`) + a célfázis dokumentumai.
+- **Bemenet** a subagentnek: a célfázisra szűrt `<status:must_fix>` lista **az `AF-NN` / `AX-NN` azonosítókkal együtt** (azonosító + kategória + leírás + `fájl:hely`) + a célfázis dokumentumai. Az azonosítókat **ne hagyd el és ne írd át** — a túlélés-szabály (TS) szó szerinti azonosító-egyezésre épül.
 - **Kimenet** a subagenttől: (a) az elvégzett (mechanikus) javítások összefoglalója, (b) a **`downstream-hatás:`** mező (`nincs` / `van — <mi érinti a következő fázist>`, D11), és (c) a `*-questions.md`-be felvett **<status:op_new>** kérdések azonosítói — azoké a pontoké, amelyekhez valódi döntés kell. A subagent **nem kérdez közvetlenül a felhasználótól** (nincs interaktív csatornája); csak gyűjt és visszaad. A kérdezés a te dolgod (D2).
+- **Teljességi ellenőrzés a visszatéréskor.** Vesd össze az átadott listát a fixer összefoglalójával: **minden** átadott azonosítónak meg kell jelennie vagy javítottként, vagy `Knn` kérdésként, vagy explicit „nem tudtam kezelni" indoklással. **Ha egy azonosító némán hiányzik**, ne indíts analyzer-futást rá: kérdezd vissza a fixertől egy mondatban, mi lett vele. Egy némán kihagyott tétel különben úgy néz ki, mintha a fixer megpróbálta és nem sikerült volna — és a TS-számláló hamis képet adna.
 
 ### `max X` hurokszámláló + leállás
 

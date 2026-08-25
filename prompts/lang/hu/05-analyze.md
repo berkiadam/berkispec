@@ -74,6 +74,8 @@ _Iterációnkénti audit-nyom — a megszakítás-utáni folytatás horgonya._
 
 ### Iteráció 1
 - **FAIL kategóriák:** <kategóriák>
+- **Nyitott tételek:** <AF-NN / AX-NN azonosítók>
+- **Fennmaradt tételek (TS):** <mely azonosítók jöttek vissza „NEM oldódott meg"-ként, és hányadik egymást követő körben — a 2. iterációtól; vagy „nincs">
 - **Célfázis:** <fázis> (legkorábbi érintett)
 - **Fix:** <a fixer-subagent összefoglalója egy sorban>
 - **Nyitott kérdések:** <FÁZIS/Knn lista vagy „nincs">

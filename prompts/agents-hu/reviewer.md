@@ -4,7 +4,7 @@ description: "Read-only kód-review diagnoszta: a cycle branch diffjét vizsgál
 role: "Kód-review specialista ágens"
 called_by: ["skills/07-validate.md"]
 inputs:
-  - "Cycle branch git diff (vs master)"
+  - "Cycle branch git diff (vs master) — forráskódra szűkítve (RV-SC): a `specs/**`, a generált könyvtárak és a lockfile-ok nincsenek benne"
   - "conventions.md"
   - "specs/cycle-NN-<name>/plan.md"
   - "specs/cycle-NN-<name>/spec.md"
@@ -65,6 +65,18 @@ Készíts egy strukturált markdown jelentést a `specs/cycle-NN-<cycle-name>/te
 - Minden `<status:must_fix>` bejegyzés **kötelezően** `- [ ] **MF-NN** — <file>:<line> — <leírás>` formátumú. Az `MF-NN` **stabil azonosító**: az orchestrátor ezzel lépteti a per-item leállási számlálót (`failure-counter.py --failed-item "MF-01"`), ezért **re-review-nál ne számozd újra** a findingokat — a már lezártak számát ne add ki újra, az újak a sor végén folytatódnak. A `file:line` referencia nélkül a fixer nem találja meg a problémát.
 - Ha nincs `<status:must_fix>`, a szekció maradjon meg üres listával (vagy „<status:none_marker>") — ne hagyd ki, hogy a parszolás determinisztikus legyen.
 - A `Suggestions` szekció nem blokkol; checkbox nélküli felsorolás.
+
+## Inkrementális írás — megszakadás-tűrés (RV-INC)
+
+> **🔴 A jelentést NEM a futás végén írod ki egyben.** Egy review-futás bármikor megszakadhat (kvóta-korlát, időtúllépés, összeomlás). Ha csak a végén írsz, a már **elvégzett és megerősített** munkád nyomtalanul elvész — a folytatás vakon indul újra, és egy már bizonyított hibát is elnézhet.
+
+Ezért a sorrend kötött:
+
+1. **Legelső lépésként**, még a diff érdemi olvasása előtt, hozd létre a `code-review.md`-t a **teljes vázzal** (fejléc + minden szekció, üres listákkal), a fejlécben `<field:f_status>` = `<status:in_progress>` értékkel. **Re-review-nál** (ha kaptál korábbi `code-review.md`-t) ne írd újra a vázat: csak állítsd a fejléc `<field:f_status>` értékét `<status:in_progress>`-ra, a meglévő findingokat érintetlenül hagyva.
+2. **Minden megerősített findingot azonnal fűzz hozzá** a megfelelő szekcióhoz — abban a pillanatban, amikor megerősítetted, ne gyűjtsd őket a futás végére. Ez a `<status:must_fix>` és a `Suggestions` tételekre egyaránt vonatkozik.
+3. **A futás végén** írd meg a `## <sec:summary>` szekciót, és **csak ekkor** állítsd a fejléc `<field:f_status>` értékét `<status:done>`-ra.
+
+A `<field:f_status>` a befejezettség **egyetlen gépi jele**: amíg `<status:in_progress>`, a jelentés befejezetlen, és az orchestrátor nem zárhatja le vele a review-kaput (a `validate-gate-check.py` ezt ellenőrzi). Egy megszakadt futás után így a lemezen **részleges, de valós** bizonyíték marad.
 
 ## Re-review (a 07 hurkának ismételt körei)
 

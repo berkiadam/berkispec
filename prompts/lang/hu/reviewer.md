@@ -11,6 +11,8 @@
 <!-- ANCHOR:RV1-code-review-formatum -->
 # Cycle NN: <cím> — Code review
 
+**Státusz:** Folyamatban | Kész
+
 ## Összefoglaló
 
 _Egy-két mondat: merge-elhető-e, vagy mi blokkol. Részleges review esetén ide kerül, mit nem néztél át._

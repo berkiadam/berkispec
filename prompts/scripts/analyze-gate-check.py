@@ -24,7 +24,8 @@ Mit ellenőriz:
   D1  `DoD-NN` azonosítók            — hiányzó vagy duplikált azonosító a specben
   D2  `DoD-NNb` alakú azonosító      — utólagos beszúrás betűs utótaggal (DI1 megsértése)
   S1  kötelező plan-táblák           — `Spec-lefedettség`, `Fordított lefedettség`,
-                                       `Környezeti koordináták` (KO1)
+                                       `Környezeti koordináták` (KO1),
+                                       `Gépi futtatási tábla` (TP4)
   S2  kötelező tasks-tábla           — `Plan-lefedettség`
   A1  futtatott artefaktum (6.a)     — a `[CHECK]`/`[OPS]` taskok és a plan
                                        `Ellenőrzési stratégia` parancsai által
@@ -121,6 +122,7 @@ REQUIRED_PLAN_TABLES = [
     (sec("spec_coverage"), "03", "a spec tesztesetei és DoD-pontjai leképezésének táblája (TP1)"),
     (sec("reverse_coverage"), "03", "a plan-képességek spec-forrásának táblája (SC1)"),
     (sec("environment_coords"), "03", "a ciklus konkrét koordinátái: URL-ek, portok, indító parancsok, példa REST hívások, teszt-/API-userek jelszóval, paraméterek (KO1)"),
+    (sec("machine_run_table"), "03", "a `run-tests.py` gépi futtatási táblája (TP4) — enélkül a 07-validate a drágább `test-runner` subagentre esik vissza, és a nyers teszt-log LLM-kontextusba kerül"),
 ]
 REQUIRED_TASKS_TABLES = [
     (sec("plan_coverage"), "04", "a plan-szekció → task fordított tábla (PID1)"),
