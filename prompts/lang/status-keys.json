@@ -88,7 +88,14 @@
       "cv_sonar": "Sonar minőségellenőrzés",
       "cv_risks_limits": "Kockázatok és ismert korlátok",
       "validation_report": "Validálási riport",
-      "steps_execution_order": "Lépések (végrehajtási sorrendben)"
+      "steps_execution_order": "Lépések (végrehajtási sorrendben)",
+      "mt_environment": "Környezet és indítás",
+      "mt_test_data": "Tesztadatok",
+      "mt_automated_tests": "Automata tesztek",
+      "mt_manual_groups": "Kézi tesztcsoportok",
+      "mt_not_manual": "Nem kézzel tesztelhető",
+      "mt_coverage": "Lefedettség",
+      "mt_changelog": "Változásnapló"
     },
     "fields": {
       "f_status": "Státusz",
@@ -137,7 +144,11 @@
       "f_tasks": "Task(ok)",
       "f_plan_section_id": "Plan szekció (ID)",
       "f_referring_tasks": "Hivatkozó taskok",
-      "f_ok": "Rendben"
+      "f_ok": "Rendben",
+      "f_what_we_test": "Mit tesztelünk",
+      "f_shutdown": "Leállítás",
+      "f_cleanup": "Takarítás",
+      "f_test_results_so_far": "A ciklus eddigi teszteredményei"
     },
     "status": {
       "draft": "Piszkozat",
@@ -170,7 +181,9 @@
       "fixed_marker": "✅ javítva",
       "no_vcs_flag": "NINCS verziókezelő (se GIT, se más), és nem is lesz.",
       "round_type_full": "TELJES",
-      "round_type_light": "KÖNNYŰ"
+      "round_type_light": "KÖNNYŰ",
+      "mtp_planned": "Tervezett",
+      "mtp_as_built": "As-built"
     }
   },
   "en": {
@@ -262,7 +275,14 @@
       "cv_sonar": "Sonar quality check",
       "cv_risks_limits": "Risks and known limitations",
       "validation_report": "Validation report",
-      "steps_execution_order": "Steps (in execution order)"
+      "steps_execution_order": "Steps (in execution order)",
+      "mt_environment": "Environment and startup",
+      "mt_test_data": "Test data",
+      "mt_automated_tests": "Automated tests",
+      "mt_manual_groups": "Manual test groups",
+      "mt_not_manual": "Not manually testable",
+      "mt_coverage": "Coverage",
+      "mt_changelog": "Change log"
     },
     "fields": {
       "f_status": "Status",
@@ -311,7 +331,11 @@
       "f_tasks": "Task(s)",
       "f_plan_section_id": "Plan section (ID)",
       "f_referring_tasks": "Referencing tasks",
-      "f_ok": "In order"
+      "f_ok": "In order",
+      "f_what_we_test": "What we test",
+      "f_shutdown": "Shutdown",
+      "f_cleanup": "Cleanup",
+      "f_test_results_so_far": "Test results of the cycle so far"
     },
     "status": {
       "draft": "Draft",
@@ -344,7 +368,9 @@
       "fixed_marker": "✅ fixed",
       "no_vcs_flag": "NO version control (neither GIT nor anything else), and none is planned.",
       "round_type_full": "FULL",
-      "round_type_light": "LIGHT"
+      "round_type_light": "LIGHT",
+      "mtp_planned": "Planned",
+      "mtp_as_built": "As-built"
     }
   }
 }

@@ -1,486 +1,911 @@
-# A megerősítő kör lefokozása — végrehajtási terv
+# `bs-manual-test-plan` — végrehajtási terv
 
 > **Ez a dokumentum önhordó.** Üres kontextusban is végrehajtható: az 1. szakasz megadja az
-> orientációt, a 2. a mérést, a 3. az opciókat, a 4. a javasolt döntést, az 5. a pontos
-> szerkesztési helyeket, a 6. az elfogadási kritériumokat.
+> orientációt, a 2. a lezárt döntéseket, a 3–9. a pipálható teendőket, a 10. az elfogadási
+> kritériumokat, a 11. a végrehajtási sorrendet.
 > **Semmit nem kell kikövetkeztetni** — ha valami mégis hiányzik, az a terv hibája; írd bele.
-
-> **Státusz:** javaslat — a döntés (3. szakasz) még nem született meg.
-> **Előzmény:** a 07-validate futásának gyorsítására tett négy javaslat **4. tétele**. Az 1–3.
-> tétel (EN prompt-nyelv, a gépi futtatási tábla kikényszerítése, `RV-SC` diff-szűkítés)
-> **elkészült** — lásd az 1.4 szakaszt.
 
 ---
 
 ## 0. Hogyan használd ezt a dokumentumot
 
-1. **Olvasd el az 1–2. szakaszt** (orientáció + mérés). Enélkül a 3. szakasz opciói
-   félreérthetők: nem mindegy, hogy a megerősítő kör melyik eleme mennyibe kerül.
-2. **A 3. szakasz döntést kér.** Ez nem gépies teendő — a felhasználóé. Amíg nincs döntés,
-   az 5. szakaszhoz **ne nyúlj**.
-3. **A döntés után az 5. szakasz szerint haladj**, és minden pont után futtasd a hozzá
-   tartozó ellenőrzést (6. szakasz), majd **pipálj ebben a fájlban** (`- [ ]` → `- [x]`).
-4. **Kétnyelvű repó:** minden prompt-szerkesztés **hu ÉS en** párban megy. A `lang-parity-check.py`
-   ezt kapuzza, de csak szerkezetileg — a jelentés-helyességért te felelsz.
+1. **Olvasd el az 1–2. szakaszt** (orientáció + lezárt döntések). Enélkül a teendők félreérthetők.
+2. **A 11. sorrend szerint haladj**, és keresd meg az első kipipálatlan teendőt.
+3. **Egy teendő = egy lépés = egy verifikáció.** Minden pont után futtasd a hozzá tartozó
+   ellenőrzést, és pipálj ebben a fájlban (`- [ ]` → `- [x]`).
+4. **Ha döntést kell hozni, ami nincs a 2. szakaszban:** ne döntsd el csendben — írd be a
+   2.9 nyitott listába, kérdezd meg a felhasználót, majd rögzítsd `MT<n>`-ként.
+5. **⛔ A repó kétnyelvű.** Minden prompt-változtatás **mindkét fán** (`-hu` és `-en`)
+   átvezetendő. Commit előtt kötelező:
+   ```bash
+   python3 prompts/scripts/lang-parity-check.py
+   python3 prompts/scripts/sync-gemini-agents.py --check
+   ```
+6. **Minden parancs a repó gyökeréből fut** (`berkispec/`), nem a `prompts/` mappából.
+7. **⛔ Amihez nem nyúlsz:** a `jegyzet.md` a felhasználó privát munkaterülete (verziókövetve
+   van, de **nem a tiéd**) — ne olvasd, ne szerkeszd, és **soha ne commitold**. Emiatt a
+   commit-lépésben (11./9.) **tilos a `git add -A`**; csak a felsorolt útvonalakat stage-eld.
+
+### 0.1 Hol tart most a munka (állapot-szonda)
+
+Futtasd le legelőször — ebből látod, mi van már kész, és hol kell felvenned a fonalat.
+**Ne feltételezz, ellenőrizz:**
+
+```bash
+ls prompts/skills-hu/manual-test-plan.md prompts/skills-en/manual-test-plan.md \
+   prompts/lang/hu/manual-test-plan.md prompts/lang/en/manual-test-plan.md \
+   prompts/scripts/manual-test-gate-check.py 2>&1 | sed 's/^/  /'
+python3 -c "
+import json
+k=json.load(open('prompts/lang/status-keys.json'))
+print('  status-keys mt_* :', [x for x in k['hu']['sections'] if x.startswith('mt_')] or 'NINCS')
+print('  status-keys mtp_*:', [x for x in k['hu']['status'] if x.startswith('mtp_')] or 'NINCS')
+d=json.load(open('prompts/lang/hu/descriptions.json'))
+print('  descriptions.json:', 'megvan' if 'bs-manual-test-plan' in d else 'NINCS')"
+grep -c 'manual-test-plan' README.md prompts/meta-improve-prompts.md prompts/scripts/cycle-status.py
+```
+
+A terv írásakor (kiinduló állapot) **mind a öt fájl hiányzik, mindhárom kulcs-csoport
+`NINCS`, és a `grep -c` mindhárom fájlra `0`** — ha nem ezt látod, valaki már elkezdte:
+a 11. sorrend szerint keresd meg az első hiányzó darabot.
 
 ---
 
 ## 1. Orientáció
 
-### 1.1 Mi a megerősítő kör
+### 1.1 Mit vezetünk be
 
-A `07-validate` önjavító hurka körökben dolgozik. Két körtípus van (a skill „Kör-típusok —
-inkrementális hurok (VD10)" szekciója):
+Egy új, **számozatlan segédparancsot**: `/bs-manual-test-plan`. Előállítja a
+`specs/cycle-NN-<name>/manual-test-plan.md` fájlt, amelyben egy ember végig tud menni a
+ciklus funkcionalitásán kézzel: elindítja a komponenseket, lefuttatja a hívási
+szekvenciákat (REST: `curl` + VSCode `.http`; felület: URL + kattintási lépések),
+összeveti a kapottat az elvárttal, és tudja, hol vannak az automata tesztek eredményei.
 
-- **Teljes kör:** gyors tesztek → statikus réteg (Sonar + kódreview) → nehéz tesztek +
-  regresszió → DoD/tasks/riport-kapu.
-- **Könnyű kör:** a teljes gyors teszt-készlet + **kizárólag** az(ok) a bukott item(ek), ami(k)
-  nehéz teszt, Sonar vagy review-finding volt(ak).
+### 1.2 Miért olcsó ez a fázis
 
-A hurok menete a skill saját ábrája szerint:
+A kért tartalom **90%-ban már létező adat** a keretrendszerben — a skill nem felderít,
+hanem **összeszerel**:
 
-```
-1. kör      TELJES    → FAIL  → fix
-2. kör      KÖNNYŰ    → FAIL  → fix
-3. kör      KÖNNYŰ    → zöld  → NEM PASS! kötelező megerősítő kör
-4. kör      TELJES    → PASS (vagy FAIL → a hurok folytatódik)
-```
-
-A **4. kör a megerősítő kör**: egy **teljes** kör, **javítás nélkül**, közvetlenül azután, hogy
-egy könnyű kör zöld lett.
-
-### 1.2 Miért létezik
-
-Két, egymástól független indoka van, és ezeket a lefokozáskor külön kell kezelni:
-
-1. **Mérhetőség (VD10/1).** Egy könnyű körben a PASS feltételeinek egy része **meg sem mérhető**
-   — nem futott nehéz teszt, nem futott Sonar, nem futott teljes review. A PASS ezért csak
-   teljes körből adható.
-2. **A javítás mellékhatása.** A fixer a kódot módosította; a megerősítő kör azt kérdezi, hogy
-   a javítás **nem tört-e el mást**.
-
-### 1.3 Hol van definiálva (a szerkesztendő helyek)
-
-| Hely | Mit mond |
+| Amit a kézi tesztterv igényel | Meglévő forrás |
 |---|---|
-| `skills-{hu,en}/07-validate.md` → „Kör-típusok" tábla | a teljes kör kiváltója: „(a) a fázis **első** köre; (b) a **záró megerősítő** kör" |
-| ugyanott, **1. kötelező szabály** | „PASS kizárólag TELJES körből adható… utána **azonnal** teljes megerősítő kör indul, ugyanabban a menetben, javítás nélkül" |
-| ugyanott, **4. kötelező szabály** | „**A gyors készletet nem szűkítjük.** …másodpercekbe kerül, viszont elkapja, ha a javítás máshol tört el valamit." |
-| „Az önjavító hurok" → 8. pont **Zöld** ága | „**még NEM PASS.** Azonnal, javítás nélkül indíts egy **TELJES megerősítő kört** (gyors tesztek → **Sonar + kódreview** → nehéz tesztek + regresszió → DoD/tasks/riport-kapu)… A review itt **inkrementálisan** fut" |
-| „Státusz kezelés → PASS" előtti 🔴 blokk (VD10/1) | a PASS-ellenőrzés: „a lépés-táblában szerepel a nehéz teszt, a Sonar (vagy `N/A` a plan szerint) **és a lefutott kódreview**" |
+| komponens indítása, port, health endpoint | `plan.md` → `<sec:environment_coords>` / `<sec:components_endpoints>` (KO1) |
+| REST hívási szekvenciák, `curl` | `plan.md` → `<sec:rest_calls_examples>` (ige + teljes URL + fejlécek + konkrét body + elvárt válasz + kinyerendő mező, token-beszerzéssel) |
+| tesztadatok, userek, jelszavak | `plan.md` → `<sec:test_api_users>` + `<sec:other_parameters>` (TC5 titok-szabály) |
+| hálózati előfeltételek | `plan.md` → `<sec:network_access_prereqs>` |
+| mit tesztelünk egy csoporttal | `spec.md` → `<sec:test_specification>` + `<sec:definition_of_done>` (`DoD-NN`) |
+| automata teszt-parancsok | `plan.md` → `<sec:machine_run_table>` (TP4 — ezt olvassa a `run-tests.py`) |
+| hova kerülnek az eredmények | `conventions.md` → `## <sec:cv_test_reporting>` (TR3 + TR5 kör-mappa jelölő) |
 
-A körnaplózás oldaláról: `round-log.py --type TELJES|KÖNNYŰ --trigger "megerősítő kör"`.
-A záró kapu oldaláról: `validate-gate-check.py --stage close --require-review`.
+Mellékhatásként **őszinteség-teszt a KO1-re**: ami a plan-ből hiányzik vagy elavult, az itt
+azonnal kiderül — ma ez csak a `test-runner`-nek fájna, ami gyakran nem is fut.
 
-### 1.4 Mi készült el már (kontextus)
+### 1.3 Mit NEM vezetünk be
 
-Ugyanennek a gyorsítási körnek az 1–3. tétele **kész**:
+- **Nem** új számozott fázis: a `00–09` lánc, a státusz-lánc és a `prev`/`next` gráf
+  **érintetlen** marad.
+- **Nem** visszacsatolás: nincs `manual-test-results.md`, a `07-validate` és a `09-merge`
+  gépezetéhez **nem nyúlunk**.
+- **Nem** subagent: nincs új ágens, nincs új `gemini-agent/*/agent.json` tükör.
+- **Nem** doc-sync / export-doc integráció.
 
-- **EN prompt-nyelv** — kiderült, hogy már telepítve volt; nincs további nyereség rajta.
-- **Gépi futtatási tábla (TP4) kikényszerítése** — bekerült az `analyze-gate-check.py`
-  `REQUIRED_PLAN_TABLES` listájába (`S1` kód). Ettől a 07 nem esik vissza a drága
-  `test-runner` subagentre.
-- **`RV-SC` diff-szűkítés** — a `reviewer` mostantól forráskódra szűkített diffet kap
-  (`':(exclude)specs/**'` + generált könyvtárak + lockfile-ok).
+### 1.4 A repó releváns mechanizmusai (amit tudni kell hozzá)
 
-**Ezért a mostani mérést a fenti állapotra kell érteni**, nem a korábbira.
+- **A telepítő glob-alapú** — `install-helper.py`:
+  - skillek: `skills_src.glob("*.md")` → a célmappa `bs-<fájlnév-stem>/SKILL.md`
+    (`write_markdown_skill`, ~738. sor). Tehát a fájl neve **`manual-test-plan.md`** kell
+    legyen, hogy `/bs-manual-test-plan` legyen belőle. **Az `install-helper.py`-t nem kell
+    módosítani.**
+  - scriptek: `copy_helper_scripts()` a `prompts/scripts/*.py` mindegyikét másolja, kivéve
+    a három repó-karbantartó eszközt. **Az új gate-scriptet sem kell regisztrálni.**
+- **A nyelvi tengelyek**: a szekciónevek / mezőnevek / státuszok a promptban `<sec:…>`,
+  `<field:…>`, `<status:…>` tokenek, amiket a telepítő old fel a
+  `prompts/lang/status-keys.json`-ból. **Új szekciónév → előbb kulcs a JSON mindkét
+  szeletébe, csak utána token.** A user-facing mondatok és az artefaktum-sablon a
+  `prompts/lang/<L>/<fájl>.md` horgonyaiban élnek,
+  `<!-- INCLUDE:lang/<fájl>.md#<horgony> -->` markerrel behivatkozva.
+- **A kapu-scriptek nyelvfüggetlenek**: a `lang_keys.py` (`sec()`, `fld()`, `st()`) a
+  telepített `lang-keys.json`-ból olvas.
+- **Számozatlan skill minta**: `brainstorm.md`, `cycle-status.md`, `export-doc.md`,
+  `quick-flow.md` — `name`/`description` alapú frontmatter, nincs `phase`/`prev`/`next`.
 
----
+### 1.5 Kötelező előolvasás (tiszta kontextusban)
 
-## 2. Mérés — mibe kerül a megerősítő kör
+Ez a terv **nem** helyettesíti a keretrendszer megértését. Mielőtt az első teendőhöz
+nyúlnál, olvasd el:
 
-A kör négy eleme **nagyon eltérő** költségű. Ez a terv legfontosabb megállapítása: aki
-„a megerősítő kört" akarja olcsóbbá tenni, annak elemenként kell néznie.
+1. **`prompts/meta-improve-prompts.md`** — a teljes rendszer leírása: a `00–09` flow, a
+   kétnyelvű fastruktúra, a tervezési elvek (fáziskapu, minimális kontextus, egy kérdés
+   egyszerre, scope-fegyelem, megállási szabályok, `RP1` útvonal-konvenció, `GC1`
+   kapu-konfiguráció).
+2. **Egy meglévő számozatlan skill mintaként** — `prompts/skills-hu/export-doc.md` (rövid,
+   script-hívós) és `prompts/skills-hu/cycle-status.md`.
+3. **Egy meglévő kapu-script mintaként** — `prompts/scripts/ds22-gate-check.py` vagy
+   `prompts/scripts/report-gate-check.py` (a `lang_keys` használatára és a kimenet-formára).
+4. **`prompts/shared-hu/phase-commit.md`** — a commit-blokk, amit a skill beemel (MT9).
 
-| Elem | Token-költség | Óraidő | Mit véd |
+### 1.6 A négy csendes buktató
+
+Ezek olyan mechanizmusok, amelyek **hallgatólagosan** buktatják a bevezetést, ha nem
+tudsz róluk. Mindegyikhez tartozik teendő a tervben:
+
+| # | Mechanizmus | Következmény, ha kihagyod | Teendő |
 |---|---|---|---|
-| Gyors tesztek (`run-tests.py`) | **elhanyagolható** — a szkript 10–20 sorban válaszol, a nyers log soha nem kerül kontextusba | másodpercek–percek | a javítás máshol tört el valamit (unit szinten) |
-| Sonar (`sonar-gate.py`) | **elhanyagolható** — szkript, gépi kimenet | 1–2 perc | a javítás új kódszagot vitt be |
-| **Kódreview (RV1/RV2)** | **nagy** — a `reviewer` a legdrágább subagent-hívás a fázisban | percek | lásd a 2.1 pontot |
-| **Nehéz tesztek (E2E + regresszió)** | közepes — a riport gépi, de a stack-kezelés hosszú | **a legtöbb óraidő** — tiszta indítás + takarítás | a javítás integrációs szinten tört el valamit |
-
-### 2.1 A kulcs-megfigyelés: a megerősítő kör review-ja jellemzően üresjárat
-
-A skill a megerősítő körben **inkrementális** review-t ír elő:
-
-> „A review itt **inkrementálisan** fut: az előző `code-review.md`-t átadva, a még nyitott
-> `<status:must_fix>`-ekre fókuszálva."
-
-Az inkrementális review (RV2) definíció szerint **kizárólag a még nyitott `MF-NN` findingokat
-nézi** — a `reviewer` kontraktusa is így szól („a teljes diff újra-review-ja tilos").
-
-Ebből következik: **ha a megerősítő kör indulásakor nincs nyitott `MF-NN`** (márpedig
-tipikusan nincs, hiszen az előző kör épp ezért lett zöld), akkor az RV2-nek **nincs mit
-megvizsgálnia**. Nem tudja elkapni a fixer által **újonnan** bevitt problémát sem, mert nem a
-friss diffet nézi, hanem a régi findinglistát.
-
-**Vagyis a megerősítő kör review-ja ilyenkor nem gyengébb védelem — hanem semmilyen**, miközben
-a fázis legdrágább subagent-hívása. Ez a legjobb vágási pont.
-
-> ⚠ **Ez a megállapítás felülírja a korábbi javaslatot.** Az eredeti javaslat a **gyors teszteket**
-> akarta kihagyni a megerősítő körből — az viszont a kör **legolcsóbb** eleme, ráadásul a skill
-> 4. kötelező szabálya külön indokolja a megtartását („másodpercekbe kerül, viszont elkapja, ha
-> a javítás máshol tört el valamit"). A gyors teszteket **meg kell tartani.**
+| 1 | A frontmatter `description` mezője **build-time kicserélődik** a `prompts/lang/<PROJECT_LANG>/descriptions.json` `name`-hez tartozó értékére (`substitute_lang_frontmatter`, LG15/LG26) | **`sys.exit(1)`**: „a 'bs-manual-test-plan' nincs a projekt-nyelvi descriptions.json-ban" → a telepítés megáll | **3.3** |
+| 2 | A `lang-parity-check.py` **11.4** checkje megköveteli, hogy a `descriptions.json` kulcskészlete **pontosan** a fa `name` mezőinek halmaza legyen, **mindkét nyelven** | `FAIL` a paritás-kapun | **3.3** |
+| 3 | A **11.3/b** check: **minden horgonyt hivatkoznia kell** legalább egy `INCLUDE` markernek („árva horgony" = `FAIL`); és a nyelvi blokk maga **nem tartalmazhat** `INCLUDE` markert (8.5) | `FAIL` a paritás-kapun | **5.4** |
+| 4 | A script-hívások elé a keretrendszer a `<!-- INCLUDE:shared/python-cmd.md -->` blokkot teszi (Windows `python` / `py -3` fallback), az útvonalban pedig a `<platform-scripts-mappa>` helyőrző áll (BD15), amit a telepítő old fel | Windowson elhasal a kapu-hívás, vagy rossz útvonalra mutat | **4.10** |
 
 ---
 
-## 3. Opciók — döntést igényel
+## 2. Lezárt döntések
 
-Mind a négy opció **azonos invariánst tart**: a PASS forrása továbbra is teljes kör, és a
-nehéz tesztek a megerősítő körben **lefutnak**.
+- [x] **MT1 — Jelleg és kapu.** Számozatlan, bármikor hívható segédparancs (nem a `00–09`
+  lánc része). **Előfeltétel:** `analyze-report.md` státusza `PASS`. Előtte a skill
+  **elutasít** és visszairányít a `05`-re (`/bs-analyze input: @specs/cycle-NN-<name>`).
+  Indok: az `05` mechanikus kapuja garantálja, hogy a `plan.md` KO1 szekciója placeholder
+  nélkül, kitöltve áll — ez a terv egyetlen valódi bemenete.
 
-### O1 — A review kimarad, ha nincs nyitott `MF-NN` *(javasolt)*
+- [x] **MT2 — Ciklus-beazonosítás.** A többi skill mintájára: ha a felhasználó megadott
+  ciklust/fájlt, azt használja; különben a legfrissebb `specs/cycle-*` mappát ajánlja fel
+  megerősítésre, és **vár a válaszra**.
 
-A megerősítő körben a kódreview akkor és csak akkor fut, ha maradt nyitott `MF-NN`. Ha nincs,
-a lépés `kihagyva (nincs nyitott MF-NN)` bejegyzést kap.
+- [x] **MT3 — Kétmódú működés, automatikus módválasztás.** A skill a `tasks.md` státuszából
+  dönt:
+  - **`Tervezett` mód** (`tasks.md` = `<status:ready_for_implement>`, azaz még nincs kész
+    kód): kizárólag a `plan.md` KO1 + `spec.md` teszt-szekció/DoD + `conventions.md`
+    alapján szerel össze. A fejléc kimondja, hogy a lépések **valós kódon nem
+    verifikáltak**. A teszteredmény-szekció a **leendő** útvonalakat sorolja, explicit
+    „még nem létezik" jelöléssel.
+  - **`As-built` mód** (`tasks.md` = `<status:ready_for_validate>` vagy `<status:done>`):
+    a valós route-okat, portokat, konfigokat **ellenőrzi a kódban**; eltérésnél **a kód
+    nyer**, és az eltérés bekerül a `## Változásnapló`-ba. A teszteredmény-szekció a
+    ténylegesen létező fájlokat listázza.
 
-- **Nyereség:** a fázis legdrágább subagent-hívása marad ki, körönként egyszer.
-- **Minőség-ár:** **gyakorlatilag nulla** — lásd a 2.1 pontot: az RV2 ilyenkor sem vizsgálna semmit.
-- **Kockázat:** a PASS-ellenőrzés ma megköveteli a „lefutott kódreview" sort a lépés-táblában
-  (VD10/1) — ezt együtt kell módosítani, különben a kapu ellentmond a szabálynak.
+- [x] **MT4 — Nulla visszacsatolás.** A skill kizárólag a `manual-test-plan.md`-t állítja
+  elő. Nincs eredményfájl, nincs pipálható végrehajtás-napló, a `07` és a `09` nem kapuz rá,
+  a talált hibák sorsa a felhasználóra van bízva.
 
-### O2 — A Sonar kimarad, ha a fixer diffje nem érint forrásfájlt
+- [x] **MT5 — Fő ágens + determinisztikus kapu.** A skillt a fő ágens hajtja végre (nincs
+  subagent), és egy új `prompts/scripts/manual-test-gate-check.py` zárja. Indok: kvóta-barát,
+  és a gyenge modell hibamódjait (placeholder, hiányzó tesztadat, lefedetlen DoD) csak
+  determinisztikusan lehet elkapni.
 
-Ha a fixer csak dokumentumot/tesztet módosított, a Sonar nem hozhat új találatot.
+- [x] **MT6 — Lefedettségi szabály: csak a ciklus, DoD-hez kötve.** Minden tesztcsoport
+  visszavezet egy `DoD-NN`-re vagy egy spec-tesztesetre, és minden `DoD-NN`-hez tartozik
+  legalább egy csoport. **A fázis új követelményt nem talál ki**, exploratív csoportot nem
+  ad hozzá. (A nem kézzel tesztelhető DoD-pontok kezelését lásd MT10.)
 
-- **Nyereség:** 1–2 perc óraidő, minimális token.
-- **Minőség-ár:** kicsi, de nem nulla (a Sonar teszt-fájlokra is futhat, ha a projekt így méri).
-- **Megjegyzés:** a mechanizmus **már létezik** — a skill ismeri a `kihagyva (a hívó kérésére)`
-  állapotot. Csak az alapértelmezést kell megfordítani ebben az egy körben.
+- [x] **MT7 — Újrafuttatás: néma merge, javítás-naplóval.** Kérdés nélkül összefésül: a
+  **kézi (nem generált) tartalmat megőrzi**, a generált szekciókat frissíti, és a fájl végi
+  `## Változásnapló` szekcióba ír egy bejegyzést arról, mit és miért változtatott.
 
-### O3 — A gyors tesztek kimaradnak *(NEM javasolt)*
+- [x] **MT8 — Integráció: csak a `cycle-status.py`.** A `08-doc-sync`, az `export-doc`, a
+  `07-validate` és a `09-merge` **érintetlen**. A `cycle-status.py` kimenetében megjelenik,
+  hogy van-e már kézi tesztterv, és melyik módban.
 
-Az eredeti javaslat. A 2. szakasz mérése alapján a **legolcsóbb** elemet vágná ki, miközben ez
-az egyetlen olcsó háló a „a fix máshol tört el valamit" ellen. **Elvetésre javasolt** — de itt
-marad dokumentálva, hogy ne merüljön fel újra megfontolatlanul.
+- [x] **MT9 — Commit: `shared/phase-commit.md` szerint**, `<FÁZIS-TAG>` = `manual-test-plan`,
+  azaz `git commit -m "cycle-NN: manual-test-plan"`.
+  **Hurok-őr (kötelező eltérés a közös blokktól):** ha a `tasks.md` `[analyze-loop]` vagy
+  `[validate-loop]` markert visel, a skill **kizárólag a `manual-test-plan.md` útvonalát**
+  stage-eli (`git add specs/cycle-NN-<name>/manual-test-plan.md`), **soha nem** a ciklus
+  mappáját és soha nem `-A`-t. Indok: a `07-validate` VD8 szabálya szerint a hurok alatt
+  **nincs** köztes commit — a `test-report/`, a DoD-pipák és a javító-taskok szándékosan
+  commitálatlanul állnak, és a `07` megszakadás-kezelése (a fáziseleji munkafa-ellenőrzés
+  2. pontja) ebből ismeri fel, hogy megszakadt hurkot folytat. Egy naiv `git add
+  specs/cycle-NN-<name>/` **elrántaná a lábát a `07` alól**.
 
-### O4 — A megerősítő kör teljesen elmarad, ha a fixer nem módosított forrásfájlt
+- [x] **MT10 — Nem kézzel tesztelhető DoD.** Van olyan `DoD-NN`, amit kézzel nem lehet
+  ellenőrizni (belső refaktor, lint-szabály, coverage-küszöb, CI-konfiguráció). Ezekre a
+  dokumentum végén egy `### Nem kézzel tesztelhető` allista szolgál: `DoD-NN` + **egy
+  mondat indoklás** + hogy melyik automata teszt/kapu fedi. A kapu a `DoD-NN`-t akkor
+  tekinti lefedettnek, ha **vagy** szerepel egy tesztcsoport fejlécében, **vagy** itt
+  szerepel indoklással. Enélkül az MT6 teljesíthetetlen lenne, és az ágens vagy hazudna,
+  vagy kitalálna egy értelmetlen kézi lépést.
 
-Ha a `git diff` szerint a fixer egyetlen forrásfájlt sem érintett (csak `tasks.md`-t pipált,
-dokumentumot javított), akkor nincs mit megerősíteni.
+- [x] **MT11 — Dokumentum-váz: csoport-központú.** Elöl a közös kontextus (indítás,
+  tesztadatok, automata tesztek), utána tesztcsoportonként egy **önhordó** blokk. Minden
+  REST lépésnél **`curl` ÉS `.http` blokk is** kötelező. A pontos vázat a 3.2 rögzíti.
 
-- **Nyereség:** a teljes kör (a nehéz tesztekkel együtt) — messze a legnagyobb.
-- **Minőség-ár:** **valódi.** Az utolsó zöld kör könnyű volt, tehát nem futott nehéz teszt;
-  ha a hurok csak könnyű köröket látott, PASS-t adnánk E2E-bizonyíték nélkül.
-- **Feltétel, ami nélkül nem szabad:** csak akkor alkalmazható, ha **ebben a fázisban** már
-  futott legalább egy teljes kör zöld nehéz tesztekkel, és azóta forrásfájl nem változott.
-  Ez a feltétel gépiesen ellenőrizhető a `validation-report.md` lépés-tábláiból.
+- [x] **MT12 — Nyelvi kezelés.** A skill mindkét prompt-nyelvi fára elkészül
+  (`skills-hu/` + `skills-en/`), a dokumentum-sablon és a user-facing mondatok a
+  `prompts/lang/hu/manual-test-plan.md` + `prompts/lang/en/manual-test-plan.md`
+  horgonyaiba kerülnek, a szekciónevek és státuszok a `status-keys.json` **mindkét**
+  szeletébe.
 
-### Döntési tábla
+- [x] **MT13 — A kapu közös kódja: MÁSOLÁS, nem refaktor.** Az `MG3` (placeholder + üres
+  cella) és az `MG8` (RP1) logikája megegyezik az `analyze-gate-check.py` `C6` és `R1`
+  checkjeivel. A `manual-test-gate-check.py` a mintákat **átmásolja**, forrás-hivatkozó
+  kommenttel — **nem** emeljük ki közös modulba. Indok: (a) a fájlnévben lévő kötőjel miatt
+  az `analyze-gate-check.py` normál `import`-tal nem érhető el; (b) egy új `gate_common.py`
+  bevezetése az `analyze-gate-check.py` (1200+ sor, az `05` kapuja) átírását jelentené,
+  ami ehhez a feladathoz képest aránytalan regressziós kockázat. A pontos átveendő
+  elemeket a 6.3 sorolja fel. *(Ha később egy harmadik kapunak is kellene, akkor érdemes
+  kiemelni — akkor viszont külön, dedikált ciklusban.)*
 
-| Opció | Nyereség | Minőség-ár | Javaslat |
+- [x] **MT14 — A `cycle-status.py` bővítése NEM a `phases` listába megy.** A kézi tesztterv
+  külön helper + külön kiírt sor; az `analyze_cycle()` visszatérési értéke és a `phases`
+  lista **változatlan**. Indok: mérve, nem feltételezve — lásd 7.1.
+
+- [x] **MT15 — Egy negyedik mezőkulcs (`f_test_results_so_far`) a 3.1.3-hoz.** A 3.2 sablon
+  „A ciklus eddigi teszteredményei:" sora **nem maradhat literál**, mert az `MG7` as-built
+  ága ezt a sort horgonyként keresi — a 6.4 nyelvfüggetlenségi szabály tehát kulcsot kíván.
+  Felvéve a `status-keys.json` mindkét szeletébe; a sablon és mindkét skill a tokent
+  használja. *(Végrehajtás közben hozott, mechanikus következmény-döntés — nem szűkíti és
+  nem bővíti a hatókört.)*
+
+- [x] **MT16 — Az `MG3` helyőrző-mintája szélesebb, mint a `KO1_PLACEHOLDER_RE`.** A 6.3
+  szerint a `KO1_PLACEHOLDER_RE`-t szó szerint átvettük (a nyelvfüggő ággal és a
+  forrás-hivatkozó kommenttel együtt), de az önmagában **nem fogja meg** a 6.2-ben
+  felsorolt eseteket: a `<a csoport neve>` alakú helyőrzőt és a `...` / `…` cellát.
+  Ezért az `MG3` két további, **nyelvsemleges** mintát is futtat
+  (`ANGLE_PLACEHOLDER_RE`, `WORD_PLACEHOLDER_RE`, `ELLIPSIS_CELL_RE`). Az `ANGLE_…`
+  szándékosan **csak** akkor jelez, ha a `<...>` tartalma szóközt tartalmaz, vagy csupa
+  nagybetűs/aláhúzásos — így egy XML-payload `<user>` tagje nem bukik meg. A `...`/`…`
+  csak **táblacellában** hiba, prózában nem (magyar szövegben legitim).
+
+### 2.9 Nyitott döntések
+
+*(Jelenleg nincs. Ha munka közben felmerül, ide írd, kérdezd meg, majd rögzítsd `MT<n>`-ként
+a 2. szakaszban.)*
+
+---
+
+## 3. A dokumentum és a nyelvi kulcsok
+
+### 3.1 Új kulcsok a `prompts/lang/status-keys.json`-ba
+
+- [x] **3.1.1 — `sections` csoport, `hu` és `en` szelet egyaránt:**
+
+  | kulcs | `hu` | `en` |
+  |---|---|---|
+  | `mt_environment` | Környezet és indítás | Environment and startup |
+  | `mt_test_data` | Tesztadatok | Test data |
+  | `mt_automated_tests` | Automata tesztek | Automated tests |
+  | `mt_manual_groups` | Kézi tesztcsoportok | Manual test groups |
+  | `mt_not_manual` | Nem kézzel tesztelhető | Not manually testable |
+  | `mt_coverage` | Lefedettség | Coverage |
+  | `mt_changelog` | Változásnapló | Change log |
+
+- [x] **3.1.2 — `status` csoport, `hu` és `en` szelet egyaránt:**
+
+  | kulcs | `hu` | `en` |
+  |---|---|---|
+  | `mtp_planned` | Tervezett | Planned |
+  | `mtp_as_built` | As-built | As-built |
+
+- [x] **3.1.3 — `fields` csoport (csak ami hiányzik):**
+
+  | kulcs | `hu` | `en` |
+  |---|---|---|
+  | `f_what_we_test` | Mit tesztelünk | What we test |
+  | `f_shutdown` | Leállítás | Shutdown |
+  | `f_cleanup` | Takarítás | Cleanup |
+
+  **Már létezik, ezeket használd újra, ne duplikáld:** `f_status`, `f_mode`, `f_goal`,
+  `f_prerequisite`, `f_steps`, `f_expected_result`, `f_startup`, `f_example_call`,
+  `f_result`, `f_reason`, `f_evidence`, `f_last_updated`.
+
+  **Végrehajtás közben felvett negyedik kulcs (MT15):**
+
+  | kulcs | `hu` | `en` |
+  |---|---|---|
+  | `f_test_results_so_far` | A ciklus eddigi teszteredményei | Test results of the cycle so far |
+
+  Indok: a 3.2 sablonban ez a sor eredetileg **literál** volt, az `MG7` viszont as-built
+  módban ezt a sort keresi meg, hogy alatta ellenőrizze az útvonalak létezését — literállal
+  ez a 6.4 („semmilyen magyar/angol literál a scriptben") megsértése lett volna. A sablon
+  és mindkét skill a tokent használja.
+
+- [x] **3.1.4 — Verifikáció:**
+  ```bash
+  python3 -c "
+  import json; d=json.load(open('prompts/lang/status-keys.json'))
+  for g in ('sections','status','fields'):
+      assert set(d['hu'][g]) == set(d['en'][g]), (g, set(d['hu'][g]) ^ set(d['en'][g]))
+  print('kulcs-paritás OK')"
+  ```
+
+### 3.2 A `manual-test-plan.md` váza (jóváhagyott)
+
+A sablon a `prompts/lang/<L>/manual-test-plan.md` `#dokumentum-sablon` horgonyába kerül; a
+skill `<!-- INCLUDE:lang/manual-test-plan.md#dokumentum-sablon -->` markerrel hivatkozza be.
+
+> **A sablon négy backtickes kerítésben áll**, mert maga is tartalmaz ```` ``` ```` blokkot
+> (a `.http` példa). A nyelvi fájlba **a kerítés nélküli belső tartalom** kerül.
+
+````markdown
+# Kézi tesztterv — cycle-NN-<cycle-name>
+
+**<field:f_status>:** <status:mtp_planned> | <status:mtp_as_built>
+**<field:f_mode>:** <a módválasztás indoka egy sorban — pl. „tasks.md = Validálásra kész">
+**Forrás:** plan.md <sec:environment_coords> · spec.md <sec:definition_of_done> · conventions.md
+**Utolsó frissítés:** ÉÉÉÉ-HH-NN
+
+> (csak <status:mtp_planned> módban) ⚠ Az implementáció még nem zárult le. A lépések a
+> tervből származnak, valós kódon NEM verifikáltak — eltérés esetén a kód a mérvadó.
+
+## 1. <sec:mt_environment>
+
+| Komponens | Port | Health endpoint | <field:f_startup> | <field:f_shutdown> |
+|---|---|---|---|---|
+| … | … | … | `…` | `…` |
+
+**<field:f_prerequisite>:** hálózati/hozzáférési előfeltételek, sorrend.
+
+## 2. <sec:mt_test_data>
+
+| Név | Érték | Hol keletkezik | <field:f_cleanup> |
 |---|---|---|---|
-| **O1** — review kihagyása, ha nincs nyitott `MF-NN` | nagy (token) | ~nulla | ✅ **javasolt** |
-| **O2** — Sonar kihagyása forrás-érintetlen fixnél | kicsi (óraidő) | kicsi | ✅ javasolt |
-| **O3** — gyors tesztek kihagyása | elhanyagolható | közepes | ❌ elvetve |
-| **O4** — a kör elhagyása szigorú feltétellel | **legnagyobb** | valódi, de korlátozott | ⚠ döntést kér |
+| … | … | … | … |
 
-- [ ] **D1 — Döntés:** melyik opciók valósuljanak meg? (javasolt: **O1 + O2**; az **O4** külön
-      döntés, mert ez az egyetlen, ami tényleges lefedettséget áldoz)
+(teszt-userek jelszóval, tokenek és beszerzésük, seed rekordok, azonosítók, scope-ok —
+TC5 titok-szabály: dev-hatókörű érték konkrétan, klaszter/registry/VPN/IAM/éles
+credential csak pointerként)
 
----
+## 3. <sec:mt_automated_tests>
 
-## 4. A javasolt csomag (O1 + O2)
-
-Ha D1 az ajánlást fogadja el, a megerősítő kör így néz ki:
-
-```
-Megerősítő kör (TELJES, javítás nélkül)
-  1. gyors tesztek           → FUT (változatlan)
-  2/a Sonar                  → FUT, KIVÉVE ha a fixer diffje nem érint forrásfájlt
-  2/b kódreview (RV2)        → FUT, KIVÉVE ha nincs nyitott MF-NN
-  3. nehéz tesztek + regr.   → FUT (változatlan)
-  4. DoD/tasks/riport-kapu   → FUT (változatlan)
-```
-
-**Amit ez NEM változtat meg:** a PASS továbbra is teljes körből jön, a nehéz tesztek továbbra is
-lefutnak, a leállási korlátok (VD4) és a körnaplózás (VD9) érintetlen.
-
----
-
-## 5. Végrehajtás — pontos szerkesztési helyek
-
-> A sorszámok tájékoztatók (a fájl változik) — a **idézett szöveg** az igazi horgony.
-
-### 5.1 A hurok „Zöld" ága — a megerősítő kör leírása
-
-- [ ] **T1.** `skills-hu/07-validate.md` + `skills-en/07-validate.md`, „Az önjavító hurok"
-      8. pont **Zöld** ága. A mai szöveg:
-      *„Azonnal, javítás nélkül indíts egy **TELJES megerősítő kört** (gyors tesztek → **Sonar +
-      kódreview** → nehéz tesztek + regresszió → DoD/tasks/riport-kapu)."*
-      Egészítsd ki a két feltételes kihagyással (O1, O2), és **mondd ki az indokot** — az RV2
-      nyitott `MF-NN` nélkül nem vizsgál semmit (2.1). Az indok nélkül egy gyenge modell
-      „biztos, ami biztos" alapon úgyis lefuttatja.
-
-### 5.2 A PASS-ellenőrzés összehangolása
-
-- [ ] **T2.** Ugyanott, a „Státusz kezelés → PASS" előtti 🔴 blokk (VD10/1). A mai ellenőrzés:
-      *„a lépés-táblában szerepel a nehéz teszt, a Sonar (vagy `N/A` a plan szerint) **és a
-      lefutott kódreview**"*.
-      A „lefutott kódreview" feltételt bővítsd: **lefutott VAGY `kihagyva (nincs nyitott MF-NN)`**.
-      Ugyanez a Sonarra az O2 miatt.
-      > 🔴 **Ezt a T1-gyel EGYÜTT kell megcsinálni.** Ha csak a T1 megy be, a kapu ellentmond a
-      > szabálynak: a kör jogosan hagyja ki a review-t, a PASS-ellenőrzés viszont elbukik rajta.
-
-### 5.3 A „Kör-típusok" tábla és az 1. kötelező szabály
-
-- [ ] **T3.** A „Kör-típusok" tábla **teljes kör** sora és az **1. kötelező szabály** ma azt
-      sugallja, hogy a teljes kör mind a négy lépést mindig lefuttatja. Írd hozzá egy fél
-      mondatban, hogy a megerősítő körben a statikus réteg két eleme **feltételesen** kimarad,
-      és hivatkozz a hurok 8. pontjára. A **4. kötelező szabályt** („A gyors készletet nem
-      szűkítjük") **ne bántsd** — az O3 elvetve.
-
-### 5.4 A kapu-script
-
-- [ ] **T4.** `prompts/scripts/validate-gate-check.py` — `check_review()`. Ma a hiányzó
-      `code-review.md` `--require-review` mellett bukás. Az O1 után a megerősítő körben
-      **létező, de nem frissített** `code-review.md` a normális eset — ez ma is átmegy
-      (nincs nyitott `- [ ]`), tehát **valószínűleg nincs teendő**.
-      **Ellenőrizd, ne feltételezd:** futtasd le a 6.2 próbát, és csak akkor módosíts, ha bukik.
-
-### 5.5 Nyelvi paritás és tükrök
-
-- [ ] **T5.** `lang-parity-check.py --check --strict` → exit 0.
-- [ ] **T6.** Agent-prompt nem változik ebben a tervben, de ha mégis: `sync-gemini-agents.py`.
-
----
-
-## 6. Elfogadási kritériumok
-
-- [ ] **A1.** `bash prompts/scripts/acceptance-check.sh` → **10 teljesült · 0 bukott**.
-      A 16.1 keret bukni **fog** (szándékos tartalmi változás) — ellenőrizd, hogy a változott
-      hash-ek száma **pontosan** a várt halmaz (a `07-validate` 5 platformon = 5 skill-hash,
-      agent 0), majd `--baseline`-nal alapozz újra.
-- [ ] **A2.** `python3 prompts/scripts/lang-parity-check.py --check --strict` → exit 0.
-- [ ] **A3.** Token-mérés: a telepített `bs-07-validate/SKILL.md` mérete **nem nőhet érdemben**
-      (a kihagyási szabályok szövege pár száz karakter). A cél a **futásidejű** megtakarítás,
-      nem a skill rövidítése — ha a skill érdemben hízik, a megfogalmazás túl bőbeszédű.
-
-### 6.2 Kapu-próba (a T4-hez)
-
-Építs egy próba-ciklusmappát, amelyben a `code-review.md` létezik, **nincs** benne nyitott
-`- [ ] **MF-NN**`, és a `validation-report.md` utolsó köre `— TELJES`, a lépés-táblában
-`kódreview … kihagyva (nincs nyitott MF-NN)` sorral. Ezen:
-
-```
-python3 prompts/scripts/validate-gate-check.py <ciklusmappa> --stage close --require-review
-```
-
-**Elvárás:** exit 0. Ha bukik, a T4 mégis kell.
-
----
-
-## 7. Kockázatok
-
-1. **A gyenge modell „biztos, ami biztos" alapon lefuttatja a kihagyható lépést.** Ez ellen
-   egyetlen dolog véd: a kihagyás **indokának** kimondása a promptban (2.1), nem csak az
-   engedélyé. Ezt a T1 kötelező része.
-2. **T1 és T2 szétcsúszása.** Külön commitban bemenve a kapu ellentmond a szabálynak. Egy
-   commitba menjenek.
-3. **Az O4 csendes bekúszása.** Az O4 külön döntés (D1). Ha valaki a T1 kapcsán „logikusnak"
-   érzi az egész kör elhagyását, az **lefedettség-vesztés** — a hurok könnyű körei nem futtatnak
-   nehéz tesztet.
-4. **A mérés elavulása.** A 2. szakasz táblája az `RV-SC` **utáni** állapotra érvényes. Ha a
-   diff-szűkítés változik, a review költsége is változik — a táblát frissíteni kell.
-
----
-
-## 8. Végrehajtási sorrend
-
-1. **D1 döntés** (3. szakasz) — enélkül semmi.
-2. **T1 + T2 egyetlen commitban** (hu + en), utána **A2**.
-3. **T3** (hu + en).
-4. **6.2 kapu-próba** → ha bukik, **T4**.
-5. **A1** — elfogadási sor + a 16.1 újraalapozás.
-6. Ha a felhasználó az **O4**-et is kérte: külön terv-szakasz kell hozzá (a „futott-e már teljes
-   kör zöld nehéz tesztekkel" feltétel gépi ellenőrzésével), **nem** a T1 kiterjesztéseként.
-
-### Commit-stratégia
-
-Egy commit a T1+T2 párosnak, egy a T3-nak, és ha kell, egy a T4-nek. Üzenet-minta a repó
-szokása szerint: `07.4: a megerősítő kör statikus rétege feltételessé válik (O1+O2)`.
-
----
----
-
-# II. Az 05-analyze gyorsítása — a maradék tételek
-
-> **Ez a rész önhordó, de NEM önálló dokumentum:** az I. rész (a 07 megerősítő köre) független
-> tőle, csak a fájl közös. A II. rész az `05-analyze` fázis gyorsítására tett hat javaslat
-> **maradéka**: az 1–3. tétel (a fixer önellenőrzése, a négy párhuzamos diagnoszta-kör
-> szeletelt bemenettel, a párhuzamos lokális fix-batch) **elkészült** — lásd a II.1 szakaszt.
-> **Státusz:** javaslat. A II.3–II.6 tétel egyike sincs eldöntve.
-
----
-
-## II.1 Ami már elkészült (a kiindulási állapot)
-
-| Tétel | Szabály-ID | Hol él |
+| Mit futtat | Parancs | Az eredmény helye |
 |---|---|---|
-| A fixer a visszatérése ELŐTT maga futtatja a mechanikus kaput, és a `kapu:` mezőben jelenti az eredményt; a 4.b orchestrátor-kör védőhálóvá szelídült | `GS1` | `agents-{hu,en}/{spec,plan,tasks}-fixer.md`, `skills-*/05-analyze.md` 4.b |
-| A szemantikai diagnózis **három párhuzamos körre** oszlik (`s1-dup-underspec` = 1+3., `s2-coverage` = 2+5., `s3-conventions` = 4. kategória), a 6. kategória marad az `analyzer-exec`-nél → négy párhuzamos kör | `SH1` | `agents-*/analyzer.md` (hatókör-paraméter), `skills-*/05-analyze.md` („A négy diagnoszta-kör") |
-| A körök bemenetét a kapu **kimetszi** (`--emit-slices` → `<ciklus>/analyze-slices/*.md`, önmagát rejtő `.gitignore`-ral), így egyik kör sem olvassa a teljes négyest | `SH1` | `scripts/analyze-gate-check.py` (`SLICES`, `emit_slices`) |
-| Ha minden `Must Fix` **lokális** (megfogalmazás, hang, útvonal-formátum, duplikátum-összevonás, elromlott `[P-…]`), a fixerek egyetlen üzenetben, **párhuzamosan** indulnak, downstream re-deriválás nélkül | `LF1` | `skills-*/05-analyze.md` 1.a |
+| … | `…` | `…` |
 
-**Amit ez a csomag NEM oldott meg** — ezek a II.3–II.6 tételek.
+**A ciklus eddigi teszteredményei:** <konkrét útvonalak, vagy „még nem létezik">
 
----
+## 4. <sec:mt_manual_groups>
 
-## II.2 Mérés — ezt kell megismételni döntés előtt
+### TG-01 — <a csoport neve>  (DoD-03, DoD-07)
 
-A II.3–II.6 sorrendje attól függ, hogy **melyik a hosszú pólus**. Ez ma nincs megmérve, és
-találgatásból rossz tételt választanánk. A recept:
+**<field:f_what_we_test>:** <egy-két mondat: milyen viselkedést igazol ez a csoport>
+**<field:f_prerequisite>:** <mi álljon készen a csoport előtt>
 
-1. Futtass egy éles `05-analyze` ciklust FAIL-lel (legalább 2 iteráció).
-2. A Hurok-naplóba iterációnként írasd bele: **a hívások számát** (kapu, kör, fixer), **a körök
-   eltelt idejét** külön-külön, és **az emberi kérdés-körök számát + a válaszra várás idejét**.
-3. A három szám aránya adja a döntést:
-   - ha az **emberi kérdés-körök** dominálnak → **II.3** (kérdés-batch) az első tétel;
-   - ha a **kör-tokenek** dominálnak → **II.4** (jelölt-inventory);
-   - ha az **iterációszám** dominál (3/3 feladva) → **II.5** (shard-szűkített közbenső kör).
+| # | <field:f_steps> | Hívás / művelet | <field:f_expected_result> |
+|---|---|---|---|
+| 1 | token beszerzése | `curl -s -X POST …` | 200, a válasz `access_token` mezője nem üres |
+| 2 | … | … | … |
 
-> **A II.1 utáni állapotot mérd, ne a régit.** A négy párhuzamos kör és a `GS1` már megváltoztatta
-> az arányokat: a fixer-körfordulások száma iterációnként 2–4-gyel csökkent.
+```http
+POST http://localhost:8080/api/…
+Content-Type: application/json
 
----
+{ … }
+```
 
-## II.3 Döntés-jellegű tételek előre, BATCHELVE — döntést igényel
+**<field:f_cleanup>:** <mit kell visszaállítani a csoport után>
 
-**A probléma.** Egy döntést igénylő megállapítás ma a leglassabb úton jut a felhasználóhoz:
-kör → merge → fixer lefut → `Knn` → kérdés → válasz → fixer újra. A `TS` túlélés-szabály
-ráadásul csak a **második** túlélés után eszkalál, tehát a rossz esetben két iteráció ég el
-azelőtt, hogy a felhasználó egyáltalán meglátná a kérdést.
+### TG-02 — …
 
-**A javaslat.** Az összefésülésnél (a fixer indítása ELŐTT) osztályozd a tételeket
-`fixer-javítható` / `döntés-igényes` szerint. A döntés-igényeseket (ambiguitás, súlyos
-konvenció-ütközés, definiálatlan komponens) az orchestrátor **azonnal** felteszi — és **egy
-blokkban az összeset**, nem egyesével.
+### <sec:mt_not_manual>
 
-**Miért döntést igényel.** Ütközik az „egyszerre egy kérdés" szabállyal, ami szándékos
-gyenge-modell-védelem (a `05` „Kérdezési szabályok" szekciója és a `shared/questions-tasks.md`).
-Az érv a batch mellett: itt az **orchestrátor** kérdez, nem a fixer, és a fázis eltelt idejének
-nagy részét épp az emberi körök adják. Az érv ellene: több kérdés egy blokkban a gyengébb
-modellnél összecsúszó válaszokat és félrevezetett `[x]` pipálást szül.
-
-**Három lehetséges alak (a döntés ezek között van):**
-
-- **A) Nincs batch, csak korábbi eszkaláció.** A `TS` az **első** túlélés után eszkalál a
-  döntés-jellegű kategóriákban. Egy iterációt nyer, szabályt nem sért. *(A legkisebb kockázat.)*
-- **B) Előre-osztályozás, egyesével kérdezve.** A döntés-igényes tételek a fixer előtt jönnek ki,
-  de továbbra is egy kérdés / egy válasz. A fixer-körfordulásokat nyerjük meg, az emberi
-  köröket nem.
-- **C) Előre-osztályozás + batch.** A teljes nyereség, a teljes szabály-ütközéssel.
-
-**Ha C mellett dönt a felhasználó, ez kell hozzá:**
-- [ ] `skills-{hu,en}/05-analyze.md` — az összefésülés (`A négy diagnoszta-kör` → `Az összefésülés
-      a te dolgod`) új 5. pontja: a `döntés-igényes` osztály definíciója + a batch-kérdés formátuma.
-- [ ] Ugyanott a „Kérdezési szabályok" szekcióban **kimondott kivétel**: az `05` orchestrátor
-      döntés-batchje az egyetlen hely, ahol több kérdés mehet egy blokkban — a fixerek és a többi
-      fázis szabálya nem változik.
-- [ ] A batch-formátum: számozott lista, tételenként `[FÁZIS · iter n/max X · FÁZIS/Knn]` fejléc,
-      és **kötelező visszaolvasás**: a válaszok átvezetése után az orchestrátor tételenként
-      visszaidézi, mit írt be, mielőtt a fixert indítja.
-- [ ] Elfogadás: egy éles ciklus, ahol 3 döntés-igényes tétel van — a hurok **egy** emberi körben
-      kapja meg mindhárom választ, és a `*-questions.md` mindhárom `[x]`-e a helyes döntést hordozza.
-
----
-
-## II.4 Jelölt-inventory az 1–4. kategóriára (a `SH1` folytatása)
-
-**Az elv, ami már bizonyított.** A 6. kategóriát az `AG3` leltár tette olcsóvá: a subagent nem
-**keres**, hanem **ítél** egy kész jelölt-listán. Ugyanez a négy szemantikai kategóriára még nincs
-meg — a szeletelés (`SH1`) csak a **bemenet méretét** vágta le, a keresés munkáját nem.
-
-**Mit lehet gépiesen jelöltté tenni** (mind a `analyze-gate-check.py`-ba, a leltár mellé):
-
-| Kategória | Jelölt-generátor | Blokk |
+| DoD-NN | Miért nem tesztelhető kézzel | Mi fedi |
 |---|---|---|
-| 1. duplikáció | normalizált bekezdés-/szakaszpárok `difflib.SequenceMatcher` hasonlósága a plan-en belül és plan↔tasks között, küszöb felett | `## Duplikátum-jelöltek` |
-| 2. ambiguitás | vágy-szótár (`megfelelő`, `gyors`, `robusztus`, `optimális`, `hatékony`) + **szám és összehasonlítás nélküli** `DoD-NN` és elfogadási sorok | `## Ambiguitás-jelöltek` |
-| 3. alulspecifikáció (KX3-próza) | a spec tábla- és listasorai, amelyek jellegzetes tokenje nem szerepel a plan-ben (a mai `V1`/`V2` csak kódblokkot és terjedelmet mér) | `## Csonkítás-jelöltek` |
-| 4. konvenció-ütközés | `conventions.md`-ből kulcs-érték tények kinyerése (stack, teszt-eszköz, elnevezés, útvonalak), majd ütköző tokenek keresése a plan-ben | `## Konvenció-jelöltek` |
+| DoD-05 | … | `…` automata teszt / Sonar kapu |
 
-**Ez a legnagyobb token-nyereség, és a legnagyobb munka.** Becsült méret: 300–400 sor a kapuba,
-plusz a négy blokk átvezetése a három kör promptjába. A **fő kockázat a false-positive ráta**:
-minden jelölt-fajtát külön kell hangolni, mert egy zajos jelölt-lista rosszabb, mint a semmi
-(a kör az ítélet helyett a szűrésre megy el). Ezért:
+## 5. <sec:mt_coverage>
 
-- [ ] **Egy jelölt-fajta = egy külön lépés, saját méréssel.** Kezdd a **2. kategóriával**
-      (a vágy-szótár a legkevésbé zajos), és csak akkor menj a következőre, ha a jelöltek
-      **legalább fele** valódi megállapítássá válik egy éles cikluson.
-- [ ] A jelölt-blokk **soha nem megállapítás**: a kapu `Must Fix` és `Javaslatok` blokkja nem nő
-      tőle, az exit code nem változik. Ugyanaz a szerződés, mint a leltárnál.
-- [ ] A kör promptja mondja ki: **a jelölt-lista nem szűkíti a hatókört** — a szeleten kívüli
-      megállapítás továbbra is jelenthető (különben a zajszűrés lefedettség-vesztéssé válik).
+| DoD-NN | Tesztcsoport |
+|---|---|
+| DoD-03 | TG-01 |
 
----
+## <sec:mt_changelog>
 
-## II.5 Shard-szűkített közbenső kör + szakasz-hash cache
+- **ÉÉÉÉ-HH-NN — <mód>:** <mit adott hozzá / mit módosított / mi avult el és miért>
+````
 
-**A probléma.** A `D10` szerint minden kör teljes, és `max X = 3` iterációban akár **három** teljes
-négy-körös diagnózis fut le — miközben a 2. és 3. iteráció jellemzően egyetlen dokumentum egyetlen
-szakaszát érinti.
+**Kötött formai szabályok** (ezekre épül a kapu):
+- a tesztcsoport-fejléc formája `### TG-NN — <név>  (DoD-NN[, DoD-NN…])`;
+- a `TG-NN` azonosítók a fájlon belül **egyediek** és hézagmentesen sorszámozottak;
+- felületi tesztnél a „Hívás / művelet" cella a **pontos URL**-t és a kattintási lépést
+  tartalmazza, REST-nél `curl`-t, és a csoportnak van legalább egy ```` ```http ````
+  blokkja is;
+- útvonal-konvenció: RP1 (`prompts/shared-<lang>/path-format.md`) — abszolút, gép-specifikus
+  és `file://` alak tilos.
 
-**A javaslat.** A `PASS` garanciáját megtartva:
-- az **1..n−1** iterációkban csak a kapu + azok a körök futnak, amelyek szeletét a
-  `git diff` érintette;
-- a `PASS` előtt **egy teljes kör** kötelező (ez marad a `D10` betűje).
+### 3.3 A skill leírója — `prompts/lang/{hu,en}/descriptions.json` (KÖTELEZŐ)
 
-**Determinisztikus biztosíték.** A kapu a szelet-fájl fejlécébe írja minden bemeneti szakasz
-**tartalom-hash-ét**, és az `analyze-report.md` Hurok-naplója rögzíti őket. Egy kör csak akkor
-hagyható ki, ha **minden** input-szakaszának hash-e változatlan az előző körhöz képest. Ez nem
-LLM-ítélet, hanem összehasonlítás — ezért nem tud csendben lefedettséget veszíteni.
+> **Enélkül a telepítés `sys.exit(1)`-gyel megáll, és a paritás-kapu 11.4 checkje FAIL.**
+> A `.md` frontmatterébe írt `description` csak **forrás/placeholder**: a telepítő
+> build-time **kicseréli** a `descriptions.json` `name`-hez tartozó értékére, mert a
+> leíró a **projekt** nyelvét követi (a felhasználó azon a nyelven kéri a skillt), nem a
+> prompt-nyelvet.
 
-- [ ] `scripts/analyze-gate-check.py` — `# SECTION-HASHES:` sor a szelet fejlécébe (szakaszonként
-      rövid `sha256`), és egy `--slice-hashes` kimeneti blokk az orchestrátornak.
-- [ ] `skills-{hu,en}/05-analyze.md` — a 6. lépés kap egy „mit kell újrafuttatni" alpontot,
-      a `D10` mellé kimondva, hogy a **PASS-kör** továbbra is teljes.
-- [ ] `lang/{hu,en}/05-analyze.md` — a Hurok-napló sor-formátuma kap egy `kihagyott körök:` mezőt
-      (audit-nyom: ha valaki később hibát talál, látszik, melyik kör mit nem nézett meg).
-- [ ] **Kockázat, amit ki kell mondani:** a kereszt-dokumentumos csatolás. Egy `tasks.md`-változás
-      nyithat rést olyan körben, aminek a szelete nem változott (pl. `s3-conventions`). Ezért a
-      kihagyás feltétele **minden** input-szakasz változatlansága, és nem elég a „saját"
-      dokumentum változatlansága.
+- [x] **3.3.1 — Új kulcs `prompts/lang/hu/descriptions.json`-ba:**
+  `"bs-manual-test-plan"` → a magyar leíró. Formája a többiét kövesse
+  (`"berkispec - segédparancs. …"`), és tartalmazza: mit állít elő, mi az előfeltétele
+  (analyze PASS), hogy nem fázis, és hogy bármikor újrafuttatható.
 
----
+- [x] **3.3.2 — Ugyanaz a kulcs `prompts/lang/en/descriptions.json`-ba**, angol szöveggel.
+  A **kulcs nem fordul** (`bs-manual-test-plan` mindkét fájlban azonos), csak az érték.
 
-## II.6 A drága tier háromszorozódása — a `SH1` nyitva hagyott ára
-
-**A tény.** Az `install-helper.py` `AGENT_MODEL_KEYS` **agent-stem szerint** rendel tiert
-(`analyzer` → `deep_reasoning_agent`). Mivel a három szemantikai kör **ugyanazt az `analyzer`
-definíciót** hívja, mind a három a **legdrágább** tieren fut. A szeletelés miatt a bemenet
-körönként jóval kisebb, tehát a token-összeg nagyságrendileg 1,3–1,5× (nem 3×), de ez az
-**Opus-osztályú** kereten jelenik meg — épp azon, amit a rendszer szándékosan egyetlen pontra
-szorít (README 5.3).
-
-**A javaslat.** Ha a drága keret a szűk keresztmetszet, a `s2-coverage` és/vagy az
-`s3-conventions` kör kapjon **saját agent-definíciót** `default` tieren:
-
-- [ ] `agents-{hu,en}/analyzer-conv.md` — a 4. kategória önálló, vékony diagnosztája
-      (`s3-conventions` a legjobb jelölt: a `conventions.md` kulcs-érték jellegű összevetése a
-      legkevesebb reasoningot igényli).
-- [ ] `lang/{hu,en}/descriptions.json` — `description` + `role` mindkét nyelven (LG26).
-- [ ] `scripts/install-helper.py` — `READONLY_AGENTS` (kötelező: read-only sandbox) és — ha
-      `default`-nál más kell — `AGENT_MODEL_KEYS`.
-- [ ] `models.json` — platformonként `effort` sor, ha a `default` nem jó.
-- [ ] `scripts/sync-gemini-agents.py` futtatása (az új agent `agent.json` váza automatikusan
-      létrejön), majd a `toolNames` kézi beállítása.
-- [ ] README: az agent-tábla, az 5.3 tier-tábla és az 5.4 ábra.
-
-> **Miért nem ez lett az első megoldás.** Egy új agent-definíció **hét** felületet érint (fenti
-> lista), a hatókör-paraméter viszont egyet. A II.1 ezért a kis felületű utat választotta —
-> a tier-szétválasztás akkor válik indokolttá, ha a mérés (II.2) kimutatja a drága keret
-> telítődését.
+- [x] **3.3.3 — Verifikáció:**
+  ```bash
+  python3 -c "
+  import json
+  hu=json.load(open('prompts/lang/hu/descriptions.json'))
+  en=json.load(open('prompts/lang/en/descriptions.json'))
+  assert set(hu)==set(en), set(hu)^set(en)
+  assert 'bs-manual-test-plan' in hu
+  print('leíró-paritás OK')"
+  ```
 
 ---
 
-## II.7 Amit szándékosan NEM javasolunk
+## 4. Az új skill — `prompts/skills-hu/manual-test-plan.md` + `-en/`
 
-1. **Az analyzer szűkítése a `git diff`-re.** A `D10` pont ezt zárja ki: a kereszt-fázisos hiba
-   jellemzően a **nem változott** oldalon nyílik. A II.5 hash-alapú kihagyása más dolog —
-   ott a kihagyás feltétele bizonyított változatlanság, nem heurisztika.
-2. **A `BR1` friss-alap ellenőrzés elhagyása.** Az adja a `PASS` érvényességét; nélküle a
-   `06` és a `09` összevetése értelmetlenné válik.
-3. **A `Végrehajthatósági leltár` opcionálissá tétele.** A `05` minőségellenőrzése kimondja: e
-   nélkül a PASS nem fogadható el, mert épp azok a hibák maradnának rejtve, amiket a lefedettségi
-   mátrix szerkezetileg nem lát.
+- [x] **4.1 — Fájl + frontmatter.** A számozatlan segédparancs-minta szerint
+  (`cycle-status.md` / `export-doc.md`), `phase`/`prev`/`next` **nélkül**:
+  ```yaml
+  ---
+  name: bs-manual-test-plan
+  description: "berkispec - segédparancs. Kézi tesztterv összeállítása a ciklushoz …
+    Előfeltétel: az analyze-report.md PASS. Nem fázis: a 00-09 folyamatnak nem része,
+    bármikor hívható az analyze után, és bármikor újrafuttatható."
+    # ⚠ ez az érték build-time KICSERÉLŐDIK a descriptions.json-ból (1.6/1., 3.3)
+  prerequisites:
+    - "specs/cycle-NN-<name>/analyze/analyze-report.md státusz: PASS"
+  output:
+    - "specs/cycle-NN-<name>/manual-test-plan.md — kézi tesztterv (Tervezett vagy As-built módban)"
+  scripts:
+    - "scripts/manual-test-gate-check.py — determinisztikus minőségi kapu"
+  shared:
+    - "shared/phase-commit.md"
+  ---
+  ```
+  A fájlnév **kötött**: `manual-test-plan.md` → a telepítő ebből képzi a
+  `bs-manual-test-plan` skill-mappát (1.4).
+
+- [x] **4.2 — Fejléc-blokkok.** `<!-- INCLUDE:lang/output-language.md#output-language -->`
+  és `<!-- INCLUDE:shared/context-check.md -->`, majd egy bekezdés: *ez nem fázis, nem
+  változtatja a ciklus státuszát, bármikor újrafuttatható.*
+
+- [x] **4.3 — Előfeltétel-szakasz (`## <field:f_prerequisite>`).**
+  0. **Ciklus-beazonosítás** (MT2) — a többi skill szó szerinti mintájával, beleértve a
+     `<!-- INCLUDE:lang/common.md#ciklus-beazonositas -->` markert.
+  1. **`conventions.md` létezés-ellenőrzés** — ha nincs, STOP → `00`.
+  2. **Analyze-kapu (MT1)** — `specs/cycle-NN-<name>/analyze/analyze-report.md` (fallback a
+     ciklus-gyökérben lévő régi helyre, ahogy a `cycle-status.py` teszi). Ha nem létezik
+     vagy a fejléc státusza nem `PASS` → **STOP**, egyértelmű mondattal + a
+     `/bs-analyze input: @specs/cycle-NN-<cycle-name>` paranccsal. **Ne kezdj el tervet
+     írni** — a KO1 kitöltöttsége ilyenkor nem garantált.
+  3. **Munkafa-ellenőrzés** (csak VCS esetén) — `git status --short`. Ha a `tasks.md`
+     `[analyze-loop]` vagy `[validate-loop]` markert visel, **ne ajánld fel commitra** a
+     ciklus mappáját (MT9), csak jelezd egy sorban, hogy hurok fut, és a commit
+     path-scoped lesz.
+
+- [x] **4.4 — Módválasztás (MT3).** A `tasks.md` státuszából, egyetlen táblával a promptban:
+
+  | `tasks.md` státusz | Mód |
+  |---|---|
+  | `<status:ready_for_implement>` (vagy hiányzik / `[analyze-loop]`) | `<status:mtp_planned>` |
+  | `<status:ready_for_validate>` vagy `<status:done>` | `<status:mtp_as_built>` |
+
+  A választott módot **írd ki a felhasználónak egy sorban**, indoklással, mielőtt dolgozni
+  kezdesz. A felhasználó felülbírálhatja (`mód: tervezett` / `mód: as-built` inputtal).
+
+- [x] **4.5 — Bemenet-beolvasás (minimális kontextus, 2. tervezési elv).** **Csak** ezek a
+  szekciók olvasandók, nem a teljes fájlok:
+  - `plan.md`: `<sec:environment_coords>` (és alszekciói: `<sec:components_endpoints>`,
+    `<sec:rest_calls_examples>`, `<sec:test_api_users>`, `<sec:other_parameters>`,
+    `<sec:network_access_prereqs>`), `<sec:testing_strategy>`, `<sec:machine_run_table>`;
+  - `spec.md`: `<sec:definition_of_done>` (a `DoD-NN` azonosítókkal),
+    `<sec:test_specification>`;
+  - `conventions.md`: `## <sec:cv_test_reporting>` (a TR5 `<field:f_artifact_path_base>`
+    jelölővel együtt), `## <sec:cv_git_conventions>` (No-VCS ág).
+
+  > **🔴 Csonkítás-mentes átemelés (KX2/KX3 analógia).** A KO1-ből átvett `curl`-példák,
+  > payloadok, userek és parancsok **szó szerint, teljes értékkel** kerülnek át. Tilos
+  > zanzásítani, placeholderre cserélni (`<TOKEN>`, `…`), vagy „lásd a plan-t" hivatkozásra
+  > cserélni: a `manual-test-plan.md`-t egy ember olvassa, aki a plant nem nyitja meg.
+
+- [x] **4.6 — As-built ellenőrzés (csak `<status:mtp_as_built>` módban).** Minden átvett
+  koordinátára (route, port, env-változó, konfig-kulcs) **keresd meg a valós forrást** a
+  kódban (route-definíciók, konfigfájlok, compose/manifest). Eltérésnél:
+  - **a kód nyer** — a tervbe a valós érték kerül;
+  - az eltérés bekerül a `<sec:mt_changelog>`-ba: `plan.md KO1: <régi> → kód: <új>`;
+  - a válaszodban **egy sorban jelezd** a felhasználónak, hogy a plan KO1-je elavult (ez a
+    `08-doc-sync` promóciójának is jelzés).
+
+  `<status:mtp_planned>` módban ez a lépés **kimarad** — ne találgass és ne olvass kódot.
+
+- [x] **4.7 — Tesztcsoportok képzése (MT6 + MT10).**
+  - Minden csoport **egy koherens viselkedést** igazol, és a fejlécében felsorolja a
+    lefedett `DoD-NN`-eket.
+  - A csoport tartalma a spec `<sec:test_specification>` eseteiből és a plan
+    `<sec:rest_calls_examples>` szekvenciáiból áll össze — **új követelményt nem találsz ki**.
+  - Minden lépésnek van **konkrét elvárt eredménye** (státuszkód, mező, képernyő-elem) —
+    „működik", „hibátlanul lefut" nem elfogadható.
+  - Minden csoportnak van **tesztadata** (2. szekcióra hivatkozva vagy helyben) és
+    **takarítása**.
+  - Ami kézzel nem tesztelhető → `<sec:mt_not_manual>` tábla, indoklással (MT10).
+
+- [x] **4.8 — Automata tesztek szekció.** A `<sec:machine_run_table>` sorait vidd át
+  (parancs szó szerint), az eredmény helyét a `conventions.md` `<sec:cv_test_reporting>`
+  táblájából + a TR5 útvonal-alap jelölőből oldd fel. Az „eddigi teszteredmények":
+  - `<status:mtp_planned>` módban a **leendő** útvonalak, `_(még nem létezik)_` jelöléssel;
+  - `<status:mtp_as_built>` módban a **ténylegesen létező** fájlok listája
+    (`test-report/implement/check-log.md`, és ha volt már validálás,
+    `test-report/validate/round-NN/…`). Csak azt sorold fel, ami tényleg ott van.
+
+- [x] **4.9 — Merge-logika újrafutásnál (MT7).** Ha a fájl létezik:
+  - **kérdés nélkül** dolgozz;
+  - a generált szekciókat (1–5.) frissítsd, a bennük lévő **kézi kiegészítéseket** (olyan
+    sor/bekezdés, ami nem vezethető vissza a bemenetekre) **tartsd meg**;
+  - a `TG-NN` azonosítókat **ne számozd újra** — a meglévők megmaradnak, az újak a sor
+    végére kerülnek;
+  - írj egy `<sec:mt_changelog>` bejegyzést: dátum, mód, mit adtál hozzá / módosítottál /
+    mi avult el és miért.
+
+- [x] **4.10 — Minőségellenőrzési lista + a kapu futtatása.** A prompt-szintű lista után
+  **kötelező** a script. A hívás **pontos formája** (a `07-validate` mintája szerint):
+  a parancs elé `<!-- INCLUDE:shared/python-cmd.md -->` (Windows `python` / `py -3`
+  fallback), az útvonalban pedig a `<platform-scripts-mappa>` **helyőrző** (BD15), amit a
+  telepítő old fel a platform tényleges scripts-mappájára — **ne írj konkrét útvonalat**:
+  ```bash
+  python3 <platform-scripts-mappa>/manual-test-gate-check.py specs/cycle-NN-<cycle-name>
+  ```
+  - `exit 0` → mehet a commit;
+  - `exit 1` → javítsd a kiírt ✗ pontokat, és futtasd újra. **Legfeljebb 2 javító
+    próbálkozás**, utána STOP: írd ki a kapu kimenetét és kérdezz.
+  - `exit 2` → használati/előfeltétel-hiba (nincs `conventions.md` jelölő, hiányzó fájl) —
+    STOP, a pótlandó sorral.
+
+- [x] **4.11 — Megállási szabályok (explicit felsorolás a promptban).**
+  1. Nincs `PASS` analyze-riport (4.3/2.);
+  2. a `plan.md` KO1-jében **placeholder vagy üres cella** van, amit a kódból sem lehet
+     feloldani → STOP, jelezd, hogy a `03`-hoz kell visszamenni (a `05` kapuja ezt
+     elvileg kizárja — ha mégis előfordul, az jelzésértékű);
+  3. egy `DoD-NN`-hez sem kézi lépés, sem MT10-indoklás nem képezhető → **kérdezz**
+     (egy kérdés egyszerre, 3. tervezési elv);
+  4. a kapu kétszeri javítás után is bukik (4.10);
+  5. a commit-ellenőrzés kétszer bukik (`shared/phase-commit.md` 4. lépése).
+
+- [x] **4.12 — Fázis-záró commit (MT9).** A `<FÁZIS-TAG>` = `manual-test-plan` deklarálása
+  után `<!-- INCLUDE:shared/phase-commit.md -->`, **és közvetlenül a marker előtt** a
+  hurok-őr kimondása:
+
+  > **Hurok-őr:** ha a `tasks.md` `[analyze-loop]` vagy `[validate-loop]` markert visel, a
+  > 3. lépés `git add`-je **kizárólag** `specs/cycle-NN-<cycle-name>/manual-test-plan.md`
+  > lehet — a ciklus mappájának teljes stage-elése a futó hurok commitálatlan állapotát
+  > (VD8) rántaná be a commitba, amiből a `07` a megszakadás-folytatást ismeri fel.
+  > Ilyenkor a 4. lépés `git status --short` ellenőrzése is csak erre a fájlra vonatkozik.
+
+  Megjegyzés: a `phase-commit.md` blokk **státuszírásról** is beszél (2. lépés) — itt ez a
+  `manual-test-plan.md` saját `<field:f_status>` mezője (`<status:mtp_planned>` /
+  `<status:mtp_as_built>`), **nem** a `spec.md`/`plan.md`/`tasks.md` státusza. Ezt a
+  skillben mondd ki, hogy az ágens ne nyúljon a ciklus státusz-láncához.
+
+- [x] **4.13 — Záró visszajelzés.** A válasz végén: a mód, a tesztcsoportok száma, a
+  lefedett `DoD-NN`-ek, a commit azonosítója, és a `manual-test-plan.md` **kattintható
+  linkje**. A `phase-commit.md` PE1 szakasza itt nem értelmezett (nincs „következő fázis") —
+  a skill a link kiírásával véget ér.
+
+- [x] **4.14 — Az angol pár (`prompts/skills-en/manual-test-plan.md`).** Szerkezetileg
+  azonos: ugyanazok a címsorok, kódblokkok, INCLUDE-markerek, `MT<n>` szabály-ID-k, nyelvi
+  tokenek és imperatívusz-darabszám. A paritás-kapu ezeket méri. **Amit konkrétan egyeztetni
+  kell:**
+  - a frontmatter lista-mezőinek (`prerequisites`, `output`, `shared`, …) **elemszáma**
+    egyezzen (11.4 — a behúzott `- ` sorokat számolja, a tartalmat nem);
+  - a `<sec:…>` / `<field:…>` / `<status:…>` tokenek **halmaza** egyezzen (11.12);
+  - a nyelvfüggetlen tokenek (`/bs-…` parancsok, `[analyze-loop]`/`[validate-loop]`
+    markerek, `*.md`/`*.py` útvonalak) **halmaza** egyezzen (11.13);
+  - a „kemény padló" jelölések (`TILOS` ↔ `FORBIDDEN`/`NEVER`, `🔴`, `⛔`) **darabszáma**
+    egyezzen (11.10).
+
+---
+
+## 5. A nyelvi blokkok — `prompts/lang/{hu,en}/manual-test-plan.md`
+
+> **🔴 Két kemény szabály, amit a 11.3 kapu számon kér:**
+> 1. **Nincs árva horgony.** Minden horgonyt **hivatkoznia kell** legalább egy
+>    `<!-- INCLUDE:lang/manual-test-plan.md#<horgony> -->` markernek valamelyik prompt-fában.
+>    Ha egy horgonyt megírsz, de a skillből nem hivatkozol rá → `FAIL`. Tehát: **csak annyi
+>    horgonyt írj, amennyit a skill tényleg behivatkoz** — az 5.1 tábla ezért a skill 4.
+>    szakaszának lépéseihez van kötve.
+> 2. **A nyelvi blokk maga nem tartalmazhat `INCLUDE` markert** (8.5) — a `lang/<L>/*.md`
+>    fájlokban csak horgonyok és tartalom lehet, beágyazott include nem.
+>
+> **A horgony pontos szintaxisa** (saját sorban, semmi más a sorban, **szóköz nélkül** a
+> kettőspont után — a repó minden horgonya így néz ki, 75 db):
+> `<!-- ANCHOR:dokumentum-sablon -->`
+> - a horgonynév **nem fordul** — mindkét nyelvi fájlban azonos;
+> - névkonvenció: `<szabály-ID>-<rövid-név>` ott, ahol van hozzá szabály-ID
+>   (`DS10-doc-sync-plan-vaz`, `TC12-promocio-kerdes`), egyébként sima leíró név
+>   (`zaro-uzenet`, `statusz-megerosites`);
+> - **a blokk a következő `ANCHOR` sorig (vagy a fájl végéig) tart** — az `ANCHOR` sorok
+>   maguk nem részei a beemelt szövegnek (8.9). Nincs záró marker;
+> - **hivatkozott, de nem létező horgony → a telepítő `sys.exit(1)`** (a hiányzó *fájl*
+>   ezzel szemben csendben átmegy — ezért a horgonynevet elgépelni drágább, mint hinnéd).
+
+- [x] **5.1 — Horgonyok.** Pontosan ezek (mindegyiket hivatkozza a skill):
+
+  | horgony | tartalom |
+  |---|---|
+  | `dokumentum-sablon` | a 3.2 váz teljes egészében |
+  | `mod-tervezett-figyelmeztetes` | a `Tervezett` mód fejléc-figyelmeztetése |
+  | `analyze-kapu-stop` | a STOP-üzenet szövege + a `/bs-analyze` parancs |
+  | `mod-bejelentes` | „A ciklus … módban készül, mert …" |
+  | `ujrafutas-bejelentes` | „Létező tesztterv frissítése — a kézi tartalom megmarad." |
+  | `zaro-uzenet` | a 4.13 záró visszajelzés sablonja |
+
+- [x] **5.2 — Az angol pár** ugyanezekkel a horgonynevekkel (a horgonynév **nem fordul**).
+
+- [x] **5.3 — Verifikáció:**
+  ```bash
+  diff <(grep -o '<!-- *ANCHOR:[^>]*-->' prompts/lang/hu/manual-test-plan.md) \
+       <(grep -o '<!-- *ANCHOR:[^>]*-->' prompts/lang/en/manual-test-plan.md) \
+    && echo "horgony-paritás OK"
+  ```
+
+- [x] **5.4 — Árva-horgony ellenőrzés** (a 11.3/b kapu előfutára — futtasd, mielőtt a
+  paritás-kaput hívnád):
+  ```bash
+  comm -23 \
+    <(grep -o '<!-- *ANCHOR:[^>]*-->' prompts/lang/hu/manual-test-plan.md \
+      | sed 's/.*ANCHOR: *//; s/ *-->//' | sort -u) \
+    <(grep -rho 'INCLUDE:lang/manual-test-plan.md#[^ ]*' prompts/skills-hu prompts/skills-en \
+      | sed 's/.*#//; s/ *-->$//' | sort -u)
+  ```
+  **Üres kimenet a helyes** — minden nem-hivatkozott horgony itt jelenik meg.
+
+---
+
+## 6. A kapu — `prompts/scripts/manual-test-gate-check.py`
+
+Mintaként a `ds22-gate-check.py` és a `report-gate-check.py` szolgál (kisebbek, mint az
+`analyze-gate-check.py`, és ugyanezt a szerkezetet követik).
+
+- [x] **6.1 — Váz.** `#!/usr/bin/env python3`, `from lang_keys import fld, st, sec`,
+  argparse: `cycle_path` pozicionális; opcionális `--mode {planned,as-built}` (default: a
+  fájl `<field:f_status>` mezőjéből). Kimenet: fejléc + `✓`/`✗`/`·` sorok, a `✗` sorok
+  mellett az ID (`MG<n>`) és a **pótlandó konkrétum**. Kilépő kód: `0` = tiszta,
+  `1` = legalább egy `✗`, `2` = használati/előfeltétel-hiba.
+
+- [x] **6.2 — Ellenőrzések.**
+
+  | ID | Mit ellenőriz | Bukás esetén |
+  |---|---|---|
+  | `MG1` | a fájl létezik; a `<field:f_status>` értéke `<status:mtp_planned>` vagy `<status:mtp_as_built>` | `exit 2` — pótlandó fejléc-sor |
+  | `MG2` | mind a 6 kötelező szekció megvan (`mt_environment`, `mt_test_data`, `mt_automated_tests`, `mt_manual_groups`, `mt_coverage`, `mt_changelog`) | a hiányzók felsorolása |
+  | `MG3` | **placeholder- és üres-cella-tilalom** az 1–4. szekcióban (`<…>`, `TODO`, `TBD`, `xxx`, üres tábla-cella). Az `—` explicit „nem értelmezhető", elfogadott | fájl:sor + a talált minta |
+  | `MG4` | minden `### TG-NN` csoportnál: van `<field:f_what_we_test>` sor, van `<field:f_prerequisite>` sor, van legalább 1 soros lépés-tábla, és **minden** lépés-sor `<field:f_expected_result>` cellája nem üres | a hiányos csoport ID-ja + mi hiányzik |
+  | `MG5` | **kétirányú DoD-lefedettség:** minden `### TG-NN` fejlécében van legalább egy `DoD-NN`; és a `spec.md` `<sec:definition_of_done>` minden `DoD-NN`-je szerepel **vagy** egy csoport fejlécében, **vagy** a `<sec:mt_not_manual>` táblában indoklással | a lefedetlen `DoD-NN`-ek felsorolása |
+  | `MG6` | az 1. szekció minden komponens-sorában van **nem üres, nem placeholder** indító parancs | a hiányos komponens neve |
+  | `MG7` | a 3. szekció parancsai **halmazként lefedik** a `plan.md` `<sec:machine_run_table>` sorait; `as-built` módban a „ciklus eddigi teszteredményei" alatt felsorolt útvonalak **léteznek a lemezen** | a hiányzó parancs / a nem létező útvonal |
+  | `MG8` | **RP1** — nincs abszolút útvonal, gép-specifikus prefix vagy `file://` a dokumentumban | fájl:sor |
+  | `MG9` | minden olyan csoportnál, amelynek lépés-táblájában `curl` szerepel, van legalább egy ```` ```http ```` blokk is (és fordítva) | a csoport ID-ja |
+  | `MG10` | a `TG-NN` azonosítók egyediek és hézagmentesek; a `<sec:mt_coverage>` tábla `DoD-NN → TG-NN` párjai megegyeznek a csoport-fejlécekkel | az eltérő sorok |
+
+- [x] **6.3 — Kód-újrahasznosítás (MT13: másolás, forrás-hivatkozó kommenttel).**
+  Az alábbiakat **szó szerint** vedd át az `analyze-gate-check.py`-ból, mindegyik fölé egy
+  `# forrás: analyze-gate-check.py <név> (C6/R1)` kommenttel:
+
+  | Amit átveszel | Sor (a terv írásakor) | Mire kell |
+  |---|---|---|
+  | `section_body(text, title_substr)` | 564 | szekció-törzs kimetszése (`##`–`####`, a következő azonos/magasabb szintű címsorig) |
+  | `TABLE_ROW_RE` · `SEPARATOR_ROW_RE` | 544–545 | tábla-sorok felismerése |
+  | `PLACEHOLDER_CELL_RE` | 546 | sablon-/példasor felismerése |
+  | `KO1_PLACEHOLDER_RE` | 814 | placeholder az érték helyén (`MG3`) |
+  | `FENCE_RE` | 907 | kódblokk-határ (`MG8`) |
+  | `FILE_URI_RE` · `MACHINE_PATH_RE` · `PLACEHOLDER_PATH_RE` · `MD_ABS_LINK_RE` · `ABS_REPO_PATH_RE` · `R1_MAX_PER_DOC` | 1032–1038 | `MG8` útvonal-minták |
+  | `check_path_format(docs, repo_root, f)` | 1042 | `MG8` teljes logikája — a `docs` egyetlen elemű: `[("manual-test-plan.md", text, "—")]` |
+
+  **🔴 Két szemantikai csapda, amit pontosan úgy kell másolni, ahogy van** — különben a két
+  kapu mást mond ugyanarra a szövegre:
+  1. **A csupa-placeholder sor NEM hiba.** A `C6` így szűr: ha a sor **minden** cellája
+     illeszkedik a `PLACEHOLDER_CELL_RE`-re (`_dőlt_`, `...`, `—`, `-`, `<...>`) **vagy**
+     üres, akkor az **sablonsor**, `continue`. Csak az olyan sorban hiba az üres cella,
+     amelyikben legalább egy valódi érték is áll. A `—` tehát **legális** „nem
+     értelmezhető" jelölés, nem hiányzó adat.
+  2. **A fejlécsor átugrása állapotgéppel megy** (`seen_separator`): amíg a `|---|---|`
+     elválasztó nem jött, a sorokat nem vizsgáljuk. A `FENCE_RE`-t követő `in_fence`
+     kapcsoló ugyanígy állapotgép — az `R1` a `file://`, gép-specifikus és placeholder
+     alakot **kódblokkban is** hibázza, az abszolút markdown-linket és az abszolút
+     repó-útvonalat viszont **csak kódblokkon kívül**.
+
+  > **⚠ A `KO1_PLACEHOLDER_RE` nyelvfüggő** (magyar kulcsszavakra épül: `ide j`, `kitölt`,
+  > `megadni`, `érték`, `url`, `jelszó`, `password`), csak a `TODO|TBD|FIXME|XXX` ága
+  > nyelvsemleges. Angol projekt-nyelvnél tehát gyengébben fog. **Ne javítsd itt** — ez az
+  > `05` kapujával közös, meglévő adósság, és az egyoldalú „javítás" pont a két kapu
+  > eltéréséhez vezetne. Vedd át úgy, ahogy van, és írd a komment mellé:
+  > `# nyelvfüggő ág — az analyze-gate-check.py C6-jával közös adósság`.
+
+- [x] **6.4 — Nyelvfüggetlenség.** Semmilyen magyar/angol literál a scriptben — minden
+  szekciónév/mezőnév/státusz a `lang_keys` `sec()`/`fld()`/`st()` hívásain keresztül.
+  A `✓`/`✗` sorok user-facing szövege a `cycle-status.py` és a `ds22-gate-check.py`
+  jelenlegi gyakorlatát követi.
+
+- [x] **6.5 — Verifikáció.** Egy létező, lezárt ciklus mappáján futtatva ne dobjon
+  tracebacket; hiányzó `manual-test-plan.md` esetén `exit 2` és értelmes üzenet.
+
+---
+
+## 7. `cycle-status.py` bővítés (MT8)
+
+> **🔴 MIÉRT NEM a `phases` listába (MT14) — mérve, a kódban.** Az `analyze_cycle()` a
+> `phases`-ből származtatja a ciklus összesített státuszát (352–355. sor):
+> ```python
+> all_done   = all(p[1] in ("KÉSZ", INDIRECT) for p in phases)
+> any_started= any(p[1] in ("KÉSZ", INDIRECT, "FOLYAMATBAN") for p in phases)
+> overall_status = "KÉSZ" if all_done else ("FOLYAMATBAN" if any_started else "MÉG NEM FUTOTT")
+> ```
+> Ha a listába beteszünk egy `MÉG NEM FUTOTT` sort, **egyetlen ciklus sem lesz soha `KÉSZ`** —
+> egy lemergelt, lezárt ciklus is örökre `FOLYAMATBAN` marad. Ez nem kozmetika: a
+> `text_fallback_menu()` és a `curses_menu()` az `overall != "KÉSZ"` feltétellel tölti az
+> `incomplete_cycles` listát, tehát **minden befejezett ciklus visszakerülne a nyitottak
+> közé**, és a „Minden ciklus sikeresen befejeződött! 🎉" ág soha nem futna le.
+>
+> Ezért: az `analyze_cycle()` **visszatérési értékéhez és a `phases` listához nem nyúlunk**
+> (négy hívási helye van: 362, 394, 443, 566). A kézi tesztterv **külön helper + külön
+> kiírt sor**.
+
+- [x] **7.1 — Új helper: `get_manual_test_plan_state(cycle_path)`.** A
+  `get_status_from_file()` mellé, ugyanazzal a mintával. Visszatérés: egyetlen
+  megjelenítendő string.
+
+  | észlelt állapot | visszatérés |
+  |---|---|
+  | nincs `manual-test-plan.md` | `MÉG NEM FUTOTT` |
+  | létezik, `<field:f_status>` = `<status:mtp_planned>` | `TERVEZETT` |
+  | létezik, `<field:f_status>` = `<status:mtp_as_built>` | `AS-BUILT` |
+  | létezik, státusz nem olvasható | `FOLYAMATBAN` |
+
+  A státusz-összehasonlítás **kisbetűs**, a fájl tetején lévő `_S_*` konstansok mintájára
+  (`_MTP_PLANNED = st("mtp_planned").lower()`).
+
+- [x] **7.2 — Megjelenítés két helyen, a `phases` listától függetlenül.**
+  - **`print_cycle_phases()`** — a `for phase_name, p_status in phases:` ciklus **után**,
+    az `INDIRECT` lábjegyzet **előtt**, egy vizuálisan elkülönített sor, hogy ne tűnjön
+    fázisnak:
+    ```python
+    mtp = get_manual_test_plan_state(cycle_path)
+    print(f"  {DIM}· {'Kézi tesztterv (nem fázis)':<35} → {mtp}{RESET}")
+    ```
+  - **`curses_menu()`** — a jobb oldali panel fázis-ciklusa után egy sor, a **meglévő
+    `height - 3` túlcsordulás-őrrel** (a panel `10 + p_idx`-től ír, és `break`-el, ha
+    kifutna):
+    ```python
+    py = 10 + len(sel_phases)
+    if py < height - 3:
+        stdscr.attron(curses.A_DIM)
+        stdscr.addstr(py, rx, f" · {get_manual_test_plan_state(sel_cycle):<12}")
+        stdscr.attroff(curses.A_DIM)
+        stdscr.addstr(" Kézi tesztterv (nem fázis)")
+    ```
+  - A `text_fallback_menu()` **egysoros ciklus-listáját ne bővítsd** — ott csak az
+    összesített státusz fér el.
+
+- [x] **7.3 — Lightweight flow ág:** oda **ne** kerüljön be (ott nincs `plan.md` és nincs
+  analyze — a skill kapuja eleve nem teljesülhet).
+
+- [x] **7.4 — Ismert adósság, ne told tovább:** a `cycle-status.py` fázis-címkéi ma
+  **hardcode-olt magyar** literálok (`"Specifikáció (spec.md)"`, `"MÉG NEM FUTOTT"`).
+  Az új sort a **jelenlegi mintához igazítsd** (ne vezess be félmegoldást), és ezt a
+  szakaszt hivatkozd, ha valaki később egységesíti.
+
+- [x] **7.5 — Verifikáció:** `python3 prompts/scripts/cycle-status.py <egy-ciklus>` fut
+  hiba nélkül a fájl megléte nélkül és meglétével is.
+
+---
+
+## 8. Dokumentáció
+
+- [x] **8.1 — `README.md` / 3. Alapvető parancsok** (a `bs-cycle-status` sora mellé):
+  egy `* **/bs-manual-test-plan**: …` bekezdés — mit ad, mi az előfeltétele, hogy
+  bármikor újrafuttatható.
+
+- [x] **8.2 — `README.md` / 7. Skill-index:** új sor a táblába (a `bs-export-doc` és
+  `bs-cycle-status` mintájára), és az alatta lévő mondat kiegészítése — ma azt írja:
+  *„a segédparancsok (`bs-brainstorm`, `bs-export-doc`) …"* → vedd fel közé a
+  `bs-manual-test-plan`-t.
+
+- [x] **8.3 — `README.md` / 4. Mappastruktúra:** a `manual-test-gate-check.py` sora a
+  `prompts/scripts/` felsorolásba, és a `manual-test-plan.md` a ciklus-mappa tartalmához.
+
+- [x] **8.4 — `prompts/meta-improve-prompts.md`:**
+  - a „A workflow felépítése" szakaszban, a `bs-brainstorm` bekezdés mintájára egy
+    **„A flow UTÁN / mellett (opcionális segédparancs)"** bekezdés a
+    `bs-manual-test-plan`-ról (kapu: analyze PASS; kétmódú; nulla visszacsatolás);
+  - a prompt-fájl táblába egy sor;
+  - a „Tervezési elvek" végére **nem** kell új elv — a skill a meglévőket követi.
+
+- [x] **8.5 — `README.md` / 5.7 példa prompt-folyam:** opcionálisan egy kommentsor a `⑦`
+  (06) és `⑧` (07) közé: `# (bármikor az 05 után) /bs-manual-test-plan input: cycleNN`.
+  **Ne** számozott lépésként — nem fázis.
+
+---
+
+## 9. Ismert korlátok (tudatosan vállalva)
+
+- [x] **9.1 — A lightweight flow-ban nem használható.** Ott nincs `plan.md` és nincs
+  `05-analyze`, tehát az MT1 kapu soha nem teljesül. Ez **elfogadott** — ha később kell,
+  külön döntés (`MT<n>`) tárgya, nem ennek a tervnek a hatóköre. A skill STOP-üzenete
+  legyen erre is érthető („nincs analyze-riport — ez a parancs a teljes flow-hoz készült").
+
+- [x] **9.2 — `Tervezett` módban a terv elavulhat.** Ha az implementáció eltér, a terv
+  hazudik, amíg valaki újra nem futtatja. Ezt a fejléc-figyelmeztetés (3.2) és az
+  as-built újrafuttatás kezeli — **kapu nem** (MT4: nulla visszacsatolás).
+
+- [x] **9.3 — Nincs promóció a `test-conventions.md`-be.** A visszatérő indítási és
+  smoke-lépések nem kerülnek át a regiszterbe (MT8). Ha a gyakorlat azt mutatja, hogy
+  ciklusonként újraírjuk ugyanazt, az a `08-doc-sync` bővítése lesz, külön döntéssel.
+
+---
+
+## 10. Elfogadási kritériumok
+
+- [x] **10.1** — `python3 prompts/scripts/lang-parity-check.py --strict` → `exit 0`
+  (a fájlhalmaz-paritás is teljesül: `skills-hu/manual-test-plan.md` ↔
+  `skills-en/manual-test-plan.md`, `lang/hu/…` ↔ `lang/en/…`).
+- [x] **10.2** — `python3 prompts/scripts/sync-gemini-agents.py --check` → `exit 0`
+  (új agent nincs, tehát változatlan; ha mégis panaszkodik, az regresszió).
+- [x] **10.3** — `status-keys.json` kulcs-paritás (3.1.4 parancs) → OK.
+- [x] **10.3/b** — `descriptions.json` kulcs-paritás + a `bs-manual-test-plan` kulcs megléte
+  (3.3.3 parancs) → OK.
+- [x] **10.3/c** — Árva-horgony ellenőrzés (5.4 parancs) → üres kimenet.
+- [x] **10.4** — Éles telepítés egy próbaprojektbe. *(Lefuttatva nem interaktívan, közvetlenül
+  az `install-helper.py`-val — az `install.sh` csak a paraméter-bekérést adja hozzá:
+  `claude hu hu`, `claude en en` és `antigravity en hu` kombinációval. Mindhárom `Success`,
+  a skill-mappa és a script a helyén, a három `grep` üres. A `prompt EN + projekt HU`
+  kombinációban a magyar sablon emelődik be az angol skillbe — helyes.)* És:
+  - a `bs-manual-test-plan` skill megjelenik a platform skill-mappájában,
+  - a `manual-test-gate-check.py` ott van a scripts mappában,
+  - a telepített `SKILL.md`-ben **nincs feloldatlan** `<sec:…>` / `<field:…>` /
+    `<status:…>` token és **nincs** maradék `<!-- INCLUDE: … -->` marker:
+    ```bash
+    grep -n '<\(sec\|field\|status\):' <dest>/.claude/skills/bs-manual-test-plan/SKILL.md
+    grep -n 'INCLUDE:' <dest>/.claude/skills/bs-manual-test-plan/SKILL.md
+    ```
+    (mindkettő üres kell legyen)
+- [ ] **10.5** — Éles próba egy valódi ciklusban, **mindkét módban**. ⛔ **NEM FUTTATHATÓ
+  ebben a repóban:** itt nincs `specs/` mappa és nincs `PASS` analyze-riportú ciklus — ez
+  egy valódi projektben, ágenssel végzendő próba. *(A kapu mindkét módban le van tesztelve
+  szintetikus ciklus-mappán: `Tervezett` módban a nem létező eredmény-útvonal nem hiba,
+  as-builtben igen; a `--mode` felülbírálás is működik.)*
+  - `Tervezett` mód (analyze PASS, implementáció előtt) → a terv elkészül, a kapu zöld,
+    a fejléc-figyelmeztetés ott van, a teszteredmény-útvonalak `_(még nem létezik)_`
+    jelölést kapnak;
+  - `As-built` mód (validálás után) → újrafuttatva a `<sec:mt_changelog>` bejegyzést kap,
+    a kézi kiegészítések megmaradnak, a felsorolt eredmény-útvonalak léteznek.
+- [ ] **10.6** — ⛔ **NEM FUTTATHATÓ ebben a repóban** (ágens-viselkedés valódi ciklusban) —
+  **Hurok-őr próba (MT9):** `[validate-loop]` markeres `tasks.md` mellett
+  futtatva a commit **csak** a `manual-test-plan.md`-t tartalmazza:
+  ```bash
+  git show --stat --name-only HEAD | grep -c . # csak a manual-test-plan.md útvonal
+  git status --short specs/cycle-NN-<name>/    # a hurok commitálatlan állapota MEGMARAD
+  ```
+- [x] **10.7** — `python3 prompts/scripts/cycle-status.py` fut hiba nélkül, és a kézi
+  tesztterv sora a várt értéket mutatja **mind a négy** állapotban (`MÉG NEM FUTOTT` /
+  `TERVEZETT` / `AS-BUILT` / `FOLYAMATBAN`), a lightweight flow-ban pedig a sor **nem
+  jelenik meg** (7.3). *(A `curses_menu()` ága headless környezetben nem futtatható —
+  kódszinten a meglévő `height - 3` túlcsordulás-őrrel és `sel_ff` kapuval készült.)*
+- [ ] **10.8** — ⛔ **NEM FUTTATHATÓ ebben a repóban** (ágens-viselkedés valódi ciklusban) —
+  Negatív próba: **analyze PASS nélkül** hívva a skill **elutasít**, nem ír
+  fájlt, és a `/bs-analyze` parancsot adja vissza.
+
+---
+
+## 11. Végrehajtási sorrend
+
+1. **3.1** — kulcsok a `status-keys.json`-ba (mindkét szelet) + 3.1.4 verifikáció.
+   *Ez az első, mert minden más ezekre a tokenekre épül.*
+2. **5.** — `lang/hu/manual-test-plan.md` + `lang/en/…` horgonyok (benne a 3.2 sablon).
+3. **4.** — `skills-hu/manual-test-plan.md`, majd **közvetlenül utána** a `-en` pár (4.14).
+   Utána azonnal **3.3** (`descriptions.json` mindkét nyelven) + **5.4** árva-horgony
+   ellenőrzés — a skill `name`-je és az INCLUDE-markerei csak ekkor véglegesek.
+   *Ne halmozz több skill-szakaszt az angol pár nélkül — a paritás-kapu így fogja meg a
+   csúszást a keletkezése helyén.*
+4. **6.** — `manual-test-gate-check.py` + 6.5 verifikáció.
+5. **7.** — `cycle-status.py` bővítés + 7.5 verifikáció.
+6. **8.** — dokumentáció (README + meta-improve-prompts).
+7. **10.1–10.4** — kapuk és telepítési próba.
+8. **10.5–10.8** — éles próba mindkét módban + negatív és hurok-őr próba.
+9. **Commit.** Egyetlen commit a teljes bevezetésről, a repó szokása szerint magyar
+   commit-üzenettel (pl. `bs-manual-test-plan skill bevezetése (MT1–MT12)`).
+   **⛔ Path-scoped `git add`, soha `-A`** (0./7.) — pontosan ezek az útvonalak:
+   ```bash
+   git add prompts/skills-hu/manual-test-plan.md prompts/skills-en/manual-test-plan.md \
+           prompts/lang/hu/manual-test-plan.md prompts/lang/en/manual-test-plan.md \
+           prompts/lang/hu/descriptions.json prompts/lang/en/descriptions.json \
+           prompts/lang/status-keys.json \
+           prompts/scripts/manual-test-gate-check.py prompts/scripts/cycle-status.py \
+           README.md prompts/meta-improve-prompts.md prompts/inprove-list5.md
+   git status --short   # a jegyzet.md és minden más NEM stage-elt marad
+   ```

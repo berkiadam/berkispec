@@ -13,6 +13,8 @@ _S_READY_PLAN = st("ready_for_plan").lower()
 _S_READY_TASKS = st("ready_for_tasks").lower()
 _S_READY_IMPL = st("ready_for_implement").lower()
 _S_READY_VALIDATE = st("ready_for_validate").lower()
+_MTP_PLANNED = st("mtp_planned").lower()
+_MTP_AS_BUILT = st("mtp_as_built").lower()
 
 # Színek ANSI escape kódokkal
 GREEN = "\033[92m"
@@ -102,6 +104,25 @@ def get_status_from_file(file_path):
         pass
     return None
 
+def get_manual_test_plan_state(cycle_path):
+    """A kézi tesztterv (`/bs-manual-test-plan`, MT8) állapota egyetlen
+    megjelenítendő stringként.
+
+    SZÁNDÉKOSAN nem az `analyze_cycle()` `phases` listájába megy (MT14): a
+    ciklus összesített státusza a `phases` minden elemének KÉSZ-ségéből
+    származik, tehát egy nem-fázis sor ott azt okozná, hogy egy lemergelt,
+    lezárt ciklus is örökre FOLYAMATBAN maradjon (és visszakerüljön a nyitott
+    ciklusok listájába). Ezért külön helper + külön kiírt sor."""
+    plan_file = cycle_path / "manual-test-plan.md"
+    if not plan_file.exists():
+        return "MÉG NEM FUTOTT"
+    status = get_status_from_file(plan_file)
+    if status == _MTP_PLANNED:
+        return "TERVEZETT"
+    if status == _MTP_AS_BUILT:
+        return "AS-BUILT"
+    return "FOLYAMATBAN"
+
 def _git(args):
     """(returncode, stdout). returncode None, ha a git nem elérhető vagy ez nem repo."""
     try:
@@ -177,7 +198,11 @@ def analyze_cycle(cycle_path):
     
     spec_file = cycle_path / "spec.md"
     tasks_file = cycle_path / "tasks.md"
-    analyze_file = cycle_path / "analyze-report.md"
+    # az aktuális hely a ciklus analyze/ almappája; a régi (ciklus-gyökér) hely
+    # visszafelé kompatibilitásból marad
+    analyze_file = cycle_path / "analyze" / "analyze-report.md"
+    if not analyze_file.exists():
+        analyze_file = cycle_path / "analyze-report.md"
     # az aktuális név a validation-report.md; a két korábbi név visszafelé kompatibilitásból marad
     validate_file_1 = cycle_path / "test-report/validation-report.md"
     validate_file_2 = cycle_path / "test-report/bs-validate-decision.md"
@@ -376,6 +401,10 @@ def print_cycle_phases(cycle_path):
         else:
             p_color = DIM
         print(f"  {p_color}● {phase_name:<35} → {p_status}{RESET}")
+    if is_full_flow:
+        # vizuálisan elkülönített sor (`·`, DIM), hogy ne tűnjön fázisnak
+        mtp = get_manual_test_plan_state(cycle_path)
+        print(f"  {DIM}· {'Kézi tesztterv (nem fázis)':<35} → {mtp}{RESET}")
     if any(p[1] == INDIRECT for p in phases):
         print(f"  {DIM}* = közvetett bizonyíték: a fázis a rákövetkező állapotokból "
               f"lefutottnak tűnik, de a saját artefaktuma nem ellenőrizhető.{RESET}")
@@ -516,7 +545,15 @@ def curses_menu(stdscr, cycles):
                 stdscr.addstr(py, rx, f" ● {p_status:<12}")
                 stdscr.attroff(pc)
                 stdscr.addstr(f" {phase_name}")
-                
+
+            if sel_ff:
+                py = 10 + len(sel_phases)
+                if py < height - 3:
+                    stdscr.attron(curses.A_DIM)
+                    stdscr.addstr(py, rx, f" · {get_manual_test_plan_state(sel_cycle):<12}")
+                    stdscr.attroff(curses.A_DIM)
+                    stdscr.addstr(" Kézi tesztterv (nem fázis)")
+
         stdscr.refresh()
         
         # Billentyűzet olvasása

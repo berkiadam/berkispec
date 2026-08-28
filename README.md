@@ -258,6 +258,7 @@ A telepítés után a platform chat felületén a `/` karakter leütésével ér
 * **`/bs-brainstorm`**: Feltáró ötletelés és közös tervezés **a spec előtt** — perzisztens munkafájllal (`.bs-brainstorm/`), olcsó `researcher` feltárással; a végén átad a `/bs-add-cycles`-nak vagy a `/bs-quick-flow`-nak.
 * **`/bs-quick-flow`**: Az egyszerűsített (lightweight) flow elindítása kis feladatokhoz (spec → task → implementáció).
 * **`/bs-export-doc`**: Verziózott PDF export a markdown doksikból (mermaid ábrákkal együtt) az `export/` mappába — paraméter nélkül az `architecture.md`-ből és a `system-overview.md`-ből.
+* **`/bs-manual-test-plan`**: **Kézi tesztterv** összeállítása a ciklushoz (`manual-test-plan.md`): komponens-indítás, tesztadatok, kézi hívási szekvenciák (`curl` + `.http`), elvárt eredmények és az automata tesztek eredményének helye. Két mód: `Tervezett` (implementáció előtt, a `plan.md` alapján) vagy `As-built` (validálás után, a kódhoz ellenőrizve). Előfeltétele az `analyze-report.md` `PASS` státusza; nem fázis, nem változtat ciklus-státuszt, és bármikor újrafuttatható (a kézi kiegészítéseket megőrzi).
 
 ---
 
@@ -323,6 +324,7 @@ berkispec/                            # repo gyökér
     │   ├── analyze-gate-check.py     # a 05-analyze mechanikus kapuja: plan-`[P-…]` ↔ task-hivatkozás, marker, `⟂`, `DoD-NN`, kötelező táblák, futtatott artefaktumok (A1), plan-horgonyok (A2), artefaktum-hang (A3), a DoD→plan→task lefedettségi lánc (C1–C3), KF1 üres cellák (C4), KO1 koordináta-placeholder/üres cella (C6), task-határon átnyúló shell-változó (C5) + a KÉT GENERÁLT RIPORT-TÁBLA, a `## Leltár` az analyzer-execnek (AG3/AG4) és a `--emit-slices` szeletei a szemantikai köröknek (SH1)
     │   ├── sync-gemini-agents.py     # a gemini-agent/*/agent.json `Instructions` szekciójának szinkronja az agents/*.md prompttal (`--check` a CI-hez) — NEM kerül a célprojektbe
     │   ├── lang-parity-check.py      # a kétnyelvű prompt-fák paritás-kapuja (§11): fájllista, INCLUDE-marker ↔ horgony, frontmatter, szabály-ID, szekció-szerkezet, kódblokk, imperatívusz-darabszám, `<sec:…>`/`<field:…>`/`<status:…>` token — `--strict` a záráshoz — NEM kerül a célprojektbe
+    │   ├── manual-test-gate-check.py # a bs-manual-test-plan determinisztikus kapuja (MG1–MG10): fejléc-státusz, kötelező szekciók, placeholder/üres cella, tesztcsoport-teljesség, kétirányú DoD-lefedettség, indító parancsok, gépi parancs-egyezés + as-built eredmény-útvonalak, RP1 útvonal-formátum, `curl` ↔ ```http szimmetria, TG-NN azonosítók
     │   ├── report-gate-check.py      # a 07-validate TR3 kapuja: a conventions.md `## Teszt-riportolás` szerinti riportok megvannak-e az adott kör mappájában (--report-subdir test-report/validate/round-NN)
     │   ├── failure-counter.py        # a 07 hurok futás-naplója + leállási korlátok (per-item 3 egymást követő / 5 összes bukás, 5 egymást követő FAIL-futás) — determinisztikus, `--status` read-only móddal
     │   ├── run-tests.py              # 07: tesztfuttatás a plan.md gépi táblájából — a nyers teszt-log SOHA nem kerül LLM-kontextusba (TR1/TR2)
@@ -497,7 +499,7 @@ flowchart TD
 
         P05["05 — Analyze"]:::design
         P05_Check{"Konzisztens? (analyze-report.md)"}:::decision
-        DocAnalyze["specs/cycle-NN-*/analyze-report.md (PASS/FAIL)"]:::doc
+        DocAnalyze["specs/cycle-NN-*/analyze/analyze-report.md (PASS/FAIL)"]:::doc
     end
 
     subgraph Development ["<b>💻 IMPLEMENTÁCIÓ & ELLENŐRZÉS (ITERATÍV)</b>"]
@@ -690,6 +692,10 @@ Ez az ábra **kizárólag az 05-analyze lépést** mutatja be, a subagentek és 
 
 Négy rövidítő ág van benne, mert ezek adják a fázis megtakarításának nagy részét: a fixer **maga futtatja a kaput visszatérés előtt** (GS1), így a fixer utáni kapu-kör (G) védőhálóvá szelídült — ha mégis csak mechanikus hibát talált, az visszamegy ugyanahhoz a fixerhez, analyzer-kör és iteráció-fogyasztás nélkül; ha a fixer **semmit nem változtatott** (N), a hurok nem indít analyzert, hanem megáll és kérdez; és ha minden `Must Fix` **lokális**, a fixerek **egyetlen üzenetben, párhuzamosan** indulnak, downstream re-deriválás nélkül (LF1).
 
+Az ötödik — és a legnagyobb megtakarítást hozó — ág a **triázs-megállás (TR1)**: **minden diagnoszta-kör után** a hurok megáll, és egyetlen kérdésben a felhasználó dönti el, mely **új** `Must Fix` tételeket javítsuk egyáltalán. A jóváhagyott tételek az **`analyze-task.md`** javítási listára kerülnek — a fixerek kizárólag ezen dolgoznak —, az elvetettek pedig `elvetve (triázs)` állapottal a riportban maradnak (audit-nyom), és nem blokkolják a `PASS`-t. Egy körön belül a hurok nem kérdez: végigmegy a listán, és amit közben újként talál, arról a **következő** triázsban kérdez. Már eldöntött tételre soha nem kérdez rá újra; a tisztán mechanikus (kapu-)tételek pedig kérdés nélkül kerülnek a listára.
+
+**Az analízis mappája (AD1).** Az analízis minden fájlja a ciklus `analyze/` almappájában él: `analyze-report.md`, `analyze-task.md`, a kapu által kimetszett `slices/` (gitignore-olt) és minden segédfájl. A ciklus gyökere így a tervezési dokumentumoké marad.
+
 ```mermaid
 flowchart TD
     classDef orch fill:#e0f2fe,stroke:#0d9488,stroke-width:2px,color:#1e293b;
@@ -704,27 +710,32 @@ flowchart TD
     AZ["<b>analyzer</b> ×3 ‖ <b>analyzer-exec</b><br/>NÉGY PÁRHUZAMOS kör<br/>(read-only diagnózis: 1+3.,<br/>2+5., 4. és 6. kategória)"]:::agent
     FIX["<b>fixer-subagent</b><br/>spec/plan/tasks-fixer<br/>(02/03/04 fix-mód,<br/>önhordó prompt — D13)"]:::agent
     Q["*-questions.md<br/>(fixer ír új Knn-t)"]:::doc
-    REP["analyze-report.md<br/>(+ Hurok-napló)"]:::doc
+    REP["analyze/analyze-report.md<br/>(+ Hurok-napló)"]:::doc
+    TASK["analyze/analyze-task.md<br/>(jóváhagyott javítási lista —<br/>a fixerek ezen dolgoznak)"]:::doc
     User(["Felhasználó"]):::userInput
 
-    Check{"Van Must Fix?"}:::decision
+    Check{"Van nyitott tétel az<br/>analyze-task.md-en?"}:::decision
     MaxX{"max X = 3<br/>elérve?"}:::decision
     NoChg{"4.a Változott<br/>bármi? (N)"}:::decision
     MechOnly{"4.b Csak mechanikus<br/>hiba? (G/GS1)"}:::decision
     Down{"5. downstream-hatás:<br/>van? (D11)"}:::decision
+    TRI{"③.a TRIÁZS (TR1):<br/>minden kör után, az ÚJ<br/>tételekre: mit javítsunk?"}:::decision
 
     O -- "⓿ minden kör előtt" --> GATE
     GATE -- "① Leltár → analyzer-exec · mátrix → s2<br/>szeletek → a 3 szemantikai kör" --> AZ
     AZ -- "② négy megállapítás-lista" --> O
     O -- "③ összefésül (dedup) + ír" --> REP
-    O --> Check
+    O --> TRI
+    TRI -- "elvetve (triázs)<br/>→ nem blokkol" --> REP
+    TRI -- "jóváhagyva → felkerül" --> TASK
+    TASK -- "nyitott tételek" --> Check
     Check -- "Nincs → PASS<br/>(marker le, 1 commit)" --> Done(["Tovább: 06-implement"]):::orch
 
     Check -- "Van → FAIL" --> MaxX
     MaxX -- "Igen → feladva<br/>(report FAIL, marker marad)" --> Stop(["Megáll + humán döntés"]):::userInput
 
     MaxX -- "Nem" --> O2["④ legkorábbi célfázis<br/>+ [analyze-loop] marker"]:::orch
-    O2 -- "⑤ indít (Must Fix lista)" --> FIX
+    O2 -- "⑤ indít (az analyze-task.md<br/>rá szűrt nyitott tételeivel)" --> FIX
     FIX -- "⑥ döntéshez: új Knn-t gyűjt" --> Q
     FIX -- "⑦ összefoglaló + downstream-hatás" --> NoChg
     NoChg -- "Nem, és nincs új kérdés<br/>→ analyzer NEM indul" --> User
@@ -833,7 +844,7 @@ Két fázis vezényel önjavító hurkot: az **05-analyze** (a tervezési dokume
 
 **Iteráció-takarékosság: mechanikus visszacsatolás a fixer után (G).** A hurok leggyakoribb ismétlődése nem szemantikai, hanem az, hogy a fixer eltöri a hivatkozási rendet (`— plan [P-…]` hiány, elavult `Plan-lefedettség` tábla, marker) — a `tasks-fixer` promptja ezt „a hurok leggyakoribb csendes rombolásának" nevezi. Ezért a fixer **a visszatérése előtt maga futtatja a kaput** (GS1), és a `kapu:` mezőben jelenti az eredményt — a mechanikus regresszió így ott javul, ahol keletkezett, egyetlen subagent-körfordulás nélkül. Az orchestrátor kapu-futása (G) ezután **védőháló**: ha mégis mechanikus találat van, az **ugyanahhoz a fixerhez** megy vissza — analyzer-futás nélkül, a hurokszámláló növelése nélkül (legfeljebb kétszer egy iterációban). Egy ilyen kör eredetileg egy teljes analyzer-futásba és egy egész iterációba került, a GS1 előtt pedig egy orchestrátor↔fixer körfordulásba.
 
-**Párhuzamos diagnózis (E/SH1).** A read-only diagnózist **négy kör** végzi, egyetlen üzenetben indítva: az `analyzer` definíció **háromszor**, hatókör-paraméterrel (`s1-dup-underspec` = 1+3., `s2-coverage` = 2+5., `s3-conventions` = 4. kategória), az `analyzer-exec` egyszer a 6.-ra. A négy hatókör kimenete diszjunkt, ezért a fázis eltelt ideje a leglassabb köré lesz, nem a négy összege. Hogy ennek ne a token-költség háromszorozása legyen az ára, a kapu `--emit-slices` módja **kimetszi** minden körnek a saját bemenetét (`analyze-slices/<hatókör>.md`) — így egyik kör sem olvassa a teljes négyest, és a szeletek átfedése miatt a teljes bemenet nagyságrendileg 1,3–1,5× marad, nem 3×. Az összefésülés (egyesített `Must Fix` lista → legkorábbi célfázis, duplikátum-szűrés, körönként külön azonosító-prefix: `AF`/`AC`/`AN`/`AX`) az orchestrátoré.
+**Párhuzamos diagnózis (E/SH1).** A read-only diagnózist **négy kör** végzi, egyetlen üzenetben indítva: az `analyzer` definíció **háromszor**, hatókör-paraméterrel (`s1-dup-underspec` = 1+3., `s2-coverage` = 2+5., `s3-conventions` = 4. kategória), az `analyzer-exec` egyszer a 6.-ra. A négy hatókör kimenete diszjunkt, ezért a fázis eltelt ideje a leglassabb köré lesz, nem a négy összege. Hogy ennek ne a token-költség háromszorozása legyen az ára, a kapu `--emit-slices` módja **kimetszi** minden körnek a saját bemenetét (`analyze/slices/<hatókör>.md`) — így egyik kör sem olvassa a teljes négyest, és a szeletek átfedése miatt a teljes bemenet nagyságrendileg 1,3–1,5× marad, nem 3×. Az összefésülés (egyesített `Must Fix` lista → legkorábbi célfázis, duplikátum-szűrés, körönként külön azonosító-prefix: `AF`/`AC`/`AN`/`AX`) az orchestrátoré.
 
 **Csonkítás-mentesség: a spec kidolgozott artefaktumai szó szerint kerülnek a plan-be (KX3).** A `plan.md`-nek önhordónak kell lennie (a `test-runner` a spec-et nem olvassa), a 03 mégis rendszeresen **„tervvé absztrahálta"** a spec-ben már kidolgozott anyagot: az OpenAPI-leíró helyére „a spec részletesen definiálja" került, a teljes payload helyére mezőnév-lista, a tízlépéses teszt-forgatókönyv helyére egy összefoglaló sor. A 02-nek eddig **volt** védelme az összevonás ellen (`KX2` — „ne zanzásítsd a teszteseteket"), a 03-nak **nem**, sőt három ellen-nyomás dolgozott ellene: a „*a plan terv, nem archívum*" szabály (ami a repó forrásfájljaira szól), a „*a spec absztrakciós szintjét fel kell oldani, nem reprodukálni*" megfogalmazás, és a `05-analyze` **duplikáció-kategóriája**, ami a spec→plan átvételt redundanciának minősíthette. A `KX3` mindhármat feloldja, és kimondja az irányt: **bővítés és pontosítás igen, összevonás és elhagyás nem**. A szabályt a mechanikus kapu **méri** is: a `V1` check a spec szerződés-blokkjainak (OpenAPI/JSON/YAML/SQL/`curl`) jellegzetes sorait keresi a plan-ben, a `V2` a két teszt-szekció terjedelmét veti össze — a prózában vagy táblában kidolgozott tartalom csonkítása pedig az `analyzer` 3. kategóriájában marad. Mindkettő a `03` lezárásakor is fut (`--plan-only`), tehát a hiba a keletkezése helyén derül ki.
 
@@ -883,11 +894,15 @@ Futtasd a parancsot: `/bs-write-tasks input: @specs/cycle-02-oidc-login/plan.md`
 
 # ⑥  05 — Analyze
 Futtasd a parancsot: `/bs-analyze input: @specs/cycle-02-oidc-login`
-   → kereszt-fázisos ellenőrzés; FAIL esetén önjavító hurok (kérdésekre válaszolsz) → analyze-report.md (PASS)
+   → kereszt-fázisos ellenőrzés; a talált tételekből TE választod ki (triázs), mit javítson → önjavító hurok az analyze-task.md-n → analyze-report.md (PASS)
 
 # ⑦  06 — Implementálás
 Futtasd a parancsot: `/bs-implement input: @specs/cycle-02-oidc-login/tasks.md`
    → kód + tasks.md haladás → tasks.md (Validálásra kész)
+
+# (bármikor az 05 után, nem számozott lépés) — kézi tesztterv
+# Futtasd a parancsot: `/bs-manual-test-plan input: @specs/cycle-02-oidc-login`
+#    → manual-test-plan.md (Tervezett vagy As-built módban) — nem fázis, nem változtat státuszt
 
 # ⑧  07 — Validálás
 Futtasd a parancsot: `/bs-validate input: @specs/cycle-02-oidc-login`
@@ -1032,7 +1047,7 @@ Egy kis feladat végigvitele. Itt **egyetlen indító prompt** van; utána a flo
 | `/bs-write-spec` | Spec | Roadmap + ciklus neve | `spec.md` (`Tervezésre kész`) |
 | `/bs-write-plan` | Plan | `spec.md` | `plan.md` (`Task írásra kész`) — **önhordó és csonkítás-mentes** (KX3: a spec kidolgozott artefaktumai szó szerint); a lezárás előtt **Lezárási kapu (TP2)** + **mechanikus kapu** (`analyze-gate-check.py --plan-only`, M) |
 | `/bs-write-tasks` | Tasks | `plan.md` | `tasks.md` (`Implementálásra kész`) — a lezárás előtt **mechanikus kapu** (`analyze-gate-check.py`, M): `Must Fix` esetén nincs státuszváltás |
-| `/bs-analyze` | Analyze | ciklus mappa | `analyze-report.md` (PASS/FAIL) — mechanikus kapu + **négy párhuzamos diagnoszta-kör** (`analyzer` × 3 hatókör az 1–5. kategóriára, `analyzer-exec` a 6.-ra); a két lefedettségi táblát a kapu **generálja**. FAIL esetén orchestrált önjavító hurok (fixer-subagentek, `max X=3`, iterációnként **egy** analyzer-kör) |
+| `/bs-analyze` | Analyze | ciklus mappa | `analyze/analyze-report.md` (PASS/FAIL) + `analyze/analyze-task.md` (a triázsban jóváhagyott javítási lista) — mechanikus kapu + **négy párhuzamos diagnoszta-kör** (`analyzer` × 3 hatókör az 1–5. kategóriára, `analyzer-exec` a 6.-ra); a két lefedettségi táblát a kapu **generálja**. FAIL esetén orchestrált önjavító hurok (fixer-subagentek, `max X=3`, iterációnként **egy** analyzer-kör) |
 | `/bs-implement` | Implementálás | `tasks.md` | kód + `tasks.md` (`Validálásra kész`) + `test-report/implement/check-log.md` (a `[CHECK]` futások append-only naplója) — a task listát **egy futásban** dolgozza fel (IM1): a task-commit nem fázis-vég |
 | `/bs-validate` | Validálás + kódreview | ciklus mappa | PASS/FAIL + `test-report/` (`validation-report.md`, `code-review.md`, `validate/round-NN/`); PASS → státuszok `Kész` — a tesztek/Sonar/E2E futtatását a `test-runner`, a diff átnézését a `reviewer` subagent végzi, a PASS/FAIL döntést és a DoD-ot az orchestrátor; FAIL esetén orchestrált önjavító hurok (`implement-fixer` / `review-fixer`, három leállási korlát, VD3a szerződés-kapu, VD5 eszkaláció) |
 | `/bs-doc-sync` | Doc-sync | ciklus mappa + `docs-generated/` + `specs/test-conventions.md` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README mappa-index) + komponens README-k + `specs/test-conventions.md` (promóció / `Utolsó futás` bump / elavult tétel törlése, TC1–TC11) + `doc-sync-plan.md` — terv (`doc-sync-planner`) → mechanikus végrehajtás → objektív kapu (DS22, 3/4 pont a `ds22-gate-check.py` scripttel, LLM nélkül) + TC8 kapu a regiszterre (`tc8-gate-check.py`, teljesen szkriptelt); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
@@ -1040,9 +1055,10 @@ Egy kis feladat végigvitele. Itt **egyetlen indító prompt** van; utána a flo
 | `/bs-quick-flow` | **Egyszerűsített flow** (külön út) | feladat leírása | `spec.md` + `task.md` + implementáció — háromfázisú, kis feladatokhoz; opcionális `researcher`/`analyzer`/`reviewer`; túlnövéskor átirányít a `/bs-add-cycles`-ra |
 | `/bs-brainstorm` | **Ötletelés** (segédparancs, a flow előtt) | téma szabad szöveggel, vagy `folytassuk a NN-est` | `.bs-brainstorm/brainstorm-NN-<slug>.md` — perzisztens munkafájl (tények forrással, alternatívák trade-offokkal, döntések, nyitott kérdések, javasolt ciklus-vágás). Nem fázis, nem változtat státuszt; kódot és a mappán kívül semmit nem ír. Átadás: `/bs-add-cycles brainstorm: NN` (BS18) vagy `/bs-quick-flow`. |
 | `/bs-export-doc` | **PDF export** (segédparancs) | markdown fájl(ok), opcionális — üresen a `docs-generated/architecture.md` és `system-overview.md` | `export/<név>-v<N>.pdf` — fájlonként független verziószám (utolsó + 1, v1-től); pandoc + `mermaid-filter` + xelatex, a ciklus a címlapon (`Lefedve: cycle-NN-ig · vN`). Nem fázis: nincs előfeltétele, nem változtat státuszt. |
+| `/bs-manual-test-plan` | **Kézi tesztterv** (segédparancs, az 05 után bármikor) | ciklus mappa (opcionális), opcionálisan `mód: tervezett` / `mód: as-built` | `manual-test-plan.md` — komponens-indítás, tesztadatok, `TG-NN` tesztcsoportok (`curl` + `.http`, konkrét elvárt eredménnyel), kétirányú `DoD-NN` lefedettség és az automata teszteredmények helye. Előfeltétel: `analyze-report.md` = `PASS`. Determinisztikus kapu (`manual-test-gate-check.py`, MG1–MG10). Nem fázis: nem változtat ciklus-státuszt, újrafuttatáskor néma merge + `Változásnapló`. |
 | `/bs-cycle-status` | **Státusz ellenőrző** | ciklus neve vagy elérési útja (opcionális) | Kimutatja a ciklusok státuszát (Kész/Folyamatban), és interaktív TUI vagy közvetlen módon részletesen listázza a fázisok előrehaladását (KÉSZ, KÉSZ*, FOLYAMATBAN, MÉG NEM FUTOTT) felismerve a flow típusát. |
 
-A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a kimenetet, a szomszédos fázisokat (`prev`/`next`) és a hívott subagenteket. Az egyszerűsített flow skill és a segédparancsok (`bs-brainstorm`, `bs-export-doc`) ettől eltérő, `name`/`description` alapú frontmattert használnak (nem fázisok, lásd a „Két fejlesztési út" szekciót).
+A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a kimenetet, a szomszédos fázisokat (`prev`/`next`) és a hívott subagenteket. Az egyszerűsített flow skill és a segédparancsok (`bs-brainstorm`, `bs-export-doc`, `bs-manual-test-plan`) ettől eltérő, `name`/`description` alapú frontmattert használnak (nem fázisok, lásd a „Két fejlesztési út" szekciót).
 
 ## 8. Agent-index
 
@@ -1194,11 +1210,14 @@ Minden ciklus saját mappát kap: `specs/cycle-NN-<cycle-name>/`
 | `plan-input-from-prev.md` | írja: 01, 02 · fogyasztja: **03** | A spec-ből kivett vagy a kutatás során felszínre került technikai/implementációs részletek. |
 | `tasks-input-from-prev.md` | írja: 02, 03 · fogyasztja: **04** | Előkészítő lépések és sorrend-megkötések a task-bontáshoz. |
 | `validate-input-from-prev.md` | írja: 03, 04 · fogyasztja: **07** | Futtatási előfeltételek és üzemeltetési tudnivalók a validáláshoz (pl. „a stack indítása előtt VPN kell"). |
-| `analyze-report.md` | 05 | Kereszt-fázisos konzisztencia jelentés (PASS/FAIL), 6 kategória (1+3., 2+5. és 4. az `analyzer` három hatóköre, 6. az `analyzer-exec`), **a kapu által generált** lefedettségi mátrix és `Plan-szekció ↔ task` tábla (az orchestrátor szó szerint fűzi be, majd az `Érintett DoD-sorok` szerint javítja), **végrehajthatósági leltár**, **Hurok-napló** (az önjavító hurok iterációnkénti audit-nyoma). |
+| `analyze/analyze-report.md` | 05 | Kereszt-fázisos konzisztencia jelentés (PASS/FAIL), 6 kategória (1+3., 2+5. és 4. az `analyzer` három hatóköre, 6. az `analyzer-exec`), **a kapu által generált** lefedettségi mátrix és `Plan-szekció ↔ task` tábla (az orchestrátor szó szerint fűzi be, majd az `Érintett DoD-sorok` szerint javítja), **végrehajthatósági leltár**, **Hurok-napló** (az önjavító hurok iterációnkénti audit-nyoma). **Az analízis minden fájlja a ciklus `analyze/` almappájában él** (AD1). |
+| `analyze/analyze-task.md` | 05 | A **triázsban (TR1) jóváhagyott javítási lista** — a fixer-subagentek kizárólag ennek nyitott tételein dolgoznak. Ide csak az kerül, amit a felhasználó javításra jelölt (plusz a mechanikus kapu tételei, kérdés nélkül); az elvetett tételek külön szekcióban maradnak, ez a későbbi körök szűrésének memóriája. Egyetlen írója az orchestrátor. |
+| `analyze/slices/` | 05 | A mechanikus kapu `--emit-slices` kimenete: a három szemantikai `analyzer`-kör bemenete, a tervezési dokumentumok szó szerinti kimetszéseként. `.gitignore`-ral rejti magát, nem kerül commitba. |
 | `imp-decision.md` | 06 | Implementációs döntési napló: nem egyértelmű megoldások és a 3-próba szabály utáni leállások. |
 | `test-report/implement/check-log.md` | 06 | A `[CHECK]` futások append-only naplója: idő, task, hányadik próba, mód (normál / validate-loop), a **ténylegesen kiadott parancs** és a darabszámok (`X passed / Y failed / Z skipped`) — a bukott próbák is. Enélkül az implementációs fázisból csak a `- [x]` pipa maradna, ami állítja a zöldet, de nem bizonyítja (a chat `/clear` után nincs). |
 | `test-report/validation-report.md` | 07 | **A `## Kör N` blokkokat a `round-log.py` írja** (open/step/close), a `# Validation History`-t a `failure-counter.py` — az orchestrátor csak a szabad szöveges mezőket adja. Validációs futástörténet, regressziós/Sonar hibák, consecutive failures számlálók — egyben az **07 önjavító hurok naplója** (LC2), a megszakított futás horgonya. A körök **típusa is látszik** (TELJES / KÖNNYŰ — VD10): a költséges lépések (E2E, regresszió, Sonar, review) csak az első és a záró megerősítő körben futnak, a köztes javító körökben a teljes gyors teszt-készlet. PASS **kizárólag teljes körből** adható. |
 | `test-report/validate/round-NN/` | 07 | Körönként külön mappa a kör **összes** teszt-artefaktumával (a `conventions.md` `## Teszt-riportolás` táblája szerint: Allure/Playwright HTML, coverage, JUnit XML) **és** a `sonar-report.md`/`.html`-lel. A mappa száma = a `## Kör N` sorszáma; korábbi körök mappái sosem íródnak felül (TR5). |
+| `manual-test-plan.md` | *(nem fázis — `/bs-manual-test-plan`, az 05 után bármikor)* | Kézi tesztterv: `Környezet és indítás` (komponens, port, health endpoint, szó szerinti indító/leállító parancs), `Tesztadatok` (userek jelszóval, tokenek, seed, takarítás — TC5 titok-szabállyal), `Automata tesztek` (a plan gépi futtatási táblája + az eredmények helye), `TG-NN` **kézi tesztcsoportok** (mit tesztelünk · előfeltétel · lépés-tábla konkrét elvárt eredménnyel · `curl` **és** `.http` blokk · takarítás), `Nem kézzel tesztelhető` (MT10: indoklás + mi fedi), `Lefedettség` (`DoD-NN → TG-NN`) és `Változásnapló`. **Kétmódú:** `Tervezett` (a tervből, valós kódon nem verifikált) vagy `As-built` (a kódhoz ellenőrizve — eltérésnél a kód nyer). Determinisztikus kapu: `manual-test-gate-check.py` (MG1–MG10). **Nulla visszacsatolás:** a 07 és a 09 nem kapuz rá, eredményfájl nem készül. |
 | `doc-sync-plan.md` | 08 | A `doc-sync-planner` per-fájl pipálható terve a `docs-generated/` frissítéséhez (mit kell tenni / nincs teendő + drift-megállapítások). A végrehajtás **és** a megszakítás-utáni folytatás determinisztikus horgonya (a fő ágens pipálja). |
 | `doc-sync-questions.md` | 08 | A doc-sync döntési pontjai és kapu-bukásai (`Knn`). A fő ágens kérdez egyenként; nyitott `[ ]` kérdésnél a fázis megáll. Sosem törlünk, csak `[x]`. |
 | `test-report/code-review.md` | 07 | A `reviewer` ágens code review jelentése: `MF-NN` **Must Fix** (blokkol) + `S-NN` **Suggestions** (nem blokkol). Nincs benne napló — a review körei a `validation-report.md` `# Validation History`-jába kerülnek, a teszthibákkal közös számlálón. Nyitott finding esetén a `tasks.md` `## Review javítások` szekciója is keletkezik. |
@@ -1395,7 +1414,7 @@ A spec (02), plan (03) és tasks (04) fázisban az ágens nyitott kérdéseit k�
 
 | Marker | Hurok / visszanyitott dokumentum | Fixer | Napló |
 |---|---|---|---|
-| `[analyze-loop]` | 05-analyze / tervezési doksik (`spec`/`plan`/`tasks`) | `spec`/`plan`/`tasks-fixer` | `analyze-report.md` (Hurok-napló) |
+| `[analyze-loop]` | 05-analyze / tervezési doksik (`spec`/`plan`/`tasks`) | `spec`/`plan`/`tasks-fixer` | `analyze/analyze-report.md` (Hurok-napló) + `analyze/analyze-task.md` |
 | `[validate-loop]` | 07-validate / `tasks.md` | `implement-fixer` (teszt/Sonar/DoD) és `review-fixer` (Must Fix) — mindkettő 06 fix-mód | `validation-report.md` `# Validation History` |
 
 ---

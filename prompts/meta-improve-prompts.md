@@ -19,6 +19,9 @@ A teljes fejlesztési folyamat 10 lépésből áll (0–9):
 **A flow ELŐTT (opcionális segédparancs):**
 - `bs-brainstorm` — feltáró ötletelés és közös tervezés, amikor még a *mit és hogyan* a kérdés. Perzisztens munkafájl (`.bs-brainstorm/brainstorm-NN-<slug>.md`, gitignore-olt), olcsó **párhuzamos `researcher`** feltárás (BS7), beszélgetési gardek (egy kérdés/kör, 2–3 alternatíva + ajánlás, tilos az igenelés, BS8–BS13). **Nem fázis:** nem változtat státuszt, kódot és a mappán kívül semmit nem ír (BS1). Átadás a flow-nak: `/bs-add-cycles brainstorm: NN` → a `cycle-design-input.md` feltöltése a desztillátummal (BS18).
 
+**A flow UTÁN / mellett (opcionális segédparancs):**
+- `bs-manual-test-plan` — **kézi tesztterv** a ciklushoz (`specs/cycle-NN-<cycle-name>/manual-test-plan.md`), hogy egy ember végig tudja próbálni a ciklus funkcionalitását: komponens-indítás, tesztadatok, `TG-NN` tesztcsoportok konkrét hívásokkal (`curl` **és** `.http`) és konkrét elvárt eredménnyel, kétirányú `DoD-NN` lefedettség (MT6), és az automata teszteredmények helye. **Kapu:** az `analyze-report.md` `PASS` státusza (MT1) — a fázis nem felderít, hanem **összeszerel** a `plan.md` `## Környezeti koordináták` (KO1), a `spec.md` DoD/teszt-szekció és a `conventions.md` riport-táblája alapján; ezért egyben őszinteség-teszt a KO1-re. **Kétmódú (MT3):** `Tervezett` (a tervből, valós kódon nem verifikált) vagy `As-built` (a kódhoz ellenőrizve — eltérésnél a kód nyer, és bekerül a `Változásnapló`-ba). **Nem fázis és nulla visszacsatolás (MT4):** a `00–09` láncot, a státusz-láncot és a `07`/`08`/`09` gépezetét nem érinti, eredményfájl nem készül. Determinisztikus kapu zárja (`manual-test-gate-check.py`, MG1–MG10), fő ágenssel, subagent nélkül (MT5).
+
 **Projekt szintű setup (egyszer fut le):**
 - `00` — Projekt inicializálás: `conventions.md` létrehozása (konvenciók, tech stack, portok, merge stratégia)
 - `01` — Ciklusok kezelése: `specs/roadmap.md` létrehozása/karbantartása (cikluslista, függőségek, teszt kritériumok)
@@ -70,6 +73,7 @@ Minden ciklus mappája: `specs/cycle-NN-<cycle-name>/`
 | Fájl | Fázis | Bemenet | Kimenet |
 |------|-------|---------|---------|
 | `prompts/skills-hu/brainstorm.md` | *(nem fázis — a flow előtt)* | téma szabad szöveggel / `folytassuk a NN-est` | `.bs-brainstorm/brainstorm-NN-<slug>.md` (Cél · Tények forrással · Alternatívák · Döntések · Nyitott kérdések · Javasolt ciklus-vágás · Napló) — átadás a `01`-nek (BS18) |
+| `prompts/skills-hu/manual-test-plan.md` | *(nem fázis — az 05 után bármikor)* | ciklus mappa (opcionálisan `mód: tervezett` / `mód: as-built`) | `manual-test-plan.md` (Környezet és indítás · Tesztadatok · Automata tesztek · `TG-NN` kézi tesztcsoportok · Nem kézzel tesztelhető · Lefedettség · Változásnapló) — előfeltétel: `analyze-report.md` = `PASS`; kapu: `manual-test-gate-check.py` |
 | `prompts/skills-hu/00-init-project.md` | Projekt init | Projekt leírás | `conventions.md` |
 | `prompts/skills-hu/01-add-cycles.md` | Ciklusok kezelése | HLD/LLD vagy leírás | `specs/roadmap.md` |
 | `prompts/skills-hu/02-write-spec.md` | Spec | Roadmap + ciklus neve | `spec.md` (`Tervezésre kész`) |
