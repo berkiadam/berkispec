@@ -151,6 +151,9 @@ _**Hova kerülnek (TR5):** a riportok nem közvetlenül a `test-report/` gyöker
 
 **Riport-generálás kötelező:** igen
 **Artefaktum-útvonal alapja:** kör-mappa
+**Riport-fázisok:** validate
+
+_**Riport-fázisok (TR6).** A mező sorolja fel, MELY fázisok kötelesek a fenti artefaktum-készletet előállítani: `validate` (a 07 teljes körei — ez az alapérték), `implement` (a 06 záró állapota), vagy mindkettő (`implement, validate`). Ha az `implement` is szerepel, a 06-implement a státuszváltás előtt legenerálja a készletet a `test-report/implement/` fázis-mappába, és ugyanaz a `report-gate-check.py` zárja. Ha nem, a 06 csak a `check-log.md`-t írja, és a bizonyítékot a 07 első TELJES köre adja. A mező nélküli, régi projekt viselkedése változatlan (`validate`). **Mikor éri meg az `implement`?** Ha az implementációs futásnak önálló bizonyíték-értéke van (böngészős képernyőképek, REST audit-naplók, hosszú E2E), amit a 07 köre már nem reprodukál ugyanabban az állapotban._
 
 _**A jelölő kötelező (TR5/b).** Az utolsó oszlop jelentése 2026-08-07-én megváltozott (`test-report/` gyökér → **kör-mappa**), a formátuma viszont nem — egy régi tábla ezért csendben félreértelmeződne. A `report-gate-check.py` a jelölő hiányában **nem találgat**: `exit 2` + a pótlandó sor. Elfogadott érték: `kör-mappa` (mai séma) vagy `test-report` (régi, flat séma — ilyenkor a kapu a `test-report/` gyökérhez oldja fel az útvonalakat). Meglévő projekt migrációja: írd be a jelölőt a valós sémával, és ha a ciklus most tér át a mai sémára, a `conventions.md` átírása **a ciklus része** (lásd a 03 „Kapu-konfiguráció együtt mozog" szabályát)._
 
@@ -161,10 +164,12 @@ _**Határvonal a `specs/test-conventions.md`-hez (TC1/c):** ide, a `conventions.
 | E2E | Playwright (+ Allure) | `npx playwright test --reporter=html && npx allure generate ./allure-results --single-file -o ./allure-report` | `allure-report.html` |
 | Unit / integrációs | _a választott futtató_ | `<riport-generáló parancs>` | `unit-report.html` |
 | Lefedettség | _pl. c8 / coverage.py_ | `<parancs>` | `coverage/` |
+| Alkalmazás-oldali audit / REST kérés-válasz | _a szolgáltatás saját napló-írása_ | _a teszt-futás mellékterméke — a naplózás bekapcsolása a parancs_ | `e2e/rest-logs/` |
 
 _Kitöltési szabályok:_
 - **Egyfájlos HTML-t preferálj** (`allure generate --single-file`, `--reporter=html` egy fájlba), mert a riport a ciklus git-diffjébe kerül. Ha az eszköz csak mappát tud (pl. teljes Allure static site), az is elfogadható — akkor a mappa neve `/`-re végződjön (`allure-report/`).
 - Ha egy kategóriához nincs riport-artefaktum, az utolsó oszlopba `-` kerül (a kapu kihagyja azt a sort).
+- **Az alkalmazás-oldali bizonyíték is TÁBLASOR, nem próza.** Ami a teszt-futás alatt keletkezik és utólag megnyitható — REST kérés/válasz audit-napló, korrelációs-azonosító nyom, alkalmazás-log-kivonat —, azt ugyanúgy vedd fel a táblába, mint a teszt-eszköz riportját. Amit a tábla nem kér, azt a `report-gate-check.py` **nem is keresi**: csendben elmarad, és a hiánya csak hónapokkal később derül ki. A fájlnév- és fejléc-konvenciót a `specs/test-conventions.md` rögzíti (TC1/c), a **kötelezőség** viszont ide tartozik.
 - **Ha a projekt egyáltalán nem generál teszt-riportot**, a fenti flaget írd `nem`-re, **indoklással** (pl. „csak manuális smoke-teszt van"). Ez tudatos, rögzített döntés — a kapu ilyenkor kihagyódik. Üresen hagyni vagy kitöltetlen táblázatot hagyni **nem** opció: a kapu ilyenkor használati hibát jelez.
 
 ## Naming konvenciók

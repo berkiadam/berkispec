@@ -99,10 +99,12 @@ The green tests of `07` and the docs of `08` were built **on the base** from whi
 
 ```bash
 git fetch origin
-git log --oneline $(git merge-base HEAD origin/main)..origin/main
+git log --oneline HEAD..origin/main
 ```
 
 _In a repo without a remote (local only), work with the local `main` instead of `origin/main`, without `git fetch`. `main` is replaced by the `conventions.md` `## <sec:cv_git_conventions>` **<field:f_main_branch>** field._
+
+_The command **deliberately contains no `$( )` substitution**: `HEAD..origin/main` yields the same commit set as the `merge-base` form, but several CLIs (e.g. Antigravity/Gemini) do not allow command substitution to be allowlisted for security reasons — such a line would ask for permission on every run._
 
 - **Empty list** → the cycle branch is at the top of the main branch, continue with the Merge step. _(Cross-check: does the `analyze-report.md` **`<field:f_validated_base>`** field's main branch SHA also show this — if not, `05` closed on an older base, and the re-validation rule below applies.)_
 - **Not empty** → the main branch must be brought into the cycle branch, **and then re-validated**:

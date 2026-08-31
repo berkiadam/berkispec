@@ -211,6 +211,22 @@ specs/cycle-NN-<cycle-name>/test-report/
 - **`validation-report.md` stays in the root of `test-report/`** (not in a round folder): this is the log spanning several rounds, and `failure-counter.py` also appends here.
 - **Hand the path of the round folder over to the `test-runner`** at every call — the subagent does not guess it, and if it does not get it, it asks back.
 
+- **The list above is CLOSED (TR5/c).** Under `test-report/` **only** `validation-report.md`, `code-review.md`, `implement/`, `validate/round-NN/` and the legacy `review/` may exist. If you find anything else — especially a folder named `test-report/test-report/` or `test-report/specs/` — that is **the trace of a broken path base, not evidence: delete it**, and re-run the step with the correct base. The rule above about not deleting the folders of earlier rounds applies **exclusively to the `validate/round-NN/` folders**. The layout guard of `report-gate-check.py` measures this deterministically.
+
+#### 0/a. The three path forms of the round folder (TR5/c)
+
+The same folder has **three forms, with three different bases**. The most frequent mistake is copying one form into a parameter that expects the base of another — this does not produce an error message, but a recursive report tree (`test-report/test-report/…`, `test-report/specs/…`), and the evidence lands where the gate cannot find it.
+
+| Form | Base | Where you use it |
+|---|---|---|
+| `specs/cycle-NN-<cycle-name>/test-report/validate/round-NN` | repo root | `run-tests.py --round-dir`, the path handed to the `test-runner`, the value of the `{round}` placeholder |
+| `test-report/validate/round-NN` | cycle folder | `report-gate-check.py --report-subdir` |
+| `validate/round-NN` | `test-report/` | the `<phase-dir>` placeholder or the `REPORT_PHASE_DIR`-style environment variable of the report commands in `conventions.md`, and the `{phase}` placeholder |
+
+> **🔴 If the report-generating command of `conventions.md` asks for the phase folder through a placeholder or an environment variable, the THIRD form goes there** (`validate/round-NN`) — never the other two. `run-tests.py` prints the correct value on every run as a `REPORT_PHASE_DIR=` line: **copy that**, not the path you typed just before it.
+>
+> The scripts accept and normalize all three forms (they signal it with a `MEGJEGYZÉS (TR5/c)` line) — but in the machine table of `plan.md` the two placeholders (`{round}` / `{phase}`) are **not interchangeable**: `run-tests.py` checks this before the run and stops with `exit 3` on a double prefix.
+
 **The report artifacts are part of the cycle — they do NOT have to be excluded from the diff.** The `git add specs/cycle-NN-<cycle-name>/` deliberately takes in the whole content of `test-report/`: the own report of the test tool (Allure/Playwright HTML, coverage, JUnit XML) is the only evidence about the run that can be opened afterwards. The defense against the size is the single-file HTML (`--single-file`), not the `.gitignore`. If a `test-report/.gitignore` remained from an earlier cycle that excludes the reports, **delete it** — otherwise the TR3 gate looks for a file that never gets into the repo.
 
 **The reports are mandatory according to the `## <sec:cv_test_reporting>` table of `conventions.md` (TR3)** — the last column of the table is a path **relative to the round folder**. The list is produced by the `test-runner`, and before the PASS a deterministic gate checks it (see "The gate of the mandatory test reports").
@@ -261,6 +277,9 @@ python3 <platform-scripts-mappa>/run-tests.py \
 
 - **`exit 0/1`** → the output contains, per category, the **command issued** and the `X passed / Y failed / Z skipped` counts, and on a failure the **exact names** of the failed tests — these go verbatim into the `--failed-item` values of `failure-counter.py`. The machine result stays in the `results.json` of the round folder.
 - **`exit 2`** → there is **no machine-readable run table** in `plan.md` (an old cycle or an incomplete plan). In that case you **fall back to the `test-runner` subagent** (see 1/b), and in the report of the round state in one line that the machine table of the plan is missing — for `08-doc-sync`/`03` this is an item to fix, but it is **not** the FAIL of the round.
+- **`exit 4`** → the table has an **environment error**: a category declared non-local points at a local target (EV5). **Do not run it** — a green result would then not be about the deployed component. This is a gap of `03`: the target of the command has to be aligned with the declared environment, or the `<field:f_environment>` column corrected to `local` if it really runs there. The `implement-fixer` does not fix this (the code is not at fault) — escalate to `03` according to VD5.
+- **The output also prints the ENVIRONMENT per category** (`@ dev`, `@ local`), and it goes into `results.json` too. **Carry this into the step table of the round**: it must be visible afterwards from the report where the test was green — a green JUnit XML on its own does not reveal which host it addressed.
+- **`exit 3`** → the table has a **placeholder error**: the substitution produces a double path prefix (`test-report/test-report/…` or `test-report/specs/…`, TR5/c). **Do not run anything, and do NOT fall back to the `test-runner`** — the script prints which row and which field is wrong. This is a gap of `03`, not a code bug: fix the machine table of `plan.md` to the correct placeholder (`{round}` = the full path, `{phase}` = the phase folder — see 0/a), and re-run. If the fix is not unambiguous, escalate to `03` according to VD5.
 - To confirm a single failed category in a light round: `--only <category>`.
 
 #### 1/b. The fallback: the `test-runner` subagent
@@ -433,7 +452,8 @@ python3 <platform-scripts-mappa>/report-gate-check.py \
 >
 > _(Earlier the gate ran in every round, but on fixed file names — in that case the light round found the artifact left over from the PREVIOUS round, and gave a false green. The folder per round eliminates this, which is why the rule by round type is needed.)_
 
-- **`exit 0`** → the gate is ✓ (or the project explicitly does not generate a report). Write the result into the report of the round.
+- **`exit 0`** → the gate is ✓ (or the project explicitly does not generate a report, or the examined phase is not a report phase — TR6). Write the result into the report of the round.
+- **The gate also measures the layout of `test-report/` (TR5/c):** a foreign folder under `test-report/` is `exit 1` — this is not a missing report but a broken path base. The gate names the folder and the reason; delete it and re-run the failing step with the correct base (0/a). You do not start a fixer for this either.
 - **`exit 1`** → a missing or empty artifact. **The round cannot be closed as a PASS**, but this is **not a code bug**, therefore you do **not start a fixer**: producing the report is the business of the `test-runner`.
   1. Call the `test-runner` again **explicitly to produce the missing report(s)**, with the command given in the table, and ask it to put the artifact **into the folder of the current round** (hand over the concrete path).
   2. Run the gate again. If it fails the second time as well → **STOP + human** with the "Where we are" header: *"The [artifact] report did not come into existence even after two attempts with the `<command>` command. Human intervention is needed — how do we continue?"*, together with the output of the script.

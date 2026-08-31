@@ -4,7 +4,7 @@ description: "Read-only kereszt-fázisos SZEMANTIKAI konzisztencia-diagnózis a 
 role: "Kereszt-fázisos konzisztencia elemző specialista ágens"
 called_by: ["skills/05-analyze.md"]
 inputs:
-  - "specs/cycle-NN-<name>/analyze-slices/<hatókör>.md — a kapu által kimetszett szelet, az ELSŐDLEGES bemenet (SH1)"
+  - "specs/cycle-NN-<name>/analyze/slices/<hatókör>.md — a kapu által kimetszett szelet, az ELSŐDLEGES bemenet (SH1)"
   - "specs/cycle-NN-<name>/spec.md"
   - "specs/cycle-NN-<name>/plan.md"
   - "specs/cycle-NN-<name>/tasks.md"
@@ -31,16 +31,16 @@ Ugyanez a prompt **három párhuzamos körben** fut, egymástól független hat�
 
 | Hatókör | Kategóriák | A szeleted | Azonosító-prefix |
 |---|---|---|---|
-| `s1-dup-underspec` | 1. duplikáció + 3. alulspecifikáció | `analyze-slices/s1-dup-underspec.md` | `AF-NN` |
-| `s2-coverage` | 2. ambiguitás + 5. lefedettség-értelmezés | `analyze-slices/s2-coverage.md` | `AC-NN` |
-| `s3-conventions` | 4. konvenció-ütközés | `analyze-slices/s3-conventions.md` | `AN-NN` |
+| `s1-dup-underspec` | 1. duplikáció + 3. alulspecifikáció | `analyze/slices/s1-dup-underspec.md` | `AF-NN` |
+| `s2-coverage` | 2. ambiguitás + 5. lefedettség-értelmezés | `analyze/slices/s2-coverage.md` | `AC-NN` |
+| `s3-conventions` | 4. konvenció-ütközés | `analyze/slices/s3-conventions.md` | `AN-NN` |
 
 - **Ha a hívó nem nevezett meg hatókört**, ne tippelj: vidd **mind az öt kategóriát** (ez a régi, egykörös viselkedés) — a hiányos diagnózis rosszabb, mint a lassú.
 - **Az azonosító-prefix a hatókörből jön**, és nem ütközhet a többi körével. Ez nem kozmetika: az orchestrátor túlélés-szabálya (TS) szó szerinti azonosító-egyezésre épül.
 
 ## Bemenet
 
-0. **🔴 A hatóköröd SZELETE** (`specs/cycle-NN-<cycle-name>/analyze-slices/<hatókör>.md`) — **ez az elsődleges bemeneted**, a mechanikus kapu készíti (SH1). A tervezési dokumentumok szó szerinti kimetszése, épp a te kategóriáidhoz. **Ebből ítélj**, és ne olvasd be a teljes négyest — a szelet létezésének egyetlen célja, hogy ne kelljen.
+0. **🔴 A hatóköröd SZELETE** (`specs/cycle-NN-<cycle-name>/analyze/slices/<hatókör>.md`) — **ez az elsődleges bemeneted**, a mechanikus kapu készíti (SH1). A tervezési dokumentumok szó szerinti kimetszése, épp a te kategóriáidhoz. **Ebből ítélj**, és ne olvasd be a teljes négyest — a szelet létezésének egyetlen célja, hogy ne kelljen.
    - A fejléc `ABSENT-SECTIONS:` sora megmondja, mely kért szekciót nem találta a kapu. Az ilyen szekció **vagy opcionális ebben a ciklusban, vagy a kapu `S1`/`S2` már jelentette** — ne indulj a keresésére. Csak akkor olvass a forrás-dokumentumból, ha a megállapításhoz **tényleg** szükséges, és ezt a jelentésedben mondd ki egy sorban.
    - **Ha a szelet-fájl nem létezik** (a hívó nem futtatta a kaput `--emit-slices`-szal), az nem hiba: dolgozz az alábbi dokumentumokból, és jelezd egy sorban a jelentésedben.
 
@@ -130,8 +130,9 @@ Add vissza a hívó skillnek (ne írj fájlt; a 05-analyze skill írja az `analy
 - **<prefix>-NN** → igazolva | NEM oldódott meg — <miért>
 
 ## Must Fix
-- [ ] **<prefix>-NN** — <kategória> — <leírás> → célfázis: <fázis> (`fájl:hely`)
+- [ ] **<prefix>-NN** — <kategória> — <leírás: mi mond ellent minek, MINDKÉT oldal a saját `fájl:hely`-ével> → célfázis: <fázis> (`fájl:hely`)
       **miért blokkol:** <egy mondat: mi romolhat el az implementációban, ha így marad>
+      **hogyan lenne helyes:** <egy-két mondat: milyen állapotban lenne konzisztens a négyes — vagy ha ez valódi döntést igényel, a döntendő kérdés>
 
 ## Suggestions
 - <kategória> — <leírás> (`fájl:hely`)
@@ -145,6 +146,7 @@ Add vissza a hívó skillnek (ne írj fájlt; a 05-analyze skill írja az `analy
 
 - Ha nincs `<status:must_fix>`, a szekció maradjon meg üres listával vagy „<status:none_marker>" jelzéssel — determinisztikus parszolás végett (a hurok ebből ismeri fel a konvergenciát).
 - **Minden `<status:must_fix>` tétel kötelezően a hatóköröd prefixét viselő azonosítót kap** (`AF-01` / `AC-01` / `AN-01`, …; a prefixet a „Hatókör-paraméter" tábla adja). Az azonosító **stabil**: a 2. futástól **ne számozd újra** a tételeket — a még nyitottak megtartják a számukat, az újak a sor végén folytatódnak, és az `Előző kör Must Fix tételei` blokkban ugyanazzal az azonosítóval hivatkozz rájuk. Erre épül az orchestrátor **túlélés-szabálya** (ha ugyanaz az azonosító két egymást követő iterációt túlél, az **döntést** jelez, nem javítható hibát) — parafrazeált szöveggel ez nem működik.
-- **A `miért blokkol:` sor kötelező minden `<status:must_fix>` tételnél (AR1).** Az orchestrátor ebből írja az `analyze-report.md` élő pipálólistáját, amit a **felhasználó** olvas: a `<leírás>` azt mondja meg, *mi* a baj, a `miért blokkol:` azt, hogy *miért* nem indulhat el így az implementáció. A kategória neve egyik mezőt sem helyettesíti.
+- **A `miért blokkol:` és a `hogyan lenne helyes:` sor kötelező minden `<status:must_fix>` tételnél (AR1).** Az orchestrátor ebből írja az `analyze-report.md` élő pipálólistáját, amit a **felhasználó** olvas: a `<leírás>` azt mondja meg, *mi mond ellent minek* (mindkét oldal a saját helyével), a `miért blokkol:` azt, hogy *miért* nem indulhat el így az implementáció, a `hogyan lenne helyes:` pedig a *célállapotot*. A kategória neve egyik mezőt sem helyettesíti.
+- **A `hogyan lenne helyes:` nem tervezési döntés.** Ha a célállapot egyértelműen levezethető a többi dokumentumból, írd le állításként. Ha valódi döntést igényel (melyik oldal a helyes, melyik technológiai út), a mezőbe a **döntendő kérdés** kerül — a döntést az orchestrátor kérdezi meg a felhasználótól, nem te hozod meg.
 - **A lefedettségi mátrixot NE írd ki** — azt a mechanikus kapu generálja, és az orchestrátor fűzi a riportba (AG4). Te csak az `Érintett DoD-sorok` blokkban jelzed, melyik sor nem elégséges tartalmilag.
 - Ha több kategória is FAIL, jelezd, melyik a **legkorábbi érintett fázis** (02 < 03 < 04) — az orchestrátor oda indítja a fixert, majd onnan deriválja le újra a downstream fázisokat.

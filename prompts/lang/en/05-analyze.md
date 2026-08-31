@@ -14,28 +14,35 @@
 **Status:** IN_PROGRESS | PASS | FAIL
 **Run:** YYYY-MM-DD HH:MM
 **Current step:** <what the phase is doing right now — e.g. "iter 2/3 · the plan-fixer is working on items AF-03, AN-01", or "closed">
-**Loop:** <number of iterations> / <max X> (PASS | given up)
+**Loop:** <number of iterations> / <max X> (PASS | given up | triage: not started)
+**Triage (TR1):** <none (there was no Must Fix) | a breakdown per round — e.g. "iter 1: 4/7 taken on · iter 2: 1/2 taken on" — <n> items dismissed in total>
+**Fixing list:** `analyze-task.md` — <n> open · <n> done · <n> dismissed
 **Validated base:** `<name of the main branch>@<SHA>` · cycle branch: `<branch>@<SHA>` (BR1: `pulled in` | `was not needed`)
 
 ## Summary
 
-_One or two sentences: is the set of four consistent, or where the problem is, and how the loop closed._
+_One or two sentences: is the set of four consistent, or where the problem is, and how the loop closed. In plain language, understandable without opening the design documents._
 
 ## Items to fix (AR1)
 
 _This list is written **immediately** after the diagnosis, before the first fix, and is refreshed at
 every step of the loop — it is the user's window into the phase. One item = one tickable row with a
 plain-language explanation underneath. Items are never deleted afterwards: a resolved item stays with
-`[x]`, that is the audit trail. The `analyze-slices/` directory is the **input** of the diagnostic
+`[x]`, that is the audit trail. This list is the **full diagnosis** (every item found, regardless of the
+round); which of them actually get fixed is decided by the user in the triage (TR1), and the approved
+ones go onto the `analyze-task.md` work list. An item left unfixed stays here with a `dismissed (triage)`
+state and does not block the `PASS`. The `analyze/slices/` directory is the **input** of the diagnostic
 rounds (gitignored slices, verbatim cut-outs of the design documents), not a result — "what is wrong"
 can be read here and only here._
 
 ### Must Fix
 - [ ] **AF-01** · <category> · `file:location`
-      **What is wrong:** <one or two sentences in plain language: what the document states now, and why that is wrong — the category name alone is not an explanation>
+      **The contradiction:** <one side: what it says, where (`file:location`)> ↔ <the other side: what it says, where (`file:location`)>
+      _(for a one-sided gap: what is missing, and which point of which document would expect it)_
       **Why it blocks:** <what can break in the implementation if it stays like this>
+      **How it would be correct:** <one or two sentences: in what state the set of four would be consistent — what the document has to say after the fix. If this requires a real decision (which side is the correct one), then it is NOT a statement but the question to be decided, and the State is `question`>
       **Target phase:** <02-spec | 03-plan | 04-tasks>
-      **State:** open | being fixed (iter <n>) | question (<PHASE>/Q<nn>) | resolved (iter <n>) | dismissed — <justification>
+      **State:** open | being fixed (iter <n>) | question (<PHASE>/Q<nn>) | resolved (iter <n>) | dismissed (triage, iter <n>) — the user did not ask for it to be fixed | dismissed — <justification>
 
 ### Suggestions
 - <category> — <description>
@@ -85,6 +92,7 @@ _Deviations to be shown here: ID without a task · task pointing to a non-existe
 _Audit trail per iteration — the anchor for continuing after an interruption._
 
 ### Iteration 1
+- **Triage (TR1):** <selected for fixing: <identifiers> · dismissed: <identifiers> — or "there was no triage">
 - **FAIL categories:** <categories>
 - **Open items:** <AF-NN / AX-NN identifiers>
 - **Surviving items (TS):** <which identifiers came back as "NOT resolved", and in which consecutive round — from the 2nd iteration onward; or "none">
@@ -96,6 +104,32 @@ _Audit trail per iteration — the anchor for continuing after an interruption._
 
 ### Iteration 2
 ...
+
+<!-- ANCHOR:analyze-task-struktura -->
+# Cycle NN: <title> — Analyze fixing list
+
+**Refreshed:** iter <n> / <max X>
+**State:** <n> open · <n> done · <n> dismissed
+**Report:** `analyze-report.md` (in the same folder — the detailed justification is there)
+
+_The fixer subagents work **exclusively** on this list. Only an item approved by the user in the
+triage (TR1) may get here, plus the items of the mechanical gate (those without asking).
+The list is written **exclusively by the orchestrator**; the fixers may read it. The identifier
+(`AF-NN` / `AC-NN` / `AN-NN` / `AX-NN`) is the same as in the report._
+
+## Items to fix
+
+- [ ] **AF-01** · <category> · target phase: <02-spec | 03-plan | 04-tasks> · added: iter <n>
+      **What has to be done:** <the "How it would be correct" field of the report: the target state of the fix in one or two sentences>
+      **Where:** `file:location` <(+ the other side: `file:location`)>
+      **State:** open | being fixed (iter <n>) | question (<PHASE>/Q<nn>) | done (iter <n>)
+
+## Dismissed items (the user did not ask for them to be fixed)
+
+_The memory of the filtering of the later diagnosis rounds: what is listed here goes neither into
+the triage question nor onto the `Must Fix` list again._
+
+- [x] **AC-05** · <category> · `file:location` · dismissed: iter <n>
 
 <!-- ANCHOR:zaro-uzenet -->
    > *"The analysis found the design documents consistent. We can continue with step 6 (implement). Before starting the new phase, be sure to run a `/clear` command to empty the context, then use this command:*

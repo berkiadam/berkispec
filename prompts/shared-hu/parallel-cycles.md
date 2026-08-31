@@ -37,5 +37,12 @@ Két ciklus **párhuzamosan is haladhat**, külön `git worktree`-ben, külön a
 ```bash
 git fetch origin
 git worktree add ../<projekt>-cNN -b feature/cycle-NN-<name> origin/main
+python3 <platform-scripts-mappa>/worktree-setup.py ../<projekt>-cNN   # PW4
 ```
+**PW4 — az eszköz-mappák pótlása.** A worktree csak a git által **követett** fájlokat kapja meg, az agentic eszközök konfigurációja (`.claude/`, `.agents/`, `.codex/`, `.cursor/`, `.github/`, `AGENTS.md`, …) viszont lehet gitignore-olt — ilyenkor az új worktree-ben nincsenek meg a `bs-*` skillek, a subagentek és a kapu-scriptek. A `worktree-setup.py` a fő worktree gyökeréből a **hiányzó** fájlokat másolja át (meglévőt nem ír felül és nem töröl; `--extra <útvonal>`-lal bővíthető).
+
+Ha a **ciklusnév még nincs meg** (a `01` PW3/B döntési kapujában ez a normál eset), a worktree **detached** HEAD-del készül — `git worktree add --detach ../<projekt>-cNN origin/main` —, és a ciklus branch-e a BD5 szerint, a név meghatározása után jön létre benne.
+
+**PW5 — az ágenst is át kell költöztetni.** A worktree létrehozása után az agentic eszközt **be kell zárni**, a CLI-ben át kell lépni az új mappába (`cd ../<projekt>-cNN`), és **ott újraindítani** — az ágens a munkamenet indulási mappájához van kötve. A `01` fázis ilyenkor a worktree létrehozásánál **megáll**, kiadja az átköltözési utasítást (abszolút útvonal + indítóparancs), és a tervezés az új mappában, elölről indul.
+
 A linked worktree a saját HEAD-jével és indexével dolgozik, tehát a két agens munkafa-ellenőrzése nem látja egymást. A másik ciklus mappája (`specs/cycle-MM-*/`) **nem is jelenik meg** a worktree-ben, amíg az nincs merge-elve — a ciklusszámozás ezért a branch-neveket scanneli (BQ2), nem az `ls specs/`-et.

@@ -99,10 +99,12 @@ A `07` zöld tesztjei és a `08` doksija **azon az alapon** készültek, ahonnan
 
 ```bash
 git fetch origin
-git log --oneline $(git merge-base HEAD origin/main)..origin/main
+git log --oneline HEAD..origin/main
 ```
 
 _Remote nélküli (csak lokális) repóban az `origin/main` helyett a lokális `main`-nel dolgozz, `git fetch` nélkül. A `main` helyére a `conventions.md` `## <sec:cv_git_conventions>` **<field:f_main_branch>** mezője kerül._
+
+_A parancsban **szándékosan nincs `$( )` behelyettesítés**: a `HEAD..origin/main` ugyanazt a commit-halmazt adja, mint a `merge-base`-es alak, viszont több CLI (pl. Antigravity/Gemini) a parancs-behelyettesítést biztonsági okból nem engedi allowlistelni — az ilyen sor minden futásnál engedélyt kérne._
 
 - **Üres lista** → a ciklus ága a fő branch tetején áll, folytasd a Merge lépéssel. _(Kereszt-ellenőrzés: az `analyze-report.md` **`<field:f_validated_base>`** mezőjének fő branch SHA-ja is ezt mutatja-e — ha nem, az `05` egy régebbi alapon zárult, és a lenti újravalidálási szabály érvényes.)_
 - **Nem üres** → be kell hozni a fő branch-et a ciklus ágába, **majd újravalidálni**:

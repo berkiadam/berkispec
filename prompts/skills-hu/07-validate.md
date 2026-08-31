@@ -209,6 +209,22 @@ specs/cycle-NN-<cycle-name>/test-report/
 - **A `validation-report.md` a `test-report/` gyökerében marad** (nem kör-mappában): ez a több körre átívelő napló, a `failure-counter.py` is ide fűz.
 - **A kör-mappa útvonalát add át a `test-runner`-nek** minden hívásnál — a subagent nem találja ki, és ha nem kapja meg, visszakérdez.
 
+- **A fenti lista ZÁRT (TR5/c).** A `test-report/` alatt **csak** `validation-report.md`, `code-review.md`, `implement/`, `validate/round-NN/` és a legacy `review/` létezhet. Ha bármi mást találsz — különösen `test-report/test-report/` vagy `test-report/specs/` nevű mappát —, az **elrontott útvonal-bázis nyoma, nem bizonyíték: töröld**, és futtasd újra a lépést a helyes bázissal. A fenti „korábbi körök mappáit nem törlöd" szabály **kizárólag a `validate/round-NN/` mappákra** vonatkozik. A `report-gate-check.py` layout-őre ezt determinisztikusan méri.
+
+#### 0/a. A kör-mappa három útvonal-alakja (TR5/c)
+
+Ugyanannak a mappának **három alakja van, három különböző bázissal**. A leggyakoribb hiba, hogy az egyik alakot a másik bázisát váró paraméterbe másolod — ilyenkor nem hibaüzenet keletkezik, hanem egy rekurzív riport-fa (`test-report/test-report/…`, `test-report/specs/…`), és a bizonyíték olyan helyre kerül, ahol a kapu nem találja meg.
+
+| Alak | Bázis | Hol használod |
+|---|---|---|
+| `specs/cycle-NN-<cycle-name>/test-report/validate/round-NN` | repó gyökér | `run-tests.py --round-dir`, a `test-runner`-nek átadott útvonal, a `{round}` helyőrző értéke |
+| `test-report/validate/round-NN` | ciklus-mappa | `report-gate-check.py --report-subdir` |
+| `validate/round-NN` | `test-report/` | a `conventions.md` riport-parancsainak `<phase-dir>` helyőrzője vagy `REPORT_PHASE_DIR`-szerű környezeti változója, és a `{phase}` helyőrző |
+
+> **🔴 Ha a `conventions.md` riport-generáló parancsa helyőrzővel vagy környezeti változóval kéri a fázis-mappát, oda a HARMADIK alak megy** (`validate/round-NN`) — soha nem a másik kettő. A `run-tests.py` minden futásnál kiírja a helyes értéket `REPORT_PHASE_DIR=` sorként: **azt másold**, ne azt az útvonalat, amit épp előtte begépeltél.
+>
+> A szkriptek mindhárom alakot elfogadják és normalizálják (`MEGJEGYZÉS (TR5/c)` sorral jelzik) — a `plan.md` gépi táblájában viszont a két helyőrző (`{round}` / `{phase}`) **nem cserélhető fel**: a `run-tests.py` a futtatás előtt ellenőrzi, és dupla prefix esetén `exit 3`-mal megáll.
+
 **A riport-artefaktumok a ciklus részei — NEM kell őket kizárni a diffből.** A `git add specs/cycle-NN-<cycle-name>/` szándékosan beveszi a `test-report/` teljes tartalmát: a teszt-eszköz saját riportja (Allure/Playwright HTML, coverage, JUnit XML) az egyetlen utólag megnyitható bizonyíték a futásról. A méret ellen az egyfájlos HTML a védekezés (`--single-file`), nem a `.gitignore`. Ha korábbi ciklusból maradt `test-report/.gitignore`, amely a riportokat kizárja, **töröld** — különben a TR3 kapu olyan fájlt keres, ami sosem kerül be a repóba.
 
 **A riportok a `conventions.md` `## <sec:cv_test_reporting>` táblája szerint kötelezők (TR3)** — a tábla utolsó oszlopa **a kör-mappához képest relatív** útvonal. A listát a `test-runner` állítja elő, és a PASS előtt determinisztikus kapu ellenőrzi (lásd „Kötelező teszt-riportok kapuja").
@@ -259,6 +275,9 @@ python3 <platform-scripts-mappa>/run-tests.py \
 
 - **`exit 0/1`** → a kimenet kategóriánként tartalmazza a **kiadott parancsot** és a `X passed / Y failed / Z skipped` darabszámokat, bukásnál a bukott tesztek **pontos nevét** — ezek mennek szó szerint a `failure-counter.py --failed-item` értékeibe. A gépi eredmény a kör-mappa `results.json`-jában marad.
 - **`exit 2`** → a `plan.md`-ben **nincs gépi futtatási tábla** (régi ciklus vagy hiányos plan). Ilyenkor **esel vissza a `test-runner` subagentre** (lásd 1/b), és a kör riportjában jelezd egy sorban, hogy a plan gépi táblája hiányzik — a `08-doc-sync`/`03` felé ez javítandó tétel, de **nem** a kör FAIL-je.
+- **`exit 4`** → a tábla **környezet-hibás**: egy nem-lokálisnak deklarált kategória lokális célra mutat (EV5). **Ne futtass** — a zöld eredmény ilyenkor nem a telepített komponensről szólna. Ez a `03` hiánya: a parancs célpontját kell a deklarált környezethez igazítani, vagy a `<field:f_environment>` oszlopot `lokális`-ra javítani, ha tényleg ott fut. Az `implement-fixer` ezt nem javítja (nem a kód hibás) — VD5 szerint eszkalálj a `03`-ra.
+- **A kimenet kategóriánként kiírja a KÖRNYEZETET is** (`@ dev`, `@ lokális`), és a `results.json`-ba is bekerül. **Ezt vidd be a kör lépés-táblájába**: a riportból utólag látszania kell, hol volt zöld a teszt — egy zöld JUnit XML önmagában nem árulja el, melyik hostot szólította meg.
+- **`exit 3`** → a tábla **helyőrző-hibás**: a behelyettesítés dupla útvonal-prefixet ad (`test-report/test-report/…` vagy `test-report/specs/…`, TR5/c). **Ne futtass semmit, és NE ess vissza a `test-runner`-re** — a szkript kiírja, melyik sor és melyik mező hibás. Ez a `03` hiánya, nem kód-bug: javítsd a `plan.md` gépi tábláját a helyes helyőrzőre (`{round}` = teljes útvonal, `{phase}` = fázis-mappa — lásd 0/a), és futtasd újra. Ha a javítás nem egyértelmű, a VD5 szerint eszkalálj a `03`-ra.
 - Könnyű körben egyetlen bukott kategória visszaigazolásához: `--only <kategória>`.
 
 #### 1/b. Fallback: `test-runner` subagent
@@ -431,7 +450,8 @@ python3 <platform-scripts-mappa>/report-gate-check.py \
 >
 > _(Korábban a kapu minden körben futott, de fix fájlnevekre — ilyenkor a könnyű kör az ELŐZŐ kör bennmaradt artefaktumát találta meg, és hamis zöldet adott. A körönkénti mappa ezt megszünteti, ezért kell a körtípus szerinti szabály.)_
 
-- **`exit 0`** → a kapu ✓ (vagy a projekt explicit nem generál riportot). Az eredményt írd be a kör riportjába.
+- **`exit 0`** → a kapu ✓ (vagy a projekt explicit nem generál riportot, vagy a vizsgált fázis nem riport-fázis — TR6). Az eredményt írd be a kör riportjába.
+- **A kapu a `test-report/` layoutját is méri (TR5/c):** idegen mappa a `test-report/` alatt `exit 1` — ez nem hiányzó riport, hanem elrontott útvonal-bázis. A kapu megnevezi a mappát és az okot; töröld, és a hibás lépést futtasd újra a helyes bázissal (0/a). Fixert erre sem indítasz.
 - **`exit 1`** → hiányzó vagy üres artefaktum. **A kör nem zárható PASS-ra**, de ez **nem kód-bug**, ezért **nem indítasz fixert**: a riport előállítása a `test-runner` dolga.
   1. Hívd újra a `test-runner`-t **kifejezetten a hiányzó riport(ok) előállítására**, a táblában megadott paranccsal, és kérd, hogy az artefaktumot **az aktuális kör mappájába** tegye (a konkrét útvonalat add át).
   2. Futtasd újra a kaput. Ha másodszorra is bukik → **STOP + humán** a „Hol járunk" fejléccel: *„A(z) [artefaktum] riport két próbálkozásra sem jött létre a `<parancs>` paranccsal. Humán beavatkozás szükséges — hogyan tovább?"*, a szkript kimenetével együtt.

@@ -29,7 +29,7 @@ You are the executor of the **Fix mode** of the plan phase (03), started by the 
 2. **Input:** the `<status:must_fix>` list filtered for the plan (a direct correction), **or** the summary of the changed upstream spec (a reconciliation) + the current state of `plan.md` and `plan-questions.md`.
 3. **Reconciliation = a targeted alignment, not a full rewrite.** Preserve the closed decisions of `plan-questions.md`.
 4. **Do not ask the user directly** — whatever needs a real decision, add it as a new `Qnn` to `plan-questions.md`, and return its identifier.
-5. **Do not write `analyze-report.md`** — that belongs to the orchestrator. You write `plan.md` and `plan-questions.md`.
+5. **Do not write `analyze-report.md` or `analyze-task.md`** — both belong to the orchestrator (you may read `analyze-task.md` if you are given its path). You write `plan.md` and `plan-questions.md`.
 6. **🔴 Closing self-check: run the mechanical gate (GS1).** **Before** returning, run it on the folder of the cycle:
 
 <!-- INCLUDE:shared/python-cmd.md -->

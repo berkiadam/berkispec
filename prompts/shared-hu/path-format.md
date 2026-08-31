@@ -17,4 +17,14 @@
 
 **Ami NEM fájl-útvonal, tehát nem érinti a szabály:** HTTP-endpoint útvonala (`/api/v1/token-exchange`), konténer-belső útvonal egy parancsban (`docker exec app cat /opt/app/config.yaml`), JSON-pointer, regex.
 
-_A `05-analyze` mechanikus kapuja ezt gépiesen ellenőrzi (`R1` check): `file://`, gép-specifikus és abszolút repó-útvonal a tervezési dokumentumokban `<status:must_fix>`._
+**Ha az eszközöd abszolút útvonalat ad vissza** (IDE-integráció, fájlkereső, `pwd`-vel összefűzött útvonal), a dokumentumba írás **előtt** vágd le a repó gyökerét. Abszolút útvonal a `spec.md`/`plan.md`/`tasks.md` szövegében akkor is hiba, ha a te gépeden helyes.
+
+**Kötelező ellenőrzés a fázis lezárása előtt (RP1-kapu).** Ne szemre nézd át — futtasd:
+
+```bash
+python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-name> --paths-only
+```
+
+A kapu a ciklus mappájában **meglévő** tervezési dokumentumokat nézi (`spec.md`/`plan.md`/`tasks.md` — amelyik már létezik), tehát a `02` lezárásakor is fut, amikor a plan és a tasks még nincs meg. Nem `0` kilépő kód → a talált útvonalakat **javítsd ki**, és futtasd újra; a fázis `PASS` nélkül nem záródik. A `03`/`04` fázisban a teljes mechanikus kapu (`M`) ezt úgyis lefuttatja — ott ez a hívás csak akkor kell, ha előbb akarsz visszajelzést.
+
+_A `05-analyze` mechanikus kapuja ugyanezt gépiesen ellenőrzi (`R1` check): `file://`, gép-specifikus, placeholder és abszolút repó-útvonal a tervezési dokumentumokban `<status:must_fix>`._

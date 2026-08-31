@@ -37,5 +37,12 @@ Two cycles **may proceed in parallel**, in separate `git worktree`s, in separate
 ```bash
 git fetch origin
 git worktree add ../<project>-cNN -b feature/cycle-NN-<name> origin/main
+python3 <platform-scripts-mappa>/worktree-setup.py ../<project>-cNN   # PW4
 ```
+**PW4 — replenishing the tool directories.** The worktree only receives the files **tracked** by git, whereas the configuration of the agentic tools (`.claude/`, `.agents/`, `.codex/`, `.cursor/`, `.github/`, `AGENTS.md`, …) may be gitignored — in that case the `bs-*` skills, the subagents and the gate scripts are missing in the new worktree. `worktree-setup.py` copies the **missing** files from the root of the main worktree (it does not overwrite and does not delete an existing one; it can be extended with `--extra <path>`).
+
+If the **name of the cycle is not known yet** (the normal case in the PW3/B decision gate of `01`), the worktree is created with a **detached** HEAD — `git worktree add --detach ../<project>-cNN origin/main` — and the branch of the cycle is created in it according to BD5, after the name is determined.
+
+**PW5 — the agent has to be moved over as well.** After creating the worktree the agentic tool must be **closed**, you have to change into the new directory in the CLI (`cd ../<project>-cNN`), and **restart it there** — the agent is bound to the starting directory of the session. In this case the `01` phase **stops** at the creation of the worktree, emits the moving-over instruction (absolute path + start command), and the planning starts from the beginning in the new directory.
+
 The linked worktree works with its own HEAD and index, so the working-tree checks of the two agents do not see each other. The folder of the other cycle (`specs/cycle-MM-*/`) **does not even appear** in the worktree until it is merged — this is why the cycle numbering scans the branch names (BQ2), not `ls specs/`.

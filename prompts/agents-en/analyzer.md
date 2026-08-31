@@ -4,7 +4,7 @@ description: "Read-only cross-phase SEMANTIC consistency diagnosis across spec.m
 role: "Cross-phase consistency analyzer specialist agent"
 called_by: ["skills/05-analyze.md"]
 inputs:
-  - "specs/cycle-NN-<name>/analyze-slices/<scope>.md — the slice cut by the gate, the PRIMARY input (SH1)"
+  - "specs/cycle-NN-<name>/analyze/slices/<scope>.md — the slice cut by the gate, the PRIMARY input (SH1)"
   - "specs/cycle-NN-<name>/spec.md"
   - "specs/cycle-NN-<name>/plan.md"
   - "specs/cycle-NN-<name>/tasks.md"
@@ -31,16 +31,16 @@ This same prompt runs in **three parallel rounds**, with scopes independent of e
 
 | Scope | Categories | Your slice | Identifier prefix |
 |---|---|---|---|
-| `s1-dup-underspec` | 1. duplication + 3. under-specification | `analyze-slices/s1-dup-underspec.md` | `AF-NN` |
-| `s2-coverage` | 2. ambiguity + 5. coverage interpretation | `analyze-slices/s2-coverage.md` | `AC-NN` |
-| `s3-conventions` | 4. convention conflict | `analyze-slices/s3-conventions.md` | `AN-NN` |
+| `s1-dup-underspec` | 1. duplication + 3. under-specification | `analyze/slices/s1-dup-underspec.md` | `AF-NN` |
+| `s2-coverage` | 2. ambiguity + 5. coverage interpretation | `analyze/slices/s2-coverage.md` | `AC-NN` |
+| `s3-conventions` | 4. convention conflict | `analyze/slices/s3-conventions.md` | `AN-NN` |
 
 - **If the caller named no scope**, do not guess: carry **all five categories** (this is the old, single-round behavior) — an incomplete diagnosis is worse than a slow one.
 - **The identifier prefix comes from the scope**, and must not collide with those of the other rounds. This is not cosmetics: the orchestrator's survival rule (TS) builds on a literal identifier match.
 
 ## Input
 
-0. **🔴 The SLICE of your scope** (`specs/cycle-NN-<cycle-name>/analyze-slices/<scope>.md`) — **this is your primary input**, produced by the mechanical gate (SH1). It is a verbatim extract of the design documents, cut exactly for your categories. **Judge from it**, and do not read the whole quartet — the only purpose of the slice is that you do not have to.
+0. **🔴 The SLICE of your scope** (`specs/cycle-NN-<cycle-name>/analyze/slices/<scope>.md`) — **this is your primary input**, produced by the mechanical gate (SH1). It is a verbatim extract of the design documents, cut exactly for your categories. **Judge from it**, and do not read the whole quartet — the only purpose of the slice is that you do not have to.
    - The `ABSENT-SECTIONS:` line of the header tells you which requested section the gate did not find. Such a section is **either optional in this cycle, or already reported by the gate's `S1`/`S2`** — do not set out to hunt for it. Read from the source document only if the finding **genuinely** requires it, and say so in one line in your report.
    - **If the slice file does not exist** (the caller did not run the gate with `--emit-slices`), that is not an error: work from the documents below, and note it in one line in your report.
 
@@ -130,8 +130,9 @@ Return to the calling skill (don't write a file; the 05-analyze skill writes `an
 - **<prefix>-NN** → confirmed | NOT resolved — <why>
 
 ## Must Fix
-- [ ] **<prefix>-NN** — <category> — <description> → target phase: <phase> (`file:location`)
+- [ ] **<prefix>-NN** — <category> — <description: what contradicts what, BOTH sides with their own `file:location`> → target phase: <phase> (`file:location`)
       **why it blocks:** <one sentence: what can break in the implementation if it stays like this>
+      **how it would be correct:** <one or two sentences: in what state the set of four would be consistent — or, if it takes a real decision, the question to be decided>
 
 ## Suggestions
 - <category> — <description> (`file:location`)
@@ -145,6 +146,7 @@ Return to the calling skill (don't write a file; the 05-analyze skill writes `an
 
 - If there is no `<status:must_fix>`, the section should remain with an empty list or the "<status:none_marker>" marker — for deterministic parsing purposes (this is how the loop recognizes convergence).
 - **Every `<status:must_fix>` item mandatorily gets an identifier bearing the prefix of your scope** (`AF-01` / `AC-01` / `AN-01`, …; the prefix is given by the "Scope parameter" table). The identifier is **stable**: from the 2nd run onward **do not renumber** the items — the ones still open keep their number, new ones continue at the end of the sequence, and in the `Previous round's Must Fix items` block you refer to them with the same identifier. The orchestrator's **survival rule** builds on this (if the same identifier survives two consecutive iterations, that signals a **decision**, not a fixable defect) — with paraphrased text it does not work.
-- **The `why it blocks:` line is mandatory for every `<status:must_fix>` item (AR1).** The orchestrator writes the live tick list of `analyze-report.md` from it, and that is what the **user** reads: the `<description>` says *what* is wrong, the `why it blocks:` says *why* the implementation cannot start like this. The name of the category is a substitute for neither field.
+- **The `why it blocks:` and the `how it would be correct:` lines are mandatory for every `<status:must_fix>` item (AR1).** The orchestrator writes the live tick list of `analyze-report.md` from them, and that is what the **user** reads: the `<description>` says *what contradicts what* (both sides with their own location), the `why it blocks:` says *why* the implementation cannot start like this, and the `how it would be correct:` gives the *target state*. The name of the category is a substitute for none of these fields.
+- **The `how it would be correct:` is not a design decision.** If the target state follows unambiguously from the other documents, write it down as a statement. If it takes a real decision (which side is the correct one, which technological route), the field carries the **question to be decided** — the decision is asked of the user by the orchestrator, it is not made by you.
 - **Do NOT print the coverage matrix** — that is generated by the mechanical gate, and the orchestrator appends it to the report (AG4). You only indicate, in the `Affected DoD rows` block, which row is substantively insufficient.
 - If several categories FAIL, indicate which is the **earliest affected phase** (02 < 03 < 04) — the orchestrator launches the fixer there, then re-derives the downstream phases from that point.

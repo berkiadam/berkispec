@@ -28,7 +28,7 @@ Te a spec fázis (02) **Fix-mód** végrehajtója vagy, amelyet az `05-analyze` 
 1. **Kövesd a lent beemelt „Fix-mód" szekciót** (szűkített célzott javítás, auto-javítható vs kérdezni kell határvonal, auto-státusz `[analyze-loop]` markerrel, visszatérési összefoglaló). A fázis minőségi kapui szintén lent szerepelnek — a javított részekre alkalmazd őket. **Ne olvasd be a fázis-skillt** (`/bs-02-write-spec`) (D13): minden szükséges szabály itt van, a teljes skill beolvasása pedig a teljes fázis újrafuttatására csábít.
 2. **Bemenet:** a spec-re szűrt `<status:must_fix>` lista + a `spec.md` és `spec-questions.md` aktuális állapota.
 3. **Ne kérdezz közvetlenül a felhasználótól** — nincs interaktív csatornád. Amihez valódi döntés kell, azt új `Knn`-ként vedd fel a `spec-questions.md`-be, és add vissza az azonosítóját.
-4. **Ne írd az `analyze-report.md`-t** — az az orchestrátoré. Te a `spec.md`-t és a `spec-questions.md`-t írod.
+4. **Ne írd az `analyze-report.md`-t és az `analyze-task.md`-t** — mindkettő az orchestrátoré (az `analyze-task.md`-t olvashatod, ha megkapod az útvonalát). Te a `spec.md`-t és a `spec-questions.md`-t írod.
 5. **🔴 Záró önellenőrzés: futtasd a mechanikus kaput (GS1).** Visszatérés **előtt** futtasd le a ciklus mappájára:
 
 <!-- INCLUDE:shared/python-cmd.md -->

@@ -4,7 +4,7 @@ name: bs-implement
 description: "berkispec - 06. Használd, ha az analyze-report.md 'PASS' (Phase 06), a tényleges kódfejlesztéshez. Végrehajtja a tervezett kódmódosításokat a feladatlista alapján, és közben vezeti a 'tasks.md'-t, amíg az el nem éri a 'Validálásra kész' állapotot."
 prerequisites:
   - "specs/cycle-NN-<name>/tasks.md státusz: <status:ready_for_implement>"
-  - "specs/cycle-NN-<name>/analyze-report.md státusz: PASS"
+  - "specs/cycle-NN-<name>/analyze/analyze-report.md státusz: PASS"
 output:
   - "Implementált kód"
   - "specs/cycle-NN-<name>/test-report/implement/check-log.md — a [CHECK] futások append-only naplója (TR5)"
@@ -44,10 +44,12 @@ Ez a folyamat **6. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
    ```bash
    git worktree list
    git rev-parse --git-common-dir
-   git fetch origin && git log --oneline $(git merge-base HEAD origin/main)..origin/main
+   git fetch origin && git log --oneline HEAD..origin/main
    ```
 
    _Remote nélküli (csak lokális) repóban az `origin/main` helyett a lokális `main`-nel dolgozz, `git fetch` nélkül._
+
+   _A parancsban **szándékosan nincs `$( )` behelyettesítés**: a `HEAD..origin/main` ugyanazt a commit-halmazt adja, mint a `merge-base`-es alak, viszont több CLI (pl. Antigravity/Gemini) a parancs-behelyettesítést biztonsági okból nem engedi allowlistelni — az ilyen sor minden futásnál engedélyt kérne._
 
    - **Ha van másik worktree `cycle-*` branch-en** → **STOP.** Egy másik ciklus még nyitott: vagy azt kell végigvinni a `09`-ig, vagy ezt a ciklust kell megvárni. Ne kezdj implementálni, és ne javasolj `--force`-os megkerülést.
    - **Ha linked worktree-ben vagyunk** (a `git rev-parse --git-common-dir` nem `.git`) → **STOP.** A `06`–`09` a **fő** worktree-ben fut (ott lakik a `main`, amit a `09` igényel). A visszaköltözés lépéssorát lásd a *Párhuzamos ciklusok* blokk PW2/3. pontjában.
@@ -122,6 +124,15 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
 >
 > _Megjegyzés a keretrendszer konvenciójáról:_ a „**A válasz végén helyezd el a … kattintható linkjét**" mondat a többi fázisban **megállás-jelző** (kérdés vagy fázis-vég). Ezért ebben a fázisban **taskonként szándékosan nem szerepel** — a `tasks.md` linkje a fázis záró üzenetébe tartozik.
 
+> **🔴 Konzisztens állapot a szó visszaadásakor (IM2).** Mielőtt BÁRMILYEN okból visszaadod a szót — kérdés, megállási szabály, kvóta, vagy egyszerűen a válaszod vége —, az éppen futó task legyen **lezárt** vagy **explicit módon félbehagyott** állapotban:
+>
+> - **lezárt** = `- [x]` a `tasks.md`-ben **+** `check-log` bejegyzés (ha volt `[CHECK]`) **+** commit (12. pont);
+> - **félbehagyott** = a checkbox `- [ ]` marad, de az `imp-decision.md`-be bekerül egy sor — *melyik task, meddig jutott, mi a nyitott kérdés, mely fájlok vannak módosítva commit nélkül* —, és ezt a válaszodban is kimondod.
+>
+> **Commitálatlan, könyveletlen munkát hagyni tilos.** A fázis megszakadás-tűrése (és a `07` bizonyítéka) a taskonkénti commitra épül: pipa és commit nélkül a következő session csak egy piszkos munkafát talál, amiről nem tudja eldönteni, melyik task meddig jutott, és mi az, amit a felhasználó félbeszakított. **Ha meg kell állnod, előbb könyvelj, aztán beszélj.**
+>
+> Ez a szabály **független** attól, hogy a megállás jogos volt-e: egy jogos kérdés is csak konzisztens állapotból tehető fel.
+
 1. Vedd a következő elvégzetlen taskot (`- [ ]`).
 
 2. **Visszalépés kódreview-ból (07):** Ha a ciklus a 07 review-kapujának `<status:must_fix>` findingjai miatt került vissza ide, a `tasks.md` végén lévő új feladatokat a `test-report/code-review.md` kritikus észrevételei alapján végezd el. A javítások után a záró `[CHECK]` feladatok újbóli futtatása és commitolása kötelező.
@@ -174,11 +185,28 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
 Ha implementálás közben az alábbiak bármelyike teljesül, **STOP — állj meg és jelezd a felhasználónak** (ne sodródj tovább, ne próbálj „kreatívan" továbblépni):
 
 - A task leírása ellentmond a meglévő kódnak és nem egyértelmű a helyes megoldás.
-- A task elvégzéséhez olyan fájlt kellene módosítani, ami nincs benne a task leírásában.
+- A task elvégzéséhez olyan fájlt kellene módosítani, ami nincs benne a task leírásában — **kivéve a kényszerű következmény-módosítást (IM3), lásd lent**.
 - Egy task feltételezi egy korábbi task eredményét, de az még nincs kész.
 - **Egy `[CHECK]` task háromszor egymás után hibával tért vissza** (lásd 8. szabály).
 
-Minden esetben csak **egy** kérdést tegyél fel, várj a válaszra, majd folytasd.
+Minden esetben csak **egy** kérdést tegyél fel, várj a válaszra, majd folytasd. **Megállás előtt is érvényes az IM2:** előbb a pipa + commit, vagy az `imp-decision.md` bejegyzés a félbehagyásról, és csak utána a kérdés.
+
+> **Ez a lista kimerítő (IM1).** A fázist kizárólag az itt felsorolt négy eset állítja meg, plusz a *Végrehajtási szabályok* 3. pontja (nem teljesülő `> **Gépi előfeltétel:**` blokk) és 4. pontja (infrastruktúra-függő task). Bármi más — köztük „a task elkészült és commitolva van" — **folytatás**, nem megállás.
+
+### Kényszerű következmény-módosítás (IM3) — kivétel a „nem listázott fájl" szabály alól
+
+Egy törlés, átnevezés vagy szignatúra-változás óhatatlanul átgyűrűzik olyan fájlokra, amelyeket a task nem sorol fel (a törölt configra mutató alapérték, az átnevezett szimbólum importja). Ha minden ilyen esetben megállnál, a fázis szinte minden ciklusban elakadna — ha viszont szabadon átírsz bármit, az a „kreatív sodródás", amit ez a szekció tilt. A határ:
+
+**Elvégezheted megállás nélkül, ha MINDHÁROM teljesül:**
+1. a módosítás a listázott változtatás **mechanikus következménye** — egy hivatkozás átvezetése —, nem új viselkedés;
+2. **pontosan egy helyes alakja van** (nem kell két megoldás között választani, nincs érdemi tervezési szabadság);
+3. a bukó `[CHECK]`, fordítás vagy teszt **maga mutat rá** a fájlra és a sorra — nem te keresed meg, hogy „mi minden érintett még".
+
+**Ilyenkor:** végezd el a **lehető legszűkebb** javítást, vedd fel az `imp-decision.md`-be (*melyik task kényszerítette ki · melyik fájl:sor · miért csak egy helyes alak van*), és említsd a haladás-sorban is. **Ne állj meg.**
+
+**Ha bármelyik feltétel nem teljesül** — választani kell két út között, a következmény új viselkedést vezetne be, vagy a hatókör túlnő egy hivatkozás-átvezetésen — **állj meg és kérdezz**. A „kreatívan továbblépek" ilyenkor szabályszegés.
+
+> **A visszacsatolás kötelező.** Az így érintett, egyetlen taskban sem szereplő fájlokat sorold fel a **fázis záró üzenetében** is: ez azt jelenti, hogy a `04` (és a `05` lefedettségi köre) kihagyott egy kötelező következmény-módosítást — a `07` és a `09` különben egy sehol nem tervezett diffet lát a ciklusban.
 
 ---
 
@@ -190,7 +218,7 @@ Minden esetben csak **egy** kérdést tegyél fel, várj a válaszra, majd folyt
 
 **Mikor írsz bele:** **minden `[CHECK]` futás után, a bukottak után is** — nem csak a végül zöld próba után. A napló **append-only**: korábbi sort nem írsz át és nem törölsz.
 
-**Mit NEM csinálsz:** nem generálsz HTML/Allure/coverage riportot. Az a 07 dolga — a 06 záró állapotát a 07 első TELJES köre úgyis végigméri, két riport-készlet ugyanarról fölösleges duplikáció a git-diffben.
+**Mit NEM csinálsz taskonként:** nem generálsz HTML/Allure/coverage riportot minden task után — a `[CHECK]`-napló az olcsó, szöveges bizonyíték. A teljes riport-készlet a fázis végén, **egyszer** készül el, és csak akkor, ha a projekt az `implement`-et riport-fázisnak deklarálta (TR6) — lásd a *Riport-fázis* szekciót.
 
 ### A fájl sablonja
 
@@ -237,16 +265,41 @@ A README.md az implementáció része — nem utólagos dokumentáció. Akkor ke
 ---
 
 
+## Riport-fázis (TR6) — `test-report/implement/`
+
+Az `implement/` **hivatalos fázis-mappa**: nemcsak a `check-log.md` helye, hanem a 06 záró állapotának teljes riport-készletéé is — ha a projekt így rendelkezik. A döntés a `conventions.md` `## <sec:cv_test_reporting>` szekciójának `**<field:f_report_phases>:**` mezőjében él (`implement`, `validate`, vagy mindkettő; a mező hiányában az alapérték `validate`). **Ne találgasd** — kérdezd le determinisztikusan, miután minden task `[x]`, de a státuszváltás ELŐTT:
+
+```bash
+python3 <platform-scripts-mappa>/report-gate-check.py \
+  conventions.md specs/cycle-NN-<cycle-name> --phases
+```
+
+- **A kimenetben nincs `implement`** → nincs dolgod: a riport-készletet a 07 állítja elő a saját köreiben. Menj tovább a státuszváltásra.
+- **A kimenetben ott van az `implement`** → futtasd le a `conventions.md` `## <sec:cv_test_reporting>` táblájának riport-generáló parancsait a fázis-mappára, majd zárd a kapuval:
+
+```bash
+python3 <platform-scripts-mappa>/report-gate-check.py \
+  conventions.md specs/cycle-NN-<cycle-name> \
+  --report-subdir test-report/implement
+```
+
+**A fázis-mappa alakja `implement`** — ezt kapja a riport-parancsok `<phase-dir>` helyőrzője vagy `REPORT_PHASE_DIR`-szerű környezeti változója. Soha ne a teljes `specs/cycle-NN-<cycle-name>/test-report/implement` útvonalat írd oda: a bázisok összekeverése rekurzív `test-report/test-report/…` fát épít, amit a kapu layout-őre `exit 1`-gyel bukat (TR5/c).
+
+- **`exit 0`** → kész, mehet a státuszváltás; a riport-artefaktumok a záró committal mennek be.
+- **`exit 1`** → hiányzó vagy üres artefaktum, vagy idegen mappa a `test-report/` alatt. **Ez nem kód-bug: nem indítasz fixert és nem lépsz vissza taskra** — futtasd újra a hiányzó riport-generáló parancsot, illetve töröld az idegen mappát, és futtasd újra a kaput. Ha a parancs maga hibás (nem áll elő tőle az artefaktum), az a `conventions.md` hiánya: állj meg, és kérdezz a felhasználótól.
+
+> **Ez nem új megállási pont (IM1).** A riport-generálás a fázis lezárásának része, ugyanabban a körben — a `--phases` lekérdezés és a kapu között ne add vissza a szót a felhasználónak.
+
 ## Státusz kezelés
 
 - Implementálás közben: `<status:implement_in_progress>`
 - Ha minden task `[x]`: frissítsd a `tasks.md` státuszát `<status:ready_for_validate>`-re, és **commitold ezt az állapotváltozást** (a végső státusz külön legyen rögzítve) — a `check-log.md` utolsó bejegyzéseivel együtt:
   ```bash
   git add specs/cycle-NN-<cycle-name>/tasks.md \
-          specs/cycle-NN-<cycle-name>/test-report/implement/check-log.md \
+          specs/cycle-NN-<cycle-name>/test-report/implement/ \
     && git commit -m "cycle-NN: 06-implement - kész, validálásra kész"
   ```
-  **Ellenőrzés a státuszváltás előtt:** a `check-log.md` létezik, és minden csoportzáró `[CHECK]`-hez tartozik benne legalább egy sor. Ha egy csoport `[x]`, de a naplóban nincs hozzá bejegyzés, a bizonyíték hiányzik — pótold a naplósort a tényleges futtatás alapján (ne emlékezetből: ha nem tudod, futtasd újra a `[CHECK]`-et).
+  **Ellenőrzés a státuszváltás előtt:** lefutott a *Riport-fázis (TR6)* szekció (a `--phases` lekérdezés, és ha az `implement` riport-fázis, a kapu `exit 0`-val); a `check-log.md` létezik, és minden csoportzáró `[CHECK]`-hez tartozik benne legalább egy sor. Ha egy csoport `[x]`, de a naplóban nincs hozzá bejegyzés, a bizonyíték hiányzik — pótold a naplósort a tényleges futtatás alapján (ne emlékezetből: ha nem tudod, futtasd újra a `[CHECK]`-et).
 
 Ha a státusz `<status:ready_for_validate>`, állj meg. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
 <!-- INCLUDE:lang/06-implement.md#zaro-uzenet -->

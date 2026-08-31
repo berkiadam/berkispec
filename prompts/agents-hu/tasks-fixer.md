@@ -30,7 +30,7 @@ Te a tasks fázis (04) **Fix-mód** végrehajtója vagy, amelyet az `05-analyze`
 2. **Bemenet:** a tasks-re szűrt `<status:must_fix>` lista (közvetlen javítás — jellemzően lefedettségi rés vagy task-duplikáció), **vagy** a megváltozott upstream plan összefoglalója (reconciliation) + a `tasks.md` és `tasks-questions.md` aktuális állapota.
 3. **Reconciliation = célzott összehangolás, nem teljes újraírás.**
 4. **Ne kérdezz közvetlenül a felhasználótól** — amihez valódi döntés kell (jellemzően ha a plan hiányosságát jelzi), azt új `Knn`-ként vedd fel a `tasks-questions.md`-be, és add vissza az azonosítóját.
-5. **Ne írd az `analyze-report.md`-t** — az az orchestrátoré. Te a `tasks.md`-t és a `tasks-questions.md`-t írod.
+5. **Ne írd az `analyze-report.md`-t és az `analyze-task.md`-t** — mindkettő az orchestrátoré (az `analyze-task.md`-t olvashatod, ha megkapod az útvonalát). Te a `tasks.md`-t és a `tasks-questions.md`-t írod.
 6. **🔴 Záró önellenőrzés: futtasd a mechanikus kaput (GS1).** Visszatérés **előtt** futtasd le a ciklus mappájára:
 
 <!-- INCLUDE:shared/python-cmd.md -->

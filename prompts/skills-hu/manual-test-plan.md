@@ -44,6 +44,7 @@ Ez **nem fázis:** a `00–09` láncnak nem része, a ciklus státusz-láncához
 | REST hívási szekvenciák, `curl` | `plan.md` → <sec:rest_calls_examples> |
 | tesztadatok, userek, jelszavak | `plan.md` → <sec:test_api_users> + <sec:other_parameters> (TC5 titok-szabály) |
 | hálózati előfeltételek | `plan.md` → <sec:network_access_prereqs> |
+| **a tesztcsoportok maguk: lépések, hívások, elvárt eredmény** | **`plan.md` → <sec:plan_test_scenarios> (`TS-NN`) — ez a `TG-NN` csoportok elsődleges forrása** |
 | mit tesztelünk egy csoporttal | `spec.md` → <sec:test_specification> + <sec:definition_of_done> (`DoD-NN`) |
 | automata teszt-parancsok | `plan.md` → <sec:machine_run_table> |
 | hova kerülnek az eredmények | `conventions.md` → `## <sec:cv_test_reporting>` (TR3 + a TR5 kör-mappa jelölő) |

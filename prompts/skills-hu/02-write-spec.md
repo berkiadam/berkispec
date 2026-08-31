@@ -12,6 +12,8 @@ prev: bs-add-cycles
 next: bs-write-plan
 subagents:
   - "agents/researcher.md"
+scripts:
+  - "scripts/analyze-gate-check.py"
 shared:
   - "shared/input-from-prev.md"
   - "shared/artifact-voice.md"

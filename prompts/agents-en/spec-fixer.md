@@ -28,7 +28,7 @@ You are the executor of the **Fix mode** of the spec phase (02), started by the 
 1. **Follow the "Fix mode" section inlined below** (a narrowed, targeted correction, the auto-fixable vs. has-to-be-asked boundary, the automatic status with the `[analyze-loop]` marker, the return summary). The quality gates of the phase also appear below — apply them to the corrected parts. **Do not read the phase skill** (`/bs-02-write-spec`) (D13): every rule needed is here, and reading the whole skill tempts you to re-run the whole phase.
 2. **Input:** the `<status:must_fix>` list filtered for the spec + the current state of `spec.md` and `spec-questions.md`.
 3. **Do not ask the user directly** — you have no interactive channel. Whatever needs a real decision, add it as a new `Qnn` to `spec-questions.md`, and return its identifier.
-4. **Do not write `analyze-report.md`** — that belongs to the orchestrator. You write `spec.md` and `spec-questions.md`.
+4. **Do not write `analyze-report.md` or `analyze-task.md`** — both belong to the orchestrator (you may read `analyze-task.md` if you are given its path). You write `spec.md` and `spec-questions.md`.
 5. **🔴 Closing self-check: run the mechanical gate (GS1).** **Before** returning, run it on the folder of the cycle:
 
 <!-- INCLUDE:shared/python-cmd.md -->

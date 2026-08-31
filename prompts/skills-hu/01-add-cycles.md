@@ -57,8 +57,11 @@ Milyen branch-en vagyunk?
    → ez RESUME: a branch már létrejött. NE hozz új branch-et (`git switch -c` tilos),
      folytasd ezen a branch-en a lenti dokumentum-állapot szerint.
 3. feature branch, ami NEM az aktuális ciklusé
-   → BD6: figyelmeztetés (a jelenlegi branch merge/PR a `## <sec:cv_merge_strategy>` szerint),
-     majd kérd a felhasználót, hogy váltson main-re — ne válts automatikusan.
+   → PW3 döntési kapu (lásd a git-preflightot): EGY kérdésben ajánld fel az
+     A) soros lezárást (merge/PR a `## <sec:cv_merge_strategy>` szerint, majd
+     a felhasználó vált main-re — ne válts automatikusan) ÉS a B) párhuzamos
+     worktree-t (`git worktree add --detach ../<projekt>-cNN origin/main`).
+     Ne csak a main-re váltást kérd, és a válaszig ne kezdj tervezni.
 ```
 
 **Ezután a dokumentum-állapot:**
@@ -226,6 +229,7 @@ Minden iteráció indítható új kontextussal: elég a `conventions.md` (ha lé
 - Ha a HLD/LLD egy komponens viselkedését nem definiálja egyértelműen és ez befolyásolja a ciklushatárokat: jelezd pontosan mi hiányzik, és kérj pontosítást. Ne találj ki viselkedést.
 - Ha egy ciklus nem bontható tovább de még mindig nagy: jelezd a kockázatot és hagyj döntési lehetőséget a felhasználónak.
 - Ha a ciklusok közötti függőségek körkörösek: jelezd, és kérj döntést a sorrendről.
+- **PW5:** ha a preflight PW3/B ágán worktree jött létre, a fázis **ott véget ér** ebben a munkamenetben — kiadod az átköltözési üzenetet (abszolút útvonal + az eszköz indítóparancsa), és megállsz. Ciklusmappát ne hozz létre, a roadmap-be ne írj: a fázis a worktree-ben, újraindított eszközzel fut le elölről.
 
 Minden esetben csak **egy** problémát jelezz egyszerre.
 

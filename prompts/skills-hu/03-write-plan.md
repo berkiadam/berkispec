@@ -368,6 +368,10 @@ _**Kötelező szekció — a `plan.md` önhordóságának alapja.** Ide kerül *
 
 _**Szabályok:** placeholder **tilos** (`<TODO>`, `<ide jön a jelszó>`, `TBD`) — ami hiányzik vagy elavult, az `plan-questions.md` kérdés, nem placeholder. Üres cella **tilos**; ami erre a ciklusra nem értelmezhető, oda `—` kerül. Hivatkozás nem helyettesíti az adatot („lásd a spec-et", „a szokásos teszt-user"). Titok-szabály (TC5): dev-hatókörű teszt-user, mock-credential és lokális jelszó **konkrét értékkel** ide kerül; klaszter-, registry-, VPN-, IAM- és éles credential **soha** — helyette pointer (hol tárolják, ki adja ki)._
 
+**<field:f_target_env>:** <a ciklus cél-környezete: `lokális`, `dev`, `lokális + dev`, …>
+
+_**Kötelező mező (EV1).** Ki kell mondani, MELY környezetre szól ez a ciklus — mert egy zöld teszt önmagában nem bizonyítja, HOL volt zöld. Egy éles ciklus a dev-re telepített, a tesztjei viszont lokális célpontra futottak (egy `…:dev-e2e` nevű script configjában `baseURL: "http://127.0.0.1:5178"` állt): minden zöld lett, és így nem derült ki, hogy a dev-re telepített komponens el sem indult. Ez a mező köti a teszt-célpontot a ciklus szándékához, és erre méri az `05` kapuja a futtatási tábla `<field:f_environment>` oszlopát és a `TS-NN` hívásait (EV1–EV5)._
+
 ### <sec:components_endpoints>
 
 | Komponens | Repo-útvonal / image | Base URL | Port(ok) | Health endpoint | Indítás (szó szerinti parancs) | Leállítás / takarítás |
@@ -466,22 +470,60 @@ _Milyen típusú tesztek kellenek (unit / integrációs / e2e)? Melyik meglévő
 
 _**Beemelt visszatérő elvárások (TC1) — kötelező, ha létezik `specs/test-conventions.md`:** a regiszter 2. és 3. szekciójának ebben a ciklusban szükséges tételei, **önhordóan** (a hozzájuk tartozó recept-adatokkal, nem puszta hivatkozással). Minden beemelt tétel mellé írd a provenance-t: `_(forrás: test-conventions.md L01)_`. Ha egy tétel adatát a `plan-questions.md`-ben javítottad, a **javított** adat kerül ide._
 
+### <sec:plan_test_scenarios> — **kötelező (TS1)**
+
+> **🔴 Miért kötelező:** a fenti próza a teszt-**típusokról** szól, ez a szekció a teszt **tartalmáról**. A `plan.md` önhordó (TC1/a): a `test-runner` és a `bs-manual-test-plan` is **kizárólag** ebből dolgozik, és a `07` egy bukott tesztjét is ebből kell tudni kézzel reprodukálni. Ezért minden tesztesetet **végrehajtható forgatókönyvként** kell kifejteni — nem „a login flow tesztelve lesz", hanem lépésenként: mit hívunk, milyen konkrét értékkel, és pontosan mit várunk vissza.
+>
+> **A mérce (önteszt):** *„Egy ember, aki nem vett részt a tervezésben, kizárólag ezt a szekciót olvasva végig tudja csinálni a tesztet, és el tudja dönteni, hogy sikerült-e."* Ha bármit ki kellene találnia — melyik URL, melyik user, mi a helyes válasz —, a forgatókönyv hiányos.
+>
+> **A spec tesztesetei nem összevonhatók (KX3).** Ha a spec `<sec:test_specification>` szekciója hat esetet ír le, itt hat forgatókönyv áll — bővíteni és pontosítani szabad, összevonni és elhagyni nem.
+
+Forgatókönyvenként egy blokk, pontosan ebben a formában:
+
+#### TS-01 — <a forgatókönyv neve>  (DoD-02, DoD-05)
+
+**<field:f_what_we_test>:** <mit ellenőriz ez a forgatókönyv — a viselkedés, amiért fut, egy mondatban>
+**<field:f_prerequisite>:** <milyen állapotból indul: felhúzott stack, seed, bejelentkezett user, korábbi `TS-NN` eredménye>
+
+| # | Lépés | Hívás | Elvárt eredmény |
+|---|---|---|---|
+| 1 | <mit csinálunk> | `<szó szerint futtatható hívás>` | `<konkrét, ellenőrizhető válasz>` |
+
+**<field:f_cleanup>:** <mit kell utána leállítani vagy visszaállítani>
+
+**Kitöltési szabályok:**
+- **`DoD-NN` a fejlécben — kötelező és kétirányú (TS5).** Minden forgatókönyv megnevezi, mely DoD-pontokat igazolja, és **minden `DoD-NN`-hez tartoznia kell legalább egy forgatókönyvnek**. A kapu mindkét irányt méri.
+- **Hívás oszlop — szó szerint futtatható.** REST-nél teljes `curl`: ige, teljes URL porttal, fejlécek, konkrét request body. Nem REST teszt is ide tartozik ugyanebben a formában: UI-lépés (mire kattintunk, mit írunk be), CLI-parancs, DB-lekérdezés. **Hivatkozás nem hívás** — „lásd a `<sec:e2e_infrastructure>` szekciót" nem futtatható.
+- **Elvárt eredmény oszlop — konkrét és ellenőrizhető.** Státuszkód **és** a válasz azonosítható része (mezőnév, érték, payload-részlet, UI-elem szövege). A „sikeresen lefut" / „hibát ad" / „a várt eredményt adja" **tilos**: nem eldönthető. A kapu kemény padlója (TS3): legalább egy backtickes érték vagy szám.
+- **Teszt-userek, jelszavak, URL-ek, portok, azonosítók: literálisan.** A `<sec:environment_coords>` (KO1) értékeit **ide be kell írni**, nem hivatkozni rájuk — placeholder tilos (TS4), a hiányzó adat `plan-questions.md` kérdés. Credential-t a titok-szabály (TC5) szerint: dev-hatókörű teszt-user igen, klaszter/registry/IAM credential soha.
+- **Az adatfolyam legyen követhető.** Ha egy lépés kimenetét a következő használja, írd ki, **melyik mezőt melyik változóba** (`a válasz `response.initHash` mezője → `$INIT_HASH``).
+- **Számozás:** `TS-01`-től, hézagmentesen és egyediül (TS6). Javításnál a meglévő azonosítókat **ne számozd újra** — az újak a lista végére kerülnek.
+- **A bootstrapping nem ide tartozik:** a stack indítása, a token-szerzés és a deploy a `<sec:e2e_infrastructure>` szekcióban él (TP3); itt az `<field:f_prerequisite>` sor **hivatkozik** rá.
+
 ### <sec:machine_run_table> (run-tests.py) — **kötelező (TP4)**
 
 > **🔴 Miért kötelező:** a fenti próza az embernek szól, ez a tábla a **`run-tests.py`** szkriptnek. Ha megvan, a 07-validate a teszteket **szkripttel** futtatja, és a nyers teszt-log soha nem kerül LLM-kontextusba — ez a fázis legnagyobb token-tétele. Ha hiányzik, a 07 a drágább `test-runner` subagentre esik vissza. A tábla nem helyettesíti a prózát: **ugyanazok a parancsok**, gépi alakban.
 
-| Kategória | Típus | Előfeltétel | Parancs | Eredményfájl | Formátum | Takarítás |
-|---|---|---|---|---|---|---|
-| unit | gyors | — | `<szó szerinti parancs, gépi riporterrel>` | `junit.xml` | junit | — |
-| integrációs | gyors | — | `<parancs>` | `<fájl>` | junit | — |
-| e2e | nehéz | `<stack indítása; health-poll>` | `<parancs>` | `<fájl>` | junit | `<lebontás>` |
+| Kategória | Típus | Előfeltétel | Parancs | Eredményfájl | Formátum | Takarítás | <field:f_environment> |
+|---|---|---|---|---|---|---|---|
+| unit | gyors | — | `<szó szerinti parancs, gépi riporterrel>` | `junit.xml` | junit | — | lokális |
+| integrációs | gyors | — | `<parancs>` | `<fájl>` | junit | — | lokális |
+| e2e | nehéz | `<a cél elérhetőségi probe-ja; stack indítása>` | `<parancs a cél-hosttal>` | `<fájl>` | junit | `<lebontás>` | `<a cél-környezet neve>` |
 
 **Kitöltési szabályok:**
 - **Típus:** `gyors` (unit/integrációs/typecheck — a VD10 könnyű körben is fut) vagy `nehéz` (E2E/regresszió — csak teljes körben).
 - **Előfeltétel / Takarítás:** `;`-vel több parancs is felsorolható, a `## <sec:e2e_infrastructure>` szekció bootstrapping-lépéseivel **szó szerint** egyezően. A takarítás akkor is lefut, ha a futtatás elszállt.
 - **Parancs:** lehetőleg **gépi riporterrel** (`--reporter=junit`, `--junitxml=…`, `-Dsurefire.reportFormat`) — így a darabszámok és a bukott tesztnevek pontosan kinyerhetők, és nem regexből becsültek.
-- **Eredményfájl:** a repóhoz képest relatív útvonal; a szkript a kör-mappába másolja bizonyítéknak. A `{round}` helyőrző a kör-mappára cserélődik (pl. `--outputFile={round}/junit.xml`).
+- **Eredményfájl:** a repóhoz képest relatív útvonal; a szkript a kör-mappába másolja bizonyítéknak.
+- **Helyőrzők — kettő van, két különböző bázissal (TR5/c). Ne keverd őket:**
+  - `{round}` → a repó gyökeréhez képest relatív **teljes** kör-mappa (`specs/cycle-NN-<cycle-name>/test-report/validate/round-02`). Ezt írd oda, ahol a parancs a repó gyökeréből indul: `--outputFile={round}/junit.xml`, `--alluredir={round}/e2e/allure-results`.
+  - `{phase}` → a `test-report/`-hoz képest relatív **fázis-mappa** (`validate/round-02`). Ezt írd oda, ahol a `conventions.md` riport-parancsa a `<phase-dir>` helyőrzőt vagy egy `REPORT_PHASE_DIR`-szerű környezeti változót vár: `REPORT_PHASE_DIR={phase} npm run test:pw`.
+  - **Tilos a `{round}` elé `test-report/`-ot írni** (`…/test-report/{round}`) — a `{round}` már tartalmazza. Az így keletkező dupla prefix rekurzív `test-report/specs/…` riport-fát épít; a `run-tests.py` a futtatás előtt ellenőrzi, és `exit 3`-mal megáll.
 - **Formátum:** `junit` (ajánlott) vagy `text` (a stdout-ból regexszel számol — gyengébb bizonyíték).
+- **🔴 <field:f_environment> — kötelező minden sorban (EV2–EV5).** Ide `lokális` vagy a cél-környezet neve kerül. Ha nem `lokális`:
+  - a **`Parancs` cellának literálisan tartalmaznia kell a cél-hostot** (env-változóval vagy kapcsolóval, pl. `PLAYWRIGHT_BASE_URL=https://app.dev.example npx playwright test`) — **a célpont nem rejtőzhet konfigfájlban** (EV3). Egy `test:playwright:dev-e2e` nevű script configjában simán állhat `localhost`: **a parancs neve nem bizonyíték, a cím az**;
+  - az **`Előfeltétel` cellába kötelező egy elérhetőségi probe** ugyanarra a hostra (`curl -fsS https://app.dev.example/health`) — a `run-tests.py` az előfeltételt futtatja, és bukásakor a kategória FAIL, tehát **egy le sem futó deploy nem tud zöldre pipálódni** (EV4);
+  - `localhost` / `127.0.0.1` a parancsban vagy az előfeltételben **tilos** (EV5) — a `run-tests.py` ilyenkor `exit 4`-gyel megáll, futtatás nélkül.
 - **Üres cella:** `—`.
 - Ha egy kategória **szándékosan nem létezik** ebben a projektben, ne vedd fel a táblába, és a prózában írd le, miért.
 

@@ -86,8 +86,9 @@ Return to the calling skill (do not write a file; the 05-analyze skill writes `a
 
 ```md
 ## Must Fix
-- [ ] **AX-NN** — <category (6.x)> — <description> → target phase: <phase> (`file:location`)
+- [ ] **AX-NN** — <category (6.x)> — <description: what contradicts what, BOTH sides with their own `file:location`> → target phase: <phase> (`file:location`)
       **why it blocks:** <one sentence: what can break in the implementation if it stays like this>
+      **how it would be correct:** <one or two sentences: in what state it would be executable — or, if it takes a real decision, the question to be decided>
 
 ## Suggestions
 - <category (6.x)> — <description> (`file:location`)

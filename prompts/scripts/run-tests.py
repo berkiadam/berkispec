@@ -13,10 +13,15 @@ A parancsok forrása a `plan.md` `## Tesztelési stratégia` szekciójában lév
 
   ### Gépi futtatási tábla (run-tests.py)
 
-  | Kategória | Típus | Előfeltétel | Parancs | Eredményfájl | Formátum | Takarítás |
-  |---|---|---|---|---|---|---|
-  | unit | gyors | — | `npm test -- --run --reporter=junit --outputFile=junit.xml` | `junit.xml` | junit | — |
-  | e2e  | nehéz | `docker compose -f docker-compose.e2e.yml up -d --wait` | `npx playwright test --reporter=junit` | `results.xml` | junit | `docker compose ... down -v` |
+  | Kategória | Típus | Előfeltétel | Parancs | Eredményfájl | Formátum | Takarítás | Környezet |
+  |---|---|---|---|---|---|---|---|
+  | unit | gyors | — | `npm test -- --run --reporter=junit --outputFile=junit.xml` | `junit.xml` | junit | — | lokális |
+  | e2e  | nehéz | `curl -fsS https://app.dev.example/health` | `npx playwright test --reporter=junit` | `results.xml` | junit | `docker compose ... down -v` | dev |
+
+  · **Környezet:** hol fut a kategória (`lokális` vagy a cél-környezet neve). A
+    szkript naplózza a `results.json`-ba és a kimenetbe — így a bizonyítékból
+    utólag is látszik, HOL volt zöld —, és megáll (exit 4), ha egy nem-lokális
+    kategória lokális célra mutat. Régi, 7 oszlopos tábla változatlanul fut.
 
   · **Típus:** `gyors` (unit/integration/typecheck — könnyű körben is fut) vagy
     `nehéz` (E2E/regresszió — csak teljes körben, VD10).
@@ -37,6 +42,24 @@ Kilépő kód: 0 = minden futtatott kategória zöld
             2 = használati hiba: nincs gépi tábla a planban, vagy a megadott
                 kategória nem szerepel benne → **ilyenkor a hívó a `test-runner`
                 subagentre esik vissza**, és jelzi a 03-nak a hiányzó táblát
+            4 = a tábla KÖRNYEZET-hibás: egy nem-lokálisnak deklarált kategória
+                lokális célra mutat (EV5) → **NEM szabad futtatni**: a zöld
+                eredmény ilyenkor nem a telepített komponensről szólna
+            3 = a tábla helyőrző-hibás: a behelyettesítés dupla útvonal-prefixet
+                ad (`test-report/test-report/…` vagy `test-report/specs/…`) →
+                **NEM szabad futtatni és NEM szabad subagentre visszaesni**, a
+                `plan.md` táblája javítandó (TR5/c)
+
+HELYŐRZŐK a táblában (TR5/c) — kettő van, két különböző bázissal:
+
+  {round} → a repó gyökeréhez relatív TELJES kör-mappa
+            (`specs/cycle-NN-<name>/test-report/validate/round-02`)
+  {phase} → a `test-report/`-hoz relatív FÁZIS-mappa (`validate/round-02`) —
+            ezt várják a projekt riport-parancsai `REPORT_PHASE_DIR` /
+            `<phase-dir>` néven
+
+A kettő összekeverése (`…/test-report/{round}`) rekurzív riport-fát épít; a
+szkript ezt a futtatás ELŐTT megfogja és exit 3-mal megáll.
 """
 import argparse
 import json
@@ -76,7 +99,7 @@ def parse_matrix(plan_text):
         cells = [strip_cell(c) for c in mm.group(1).split("|")]
         if not cells or cells[0].lower() in ("kategória", "kategoria"):
             continue
-        while len(cells) < 7:
+        while len(cells) < 8:
             cells.append("")
         rows.append({
             "kategoria": cells[0],
@@ -86,6 +109,7 @@ def parse_matrix(plan_text):
             "eredmeny": cells[4],
             "formatum": (cells[5] or "junit").lower(),
             "takaritas": cells[6],
+            "kornyezet": cells[7],
         })
     return [r for r in rows if r["kategoria"] and r["parancs"] not in EMPTY]
 
@@ -94,8 +118,84 @@ def is_empty(value):
     return (value or "").strip().lower() in EMPTY
 
 
-def subst(value, round_dir):
-    return (value or "").replace("{round}", str(round_dir))
+def subst(value, round_dir, phase_dir=""):
+    """Helyőrző-behelyettesítés (TR5/c) — KÉT helyőrző, két bázissal:
+
+      {round} → a repó gyökeréhez relatív teljes kör-mappa
+                (`specs/cycle-NN-<name>/test-report/validate/round-02`)
+      {phase} → a `test-report/`-hoz relatív fázis-mappa (`validate/round-02`),
+                azaz amit a projekt riport-parancsai `REPORT_PHASE_DIR` /
+                `<phase-dir>` néven várnak
+
+    A kettő összekeverése rekurzív `test-report/test-report/…` és
+    `test-report/specs/…` fát hoz létre — ezt a `check_placeholder_collision`
+    fogja meg, mielőtt bármi lefutna."""
+    out = (value or "").replace("{round}", str(round_dir).replace("\\", "/"))
+    return out.replace("{phase}", phase_dir)
+
+
+COLLISION_RE = re.compile(r"test-report/(test-report|specs)/")
+LOCAL_HOST_RE = re.compile(r"\b(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])\b")
+LOCAL_ENV_WORDS = {"lokális", "lokalis", "local", "localhost", "helyi", "—", "-", "n/a", "na"}
+
+
+def env_is_local(value):
+    v = (value or "").strip().lower().strip("`*")
+    return (not v) or all(w in LOCAL_ENV_WORDS for w in re.split(r"[,;/+ ]+", v) if w)
+
+
+def check_environment_mismatch(rows):
+    """EV5 futásidejű védőháló — nem-lokális kategória lokális célra mutat.
+
+    Ez az a hibaosztály, ahol MINDEN teszt zöld lesz, miközben a telepített
+    komponenst senki nem szólította meg: egy `…:dev-e2e` nevű script configjában
+    `baseURL: "http://127.0.0.1:5178"` áll. A név nem bizonyíték, a cím az."""
+    bad = []
+    for row in rows:
+        if env_is_local(row.get("kornyezet")):
+            continue
+        for field in ("parancs", "elofeltetel"):
+            m = LOCAL_HOST_RE.search(row.get(field) or "")
+            if m:
+                bad.append((row["kategoria"], row["kornyezet"], field, m.group(0)))
+    return bad
+
+
+def check_placeholder_collision(rows, round_dir, phase_dir):
+    """Dupla útvonal-prefix a behelyettesített parancsokban (TR5/c) → hibalista.
+
+    Tipikus eset: a plan táblája `…/test-report/{round}`-ot ír, de a `{round}`
+    már tartalmazza a `test-report/`-ot is. Ilyenkor `{phase}` a helyes helyőrző."""
+    bad = []
+    for row in rows:
+        for field in ("parancs", "eredmeny", "elofeltetel", "takaritas"):
+            text = subst(row.get(field), round_dir, phase_dir)
+            if COLLISION_RE.search(text):
+                bad.append((row["kategoria"], field, text))
+    return bad
+
+
+def normalize_round_dir(raw, cycle):
+    """A kör-mappa háromféle alakját egyre hozza (TR5/c) → (teljes útvonal, fázis-mappa).
+
+    Ugyanannak a fogalomnak három bázisa van a rendszerben, és a leggyakoribb hiba
+    a bázisok összekeverése — a másik alak beragasztása rekurzív `test-report/…`
+    fát hoz létre. Ezért mind a hármat elfogadjuk:
+
+        specs/cycle-NN-<name>/test-report/validate/round-02   (repó-gyökér bázis)
+        test-report/validate/round-02                         (ciklus-mappa bázis)
+        validate/round-02                                     (test-report bázis — ez a fázis-mappa)
+
+    A `teljes útvonal` a repó gyökeréhez relatív (ide írunk és ezt kapja a `{round}`),
+    a `fázis-mappa` pedig az az alak, amit a projekt riport-parancsai várnak
+    (`REPORT_PHASE_DIR` / `<phase-dir>` helyőrző)."""
+    parts = [x for x in str(raw).replace("\\", "/").strip("/").split("/") if x and x != "."]
+    if cycle.name in parts:
+        parts = parts[parts.index(cycle.name) + 1:]
+    if parts and parts[0] == "test-report":
+        parts = parts[1:]
+    phase_dir = "/".join(parts) or "validate/round-01"
+    return cycle / "test-report" / phase_dir, phase_dir
 
 
 def run_shell(cmd, cwd, timeout):
@@ -180,7 +280,9 @@ def main():
         description="Tesztek futtatása a plan.md gépi táblájából, gépi összegzéssel.")
     parser.add_argument("plan_file", help="specs/cycle-NN-<name>/plan.md")
     parser.add_argument("--round-dir", required=True,
-                        help="a kör riport-mappája (test-report/validate/round-NN)")
+                        help="a kör riport-mappája; mind a három útvonal-alak elfogadott "
+                             "(TR5/c): `specs/cycle-NN-<name>/test-report/validate/round-NN`, "
+                             "`test-report/validate/round-NN` vagy `validate/round-NN`")
     parser.add_argument("--type", default="all", choices=["gyors", "nehez", "all"],
                         help="mely típusú kategóriák fussanak (VD10 kör-típus)")
     parser.add_argument("--only", action="append", default=[],
@@ -219,26 +321,60 @@ def main():
         print(f"HIBA: a táblában nincs `{args.type}` típusú kategória.", file=sys.stderr)
         return 2
 
-    round_dir = Path(args.round_dir)
+    round_dir, phase_dir = normalize_round_dir(args.round_dir, plan.parent)
+    if str(round_dir).replace("\\", "/") != str(args.round_dir).replace("\\", "/").strip("/"):
+        print(f"MEGJEGYZÉS (TR5/c): a --round-dir értéke `{args.round_dir}` volt, "
+              f"a szkript repó-relatív alakra normalizálta: `{round_dir}`.")
     round_dir.mkdir(parents=True, exist_ok=True)
+    print(f"REPORT_PHASE_DIR={phase_dir}   ← EZT az alakot várják a conventions.md "
+          f"riport-parancsai (a `<phase-dir>` helyőrző / a környezeti változó); "
+          f"soha ne a fenti teljes útvonalat.")
+
+    sys.stdout.flush()
+    mismatch = check_environment_mismatch(selected)
+    if mismatch:
+        print("HIBA (EV5) — nem-lokális kategória LOKÁLIS célra mutat:", file=sys.stderr)
+        for kat, env, field, hit in mismatch:
+            print(f"  ✗ {kat} [{env}] / {field}: `{hit}`", file=sys.stderr)
+        print("\nEz az a hibaosztály, ahol minden teszt zöld lesz, miközben a telepített "
+              "komponenst senki nem szólította meg. A parancs célpontját a deklarált "
+              "környezethez kell igazítani (a plan.md gépi futtatási táblájában), vagy a "
+              "kategória `Környezet` oszlopát kell `lokális`-ra javítani, ha tényleg ott fut.",
+              file=sys.stderr)
+        return 4
+
+    collisions = check_placeholder_collision(selected, round_dir, phase_dir)
+    if collisions:
+        print("HIBA (TR5/c) — dupla útvonal-prefix a gépi futtatási tábla parancsaiban:",
+              file=sys.stderr)
+        for kat, field, text in collisions:
+            print(f"  ✗ {kat} / {field}: {text}", file=sys.stderr)
+        print("\nA `{round}` helyőrző a TELJES, repó-relatív kör-mappa "
+              f"(`{round_dir}`) — nem szabad `test-report/` elé írni. Ha a parancs "
+              "a `test-report/`-hoz relatív fázis-mappát várja, használd a `{phase}` "
+              f"helyőrzőt (`{phase_dir}`). Javítsd a plan.md gépi tábláját, "
+              "ne a szkriptet.", file=sys.stderr)
+        return 3
 
     if args.dry_run:
         for row in selected:
-            print(f"{row['kategoria']} [{row['tipus']}]: {subst(row['parancs'], round_dir)}")
+            print(f"{row['kategoria']} [{row['tipus']}] @ {(row.get('kornyezet') or '—').strip()}: "
+                  f"{subst(row['parancs'], round_dir, phase_dir)}")
         return 0
 
     results = []
     any_fail = False
     for row in selected:
         cat = row["kategoria"]
-        cmd = subst(row["parancs"], round_dir)
+        cmd = subst(row["parancs"], round_dir, phase_dir)
         entry = {"kategoria": cat, "tipus": row["tipus"], "parancs": cmd,
+                 "kornyezet": (row.get("kornyezet") or "").strip() or "—",
                  "passed": 0, "failed": 0, "skipped": 0, "failed_items": [],
                  "eredmeny": None, "status": "FAIL"}
 
         if not is_empty(row["elofeltetel"]):
             for pre in row["elofeltetel"].split(";"):
-                pre = subst(pre.strip(), round_dir)
+                pre = subst(pre.strip(), round_dir, phase_dir)
                 if not pre:
                     continue
                 code, out, _ = run_shell(pre, args.repo, args.timeout)
@@ -257,7 +393,7 @@ def main():
         entry["elapsed_s"] = round(elapsed, 1)
 
         parsed = None
-        result_file = subst(row["eredmeny"], round_dir)
+        result_file = subst(row["eredmeny"], round_dir, phase_dir)
         if not is_empty(result_file):
             src = Path(args.repo) / result_file
             if not src.exists():
@@ -301,7 +437,7 @@ def main():
 
         if not is_empty(row["takaritas"]):
             for post in row["takaritas"].split(";"):
-                post = subst(post.strip(), round_dir)
+                post = subst(post.strip(), round_dir, phase_dir)
                 if post:
                     run_shell(post, args.repo, args.timeout)
 
@@ -314,7 +450,7 @@ def main():
     print(f"Teszt-futtatás — kör-mappa: {round_dir}")
     for e in results:
         mark = "✓" if e["status"] == "PASS" else "✗"
-        print(f"  {mark} {e['kategoria']} [{e['tipus']}] — `{e['parancs']}` → "
+        print(f"  {mark} {e['kategoria']} [{e['tipus']}] @ {e.get('kornyezet', '—')} — `{e['parancs']}` → "
               f"{e['passed']} passed / {e['failed']} failed / {e['skipped']} skipped"
               + (f"  ({e['elapsed_s']}s)" if e.get("elapsed_s") else ""))
         if e.get("megjegyzes"):

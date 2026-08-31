@@ -60,8 +60,34 @@ Ha `test-report`, a kapu a ciklus `test-report/` mappájához oldja fel az
 útvonalakat (a `--report-subdir` ilyenkor csak tájékoztató) — így egy régi
 projekt a migráció előtt sem kap hamis bukást.
 
+RIPORT-FÁZISOK (TR6) — a `**Riport-fázisok:**` mező sorolja fel, MELY fázisok
+kötelesek a teljes artefaktum-készletet előállítani. Elfogadott értékek:
+`implement` (a 06-implement záró állapota) és `validate` (a 07 teljes körei).
+A mező hiányában az alapérték `validate` — ez a korábbi viselkedés. Ha a kapu
+olyan fázis-mappára fut, amit a mező nem sorol fel, a kapu **kihagyja magát**
+(exit 0, magyarázó sorral): így a hívó fázis feltétel nélkül meghívhatja.
+
+A `--phases` mód csak kiírja a deklarált riport-fázisokat és kilép (exit 0) —
+ebből tudja a 06-implement, hogy kell-e neki riportot generálnia.
+
+ÚTVONAL-ALAKOK (TR5/c) — ugyanannak a kör-/fázis-mappának három alakja van a
+rendszerben, és a leggyakoribb hiba a bázisok összekeverése (a másik alak
+beragasztása egy harmadik bázisra rekurzív `test-report/test-report/…` és
+`test-report/specs/…` fákat hoz létre). A kapu ezért **mind a hármat elfogadja**
+a `--report-subdir`-ben, és normalizál:
+
+  specs/cycle-NN-<name>/test-report/validate/round-02   (repó-gyökér bázis)
+  test-report/validate/round-02                         (ciklus-mappa bázis)
+  validate/round-02                                     (test-report bázis)
+
+LAYOUT-ŐR (TR5/c) — a kapu ellenőrzi a ciklus `test-report/` mappájának felső
+szintjét is: ott csak `implement/`, `validate/`, (legacy) `review/` mappa lehet,
+a `validate/` alatt pedig csak `round-NN/`. Bármi más útvonal-hiba (elrontott
+bázis), nem megőrzendő bizonyíték → exit 1, a mappa nevéből következtetett okkal.
+
 Kilépő kód: 0 = minden deklarált artefaktum megvan (vagy a kapu kihagyva)
-            1 = hiányzó vagy üres artefaktum → a validálás NEM zárható PASS-ra
+            1 = hiányzó vagy üres artefaktum, vagy idegen mappa a
+                `test-report/` alatt → a validálás NEM zárható PASS-ra
             2 = használati hiba (nem létező conventions.md / ciklusmappa,
                 vagy hiányzó `## Teszt-riportolás` szekció)
 """
@@ -75,6 +101,7 @@ from lang_keys import fld, sec
 _SEC_REPORTING = sec("cv_test_reporting")
 _F_REQUIRED = fld("f_report_required")
 _F_PATH_BASE = fld("f_artifact_path_base")
+_F_PHASES = fld("f_report_phases")
 
 SECTION_RE = re.compile(r"^##\s+" + re.escape(_SEC_REPORTING) + r"\s*$", re.IGNORECASE)
 NEXT_SECTION_RE = re.compile(r"^##\s+")
@@ -87,6 +114,14 @@ BASE_ROUND = {"kör-mappa", "kor-mappa", "körmappa", "round", "kör",
               "round-folder", "roundfolder"}
 BASE_FLAT = {"test-report", "testreport", "flat", "gyökér", "gyoker"}
 EMPTY_VALUES = {"", "-", "–", "—", "n/a", "na", "nincs", "none"}
+PHASES_RE = re.compile(r"\*\*" + re.escape(_F_PHASES) + r":\*\*\s*(.+)")
+DEFAULT_PHASES = ("validate",)
+KNOWN_PHASES = {"implement", "validate"}
+
+# TR5/c — a `test-report/` felső szintjén megengedett mappák, és a `validate/`
+# alatt megengedett mappanév. A `review/` legacy: régi ciklusok 09-review köre.
+ALLOWED_ROOT_DIRS = {"implement", "validate", "review"}
+ROUND_DIR_RE = re.compile(r"^round-\d{2,}$")
 
 
 def extract_section(text):
@@ -123,6 +158,70 @@ def parse_rows(section_lines):
             continue
         rows.append((cells[0], cells[1], cells[2], cells[-1]))
     return rows
+
+
+def parse_phases(section_lines):
+    """A deklarált riport-fázisok (TR6). Hiányzó mező → alapérték: `validate`."""
+    m = PHASES_RE.search("\n".join(section_lines))
+    if not m:
+        return list(DEFAULT_PHASES), False
+    raw = m.group(1).strip().strip("`")
+    parts = [w.strip().strip("`").lower() for w in re.split(r"[,;/ ]+", raw) if w.strip()]
+    return [w for w in parts if w in KNOWN_PHASES], True
+
+
+def normalize_subdir(raw, cycle):
+    """A kör-/fázis-mappa háromféle alakját EGY ciklus-relatív alakra hozza (TR5/c).
+
+    Elfogadja a repó-gyökérhez relatív teljes útvonalat, a ciklus-mappához
+    relatív `test-report/...` alakot és a puszta fázis-mappát (`validate/round-02`,
+    `implement`). Visszaadja: (normalizált, eredeti-volt-e már jó)."""
+    parts = [x for x in str(raw).replace("\\", "/").strip("/").split("/") if x and x != "."]
+    if cycle.name in parts:                      # repó-gyökér bázis
+        parts = parts[parts.index(cycle.name) + 1:]
+    if not parts:
+        parts = ["test-report"]
+    if parts[0] != "test-report":                # test-report bázis (fázis-mappa)
+        parts = ["test-report"] + parts
+    norm = "/".join(parts)
+    return norm, norm == str(raw).replace("\\", "/").strip("/")
+
+
+def phase_of(report_subdir):
+    """A normalizált ciklus-relatív útvonalból a fázis neve (`implement`/`validate`)."""
+    parts = report_subdir.split("/")
+    return parts[1] if len(parts) > 1 else None
+
+
+def check_layout(cycle):
+    """Idegen mappák a `test-report/` alatt (TR5/c) → [(útvonal, ok), ...].
+
+    Egy idegen mappa sosem elfelejtett bizonyíték, hanem elrontott útvonal-bázis:
+    a `test-report/` és a `specs/` nevű gyerek pont a másik két alak beragasztása."""
+    root = cycle / "test-report"
+    problems = []
+    if not root.is_dir():
+        return problems
+    for entry in sorted(root.iterdir()):
+        if entry.is_dir() and entry.name not in ALLOWED_ROOT_DIRS:
+            problems.append((entry, _layout_reason(entry.name)))
+    vdir = root / "validate"
+    if vdir.is_dir():
+        for entry in sorted(vdir.iterdir()):
+            if entry.is_dir() and not ROUND_DIR_RE.match(entry.name):
+                problems.append((entry, _layout_reason(entry.name)))
+    return problems
+
+
+def _layout_reason(name):
+    if name == "test-report":
+        return ("dupla prefix — a ciklus-mappa bázisú alak (`test-report/validate/round-NN`) "
+                "került egy `test-report/` bázist váró paraméterbe")
+    if name == "specs":
+        return ("dupla prefix — a repó-gyökér bázisú teljes útvonal "
+                "(`specs/cycle-NN-<name>/test-report/…`) került egy `test-report/` bázist "
+                "váró paraméterbe")
+    return "nem ismert fázis-mappa"
 
 
 def check_artifact(report_dir, rel):
@@ -165,7 +264,11 @@ def main():
                         help="a vizsgált kör-mappa a cikluson belül, pl. "
                              "'test-report/validate/round-02' vagy "
                              "'test-report/review/round-01' (TR5). Alap: 'test-report' "
-                             "— csak régi, körönkénti bontás előtti ciklusokhoz")
+                             "— csak régi, körönkénti bontás előtti ciklusokhoz. "
+                             "Mind a három útvonal-alak elfogadott (TR5/c), a kapu "
+                             "normalizál")
+    parser.add_argument("--phases", action="store_true",
+                        help="csak a deklarált riport-fázisokat írja ki (TR6) és kilép")
     args = parser.parse_args()
 
     conv = Path(args.conventions)
@@ -207,6 +310,20 @@ def main():
             file=sys.stderr,
         )
         return 2
+    phases, phases_declared = parse_phases(section)
+    if args.phases:
+        print(" ".join(phases) if phases else "(nincs riport-fázis)")
+        if not phases_declared:
+            print(f"MEGJEGYZÉS: a conventions.md nem deklarál `**{_F_PHASES}:**` mezőt "
+                  f"(TR6) — alapérték: {' '.join(DEFAULT_PHASES)}.")
+        return 0
+
+    subdir, unchanged = normalize_subdir(args.report_subdir, cycle)
+    if not unchanged:
+        print(f"MEGJEGYZÉS (TR5/c): a --report-subdir értéke `{args.report_subdir}` volt, "
+              f"a kapu ciklus-relatív alakra normalizálta: `{subdir}`.")
+    args.report_subdir = subdir
+
     if base_value in BASE_FLAT:
         args.report_subdir = "test-report"
         print("MEGJEGYZÉS: a conventions.md a RÉGI, flat sémát deklarálja "
@@ -217,6 +334,13 @@ def main():
         print(f"HIBA: ismeretlen `{_F_PATH_BASE}:` érték: `{base_value}`. "
               f"Elfogadott: `kör-mappa` vagy `test-report`.", file=sys.stderr)
         return 2
+
+    phase = phase_of(args.report_subdir)
+    if base_value in BASE_ROUND and phase and phase not in phases:
+        print(f"A kapu kihagyva: a `{phase}` nem riport-fázis ebben a projektben "
+              f"(`**{_F_PHASES}:** {' '.join(phases) or '—'}`, TR6). "
+              f"Az artefaktum-készletet nem ez a fázis állítja elő.")
+        return 0
 
     rows = parse_rows(section)
     if not rows:
@@ -245,6 +369,15 @@ def main():
               f"`**{_F_REQUIRED}:**` mezőt `nem`-re, indoklással.", file=sys.stderr)
         return 2
 
+    layout = check_layout(cycle) if base_value in BASE_ROUND else []
+    if layout:
+        print("\nIDEGEN MAPPA a test-report/ alatt (TR5/c) — útvonal-hiba, "
+              "NEM megőrzendő bizonyíték:")
+        for path, reason in layout:
+            print(f"  ✗ {path}  ← {reason}")
+        print("Töröld a fát, és ismételd meg a futtatást a helyes bázissal. "
+              "A takarítási tilalom csak a `validate/round-NN/` mappákra vonatkozik.")
+
     if failures:
         print("\nKAPU BUKOTT — hiányzó teszt-riport(ok):")
         for kategoria, eszkoz, artefakt in failures:
@@ -253,8 +386,11 @@ def main():
               f"`## {_SEC_REPORTING}` táblájában megadott riport-generáló parancsot, "
               f"és másold az artefaktumot ebbe a kör-mappába: {report_dir}")
         return 1
+    if layout:
+        return 1
 
-    print(f"\nKAPU OK — mind a {checked} deklarált riport-artefaktum megvan.")
+    print(f"\nKAPU OK — mind a {checked} deklarált riport-artefaktum megvan, "
+          "és a test-report/ layoutja tiszta.")
     return 0
 
 

@@ -35,6 +35,8 @@ A hívó három dolgot ad meg:
 
 ## 🔴 Honnan veszed a technikai részleteket (TR4) — pontosan két forrás
 
+> **🔴 A CÉL-KÖRNYEZET nem a te döntésed (EV1–EV5).** A `plan.md` `<sec:environment_coords>` szekciója kimondja a ciklus `**<field:f_target_env>:**` értékét, a gépi futtatási tábla `<field:f_environment>` oszlopa pedig kategóriánként. **Pontosan oda futtass** — és a jelentésedben kategóriánként **írd ki, melyik hostot szólítottad meg**. Ha egy nem-lokális kategóriát lokális célra futtatnál (mert a script neve azt sugallja, vagy mert a config úgy áll), **állj meg és jelezd**: egy lokális célon zöld teszt nem bizonyít semmit a telepített komponensről, viszont mindent zöldre pipál. Nem-lokális célnál előbb az **elérhetőségi probe** fusson (health/verzió endpoint); ha az bukik, a kategória **FAIL**, nem `kihagyva`.
+
 **A futtatáshoz szükséges MINDEN ciklus-specifikus technikai részletet a `plan.md`-ből veszed** — URL-ek, portok, teszt-userek és jelszavaik, tokenek megszerzése, namespace/pod, image-név, példa hívások (`curl`), előfeltételek, indítási és futási sorrend, takarítás. A `plan.md` erre **önhordó** (TC1/a): a 03 fázis kötelezően maradéktalanul beleírta ezeket, épp azért, hogy neked ne kelljen máshonnan összeszedned.
 
 | Forrás | Mit veszel belőle |

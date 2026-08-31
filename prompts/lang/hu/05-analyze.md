@@ -14,28 +14,35 @@
 **Státusz:** IN_PROGRESS | PASS | FAIL
 **Futás:** YYYY-MM-DD HH:MM
 **Aktuális lépés:** <mit csinál most a fázis — pl. „iter 2/3 · a plan-fixer az AF-03, AN-01 tételeken dolgozik", vagy „lezárva">
-**Hurok:** <iterációk száma> / <max X> (PASS | feladva)
+**Hurok:** <iterációk száma> / <max X> (PASS | feladva | triázs: nem indult)
+**Triázs (TR1):** <nincs (nem volt Must Fix) | körönkénti bontás — pl. „iter 1: 4/7 felvéve · iter 2: 1/2 felvéve" — összesen <n> tétel elvetve>
+**Javítási lista:** `analyze-task.md` — <n> nyitott · <n> kész · <n> elvetve
 **Validált alap:** `<fő branch neve>@<SHA>` · ciklus ág: `<branch>@<SHA>` (BR1: `behozva` | `nem volt szükséges`)
 
 ## Összefoglaló
 
-_Egy-két mondat: konzisztens-e a négyes, vagy hol van a baj, és hogyan zárult a hurok._
+_Egy-két mondat: konzisztens-e a négyes, vagy hol van a baj, és hogyan zárult a hurok. Emberi nyelven, a tervezési dokumentumok megnyitása nélkül is érthetően._
 
 ## Javítandó tételek (AR1)
 
 _Ez a lista a diagnózis után **azonnal** elkészül, még az első javítás előtt, és a hurok minden
 lépésénél frissül — ez a felhasználó ablaka a fázisra. Egy tétel = egy pipálható sor, alatta
 emberi nyelvű magyarázat. Tételt utólag **nem törlünk**: a megoldott tétel `[x]`-szel marad, ez az
-audit-nyom. Az `analyze-slices/` mappa a diagnoszta-körök **bemenete** (gitignore-olt szeletek,
+audit-nyom. Ez a lista a **teljes diagnózis** (minden megtalált tétel, körtől függetlenül); hogy melyiket
+javítjuk is, azt a felhasználó dönti el a triázsban (TR1), és a jóváhagyottak az `analyze-task.md`
+munkalistára kerülnek. A javítás nélkül hagyott tétel `elvetve (triázs)` állapottal marad itt, és nem
+blokkolja a `PASS`-t. Az `analyze/slices/` mappa a diagnoszta-körök **bemenete** (gitignore-olt szeletek,
 a tervezési dokumentumok szó szerinti kimetszései), nem eredmény — hogy „mi a baj", kizárólag itt
 olvasható._
 
 ### Must Fix
 - [ ] **AF-01** · <kategória> · `fájl:hely`
-      **Mi a baj:** <egy-két mondat emberi nyelven: mit állít most a dokumentum, és miért hibás — a kategória neve önmagában nem magyarázat>
+      **Az ellentmondás:** <az egyik oldal: mit mond, hol (`fájl:hely`)> ↔ <a másik oldal: mit mond, hol (`fájl:hely`)>
+      _(egyoldalú hiánynál: mi hiányzik, és melyik dokumentum melyik pontja várná el)_
       **Miért blokkol:** <mi romolhat el az implementációban, ha így marad>
+      **Hogyan lenne helyes:** <egy-két mondat: milyen állapotban lenne konzisztens a négyes — mit kell mondania a dokumentumnak a javítás után. Ha ez valódi döntést igényel (melyik oldal a helyes), akkor NEM állítás, hanem a döntendő kérdés, és az Állapot `kérdés`>
       **Célfázis:** <02-spec | 03-plan | 04-tasks>
-      **Állapot:** nyitott | javítás alatt (iter <n>) | kérdés (<FÁZIS>/K<nn>) | megoldva (iter <n>) | elvetve — <indoklás>
+      **Állapot:** nyitott | javítás alatt (iter <n>) | kérdés (<FÁZIS>/K<nn>) | megoldva (iter <n>) | elvetve (triázs, iter <n>) — a felhasználó nem kérte a javítását | elvetve — <indoklás>
 
 ### Suggestions
 - <kategória> — <leírás>
@@ -85,6 +92,7 @@ _Eltérések, amiket itt kell kimutatni: ID task nélkül · task nem létező I
 _Iterációnkénti audit-nyom — a megszakítás-utáni folytatás horgonya._
 
 ### Iteráció 1
+- **Triázs (TR1):** <javításra kiválasztva: <azonosítók> · elvetve: <azonosítók> — vagy „nem volt triázs">
 - **FAIL kategóriák:** <kategóriák>
 - **Nyitott tételek:** <AF-NN / AX-NN azonosítók>
 - **Fennmaradt tételek (TS):** <mely azonosítók jöttek vissza „NEM oldódott meg"-ként, és hányadik egymást követő körben — a 2. iterációtól; vagy „nincs">
@@ -96,6 +104,32 @@ _Iterációnkénti audit-nyom — a megszakítás-utáni folytatás horgonya._
 
 ### Iteráció 2
 ...
+
+<!-- ANCHOR:analyze-task-struktura -->
+# Cycle NN: <cím> — Analyze javítási lista
+
+**Frissítve:** iter <n> / <max X>
+**Állapot:** <n> nyitott · <n> kész · <n> elvetve
+**Riport:** `analyze-report.md` (ugyanebben a mappában — a részletes indoklás ott van)
+
+_A fixer-subagentek **kizárólag** ezen a listán dolgoznak. Ide csak a felhasználó által a
+triázsban (TR1) jóváhagyott tétel kerülhet, plusz a mechanikus kapu tételei (azok kérdés nélkül).
+A listát **kizárólag az orchestrátor írja**; a fixerek olvashatják. Az azonosító (`AF-NN` /
+`AC-NN` / `AN-NN` / `AX-NN`) ugyanaz, mint a riportban._
+
+## Javítandó tételek
+
+- [ ] **AF-01** · <kategória> · célfázis: <02-spec | 03-plan | 04-tasks> · felvéve: iter <n>
+      **Mit kell tenni:** <a riport „Hogyan lenne helyes" mezője: a javítás célállapota egy-két mondatban>
+      **Hol:** `fájl:hely` <(+ a másik oldal: `fájl:hely`)>
+      **Állapot:** nyitott | javítás alatt (iter <n>) | kérdés (<FÁZIS>/K<nn>) | kész (iter <n>)
+
+## Elvetett tételek (a felhasználó nem kérte a javításukat)
+
+_A későbbi diagnoszta-körök szűrésének memóriája: ami itt szerepel, azt sem a triázs-kérdésbe,
+sem a `Must Fix` listára nem vesszük fel újra._
+
+- [x] **AC-05** · <kategória> · `fájl:hely` · elvetve: iter <n>
 
 <!-- ANCHOR:zaro-uzenet -->
    > *"Az analízis konzisztensnek találta a tervezési dokumentumokat. Folytathatjuk a 6. lépéssel (implement). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:*

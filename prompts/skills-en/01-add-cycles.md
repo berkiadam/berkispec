@@ -58,8 +58,11 @@ Which branch are we on?
      (`git switch -c` is forbidden), continue on this branch per the document
      state below.
 3. a feature branch that is NOT the current cycle's
-   → BD6: warn (merge/PR the current branch per `## <sec:cv_merge_strategy>`),
-     then ask the user to switch to main — do not switch automatically.
+   → the PW3 decision gate (see the git preflight): offer in ONE question both
+     A) the serial close-down (merge/PR per `## <sec:cv_merge_strategy>`, then the
+     user switches to main — do not switch automatically) AND B) the parallel
+     worktree (`git worktree add --detach ../<project>-cNN origin/main`).
+     Do not merely ask for the switch to main, and do not start planning until the answer.
 ```
 
 **Next, the document state:**
@@ -227,6 +230,7 @@ Every iteration can be started with new context: `conventions.md` (if it exists)
 - If the HLD/LLD doesn't clearly define a component's behavior and this affects the cycle boundaries: state exactly what's missing, and ask for clarification. Don't make up behavior.
 - If a cycle can't be broken down further but is still large: state the risk and leave the decision to the user.
 - If the dependencies between cycles are circular: state this, and ask for a decision on the order.
+- **PW5:** if a worktree was created on the PW3/B branch of the preflight, the phase **ends there** in this session — you emit the moving-over message (absolute path + the start command of the tool), and you stop. Do not create a cycle folder, do not write into the roadmap: the phase runs from the beginning in the worktree, with a restarted tool.
 
 In every case, flag only **one** problem at a time.
 

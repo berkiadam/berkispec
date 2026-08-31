@@ -21,6 +21,10 @@ Mit ellenőriz:
   T2  `[OPS]` fájl-útvonallal        — repo-fájlt szerkesztő task rossz markerrel
   T3  státusz-frissítő task          — spec/plan/tasks státuszát állító task
   T4  `⟂` szimmetria                 — `T012 ⟂ T013`, de `T013` nem hivatkozik vissza
+  T5  placeholder a parancsban       — `{round}` alakú kitöltetlen hely egy
+                                       `[CHECK]`/`[OPS]` task parancsában: az
+                                       ágensnek találgatnia kellene, mit írjon
+                                       oda (a `<valami>` alak csak javaslat)
   D1  `DoD-NN` azonosítók            — hiányzó vagy duplikált azonosító a specben
   D2  `DoD-NNb` alakú azonosító      — utólagos beszúrás betűs utótaggal (DI1 megsértése)
   S1  kötelező plan-táblák           — `Spec-lefedettség`, `Fordított lefedettség`,
@@ -57,6 +61,29 @@ Mit ellenőriz:
                                        szerint átkerültek-e a plan-be
   V2  teszt-szekció terjedelme (KX3)   — a plan teszt-szekciója nem kisebb-e a
                                        spec `Teszt specifikáció` szekciójánál
+  TS1 van `Teszt-forgatókönyvek`      — a plan `Tesztelési stratégia` szekciója
+                                       tartalmaz-e `TS-NN` forgatókönyveket
+  TS2 a `TS-NN` blokk teljes           — Mit tesztelünk / Előfeltétel /
+                                       lépés-tábla / Takarítás megvan-e
+  TS3 lépésenkénti konkrétum           — a `Hívás` és az `Elvárt eredmény`
+                                       cella kitöltött és KONKRÉT (backtickes
+                                       érték vagy szám), nem „sikeresen lefut"
+  TS4 placeholder-tilalom              — a `TS-NN` blokkokban nincs `<…>`/TODO
+  TS5 kétirányú DoD-lefedettség        — minden `DoD-NN`-hez van `TS-NN`, és
+                                       minden `TS-NN` létező DoD-ra hivatkozik
+  TS6 `TS-NN` azonosítók               — egyediek és hézagmentesek
+  EV1 cél-környezet deklarálva         — a `Környezeti koordináták` szekcióban
+                                       ott a `**Cél-környezet:**` mező
+  EV2 kategóriánkénti `Környezet`      — a gépi futtatási tábla minden sora
+                                       megmondja, hol fut
+  EV3 a cél a PARANCSBAN van           — nem-lokális kategóriánál a parancs
+                                       literálisan tartalmazza a cél-hostot,
+                                       nem konfigfájlba rejtve
+  EV4 cél-elérhetőségi probe           — nem-lokális kategóriánál az
+                                       `Előfeltétel` ugyanarra a hostra hív
+  EV5 nincs lokális cél távoli körben  — nem-lokális kategória parancsa és a
+                                       `TS-NN` hívások nem mutathatnak
+                                       localhostra
   R1  útvonal-formátum (RP1)           — `file://`, gép-specifikus (`/home/…`,
                                        `C:/Users/…`), placeholder és abszolút
                                        repó-útvonal a tervezési dokumentumokban
@@ -82,7 +109,7 @@ A szkript ezen felül két nem-megállapítás blokkot is kiír:
   művelet) JELÖLTJEI. Ez az analyzerek BEMENETE: nem kell sem a repóban, sem a
   dokumentumokban célpontot keresniük — kapnak egy listát, és ítélnek.
 
-  `analyze-slices/` (SH1, csak `--emit-slices` mellett) — a HÁROM szemantikai
+  `analyze/slices/` (SH1, csak `--emit-slices` mellett) — a HÁROM szemantikai
   analyzer-kör (1+3., 2+5., 4. kategória) bemenete, a tervezési dokumentumok
   szó szerinti kimetszéseként. Enélkül a három párhuzamos kör mindegyike a
   teljes négyest olvasná: az eltelt idő csökkenne, a token-költség viszont
@@ -134,6 +161,16 @@ REQUIRED_PLAN_TABLES = [
 REQUIRED_TASKS_TABLES = [
     (sec("plan_coverage"), "04", "a plan-szekció → task fordított tábla (PID1)"),
 ]
+
+
+CELL_SPLIT_RE = re.compile(r"(?<!\\)\|")
+
+
+def split_cells(row_body):
+    """Markdown-táblasor cellái. A `\\|` ESCAPE-elt függőleges vonal (tipikusan
+    shell-pipe egy parancs-cellában), nem cellahatár — a naiv `split("|")`
+    ilyenkor elcsúsztatja az oszlopokat, és a kapu rossz cellát ítél meg."""
+    return [c.replace("\\|", "|").strip() for c in CELL_SPLIT_RE.split(row_body)]
 
 
 class Findings:
@@ -256,6 +293,44 @@ def check_parallel_symmetry(tasks_text, f):
             back = parallel.get(peer)
             if back is None or tid not in back[1]:
                 f.add("T4", "04", f"tasks.md:{lineno} `{tid} ⟂ {peer}`, de `{peer}` nem jelöli vissza `{tid}`-t — a párhuzamosítás egyoldalú jelölése hibás")
+
+
+PLACEHOLDER_CURLY_RE = re.compile(r"(?<!\$)\{([A-Za-z][\w-]*)\}")
+PLACEHOLDER_ANGLE_RE = re.compile(r"<([A-Za-z][\w.-]*)>")
+BACKTICKED_RE = re.compile(r"`([^`]+)`")
+
+
+def check_task_command_placeholders(tasks_text, f):
+    """T5 — kitöltetlen placeholder egy futtatandó task-parancsban.
+
+    A `[CHECK]`/`[OPS]` task parancsát a 06 SZÓ SZERINT adja ki. Ha maradt benne
+    `{round}` / `{n}` alakú hely, az ágens kénytelen találgatni: vagy elhasal a
+    parancs, vagy egy kitalált útvonalra ír — a bizonyíték pedig nem ott lesz,
+    ahol a 07 keresi. A `${VAR}` és a `{a,b}` shell-alak nem placeholder.
+    A `<valami>` alak csak javaslat: prózában legitim általános hivatkozás is
+    lehet."""
+    for lineno, tid, line in task_lines(tasks_text):
+        m = MARKER_RE.search(line)
+        if not m or m.group(1) not in ("CHECK", "OPS"):
+            continue
+        seen_curly, seen_angle = set(), set()
+        for chunk in BACKTICKED_RE.findall(line):
+            if " " not in chunk and "/" not in chunk:
+                continue  # rövid azonosító, nem parancs
+            for ph in PLACEHOLDER_CURLY_RE.findall(chunk):
+                if ph in seen_curly:
+                    continue
+                seen_curly.add(ph)
+                f.add("T5", "04",
+                      f"tasks.md:{lineno} `{tid}` parancsában kitöltetlen `{{{ph}}}` placeholder maradt — "
+                      f"a `[CHECK]`/`[OPS]` parancsnak szó szerint futtathatónak kell lennie")
+            for ph in PLACEHOLDER_ANGLE_RE.findall(chunk):
+                if ph in seen_angle:
+                    continue
+                seen_angle.add(ph)
+                f.suggest("T5", "04",
+                          f"tasks.md:{lineno} `{tid}` parancsában `<{ph}>` alakú hely szerepel — "
+                          f"ha ez kitöltendő placeholder, a 06 találgatni fog; ha valódi shell-szintaxis, hagyd")
 
 
 def check_dod(spec_text, f):
@@ -556,7 +631,7 @@ def table_rows(text, title_substr):
             continue
         if not seen_separator:
             continue  # fejlécsor
-        cells = [c.strip() for c in m.group(1).split("|")]
+        cells = split_cells(m.group(1))
         if cells and all(PLACEHOLDER_CELL_RE.match(c) or not c for c in cells):
             continue  # sablonsor
         rows.append(cells)
@@ -609,7 +684,7 @@ def table_rows_by_header(text, required_headers):
                 break
             in_table, matched = False, False
             continue
-        cells = [c.strip() for c in m.group(1).split("|")]
+        cells = split_cells(m.group(1))
         if not in_table:
             in_table = True
             header = " ".join(cells).lower()
@@ -797,7 +872,7 @@ def check_env_coordinates(plan_text, f):
             continue
         if not seen_separator:
             continue  # fejlécsor
-        cells = [c.strip() for c in TABLE_ROW_RE.match(line).group(1).split("|")]
+        cells = split_cells(TABLE_ROW_RE.match(line).group(1))
         if all(PLACEHOLDER_CELL_RE.match(c) or not c for c in cells):
             continue  # sablon-/példasor
         empty = [i for i, c in enumerate(cells) if not c]
@@ -979,6 +1054,252 @@ def check_test_section_volume(spec_text, plan_text, f):
         f.note("TESZT-TERJEDELEM", f"spec `Teszt specifikáció`: {s} érdemi sor → plan teszt-szekciók: {pl} sor (rendben)")
 
 
+# ── T1–T6 — teszt-forgatókönyvek a planben (TS1–TS6) ─────────────────────────
+# Miért kell: a `plan.md` ÖNHORDÓ (TC1/a) — a `test-runner` és a `bs-manual-test-plan`
+# is kizárólag ebből dolgozik. A `Tesztelési stratégia` prózája viszont hagyta, hogy
+# a fázis „nagy vonalakban" vegye át a spec teszteseteit: típus + érintett fájl, de
+# lépés, hívás és elvárt eredmény nélkül. A V2 ezt nem fogta meg, mert AGGREGÁLT
+# sorszámot mér — a gépi tábla és a bootstrapping hosszától az egyes esetek még
+# lehettek egymondatosak. A `TS-NN` blokk ugyanaz a forma, amit a kézi tesztterv
+# `TG-NN` csoportjai használnak: onnantól a `bs-manual-test-plan` tényleg ÖSSZESZEREL.
+
+TS_HEADING_RE = re.compile(r"^#{3,5}\s*(TS-(\d+))\s*[—–-]\s*(.+?)\s*$")
+# A fejléc DoD-hivatkozásai zárójelben: `#### TS-03 — Legacy login  (DoD-02, DoD-05)`
+TS_CONCRETE_RE = re.compile(r"`[^`]+`|\d")
+
+
+def parse_ts_blocks(plan_text):
+    """A `Teszt-forgatókönyvek` szekció `TS-NN` blokkjai → [{id, num, cim, sorok}]."""
+    body = section_body(plan_text, sec("plan_test_scenarios"))
+    blocks, cur = [], None
+    for line in body.splitlines():
+        m = TS_HEADING_RE.match(line.strip())
+        if m:
+            cur = {"id": m.group(1), "num": int(m.group(2)), "cim": m.group(3), "lines": []}
+            blocks.append(cur)
+            continue
+        if cur is not None:
+            cur["lines"].append(line)
+    return blocks
+
+
+def _ts_step_rows(lines):
+    """A blokk ELSŐ táblájának adatsorai. A sablonsorokat kihagyja."""
+    rows, seen_separator = [], False
+    for line in lines:
+        m = TABLE_ROW_RE.match(line)
+        if not m:
+            if rows:
+                break
+            continue
+        if SEPARATOR_ROW_RE.match(line):
+            seen_separator = True
+            continue
+        if not seen_separator:
+            continue
+        cells = split_cells(m.group(1))
+        if cells and all(PLACEHOLDER_CELL_RE.match(c) or not c for c in cells):
+            continue
+        rows.append(cells)
+    return rows
+
+
+def check_test_scenarios(spec_text, plan_text, f):
+    """T1–T6 (TS1–TS6) — a plan teszt-forgatókönyvei végrehajtható részletességűek-e."""
+    spec_tests = section_body(spec_text, sec("test_specification"))
+    relevant = _content_line_count(spec_tests) >= 5
+    blocks = parse_ts_blocks(plan_text)
+
+    if not blocks:
+        if relevant:
+            f.add("TS1", "03", f"a plan `{sec('testing_strategy')}` szekciójában nincs "
+                  f"`### {sec('plan_test_scenarios')}` alszekció egyetlen `TS-NN` blokkal sem (TS1) — "
+                  "a spec teszt-specifikációja viszont nem üres. A `plan.md` önhordó: a `test-runner` "
+                  "és a kézi tesztterv is CSAK ebből dolgozik, ezért minden tesztesetet forgatókönyvként "
+                  "kell kifejteni (mit tesztelünk · előfeltétel · lépés-tábla konkrét hívással és "
+                  "lépésenkénti elvárt eredménnyel · takarítás)")
+        return
+
+    # T6 — azonosítók
+    nums = [b["num"] for b in blocks]
+    dup = sorted({n for n in nums if nums.count(n) > 1})
+    if dup:
+        f.add("TS6", "03", f"ismétlődő `TS-NN` azonosító: {', '.join(f'TS-{n:02d}' for n in dup)} (TS6)")
+    missing = [n for n in range(1, max(nums) + 1) if n not in nums]
+    if missing:
+        f.add("TS6", "03", f"hézag a `TS-NN` sorszámozásban: hiányzik "
+              f"{', '.join(f'TS-{n:02d}' for n in missing)} (TS6)")
+
+    known_dods = set(dod_ids(spec_text))
+    covered = set()
+
+    for b in blocks:
+        body = "\n".join(b["lines"])
+        # T5 — a fejléc DoD-hivatkozásai
+        refs = set(DOD_RE.findall(b["cim"]))
+        if not refs:
+            f.add("TS5", "03", f"{b['id']} fejlécéből hiányzik a `DoD-NN` hivatkozás (TS5) — "
+                  f"a forma: `#### {b['id']} — <név>  (DoD-02, DoD-05)`")
+        for r in refs:
+            if known_dods and r not in known_dods:
+                f.add("TS5", "03", f"{b['id']} nem létező `DoD-{r}`-re hivatkozik (TS5)")
+        covered |= refs
+
+        # T2 — kötelező mezők
+        for field_key in ("f_what_we_test", "f_prerequisite", "f_cleanup"):
+            if f"**{fld(field_key)}:**" not in body:
+                f.add("TS2", "03", f"{b['id']}: hiányzó sor: `**{fld(field_key)}:**` (TS2)")
+
+        # T4 — placeholder
+        for m in KO1_PLACEHOLDER_RE.finditer(body):
+            f.add("TS4", "03", f"{b['id']}: placeholder áll konkrét érték helyett: "
+                  f"`{m.group(0)}` (TS4) — a hiányzó adat `plan-questions.md` kérdés, nem placeholder")
+
+        # T2/T3 — lépés-tábla
+        rows = _ts_step_rows(b["lines"])
+        if not rows:
+            f.add("TS2", "03", f"{b['id']}: nincs lépés-tábla adatsorral (TS2) — a kötelező "
+                  "oszlopok: `#` · lépés · hívás · elvárt eredmény")
+            continue
+        for row in rows:
+            if len(row) < 4:
+                f.add("TS2", "03", f"{b['id']}: a lépés-tábla `{row[0] if row else '?'}` sorának "
+                      f"{len(row)} oszlopa van a kötelező 4 helyett (TS2)")
+                continue
+            step, call, expect = row[1], row[2], row[3]
+            if not call:
+                f.add("TS3", "03", f"{b['id']} / {row[0]}. lépés (`{step[:40]}`): üres a hívás "
+                      "oszlop (TS3) — ide a szó szerint futtatható hívás kerül (`curl …`, parancs, "
+                      "UI-lépés), nem hivatkozás")
+            if not expect:
+                f.add("TS3", "03", f"{b['id']} / {row[0]}. lépés (`{step[:40]}`): üres az elvárt "
+                      "eredmény oszlop (TS3)")
+            elif not TS_CONCRETE_RE.search(expect):
+                f.add("TS3", "03", f"{b['id']} / {row[0]}. lépés: az elvárt eredmény nem konkrét "
+                      f"(`{expect[:60]}`) — TS3 kemény padlója: legalább egy backtickes érték vagy "
+                      "szám (státuszkód, mezőnév, konkrét payload-részlet). A „sikeresen lefut\" "
+                      "jellegű megfogalmazás nem ellenőrizhető")
+
+    # T5 — a másik irány
+    for d in sorted(known_dods - covered):
+        f.add("TS5", "03", f"`DoD-{d}`-hez nem tartozik egyetlen `TS-NN` forgatókönyv sem (TS5) — "
+              "vagy vedd fel a lefedő forgatókönyvbe a hivatkozást, vagy írj rá újat")
+
+    steps = sum(len(_ts_step_rows(b["lines"])) for b in blocks)
+    valid = covered & known_dods if known_dods else covered
+    f.note("TESZT-FORGATÓKÖNYV", f"{len(blocks)} `TS-NN` blokk, összesen {steps} lépés; "
+           f"lefedett DoD: {len(valid)}/{len(known_dods) or '?'}")
+
+
+# ── EV1–EV5 — teszt-cél környezet (EV) ────────────────────────────────────────
+# Miért kell: egy éles ciklus a dev környezetre telepített, a tesztjei viszont
+# LOKÁLIS célpontra futottak — egy `test:playwright:dev-e2e` nevű npm-script
+# configjában `baseURL: "http://127.0.0.1:5178"` állt. Minden teszt zöld lett,
+# és így nem derült ki, hogy a dev-re telepített komponens el sem indult.
+# A zöld teszt önmagában NEM bizonyítja, HOL volt zöld: a JUnit XML és az Allure
+# riport nem rögzíti a megcélzott hostot. Három dolgot kell kimondatni és mérni:
+# a ciklus cél-környezetét, kategóriánként a futás környezetét, és azt, hogy a
+# nem-lokális cél a PARANCSBAN legyen látható (ne konfigfájlban rejtve), egy
+# elérhetőségi probe-bal az `Előfeltétel` oszlopban.
+
+LOCAL_HOST_RE = re.compile(r"\b(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])\b")
+REMOTE_URL_RE = re.compile(r"https?://([A-Za-z0-9.\-]+)(?::\d+)?")
+LOCAL_ENV_WORDS = {"lokális", "lokalis", "local", "localhost", "helyi", "—", "-", "n/a", "na"}
+EMPTY_CELL_VALUES = {"", "-", "–", "—", "n/a", "na", "nincs", "none"}
+
+
+def is_empty_cell(value):
+    return (value or "").strip().strip("`").lower() in EMPTY_CELL_VALUES
+
+
+def _env_is_local(value):
+    v = (value or "").strip().lower().strip("`*")
+    return bool(v) and all(w in LOCAL_ENV_WORDS for w in re.split(r"[,;/+ ]+", v) if w)
+
+
+def _remote_hosts(text):
+    """A szövegben szereplő NEM lokális hostok."""
+    return {h for h in REMOTE_URL_RE.findall(text or "")
+            if not LOCAL_HOST_RE.search(h)}
+
+
+def check_target_environment(plan_text, f):
+    """EV1–EV5 — a teszt tényleg ott fut-e, ahova a ciklus szól."""
+    coords = section_body(plan_text, sec("environment_coords"))
+    target_m = re.search(r"\*\*" + re.escape(fld("f_target_env")) + r":\*\*\s*(.+)", coords or "")
+    target = (target_m.group(1).strip() if target_m else "")
+    if not target:
+        f.add("EV1", "03", f"a `{sec('environment_coords')}` szekcióból hiányzik a "
+              f"`**{fld('f_target_env')}:**` mező (EV1) — ki kell mondani, MELY környezetre szól "
+              "ez a ciklus (pl. `lokális`, `dev`, `lokális + dev`). Enélkül semmi nem köti a "
+              "teszt-célpontot a ciklus szándékához: egy zöld futás nem bizonyítja, HOL volt zöld")
+    target_is_local_only = _env_is_local(target) if target else False
+    known_remote = _remote_hosts(coords)
+
+    rows = table_rows(plan_text, sec("machine_run_table"))
+    for row in rows:
+        cat = row[0] if row else "(névtelen)"
+        env = row[7] if len(row) > 7 else ""
+        pre = row[2] if len(row) > 2 else ""
+        cmd = row[3] if len(row) > 3 else ""
+        if not env.strip():
+            f.add("EV2", "03", f"a gépi futtatási tábla `{cat}` sorából hiányzik a "
+                  f"`{fld('f_environment')}` oszlop értéke (EV2) — minden kategória mondja meg, "
+                  "hol fut (`lokális` / a cél-környezet neve). A `run-tests.py` ezt naplózza a "
+                  "kör bizonyítékába")
+            continue
+        if _env_is_local(env):
+            continue
+
+        # EV3 — a cél legyen a parancsban, ne konfigfájlba rejtve
+        cmd_hosts = _remote_hosts(cmd)
+        if not cmd_hosts:
+            f.add("EV3", "03", f"a gépi futtatási tábla `{cat}` sora `{env}` környezetet deklarál, "
+                  "de a parancsban nincs egyetlen nem-lokális host sem (EV3) — a célpontot a "
+                  "PARANCSBAN kell láthatóvá tenni (env-változóval vagy kapcsolóval, pl. "
+                  "`PLAYWRIGHT_BASE_URL=https://…`), nem egy konfigfájlba rejtve. Egy "
+                  "`…:dev-e2e` nevű script configjában simán állhat `localhost` — a név nem bizonyíték")
+        elif known_remote and not (cmd_hosts & known_remote):
+            f.suggest("EV3", "03", f"a `{cat}` parancsának hostja ({', '.join(sorted(cmd_hosts))}) "
+                      f"nem szerepel a `{sec('environment_coords')}` szekcióban — ellenőrizd, hogy "
+                      "a célpont tényleg a ciklus koordinátái közül való")
+
+        # EV5 — lokális host egy nem-lokális kategóriában
+        if LOCAL_HOST_RE.search(cmd):
+            f.add("EV5", "03", f"a gépi futtatási tábla `{cat}` sora `{env}` környezetet deklarál, "
+                  f"de a parancsa lokális címre mutat (`{LOCAL_HOST_RE.search(cmd).group(0)}`) — EV5. "
+                  "Ez pontosan az a hibaosztály, ahol minden teszt zöld lesz, miközben a telepített "
+                  "komponenst senki nem szólította meg")
+
+        # EV4 — elérhetőségi probe
+        if is_empty_cell(pre):
+            f.add("EV4", "03", f"a `{cat}` kategória `{env}` környezetben fut, de nincs "
+                  f"`{fld('f_prerequisite')}` (EV4) — nem-lokális célnál kötelező egy "
+                  "elérhetőségi probe a cél health/verzió végpontjára (pl. "
+                  "`curl -fsS https://…/health`). A `run-tests.py` az előfeltételt futtatja, és "
+                  "bukásakor a kategória FAIL: így egy le sem futó deploy nem tud zöldre pipálódni")
+        elif cmd_hosts and not (_remote_hosts(pre) & cmd_hosts):
+            f.add("EV4", "03", f"a `{cat}` kategória előfeltétele nem a parancs cél-hostjára hív "
+                  f"({', '.join(sorted(cmd_hosts))}) — EV4. A probe-nak UGYANAZT a célt kell "
+                  "ellenőriznie, amit a teszt megszólít, különben nem bizonyít semmit")
+
+    # EV5 — a TS-NN forgatókönyvek hívásai
+    if target and not target_is_local_only:
+        for b in parse_ts_blocks(plan_text):
+            for row in _ts_step_rows(b["lines"]):
+                call = row[2] if len(row) > 2 else ""
+                m = LOCAL_HOST_RE.search(call)
+                if m and not re.search(r"\b(?:lokális|lokalis|local)\b", b["cim"], re.IGNORECASE):
+                    f.add("EV5", "03", f"{b['id']} / {row[0]}. lépés lokális címre hív "
+                          f"(`{m.group(0)}`), miközben a ciklus cél-környezete `{target}` (EV5) — "
+                          "ha ez szándékosan lokális forgatókönyv, írd bele a nevébe")
+
+    if rows:
+        envs = sorted({(r[7] if len(r) > 7 else "—").strip() or "—" for r in rows})
+        f.note("TESZT-KÖRNYEZET", f"cél-környezet: `{target or '—'}`; "
+               f"a futtatási tábla környezetei: {', '.join(f'`{e}`' for e in envs)}")
+
+
 # ── R1 — útvonal-formátum (RP1) ───────────────────────────────────────────────
 # A tervezési dokumentumokban a kód-/fájl-hivatkozás a REPÓ GYÖKERÉHEZ képest
 # relatív (a parancsok ott futnak, és a kapu is oda oldja fel a horgonyokat), a
@@ -988,13 +1309,44 @@ def check_test_section_volume(spec_text, plan_text, f):
 # (`/api/v1/...`) és a konténer-belső útvonalakat nem bántja.
 
 FILE_URI_RE = re.compile(r"file:///?[^\s`\)\]]+")
+# Gép-specifikus gyökerek. Szándékosan NEM szerepel köztük a `/root/`, `/opt/`,
+# `/workspace/`, `/srv/`: azok egy `docker exec`/`kubectl` parancsban jogos
+# KONTÉNER-BELSŐ útvonalak lehetnek, és ez a minta kódblokkon belül is fut.
+# Ami ezeken kívül esik (pl. a repó `/opt/projects/...` alatt), azt a
+# repó-gyökér abszolút alakjának keresése fogja meg — lásd `repo_root_variants`.
 MACHINE_PATH_RE = re.compile(
-    r"(?<![\w.])(?:/home/[\w.-]+|/Users/[\w.-]+|/mnt/[a-z]/[\w.-]+|[A-Za-z]:[\\/]{1,2}Users[\\/])[^\s`\)\]\|]*"
+    r"(?<![\w.])(?:"
+    r"/home/[\w.-]+"
+    r"|/Users/[\w.-]+"
+    r"|/mnt/[a-z]/[\w.-]+"
+    r"|/cygdrive/[a-z]/[\w.-]+"
+    r"|/c/Users/[\w.-]+"
+    r"|[A-Za-z]:[\\/]{1,2}[\w.-]+"      # bármely Windows meghajtó-útvonal (C:\dev\…, D:/projects/…)
+    r")[^\s`\)\]\|]*"
 )
 PLACEHOLDER_PATH_RE = re.compile(r"(?<![\w.])(?:/path/to/|<projekt>/|<project>/|/абс)[^\s`\)\]\|]*")
 MD_ABS_LINK_RE = re.compile(r"\]\((/[^)\s]*|file://[^)\s]*|[A-Za-z]:[\\/][^)\s]*)\)")
 ABS_REPO_PATH_RE = re.compile(r"(?<![\w.:/])/((?:[\w.-]+/)+[\w.-]+\.[A-Za-z0-9]{1,5})(?![\w/])")
 R1_MAX_PER_DOC = 10
+
+
+def repo_root_variants(repo_root):
+    """A repó gyökerének abszolút alakjai (posix + Windows backslash). Ha egy
+    tervezési dokumentum ezt tartalmazza, az BIZTOSAN hibás: gép-specifikus, és
+    a hivatkozás relatív alakja triviálisan előáll belőle. Ez a check független
+    a `MACHINE_PATH_RE` prefix-listájától, tehát bármilyen mappaszerkezetnél
+    (pl. `/opt/projects/…`, `/data/repos/…`) is fog."""
+    try:
+        absolute = repo_root.resolve()
+    except OSError:
+        return []
+    text = str(absolute)
+    if text in (".", "/", ""):
+        return []
+    variants = {text, text.replace("\\", "/")}
+    if "/" in text:
+        variants.add(text.replace("/", "\\"))
+    return [v for v in variants if len(v) > 1]
 
 
 def check_path_format(docs, repo_root, f):
@@ -1003,6 +1355,12 @@ def check_path_format(docs, repo_root, f):
     mindenhol hiba (kódblokkban is); a „gyökér-abszolút repó-útvonal" alakot
     viszont csak kódblokkon KÍVÜL jelezzük, mert egy parancsban a konténer-belső
     `/opt/app/...` útvonal jogos lehet."""
+    roots = repo_root_variants(repo_root)
+    try:
+        top_level = {e.name for e in repo_root.iterdir() if e.is_dir() and not e.name.startswith(".")}
+    except OSError:
+        top_level = set()
+
     for doc, text, phase in docs:
         hits, in_fence = 0, False
         for lineno, line in enumerate(text.splitlines(), start=1):
@@ -1010,6 +1368,11 @@ def check_path_format(docs, repo_root, f):
                 in_fence = not in_fence
                 continue
             found = []
+            # A repó gyökerének abszolút alakja MINDIG hiba — kódblokkban is.
+            for root in roots:
+                if root in line:
+                    found.append((root[:70], "a repó gyökerének abszolút útvonala"))
+                    break
             for m in FILE_URI_RE.finditer(line):
                 found.append((m.group(0)[:70], "`file://` sémájú link"))
             for m in MACHINE_PATH_RE.finditer(line):
@@ -1020,9 +1383,15 @@ def check_path_format(docs, repo_root, f):
                 for m in MD_ABS_LINK_RE.finditer(line):
                     found.append((m.group(1)[:70], "abszolút markdown-link"))
                 for m in ABS_REPO_PATH_RE.finditer(line):
-                    # csak akkor hiba, ha a vezető `/` nélkül LÉTEZŐ repó-fájlra mutat
-                    if (repo_root / m.group(1)).is_file():
-                        found.append((m.group(0)[:70], f"abszolút repó-útvonal (helyesen: `{m.group(1)}`)"))
+                    # Hiba, ha a vezető `/` nélkül LÉTEZŐ repó-fájlra mutat, VAGY ha az
+                    # első szegmense a repó egy létező gyökér-mappája — ez utóbbi a
+                    # tervekben gyakori „még nem létező, de tervezett fájl" eset
+                    # (`/src/auth/token-store.ts`), amit a puszta létezés-check nem fog.
+                    # A konténer-belső `/opt/app/config.yaml` így sem sül el:
+                    # `opt/` nem gyökér-mappája a repónak.
+                    rel = m.group(1)
+                    if (repo_root / rel).is_file() or rel.split("/", 1)[0] in top_level:
+                        found.append((m.group(0)[:70], f"abszolút repó-útvonal (helyesen: `{rel}`)"))
             if found:
                 # Egy sorra több minta is illeszkedhet (pl. `file://` + gép-specifikus
                 # + abszolút markdown-link ugyanarra az útvonalra). A fixernek EGY
@@ -1169,7 +1538,10 @@ SLICES = {
         "conventions.md": ["*"],
     },
 }
-SLICE_DIR_NAME = "analyze-slices"
+# Az analízis MINDEN fájlja a ciklus `analyze/` almappájában él (analyze-report.md,
+# analyze-task.md, slices/). A szeletek külön alkönyvtárba mennek, ami elrejti magát a git elől.
+ANALYZE_DIR_NAME = "analyze"
+SLICE_DIR_NAME = "slices"
 SLICE_DOCS = ("spec.md", "plan.md", "tasks.md", "conventions.md")
 
 
@@ -1190,8 +1562,8 @@ def emit_slices(cycle, texts):
     A mappa ÖNMAGÁT rejti el a git elől (`.gitignore` = `*`), ezért a fázis-záró
     `git add specs/cycle-NN-<name>/` nem stage-eli, és a munkafa tisztaság-
     ellenőrzését sem zavarja meg. Visszaad: [(név, útvonal, scope, hiányzók)]."""
-    out_dir = cycle / SLICE_DIR_NAME
-    out_dir.mkdir(exist_ok=True)
+    out_dir = cycle / ANALYZE_DIR_NAME / SLICE_DIR_NAME
+    out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / ".gitignore").write_text("*\n", encoding="utf-8")
 
     written = []
@@ -1238,10 +1610,17 @@ def main():
         help="a 03-plan fázis lezárásához: csak a spec+plan checkek futnak (a tasks.md még nem létezik)",
     )
     parser.add_argument(
+        "--paths-only",
+        action="store_true",
+        help="csak az R1 útvonal-formátum (RP1) check fut, a meglévő tervezési "
+             "dokumentumokra (spec/plan/tasks — amelyik létezik). A 02/03/04 fázis "
+             "lezárása előtt futtatható, akkor is, ha a többi dokumentum még nincs meg.",
+    )
+    parser.add_argument(
         "--emit-slices",
         action="store_true",
         help="a 05-analyze-hoz: a három szemantikai analyzer-kör bemenetének kimetszése a "
-             "<ciklus>/analyze-slices/ mappába (SH1). `--plan-only` mellett nem fut.",
+             "<ciklus>/analyze/slices/ mappába (SH1). `--plan-only` mellett nem fut.",
     )
     args = parser.parse_args()
 
@@ -1251,6 +1630,32 @@ def main():
         return 2
 
     spec_path, plan_path, tasks_path = cycle / "spec.md", cycle / "plan.md", cycle / "tasks.md"
+
+    # `--paths-only`: önálló, minimál üzemmód az R1-re. Azért van külön ága, hogy a
+    # 02 lezárása előtt is futtatható legyen — ott a plan.md és a tasks.md még nem
+    # létezik, tehát a teljes kapu (és a `--plan-only` is) elvérezne az
+    # előfeltétel-ellenőrzésen. Shift-left: az abszolút útvonal ott derüljön ki,
+    # ahol keletkezett, ne két fázissal később.
+    if args.paths_only:
+        present = [(name, path, phase) for name, path, phase in
+                   (("spec.md", spec_path, "02"), ("plan.md", plan_path, "03"),
+                    ("tasks.md", tasks_path, "04")) if path.is_file()]
+        if not present:
+            print(f"HIBA: {cycle} egyetlen tervezési dokumentumot sem tartalmaz", file=sys.stderr)
+            return 2
+        f = Findings()
+        check_path_format([(name, read(path), phase) for name, path, phase in present],
+                          Path(args.repo_root), f)
+        names = ", ".join(name for name, _, _ in present)
+        if f.items:
+            print(f"R1 útvonal-formátum kapu (RP1) — ellenőrizve: {names}")
+            print(f"PATHS-GATE: {len(f)} Must Fix\n")
+            for code, phase, message in f.items:
+                print(f"[{code}] (célfázis: {phase}) {message}")
+            return 1
+        print(f"R1 útvonal-formátum kapu (RP1): PASS — ellenőrizve: {names}")
+        return 0
+
     required = (spec_path, plan_path) if args.plan_only else (spec_path, plan_path, tasks_path)
     for p in required:
         if not p.is_file():
@@ -1276,6 +1681,7 @@ def main():
         check_plan_coverage(tasks_text, known_ids, referenced, f)
         check_markers(tasks_text, f)
         check_parallel_symmetry(tasks_text, f)
+        check_task_command_placeholders(tasks_text, f)
         check_required_tables(tasks_text, REQUIRED_TASKS_TABLES, f, "tasks.md")
         check_rollback_state(tasks_text, f)
 
@@ -1288,6 +1694,8 @@ def main():
         Path(args.repo_root), f,
     )
     check_test_section_volume(spec_text, plan_text, f)
+    check_test_scenarios(spec_text, plan_text, f)
+    check_target_environment(plan_text, f)
     check_judgment_candidates(plan_text, tasks_text, f)
 
     repo_root = Path(args.repo_root)

@@ -35,6 +35,8 @@ The caller provides three things:
 
 ## 🔴 Where you get the technical details (TR4) — exactly two sources
 
+> **🔴 The TARGET ENVIRONMENT is not your decision (EV1–EV5).** The `<sec:environment_coords>` section of `plan.md` states the `**<field:f_target_env>:**` value of the cycle, and the `<field:f_environment>` column of the machine run table states it per category. **Run exactly there** — and in your report **write out per category which host you addressed**. If you would run a non-local category against a local target (because the name of the script suggests it, or because the config says so), **stop and report it**: a test that is green against a local target proves nothing about the deployed component, yet it ticks everything green. For a non-local target, the **reachability probe** must run first (the health/version endpoint); if that fails, the category is **FAIL**, not `skipped`.
+
 **You take EVERY cycle-specific technical detail needed for execution from `plan.md`** — URLs, ports, test users and their passwords, obtaining tokens, namespace/pod, image name, example calls (`curl`), prerequisites, startup and run order, cleanup. `plan.md` is **self-contained** for this (TC1/a): phase 03 was required to write all of this in fully, precisely so you would not have to gather it from elsewhere.
 
 | Source | What you take from it |

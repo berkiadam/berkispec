@@ -368,6 +368,10 @@ _**A mandatory section — the basis of the self-containedness of `plan.md`.** *
 
 _**Rules:** a placeholder is **forbidden** (`<TODO>`, `<here comes the password>`, `TBD`) — whatever is missing or outdated is a `plan-questions.md` question, not a placeholder. An empty cell is **forbidden**; where something is not applicable to this cycle, a `—` goes. A reference does not substitute for the data ("see the spec", "the usual test user"). The secret rule (TC5): a dev-scoped test user, a mock credential and a local password go here **with a concrete value**; a cluster, registry, VPN, IAM and production credential **never** — instead a pointer (where it is stored, who issues it)._
 
+**<field:f_target_env>:** <the target environment of the cycle: `local`, `dev`, `local + dev`, …>
+
+_**Mandatory field (EV1).** It has to be stated WHICH environment this cycle is about — because a green test on its own does not prove WHERE it was green. A live cycle deployed to dev, but its tests ran against a local target (a script named `…:dev-e2e` had `baseURL: "http://127.0.0.1:5178"` in its config): everything went green, and so it never came to light that the component deployed to dev did not even start. This field binds the test target to the intent of the cycle, and the gate of `05` measures the `<field:f_environment>` column of the run table and the `TS-NN` calls against it (EV1–EV5)._
+
 ### <sec:components_endpoints>
 
 | Component | Repo path / image | Base URL | Port(s) | Health endpoint | Startup (verbatim command) | Shutdown / cleanup |
@@ -466,22 +470,60 @@ _What kinds of tests are needed (unit / integration / e2e)? Which existing test 
 
 _**The recurring expectations lifted over (TC1) — mandatory if `specs/test-conventions.md` exists:** the items of sections 2 and 3 of the register that are needed in this cycle, **self-containedly** (with the recipe data belonging to them, not with a plain reference). Next to every item lifted over, write the provenance: `_(source: test-conventions.md L01)_`. If you corrected the data of an item in `plan-questions.md`, the **corrected** data goes here._
 
+### <sec:plan_test_scenarios> — **mandatory (TS1)**
+
+> **🔴 Why it is mandatory:** the prose above is about the test **types**, this section is about the test **content**. `plan.md` is self-contained (TC1/a): both the `test-runner` and `bs-manual-test-plan` work **exclusively** from it, and a failed test of `07` must also be reproducible by hand from it. Therefore every test case has to be worked out as an **executable scenario** — not "the login flow will be tested", but step by step: what we call, with which concrete value, and exactly what we expect back.
+>
+> **The yardstick (self-test):** *"A person who did not take part in the design can carry out the test reading only this section, and can decide whether it succeeded."* If they would have to figure out anything — which URL, which user, what the correct answer is — the scenario is incomplete.
+>
+> **The test cases of the spec must not be merged (KX3).** If the `<sec:test_specification>` section of the spec describes six cases, six scenarios stand here — expanding and refining is allowed, merging and dropping is not.
+
+One block per scenario, in exactly this form:
+
+#### TS-01 — <the name of the scenario>  (DoD-02, DoD-05)
+
+**<field:f_what_we_test>:** <what this scenario verifies — the behavior it runs for, in one sentence>
+**<field:f_prerequisite>:** <the state it starts from: a stack that is up, seed, a logged-in user, the result of an earlier `TS-NN`>
+
+| # | Step | Call | Expected result |
+|---|---|---|---|
+| 1 | <what we do> | `<a literally runnable call>` | `<a concrete, checkable response>` |
+
+**<field:f_cleanup>:** <what has to be stopped or restored afterwards>
+
+**Rules for filling it in:**
+- **`DoD-NN` in the header — mandatory and bidirectional (TS5).** Every scenario names which DoD points it proves, and **every `DoD-NN` must have at least one scenario**. The gate measures both directions.
+- **Call column — literally runnable.** For REST, a full `curl`: verb, full URL with the port, headers, the concrete request body. A non-REST test belongs here in the same form: a UI step (what we click, what we type), a CLI command, a DB query. **A reference is not a call** — "see the `<sec:e2e_infrastructure>` section" is not runnable.
+- **Expected result column — concrete and checkable.** The status code **and** the identifiable part of the response (field name, value, payload fragment, the text of a UI element). "Runs successfully" / "returns an error" / "gives the expected result" is **forbidden**: it cannot be decided. The hard floor of the gate (TS3): at least one backticked value or a number.
+- **Test users, passwords, URLs, ports, identifiers: literally.** The values of `<sec:environment_coords>` (KO1) have to be **written in here**, not referenced — a placeholder is forbidden (TS4), and missing data is a `plan-questions.md` question. Credentials according to the secret rule (TC5): a dev-scope test user yes, a cluster/registry/IAM credential never.
+- **The data flow must be traceable.** If the next step uses the output of a step, write out **which field into which variable** (`the `response.initHash` field of the answer → `$INIT_HASH``).
+- **Numbering:** from `TS-01`, without gaps and uniquely (TS6). When fixing, do **not** renumber the existing identifiers — new ones go to the end of the list.
+- **Bootstrapping does not belong here:** starting the stack, obtaining the token and the deploy live in the `<sec:e2e_infrastructure>` section (TP3); here the `<field:f_prerequisite>` line **references** it.
+
 ### <sec:machine_run_table> (run-tests.py) — **mandatory (TP4)**
 
 > **🔴 Why it is mandatory:** the prose above speaks to a human, this table speaks to the **`run-tests.py`** script. If it exists, 07-validate runs the tests **with a script**, and the raw test log never gets into an LLM context — this is the largest token item of this phase. If it is missing, 07 falls back to the more expensive `test-runner` subagent. The table does not substitute for the prose: **the same commands**, in a machine-readable form.
 
-| Category | Type | Prerequisite | Command | Result file | Format | Cleanup |
-|---|---|---|---|---|---|---|
-| unit | gyors | — | `<the verbatim command, with a machine reporter>` | `junit.xml` | junit | — |
-| integration | gyors | — | `<command>` | `<file>` | junit | — |
-| e2e | nehez | `<starting the stack; a health poll>` | `<command>` | `<file>` | junit | `<tear-down>` |
+| Category | Type | Prerequisite | Command | Result file | Format | Cleanup | <field:f_environment> |
+|---|---|---|---|---|---|---|---|
+| unit | gyors | — | `<the verbatim command, with a machine reporter>` | `junit.xml` | junit | — | local |
+| integration | gyors | — | `<command>` | `<file>` | junit | — | local |
+| e2e | nehez | `<the reachability probe of the target; starting the stack>` | `<the command with the target host>` | `<file>` | junit | `<tear-down>` | `<the name of the target environment>` |
 
 **Rules for filling it in:**
 - **The type:** `gyors` (unit/integration/typecheck — it runs in the VD10 light round as well) or `nehez` (E2E/regression — only in a full round). _(These are the values of the `--type` flag of the script, they are not translated.)_
 - **Prerequisite / Cleanup:** several commands may be listed with a `;`, matching the bootstrapping steps of the `## <sec:e2e_infrastructure>` section **verbatim**. The cleanup runs even if the run blew up.
 - **The command:** preferably with a **machine reporter** (`--reporter=junit`, `--junitxml=…`, `-Dsurefire.reportFormat`) — this way the counts and the failed test names can be extracted precisely, and are not estimated from a regex.
-- **The result file:** a path relative to the repo; the script copies it into the round folder as evidence. The `{round}` placeholder is replaced with the round folder (e.g. `--outputFile={round}/junit.xml`).
+- **The result file:** a path relative to the repo; the script copies it into the round folder as evidence.
+- **Placeholders — there are two, with two different bases (TR5/c). Do not mix them up:**
+  - `{round}` → the **full** round folder relative to the repo root (`specs/cycle-NN-<cycle-name>/test-report/validate/round-02`). Write this where the command starts from the repo root: `--outputFile={round}/junit.xml`, `--alluredir={round}/e2e/allure-results`.
+  - `{phase}` → the **phase folder** relative to `test-report/` (`validate/round-02`). Write this where the report command of `conventions.md` expects the `<phase-dir>` placeholder or a `REPORT_PHASE_DIR`-style environment variable: `REPORT_PHASE_DIR={phase} npm run test:pw`.
+  - **Writing `test-report/` before `{round}` is forbidden** (`…/test-report/{round}`) — `{round}` already contains it. The resulting double prefix builds a recursive `test-report/specs/…` report tree; `run-tests.py` checks this before the run and stops with `exit 3`.
 - **The format:** `junit` (recommended) or `text` (it counts from the stdout with a regex — weaker evidence).
+- **🔴 <field:f_environment> — mandatory in every row (EV2–EV5).** `local` or the name of the target environment goes here. If it is not `local`:
+  - the **`Command` cell must literally contain the target host** (through an env variable or a switch, e.g. `PLAYWRIGHT_BASE_URL=https://app.dev.example npx playwright test`) — **the target must not hide in a config file** (EV3). A script named `test:playwright:dev-e2e` may perfectly well have `localhost` in its config: **the name of the command is not evidence, the address is**;
+  - a **reachability probe to the same host is mandatory in the `Prerequisite` cell** (`curl -fsS https://app.dev.example/health`) — `run-tests.py` runs the prerequisite, and on its failure the category is FAIL, so **a deployment that never even started cannot be ticked green** (EV4);
+  - `localhost` / `127.0.0.1` in the command or in the prerequisite is **forbidden** (EV5) — `run-tests.py` then stops with `exit 4`, without running anything.
 - **An empty cell:** `—`.
 - If a category **deliberately does not exist** in this project, do not add it to the table, and describe in the prose why.
 

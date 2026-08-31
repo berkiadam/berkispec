@@ -9,7 +9,7 @@ A `conventions.md` a **projekt** szintű igazságforrás, és a `00-init-project
 
 | `conventions.md` szekció | Ki olvassa | Mi romlik el, ha nem mozog vele |
 |---|---|---|
-| `## <sec:cv_test_reporting>` (artefaktumok, útvonal-alap, riport-parancsok) | `report-gate-check.py` (TR3, 07) | a kapu a régi útvonalon keresi a riportot → FAIL |
+| `## <sec:cv_test_reporting>` (artefaktumok, útvonal-alap, riport-fázisok, riport-parancsok) | `report-gate-check.py` (TR3/TR6, 06 + 07) | a kapu a régi útvonalon keresi a riportot, vagy rossz fázisban kéri számon → FAIL |
 | `## Sonar` (projekt-kulcs, küszöbök, riport helye) | `sonar-gate.py` (07) | Quality Gate-ellenőrzés hibás projektre/küszöbre fut |
 | `## <sec:cv_test_tools>` / teszt-parancsok | `run-tests.py`, `test-runner` (07) | nem létező parancsot futtat |
 | `## <sec:cv_merge_strategy>` | `09-merge` | a merge-ág rossz úton próbálkozik |

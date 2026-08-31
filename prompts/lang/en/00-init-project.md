@@ -151,6 +151,9 @@ _**Where they go (TR5):** the reports do not go directly into the root of `test-
 
 **Report generation required:** yes
 **Artifact path base:** round-folder
+**Report phases:** validate
+
+_**Report phases (TR6).** The field lists WHICH phases are required to produce the artifact set above: `validate` (the full rounds of 07 — this is the default), `implement` (the closing state of 06), or both (`implement, validate`). If `implement` is also listed, 06-implement generates the set into the `test-report/implement/` phase folder before the status change, and the same `report-gate-check.py` closes it. If not, 06 only writes `check-log.md`, and the evidence comes from the first FULL round of 07. The behavior of an old project without the field is unchanged (`validate`). **When is `implement` worth it?** If the implementation run has evidence value of its own (browser screenshots, REST audit logs, long E2E runs) that the round of 07 no longer reproduces in the same state._
 
 _**The marker is mandatory (TR5/b).** The meaning of the last column changed on 2026-08-07 (`test-report/` root → **round folder**), but its format did not — an old table would therefore be silently misinterpreted. In the absence of the marker, `report-gate-check.py` **does not guess**: `exit 2` + the line to be added. Accepted values: `round-folder` (today's scheme) or `test-report` (the old, flat scheme — in which case the gate resolves the paths to the root of `test-report/`). Migration of an existing project: write in the marker with the real scheme, and if the cycle is switching to today's scheme now, rewriting `conventions.md` is **part of the cycle** (see the "The gate configuration moves together" rule of 03)._
 
@@ -161,10 +164,12 @@ _**The boundary towards `specs/test-conventions.md` (TC1/c):** the **report arti
 | E2E | Playwright (+ Allure) | `npx playwright test --reporter=html && npx allure generate ./allure-results --single-file -o ./allure-report` | `allure-report.html` |
 | Unit / integration | _the chosen runner_ | `<report-generating command>` | `unit-report.html` |
 | Coverage | _e.g. c8 / coverage.py_ | `<command>` | `coverage/` |
+| Application-side audit / REST request-response | _the service's own log writing_ | _a by-product of the test run — the command is turning the logging on_ | `e2e/rest-logs/` |
 
 _Rules for filling it in:_
 - **Prefer a single-file HTML** (`allure generate --single-file`, `--reporter=html` into one file), because the report goes into the git diff of the cycle. If the tool can only produce a folder (e.g. a full Allure static site), that is acceptable too — then the folder name should end with `/` (`allure-report/`).
 - If there is no report artifact for a category, `-` goes into the last column (the gate skips that row).
+- **Application-side evidence is a TABLE ROW too, not prose.** Whatever is produced during the test run and can be opened afterwards — a REST request/response audit log, a correlation-id trace, an application log excerpt — put it into the table just like the report of the test tool. What the table does not ask for, `report-gate-check.py` **does not look for**: it is silently omitted, and its absence only surfaces months later. The file name and header convention is recorded in `specs/test-conventions.md` (TC1/c), but **whether it is mandatory** belongs here.
 - **If the project does not generate a test report at all**, set the flag above to `no`, **with a justification** (e.g. "there is only a manual smoke test"). This is a conscious, recorded decision — the gate is then skipped. Leaving it empty or leaving an unfilled table is **not** an option: the gate then reports a usage error.
 
 ## Naming conventions

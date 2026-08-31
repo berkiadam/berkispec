@@ -17,4 +17,14 @@
 
 **What is NOT a file path, so the rule does not apply to it:** the path of an HTTP endpoint (`/api/v1/token-exchange`), a container-internal path in a command (`docker exec app cat /opt/app/config.yaml`), a JSON pointer, a regex.
 
-_The mechanical gate of `05-analyze` checks this mechanically (`R1` check): `file://`, machine-specific and absolute repo paths in the design documents are `<status:must_fix>`._
+**If your tool returns an absolute path** (IDE integration, file finder, a path concatenated with `pwd`), strip the repo root **before** writing it into the document. An absolute path in the text of `spec.md`/`plan.md`/`tasks.md` is an error even if it is correct on your machine.
+
+**A mandatory check before closing the phase (the RP1 gate).** Do not eyeball it — run it:
+
+```bash
+python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-name> --paths-only
+```
+
+The gate looks at the design documents **present** in the cycle folder (`spec.md`/`plan.md`/`tasks.md` — whichever already exists), so it runs at the closing of `02` as well, when the plan and the tasks do not exist yet. A non-`0` exit code → **fix** the paths found, and run it again; the phase does not close without a `PASS`. In phases `03`/`04` the full mechanical gate (`M`) runs this anyway — there this call is only needed if you want feedback earlier.
+
+_The mechanical gate of `05-analyze` checks the same mechanically (`R1` check): `file://`, machine-specific, placeholder and absolute repo paths in the design documents are `<status:must_fix>`._

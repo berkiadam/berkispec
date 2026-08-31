@@ -44,6 +44,7 @@ This is **not a phase:** it is not part of the `00–09` chain, it **does not to
 | REST call sequences, `curl` | `plan.md` → <sec:rest_calls_examples> |
 | test data, users, passwords | `plan.md` → <sec:test_api_users> + <sec:other_parameters> (the TC5 secret rule) |
 | network prerequisites | `plan.md` → <sec:network_access_prereqs> |
+| **the test groups themselves: steps, calls, expected result** | **`plan.md` → <sec:plan_test_scenarios> (`TS-NN`) — this is the primary source of the `TG-NN` groups** |
 | what we test with a group | `spec.md` → <sec:test_specification> + <sec:definition_of_done> (`DoD-NN`) |
 | automated test commands | `plan.md` → <sec:machine_run_table> |
 | where the results go | `conventions.md` → `## <sec:cv_test_reporting>` (TR3 + the TR5 round-folder marker) |

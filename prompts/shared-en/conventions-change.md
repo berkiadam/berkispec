@@ -9,7 +9,7 @@
 
 | `conventions.md` section | Who reads it | What breaks if it does not move along |
 |---|---|---|
-| `## <sec:cv_test_reporting>` (artifacts, path base, report commands) | `report-gate-check.py` (TR3, 07) | the gate looks for the report on the old path → FAIL |
+| `## <sec:cv_test_reporting>` (artifacts, path base, report phases, report commands) | `report-gate-check.py` (TR3/TR6, 06 + 07) | the gate looks for the report on the old path, or demands it in the wrong phase → FAIL |
 | `## Sonar` (project key, thresholds, location of the report) | `sonar-gate.py` (07) | the Quality Gate check runs for the wrong project/threshold |
 | `## <sec:cv_test_tools>` / test commands | `run-tests.py`, `test-runner` (07) | it runs a command that does not exist |
 | `## <sec:cv_merge_strategy>` | `09-merge` | the merge branch tries the wrong path |

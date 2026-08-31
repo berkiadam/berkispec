@@ -4,7 +4,7 @@ name: bs-implement
 description: "berkispec - 06. Use when analyze-report.md is 'PASS' (Phase 06), for the actual code development. Executes the planned code changes based on the task list, and meanwhile maintains 'tasks.md' until it reaches the 'Ready for validation' state."
 prerequisites:
   - "specs/cycle-NN-<name>/tasks.md status: <status:ready_for_implement>"
-  - "specs/cycle-NN-<name>/analyze-report.md status: PASS"
+  - "specs/cycle-NN-<name>/analyze/analyze-report.md status: PASS"
 output:
   - "Implemented code"
   - "specs/cycle-NN-<name>/test-report/implement/check-log.md — the append-only log of [CHECK] runs (TR5)"
@@ -44,10 +44,12 @@ This is **phase 6 (0–9)** of the process: 0-init · 1-cycles · 2-spec · 3-pl
    ```bash
    git worktree list
    git rev-parse --git-common-dir
-   git fetch origin && git log --oneline $(git merge-base HEAD origin/main)..origin/main
+   git fetch origin && git log --oneline HEAD..origin/main
    ```
 
    _In a repo without a remote (local only), work with the local `main` instead of `origin/main`, without `git fetch`._
+
+   _The command **deliberately contains no `$( )` substitution**: `HEAD..origin/main` yields the same commit set as the `merge-base` form, but several CLIs (e.g. Antigravity/Gemini) do not allow command substitution to be allowlisted for security reasons — such a line would ask for permission on every run._
 
    - **If there is another worktree on a `cycle-*` branch** → **STOP.** Another cycle is still open: either it must be carried through to `09`, or this cycle must wait its turn. Do not start implementing, and do not suggest a `--force` workaround.
    - **If we are in a linked worktree** (`git rev-parse --git-common-dir` is not `.git`) → **STOP.** `06`–`09` run in the **main** worktree (that is where `main` lives, which `09` needs). See the PW2/3 steps in the *Parallel cycles* block for how to move back.
@@ -122,6 +124,15 @@ Decision tree for resuming — **in this order**:
 >
 > _Note on the framework's convention:_ the sentence "**Place the clickable link to … at the end of the response**" is a **stop signal** in the other phases (a question or end of phase). That is why in this phase it **deliberately does not appear per task** — the link to `tasks.md` belongs in the phase's closing message.
 
+> **🔴 A consistent state when you hand the floor back (IM2).** Before you hand the floor back for ANY reason — a question, a stopping rule, a quota, or simply the end of your response — the task currently in progress must be in a **closed** or an **explicitly suspended** state:
+>
+> - **closed** = `- [x]` in `tasks.md` **+** a `check-log` entry (if there was a `[CHECK]`) **+** a commit (item 12);
+> - **suspended** = the checkbox stays `- [ ]`, but a line goes into `imp-decision.md` — *which task, how far it got, what the open question is, which files are modified without a commit* — and you state this in your response as well.
+>
+> **Leaving uncommitted, unbooked work behind is forbidden.** The interruption tolerance of this phase (and the evidence of `07`) is built on the per-task commit: without a tick and a commit the next session finds nothing but a dirty working tree, from which it cannot tell how far which task got, and what the user interrupted. **If you have to stop, book first, talk after.**
+>
+> This rule is **independent** of whether the stop was justified: even a justified question can only be asked from a consistent state.
+
 1. Take the next unfinished task (`- [ ]`).
 
 2. **Returning from code review (07):** If the cycle came back here because of `<status:must_fix>` findings from the 07 review gate, carry out the new tasks at the end of `tasks.md` based on the critical findings in `test-report/code-review.md`. After the fixes, re-running and committing the closing `[CHECK]` tasks is mandatory.
@@ -174,11 +185,28 @@ Decision tree for resuming — **in this order**:
 If any of the following is met while implementing, **STOP — stop and inform the user** (do not drift onward, do not try to "creatively" push forward):
 
 - The task description contradicts the existing code and the correct solution is not clear.
-- Completing the task would require modifying a file that is not named in the task description.
+- Completing the task would require modifying a file that is not named in the task description — **except for a forced consequential change (IM3), see below**.
 - A task assumes the result of an earlier task, but that one is not yet done.
 - **A `[CHECK]` task has failed three times in a row** (see rule 8).
 
-In every case, ask only **one** question, wait for the response, then continue.
+In every case, ask only **one** question, wait for the response, then continue. **IM2 applies before a stop as well:** first the tick + commit, or the `imp-decision.md` entry about the suspension, and only then the question.
+
+> **This list is exhaustive (IM1).** The phase is stopped exclusively by the four cases listed here, plus item 3 of the *Execution rules* (an unmet `> **Machine prerequisite:**` block) and item 4 (an infrastructure-dependent task). Anything else — including "the task is done and committed" — is a **continuation**, not a stop.
+
+### A forced consequential change (IM3) — the exception to the "file not named" rule
+
+A deletion, a rename or a signature change inevitably ripples out to files the task does not name (the default value pointing at the deleted config, the import of the renamed symbol). If you stopped at every such case, the phase would get stuck in almost every cycle — but if you freely rewrite anything, that is exactly the "creative drift" this section forbids. The boundary:
+
+**You may carry it out without stopping if ALL THREE hold:**
+1. the change is a **mechanical consequence** of the listed change — carrying over a reference —, not new behaviour;
+2. it has **exactly one correct form** (there is no choice between two solutions, no real design freedom);
+3. the failing `[CHECK]`, compilation or test **points at the file and the line itself** — you are not the one hunting for "what else might be affected".
+
+**In that case:** make the **narrowest possible** fix, record it in `imp-decision.md` (*which task forced it · which file:line · why there is only one correct form*), and mention it in the progress line as well. **Do not stop.**
+
+**If any of the conditions does not hold** — you would have to choose between two routes, the consequence would introduce new behaviour, or the scope grows beyond carrying over a reference — **stop and ask**. "I'll creatively push on" is a rule violation here.
+
+> **The feedback is mandatory.** List the files affected this way — the ones no task names — in the **closing message of the phase** as well: it means that `04` (and the coverage round of `05`) left out a mandatory consequential change — otherwise `07` and `09` see a diff in the cycle that was planned nowhere.
 
 ---
 
@@ -190,7 +218,7 @@ In every case, ask only **one** question, wait for the response, then continue.
 
 **When to write to it:** **after every `[CHECK]` run, including the failed ones** — not just after the eventual green attempt. The log is **append-only**: you never rewrite or delete an earlier line.
 
-**What you do NOT do:** you do not generate an HTML/Allure/coverage report. That is 07's job — 07's first FULL round measures 06's closing state anyway, and two report sets about the same thing is a needless duplication in the git diff.
+**What you do NOT do per task:** you do not generate an HTML/Allure/coverage report after every task — the `[CHECK]` log is the cheap, text-based evidence. The full report set is produced **once**, at the end of the phase, and only if the project has declared `implement` a report phase (TR6) — see the *Report phase* section.
 
 ### File template
 
@@ -237,16 +265,41 @@ The README.md is part of the implementation — not after-the-fact documentation
 ---
 
 
+## Report phase (TR6) — `test-report/implement/`
+
+`implement/` is an **official phase folder**: not only the place of `check-log.md`, but also that of the full report set of 06's closing state — if the project decides so. The decision lives in the `**<field:f_report_phases>:**` field of the `## <sec:cv_test_reporting>` section of `conventions.md` (`implement`, `validate`, or both; in the absence of the field the default is `validate`). **Do not guess it** — query it deterministically, after every task is `[x]` but BEFORE the status change:
+
+```bash
+python3 <platform-scripts-mappa>/report-gate-check.py \
+  conventions.md specs/cycle-NN-<cycle-name> --phases
+```
+
+- **`implement` is not in the output** → you have nothing to do: the report set is produced by 07 in its own rounds. Move on to the status change.
+- **`implement` is in the output** → run the report-generating commands of the `## <sec:cv_test_reporting>` table of `conventions.md` for the phase folder, then close with the gate:
+
+```bash
+python3 <platform-scripts-mappa>/report-gate-check.py \
+  conventions.md specs/cycle-NN-<cycle-name> \
+  --report-subdir test-report/implement
+```
+
+**The form of the phase folder is `implement`** — this is what the `<phase-dir>` placeholder or the `REPORT_PHASE_DIR`-style environment variable of the report commands gets. Never write the full `specs/cycle-NN-<cycle-name>/test-report/implement` path there: mixing up the bases builds a recursive `test-report/test-report/…` tree, which the layout guard of the gate fails with `exit 1` (TR5/c).
+
+- **`exit 0`** → done, the status change can follow; the report artifacts go in with the closing commit.
+- **`exit 1`** → a missing or empty artifact, or a foreign folder under `test-report/`. **This is not a code bug: you do not start a fixer and you do not step back to a task** — re-run the missing report-generating command, or delete the foreign folder, and re-run the gate. If the command itself is wrong (it does not produce the artifact), that is a gap of `conventions.md`: stop and ask the user.
+
+> **This is not a new stopping point (IM1).** Generating the report is part of closing the phase, in the same turn — do not hand the floor back to the user between the `--phases` query and the gate.
+
 ## Status handling
 
 - While implementing: `<status:implement_in_progress>`
 - If every task is `[x]`: update the `tasks.md` status to `<status:ready_for_validate>`, and **commit this state change** (the final status must be recorded separately) — together with the last entries of `check-log.md`:
   ```bash
   git add specs/cycle-NN-<cycle-name>/tasks.md \
-          specs/cycle-NN-<cycle-name>/test-report/implement/check-log.md \
+          specs/cycle-NN-<cycle-name>/test-report/implement/ \
     && git commit -m "cycle-NN: 06-implement - done, ready for validation"
   ```
-  **Check before the status change:** `check-log.md` exists, and every group-closing `[CHECK]` has at least one line for it in the log. If a group is `[x]` but the log has no entry for it, the evidence is missing — add the missing log line based on the actual run (not from memory: if you do not know, re-run the `[CHECK]`).
+  **Check before the status change:** the *Report phase (TR6)* section has run (the `--phases` query, and if `implement` is a report phase, the gate with `exit 0`); `check-log.md` exists, and every group-closing `[CHECK]` has at least one line for it in the log. If a group is `[x]` but the log has no entry for it, the evidence is missing — add the missing log line based on the actual run (not from memory: if you do not know, re-run the `[CHECK]`).
 
 If the status is `<status:ready_for_validate>`, stop. Inform the user of the next step and the phase's launch command, for example:
 <!-- INCLUDE:lang/06-implement.md#zaro-uzenet -->
