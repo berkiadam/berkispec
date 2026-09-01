@@ -61,3 +61,5 @@ Te a plan fázis (03) **Fix-mód** végrehajtója vagy, amelyet az `05-analyze` 
 _Ez a 03 fázis minőségi kapuja. Fix-módban nem a teljes dokumentumot auditálod vele, hanem az általad módosított szakaszokat._
 
 <!-- INCLUDE:shared/quality-check-plan.md -->
+
+<!-- INCLUDE:shared/test-scenario-design.md -->

@@ -470,6 +470,8 @@ _Milyen típusú tesztek kellenek (unit / integrációs / e2e)? Melyik meglévő
 
 _**Beemelt visszatérő elvárások (TC1) — kötelező, ha létezik `specs/test-conventions.md`:** a regiszter 2. és 3. szekciójának ebben a ciklusban szükséges tételei, **önhordóan** (a hozzájuk tartozó recept-adatokkal, nem puszta hivatkozással). Minden beemelt tétel mellé írd a provenance-t: `_(forrás: test-conventions.md L01)_`. Ha egy tétel adatát a `plan-questions.md`-ben javítottad, a **javított** adat kerül ide._
 
+<!-- INCLUDE:shared/test-scenario-design.md -->
+
 ### <sec:plan_test_scenarios> — **kötelező (TS1)**
 
 > **🔴 Miért kötelező:** a fenti próza a teszt-**típusokról** szól, ez a szekció a teszt **tartalmáról**. A `plan.md` önhordó (TC1/a): a `test-runner` és a `bs-manual-test-plan` is **kizárólag** ebből dolgozik, és a `07` egy bukott tesztjét is ebből kell tudni kézzel reprodukálni. Ezért minden tesztesetet **végrehajtható forgatókönyvként** kell kifejteni — nem „a login flow tesztelve lesz", hanem lépésenként: mit hívunk, milyen konkrét értékkel, és pontosan mit várunk vissza.

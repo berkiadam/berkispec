@@ -11,132 +11,137 @@
     ╚══════════════════════════════════════════════════════════════════════╝
 ```
 
+**HUN version → [README-HU.md](README-HU.md)**
+
 <!-- TOC -->
 
 - [Berki-spec](#berki-spec)
-  - [1. Két fejlesztési út — válassz a feladat mérete szerint](#1-két-fejlesztési-út--válassz-a-feladat-mérete-szerint)
-    - [1.1 Mindkét út előtt (opcionális): /bs-brainstorm](#11-mindkét-út-előtt-opcionális-bs-brainstorm)
-  - [2. Installáció](#2-installáció)
-    - [Telepítés lépései:](#telepítés-lépései)
-    - [Támogatott platformok és ágensek:](#támogatott-platformok-és-ágensek)
-    - [Nyelvi beállítások — két független tengely](#nyelvi-beállítások--két-független-tengely)
-    - [Hogyan lehet használni?](#hogyan-lehet-használni)
+  - [1. Two development routes — choose by the size of the task](#1-two-development-routes--choose-by-the-size-of-the-task)
+    - [1.1 Before either route (optional): /bs-brainstorm](#11-before-either-route-optional-bs-brainstorm)
+  - [2. Installation](#2-installation)
+    - [Installation steps:](#installation-steps)
+    - [Supported platforms and agents:](#supported-platforms-and-agents)
+    - [Language settings — two independent axes](#language-settings--two-independent-axes)
+    - [How can it be used?](#how-can-it-be-used)
   - [3. Quick start](#3-quick-start)
-    - [A keretrendszer működési elve:](#a-keretrendszer-működési-elve)
-    - [Két fejlesztési út:](#két-fejlesztési-út)
-    - [Alapvető parancsok (Slash Commands):](#alapvető-parancsok-slash-commands)
-  - [4. Mappastruktúra](#4-mappastruktúra)
-  - [5. Teljes berki spec flow (00–09)](#5-teljes-berki-spec-flow-0009)
-    - [5.1 Magas szintű összefoglalás](#51-magas-szintű-összefoglalás)
-    - [5.2 Részletes folyamat](#52-részletes-folyamat)
-    - [5.3 Modellek és effort-szintek automatikus választása](#53-modellek-és-effort-szintek-automatikus-választása)
-    - [5.4 Az 05-analyze önjavító hurok (részletes)](#54-az-05-analyze-önjavító-hurok-részletes)
-    - [5.5 Az 07-validate önjavító hurok (részletes) — tesztek + kódreview](#55-az-07-validate-önjavító-hurok-részletes--tesztek--kódreview)
-    - [5.6 Önjavító hurkok (analyze + validate) — közös konvenciók](#56-önjavító-hurkok-analyze--validate--közös-konvenciók)
-    - [5.7 Példa prompt-folyam (egy ciklus végigvezetése)](#57-példa-prompt-folyam-egy-ciklus-végigvezetése)
-  - [6. Egyszerűsített (lightweight) flow](#6-egyszerűsített-lightweight-flow)
-    - [6.1 Folyamatábra](#61-folyamatábra)
-    - [6.2 A három fázis röviden](#62-a-három-fázis-röviden)
-    - [6.3 Két beépített kör-megszakító](#63-két-beépített-kör-megszakító)
-    - [6.4 Opcionális ágensek (mind read-only, egyik sem kötelező)](#64-opcionális-ágensek-mind-read-only-egyik-sem-kötelező)
-    - [6.5 Indító prompt (copy-paste)](#65-indító-prompt-copy-paste)
-    - [6.6 Példa prompt](#66-példa-prompt)
-  - [7. Skill-index](#7-skill-index)
-  - [8. Agent-index](#8-agent-index)
-  - [9. Frontmatter séma](#9-frontmatter-séma)
-  - [10. conventions.md — Projekt konvenciók](#10-conventionsmd--projekt-konvenciók)
-  - [11. Egy ciklus artifact fájljai](#11-egy-ciklus-artifact-fájljai)
-    - [11.1 Fázisok közötti átadás (`*-input-from-prev.md`)](#111-fázisok-közötti-átadás-input-from-prevmd)
-  - [12. docs-generated/ — élő dokumentáció (a 08-doc-sync gazdája)](#12-docs-generated--élő-dokumentáció-a-08-doc-sync-gazdája)
-    - [12.1 specs/test-conventions.md — visszatérő teszt-elvárások és receptek (TC1–TC11)](#121-specstest-conventionsmd--visszatérő-teszt-elvárások-és-receptek-tc1tc11)
-    - [12.2 export/ — verziózott PDF export (/bs-export-doc)](#122-export--verziózott-pdf-export-bs-export-doc)
-  - [13. Kérdéskezelés (spec-questions.md / plan-questions.md / tasks-questions.md / doc-sync-questions.md)](#13-kérdéskezelés-spec-questionsmd--plan-questionsmd--tasks-questionsmd--doc-sync-questionsmd)
-  - [14. Egységes `Kész` státusz-lifecycle](#14-egységes-kész-státusz-lifecycle)
-  - [15. Sonar minőségellenőrzés](#15-sonar-minőségellenőrzés)
-  - [16. Döntési napló (imp-decision.md)](#16-döntési-napló-imp-decisionmd)
-  - [17. Validációs riport (validation-report.md)](#17-validációs-riport-validation-reportmd)
-  - [18. Reviewer agent (agents/reviewer.md)](#18-reviewer-agent-agentsreviewermd)
-  - [19. Ágens-specifikus integráció](#19-ágens-specifikus-integráció)
-    - [19.1 Antigravity CLI (Google DeepMind)](#191-antigravity-cli-google-deepmind)
-      - [17.1.1 Tervezési és naplózási folyamat (Planning Mode)](#1711-tervezési-és-naplózási-folyamat-planning-mode)
-      - [17.1.2 Jogosultságok kezelése (Permissions)](#1712-jogosultságok-kezelése-permissions)
-      - [17.1.3 Skillek és Ágensek indítása (TUI használat)](#1713-skillek-és-ágensek-indítása-tui-használat)
-    - [19.2 Codex CLI (OpenAI)](#192-codex-cli-openai)
+    - [The operating principle of the framework:](#the-operating-principle-of-the-framework)
+    - [Two development routes:](#two-development-routes)
+    - [Basic commands (slash commands):](#basic-commands-slash-commands)
+  - [4. The full berki spec flow (00–09)](#4-the-full-berki-spec-flow-0009)
+    - [4.1 High-level summary](#41-high-level-summary)
+    - [4.2 The detailed process](#42-the-detailed-process)
+    - [4.3 Automatic selection of models and effort levels](#43-automatic-selection-of-models-and-effort-levels)
+    - [4.4 The 05-analyze self-healing loop (in detail)](#44-the-05-analyze-self-healing-loop-in-detail)
+    - [4.5 The 07-validate self-healing loop (in detail) — tests + code review](#45-the-07-validate-self-healing-loop-in-detail--tests--code-review)
+    - [4.6 Self-healing loops (analyze + validate) — shared conventions](#46-self-healing-loops-analyze--validate--shared-conventions)
+    - [4.7 Example prompt flow (walking through one cycle)](#47-example-prompt-flow-walking-through-one-cycle)
+  - [5. Simplified (lightweight) flow](#5-simplified-lightweight-flow)
+    - [5.1 Flowchart](#51-flowchart)
+    - [5.2 The three phases in brief](#52-the-three-phases-in-brief)
+    - [5.3 Two built-in loop breakers](#53-two-built-in-loop-breakers)
+    - [5.4 Optional agents (all read-only, none of them mandatory)](#54-optional-agents-all-read-only-none-of-them-mandatory)
+    - [5.5 Starter prompt (copy-paste)](#55-starter-prompt-copy-paste)
+    - [5.6 Example prompt](#56-example-prompt)
+  - [6. Skill index](#6-skill-index)
+  - [7. Agent index](#7-agent-index)
+  - [8. Frontmatter schema](#8-frontmatter-schema)
+  - [9. conventions.md — Project conventions](#9-conventionsmd--project-conventions)
+    - [Branching strategy — cycle = branch (in phase 01)](#branching-strategy--cycle--branch-in-phase-01)
+    - [Parallel cycles — a design window with a worktree (PW1/PW2, BD16)](#parallel-cycles--a-design-window-with-a-worktree-pw1pw2-bd16)
+    - [A fresh base before the analyze (BR1)](#a-fresh-base-before-the-analyze-br1)
+    - [An integration refresh before the merge (W2)](#an-integration-refresh-before-the-merge-w2)
+    - [The phase-closing commit (PC1)](#the-phase-closing-commit-pc1)
+  - [10. The artifact files of a cycle](#10-the-artifact-files-of-a-cycle)
+    - [10.1 The handover between phases (*-input-from-prev.md)](#101-the-handover-between-phases--input-from-prevmd)
+  - [11. docs-generated/ — living documentation (owned by 08-doc-sync)](#11-docs-generated--living-documentation-owned-by-08-doc-sync)
+    - [11.1 specs/test-conventions.md — recurring test expectations and recipes (TC1–TC11)](#111-specstest-conventionsmd--recurring-test-expectations-and-recipes-tc1tc11)
+    - [11.2 export/ — versioned PDF export (/bs-export-doc)](#112-export--versioned-pdf-export-bs-export-doc)
+  - [12. Question handling (spec-questions.md / plan-questions.md / tasks-questions.md / doc-sync-questions.md)](#12-question-handling-spec-questionsmd--plan-questionsmd--tasks-questionsmd--doc-sync-questionsmd)
+  - [13. A uniform Done status lifecycle](#13-a-uniform-done-status-lifecycle)
+  - [14. Sonar quality check](#14-sonar-quality-check)
+  - [15. The decision log (imp-decision.md)](#15-the-decision-log-imp-decisionmd)
+  - [16. The validation report (validation-report.md)](#16-the-validation-report-validation-reportmd)
+  - [17. The reviewer agent (agents/reviewer.md)](#17-the-reviewer-agent-agentsreviewermd)
+  - [18. Agent-specific integration](#18-agent-specific-integration)
+    - [18.0 A platform limitation: running commands in the subagents (EX1)](#180-a-platform-limitation-running-commands-in-the-subagents-ex1)
+    - [18.1 Antigravity CLI (Google DeepMind)](#181-antigravity-cli-google-deepmind)
+      - [18.1.1 The planning and logging process (Planning Mode)](#1811-the-planning-and-logging-process-planning-mode)
+      - [18.1.2 Handling permissions (Permissions)](#1812-handling-permissions-permissions)
+      - [18.1.3 Starting the skills and agents (using the TUI)](#1813-starting-the-skills-and-agents-using-the-tui)
+    - [18.2 Codex CLI (OpenAI)](#182-codex-cli-openai)
 
 <!-- /TOC -->
 
-
-
 # Berki-spec
 
-**Berki-spec** egy **spec-driven development (SDD)** keretrendszer AI-ágensekkel való szoftverfejlesztéshez. A munkát önállóan tesztelhető **ciklusokra** bontja, és minden ciklust ugyanazon a fegyelmezett úton vezet végig — a követelmény rögzítésétől (`spec`) a technikai terven (`plan`) és a feladatlistán (`tasks`) át az implementációig, a validálásig és a merge-ig. A folyamat két építőelemből áll: **skillek** (fázis-receptek, amelyeket a fő ágens futtat) és **ágensek** (dedikált, `Task tool` subagentként hívott specialisták).
+**Berki-spec** is a **spec-driven development (SDD)** framework for developing software with AI agents. It breaks the work into independently testable **cycles**, and drives every cycle down the same disciplined path — from capturing the requirement (`spec`) through the technical design (`plan`) and the task list (`tasks`) to implementation, validation and merge. The process is built from two kinds of building block: **skills** (phase recipes run by the main agent) and **agents** (dedicated specialists invoked as `Task tool` subagents).
 
-**Mitől más, mint a piacon lévő SDD eszközök?**
+**What makes it different from the SDD tools on the market?**
 
-A legtöbb SDD sablon egyetlen, merev „spec → terv → kód" fonalat ad. A Berki-spec ennél tovább megy — a különbség nem a fázisokban van, hanem abban, hogy **mi történik, amikor a valóság eltér a tervtől**:
+Most SDD templates give you a single, rigid "spec → plan → code" thread. Berki-spec goes further — and the difference is not in the phases, but in **what happens when reality diverges from the plan**:
 
-- **Adaptív, kétsebességes flow.** Nagy feladatra a teljes (00–09) folyamat a minőségi kapuival; kis, jól körülhatárolt feladatra egy egyszerűsített háromfázisú út (`spec → task → implementáció`). A kettő **menet közben átjárható** — nincs felesleges ceremónia egy konfigurációs módosításhoz, és nincs alultervezés egy komplex funkciónál.
-- **Önjavító minőségi hurkok, anti-„csalás" fegyelemmel.** Az `analyze`, `validate` és `review` fázis nemcsak *jelzi* a hibát, hanem levezényelt hurokban **automatikusan javítja** is. A kulcsszabály: a **kód igazodik a szerződéshez** (teszt / DoD / review-finding), **soha nem fordítva** — a hurok nem lazítja a tesztet, hogy zöld legyen. Ha valami csak a szerződés módosításával lenne megoldható, **felfelé eszkalál** a tervezési fázisba, ember elé.
-- **Élő, „as-built" dokumentáció drift-követéssel.** A `docs-generated/` ciklusról ciklusra szinkronban marad a kóddal, egy **objektív konzisztencia-kapun** átvezetve, és külön nyilvántartja a megvalósult rendszer **eltéréseit a HLD/LLD szándéktól** (design-drift). A dokumentáció nem avul el csendben.
-- **Megszakítás-biztos, bárhol folytatható.** Minden fázis fájlban tartja az állapotát és a nyitott kérdéseit (a listából **soha nem törlünk**, csak `[x]`-elünk), státusz-markerekkel — egy új session pontosan onnan folytatja, ahol abbamaradt.
-- **Emberi kapuk a döntéseknél.** A fázisváltások **explicit jóváhagyáshoz** kötöttek: az ágens javasol és indokol, de nem „szalad el" — a scope- és irányválasztás a fejlesztőé marad.
-- **Eszközfüggetlen, egyetlen forrásból.** Ugyanaz a skill/ágens definíció (single source of truth) fut Claude Code, Cursor, Antigravity és Codex alatt is.
-- **Gyenge/olcsó modellekre optimalizálva.** Determinisztikus védőhálók (szűkített fix-mód belépők, kötelező ellenőrzőlisták, egyszerre egy kérdés) csökkentik a hibázás esélyét akkor is, ha nem a legerősebb modell hajtja.
-- **Maximális token-megtakarítás — feladatarányos modell- és reasoning-szint-választás.** Minden lépés a hozzá **elégséges legolcsóbb ágensen** fut, **két független tengelyen** hangolva: a *modell* (melyik modell) és az *effort* (mennyi reasoning/thinking-token). A legdrágább (Opus-osztályú) modellt **egyetlen** pont kapja: a legkritikusabb reasoning, az `analyzer` konzisztencia-diagnózisa. A pontos hibalistát célzottan javító fixerek és a mechanikus futtatók **alacsony efforton** dolgoznak (a `default` modellen is), mert nekik nem kell felfedezniük a problémát. A kódkeresést, teszt-futtatást és a determinisztikus lépéseket olcsó subagentek és scriptek végzik, a fő kontextust óvva. A teljes leosztást lásd az [5.3 szekcióban](#53-modellek-és-effort-szintek-automatikus-választása).
+- **Adaptive, two-speed flow.** For a large task, the full (00–09) process with its quality gates; for a small, well-bounded task, a simplified three-phase route (`spec → task → implementation`). The two are **interchangeable mid-flight** — no needless ceremony for a configuration change, and no under-design for a complex feature.
+- **Self-healing quality loops, with anti-"cheating" discipline.** The `analyze`, `validate` and `review` phases do not merely *report* a defect, they **fix it automatically** in an orchestrated loop. The key rule: the **code adapts to the contract** (test / DoD / review finding), **never the other way round** — the loop does not weaken a test to make it green. If something could only be resolved by changing the contract, it **escalates upwards** into the design phase, in front of a human.
+- **Living, "as-built" documentation with drift tracking.** `docs-generated/` stays in sync with the code cycle by cycle, driven through an **objective consistency gate**, and separately records the **deviations of the implemented system from the HLD/LLD intent** (design drift). Documentation does not go stale silently.
+- **Interruption-safe, resumable anywhere.** Every phase keeps its state and its open questions in files (we **never delete** from the list, we only tick `[x]`), with status markers — a new session picks up exactly where the previous one stopped.
+- **Human gates at the decisions.** Phase transitions are bound to **explicit approval**: the agent proposes and justifies, but does not "run away with it" — the choice of scope and direction stays with the developer.
+- **Tool-independent, from a single source.** The same skill/agent definition (single source of truth) runs under Claude Code, Cursor, Antigravity and Codex alike.
+- **Optimised for weak/cheap models.** Deterministic safety nets (narrowed fix-mode entry points, mandatory checklists, one question at a time) reduce the chance of error even when it is not the strongest model driving.
+- **Maximum token saving — task-proportional model and reasoning-level selection.** Every step runs on the **cheapest agent sufficient for it**, tuned on **two independent axes**: the *model* (which model) and the *effort* (how many reasoning/thinking tokens). The most expensive (Opus-class) model is granted to **exactly one** point: the most critical reasoning, the consistency diagnosis of the `analyzer`. The fixers that correct a precise defect list and the mechanical runners work at **low effort** (on the `default` model too), because they do not have to discover the problem. Code search, test execution and the deterministic steps are done by cheap subagents and scripts, sparing the main context. For the full allocation see [section 4.3](#43-automatic-selection-of-models-and-effort-levels).
 
-## 1. Két fejlesztési út — válassz a feladat mérete szerint
+## 1. Two development routes — choose by the size of the task
 
-A felhasználónak **két útja** van; a feladat súlya dönti el, melyik a megfelelő:
+The user has **two routes**; the weight of the task decides which one fits:
 
-1. **Teljes berki spec flow (00–09 fázis)** — a nagyobb, összetettebb fejlesztésekhez. Külön `spec.md` → `plan.md` → `tasks.md` dokumentumok, kereszt-fázisos `analyze`, `validate`, `doc-sync` és `review` minőségi kapukkal és önjavító hurkokkal. Üres projektnél a `00-init-project`, új ciklusnál a `01-add-cycles` skillel indul. Ezt írja le a README többi része.
+1. **The full berki spec flow (phases 00–09)** — for larger, more complex developments. Separate `spec.md` → `plan.md` → `tasks.md` documents, with cross-phase `analyze`, `validate`, `doc-sync` and `review` quality gates and self-healing loops. On an empty project it starts with the `00-init-project` skill, for a new cycle with `01-add-cycles`. The rest of this README describes this route.
 
-2. **Egyszerűsített (lightweight) flow** — kis, jól körülhatárolt feladatokhoz, amelyek 3-4 lépésben megoldhatók (pl. **konfiguráció összeállítása**, **egyszerűbb script megírása**, kisebb javítás). Egyetlen háromfázisú recept: `spec.md` → `task.md` → implementáció, a `/bs-quick-flow` skillben. Nincs külön plan/bs-analyze/bs-validate/bs-doc-sync fázis; az opcionális ágenseket (`researcher`, `analyzer`, `reviewer`) csak akkor hívja, ha tényleg segítenek.
+2. **The simplified (lightweight) flow** — for small, well-bounded tasks that can be solved in 3-4 steps (e.g. **assembling a configuration**, **writing a simpler script**, a minor fix). A single three-phase recipe: `spec.md` → `task.md` → implementation, in the `/bs-quick-flow` skill. There is no separate plan/bs-analyze/bs-validate/bs-doc-sync phase; it calls the optional agents (`researcher`, `analyzer`, `reviewer`) only when they genuinely help.
 
-**Hogyan dönts?**
+**How to decide?**
 
-| Jellemző | Egyszerűsített flow | Teljes berki spec flow |
+| Characteristic | Simplified flow | Full berki spec flow |
 |---|---|---|
-| Tipikus feladat | konfiguráció, egyszerű script, kisebb javítás | új funkció, több komponens, összetett logika |
-| Méret | 3-4 lépésben megoldható | önálló, vertikálisan vágható ciklus(ok) |
-| Dokumentumok | `spec.md` + `task.md` | `spec.md` + `plan.md` + `tasks.md` |
-| Minőségi kapuk | inline + opcionális ágensek | `analyze` / `validate` / `doc-sync` / `review` hurkok |
-| Belépő | `/bs-quick-flow` | `/bs-init-project` / `/bs-add-cycles` |
+| Typical task | configuration, simple script, minor fix | new feature, several components, complex logic |
+| Size | solvable in 3-4 steps | self-contained, vertically sliceable cycle(s) |
+| Documents | `spec.md` + `task.md` | `spec.md` + `plan.md` + `tasks.md` |
+| Quality gates | inline + optional agents | `analyze` / `validate` / `doc-sync` / `review` loops |
+| Entry point | `/bs-quick-flow` | `/bs-init-project` / `/bs-add-cycles` |
 
-**Alapértelmezett flow:** a projekt jellegét a `00-init-project` fázisban tisztázzuk (termékfejlesztés vs. konfiguráció/scriptelés), és ez alapján egy **default flow** kerül a `conventions.md` `## Fejlesztési módszertan` szekciójának **Alapértelmezett flow** mezőjébe. Ez a kiindulópont — feladatonként felülbírálható.
+**Default flow:** the character of the project is clarified in the `00-init-project` phase (product development vs. configuration/scripting), and based on that a **default flow** is written into the **Default flow** field of the `## Development methodology` section of `conventions.md`. That is the starting point — it can be overridden per task.
 
-A két út **átjárható**: ha az egyszerűsített flow közben kiderül, hogy a feladat túlnő rajta (nagyobb kódírás, több komponens, összetett tervezés), a skill megállítja a munkát és **átirányít a teljes folyamatra** (`01-add-cycles`). Fordítva is: a `01-add-cycles` és a `03-write-plan` jelzi, ha a feladat túl egyszerű a teljes ciklushoz, és javasolja az egyszerűsített flow-t.
+The two routes are **interchangeable**: if during the simplified flow it turns out that the task outgrows it (more code to write, several components, complex design), the skill stops the work and **redirects to the full process** (`01-add-cycles`). And the other way round: `01-add-cycles` and `03-write-plan` will flag it if the task is too simple for a full cycle, and suggest the simplified flow.
 
-### 1.1 Mindkét út előtt (opcionális): `/bs-brainstorm`
+### 1.1 Before either route (optional): `/bs-brainstorm`
 
-A két út **közös előszobája** a `/bs-brainstorm` segédparancs — arra az esetre, amikor még nem a *méret* a kérdés, hanem az, hogy **mit és hogyan** akarunk egyáltalán. („Hogyan valósítsunk meg egy központi cert kezelést?", „Érdemes-e kiszervezni az auth-ot?") Ez a rés a `00–09` flow **előtt** van: a `01-add-cycles` már azt feltételezi, hogy tudod, mit akarsz (csak ciklusokra kell bontani), a `/bs-quick-flow` pedig azt, hogy a feladat kicsi és világos.
+The **shared antechamber** of the two routes is the `/bs-brainstorm` helper command — for the case when the question is not yet the *size*, but **what and how** we want at all. ("How should we implement central certificate management?", "Is it worth extracting auth?") This gap sits **before** the `00–09` flow: `01-add-cycles` already assumes that you know what you want (it only has to be split into cycles), and `/bs-quick-flow` assumes the task is small and clear.
 
-**Mit tesz:**
-- **Orientálódik** a projektben: `conventions.md`, `docs-generated/system-overview.md` (as-built igazság), `docs-generated/README.md` (mappa-index), `specs/roadmap.md` — téma szerint az `architecture.md` és a `design-drift.md`. A teljes `specs/` fa bedarálása tilos (BS6).
-- **A kódbázis-feltárást olcsó, párhuzamos `researcher` subagentekkel** végzi (Mód B, read-only, legolcsóbb tier, „soha nem nyers fájltartalom") — a beszélgetés kontextusát így egy leletlista terheli, nem fájlok tucatja (BS7).
-- **Beszélget, nem monologizál:** egyszerre **egy** kérdés, minden javaslatnál **2–3 alternatíva trade-offokkal + explicit ajánlás**, kötelező illesztés a meglévő rendszerhez és a `conventions.md`-hez, és tilos az igenelés — a fel nem hozott kockázat az ágens hibája (BS8–BS13).
-- **Perzisztál:** a session anyaga a `.bs-brainstorm/brainstorm-NN-<slug>.md` munkafájlba kerül, fix csontvázzal (*Cél · Feltárt tények forrással · Alternatívák · Döntések · Nyitott kérdések · Javasolt ciklus-vágás · Napló*). Minden érdemi kör után **bővül** — soha nem íródik újra (BS14). Így egy `/clear`, összeomlás vagy napokkal későbbi visszatérés után is folytatható: `/bs-brainstorm folytassuk a 04-est`.
+**What it does:**
+- **Orients itself** in the project: `conventions.md`, `docs-generated/system-overview.md` (the as-built truth), `docs-generated/README.md` (folder index), `specs/roadmap.md` — and, depending on the topic, `architecture.md` and `design-drift.md`. Grinding through the whole `specs/` tree is forbidden (BS6).
+- **It explores the codebase with cheap, parallel `researcher` subagents** (Mode B, read-only, cheapest tier, "never raw file content") — so the context of the conversation carries a list of findings rather than dozens of files (BS7).
+- **It converses, it does not monologue:** **one** question at a time, for every proposal **2–3 alternatives with trade-offs + an explicit recommendation**, mandatory fitting to the existing system and to `conventions.md`, and sycophancy is forbidden — a risk that was not raised is the agent's fault (BS8–BS13).
+- **It persists:** the material of the session goes into the `.bs-brainstorm/brainstorm-NN-<slug>.md` working file with a fixed skeleton (*Goal · Discovered facts with sources · Alternatives · Decisions · Open questions · Proposed cycle split · Log*). After every substantive round it **grows** — it is never rewritten (BS14). So it can be continued after a `/clear`, a crash or a return days later: `/bs-brainstorm let's continue number 04`.
 
-**Kemény korlátok (BS1):** kódot nem ír, `git`-et nem futtat, és a `.bs-brainstorm/` mappán kívül **egyetlen fájlt sem** módosít — egyetlen kivétellel: az első futáskor felajánlja a `.bs-brainstorm/*` bejegyzés felvételét a `.gitignore`-ba (jóváhagyás után, egyszer). A végén **javasol**, de nem lép be a következő skillbe.
+**Hard limits (BS1):** it writes no code, runs no `git`, and modifies **not a single file** outside the `.bs-brainstorm/` folder — with one exception: on the first run it offers to add the `.bs-brainstorm/*` entry to `.gitignore` (after approval, once). At the end it **recommends**, but does not enter the next skill.
 
-**A híd a flow felé (BS18):** a nyers munkafájl **helyi és gitignore-olt** (nyers gondolkodás, nem leadandó) — ami megőrzésre érdemes, az a ciklus `cycle-design-input.md`-jébe desztillálódik, és *az* kerül commitba:
+**The bridge towards the flow (BS18):** the raw working file is **local and gitignored** (raw thinking, not a deliverable) — whatever is worth keeping is distilled into the cycle's `cycle-design-input.md`, and *that* is what gets committed:
 
 ```
-/bs-brainstorm hogyan legyen központi cert kezelés
-        ↓                      .bs-brainstorm/brainstorm-04-central-cert.md   (gitignore-olt)
+/bs-brainstorm how should central cert management work
+        ↓                      .bs-brainstorm/brainstorm-04-central-cert.md   (gitignored)
 /bs-add-cycles brainstorm: 04
-        ↓                      specs/cycle-NN-<name>/cycle-design-input.md    (commitolt)
+        ↓                      specs/cycle-NN-<name>/cycle-design-input.md    (committed)
 /bs-write-spec
 ```
 
-A `01-add-cycles` a `## 6. Javasolt ciklus-vágás` szekciót a roadmap-javaslat kiindulásának veszi, a `## 5. Nyitott kérdések` kipipálatlan tételeit pedig **kérdésként** teszi fel — amit a munkafájl megválaszol, azt nem kérdezi meg újra. **Egy híd, egy irány:** a `02-write-spec` nem a brainstormot olvassa, hanem a `cycle-design-input.md`-t.
+`01-add-cycles` takes the `## 6. Proposed cycle split` section as the starting point of the roadmap proposal, and asks the unticked items of `## 5. Open questions` **as questions** — whatever the working file already answers, it does not ask again. **One bridge, one direction:** `02-write-spec` does not read the brainstorm, it reads `cycle-design-input.md`.
 
-## 2. Installáció
+## 2. Installation
 
-A BerkiSpec keretrendszer beállítása a célprojektben rendkívül egyszerű és automatizált a mellékelt telepítő script segítségével.
+Setting up the BerkiSpec framework in the target project is extremely simple and automated with the help of the bundled installer script.
 
-### Telepítés lépései:
-1. Nyiss meg egy terminált a `berkispec` repository gyökerében.
-2. Futtasd a telepítő scriptet:
+### Installation steps:
+1. Open a terminal in the root of the `berkispec` repository.
+2. Run the installer script:
    * **Linux/macOS:**
      ```bash
      ./install.sh
@@ -145,224 +150,129 @@ A BerkiSpec keretrendszer beállítása a célprojektben rendkívül egyszerű �
      ```powershell
      .\install.ps1
      ```
-3. A script interaktív módon üdvözöl, és bekéri a célprojekted gyökérmappáját.
-   * *Tipp:* Az útvonal beírása közben a **Tab** billentyűvel automatikusan kiegészítheted a mappaneveket, míg a **Tab kétszeri megnyomásával** kilistázhatod az aktuális könyvtár tartalmát.
-   * **Újratelepítéskor a legutóbbi célmappa automatikusan fel van kínálva** — Linux/macOS-en előre kitöltve jelenik meg (Enter = elfogadás, nyilakkal szerkeszthető), Windowson a script kiírja és üres Enterre elfogadja. A telepítő ehhez a repo gyökerében lévő **`history`** fájlt használja (`LAST_PROJECT_PATH`, `LAST_PLATFORM`, `LAST_INSTALL`). A fájl gépfüggő, ezért a `.gitignore` kizárja; ha a benne tárolt mappa időközben megszűnt, a script jelzi és újat kér.
-4. Válaszd ki az általad használt AI agent platformot (1–6).
-5. Válaszd ki a **két nyelvet** — lásd a *Nyelvi beállítások* szekciót lentebb. Mindkettőnél van alapértelmezés, Enterrel elfogadható:
-   * **Promptok nyelve** (amit az ágens *olvas*): `1) English [alapértelmezett]` / `2) Magyar`
-   * **Projekt nyelve** (amit az ágens *ír*): `1) Magyar [alapértelmezett]` / `2) English`
+3. The script greets you interactively and asks for the root folder of your target project.
+   * *Tip:* while typing the path you can auto-complete folder names with the **Tab** key, and **pressing Tab twice** lists the contents of the current directory.
+   * **On reinstall the most recent target folder is offered automatically** — on Linux/macOS it appears pre-filled (Enter = accept, editable with the arrow keys), on Windows the script prints it and accepts it on an empty Enter. For this the installer uses the **`history`** file in the repo root (`LAST_PROJECT_PATH`, `LAST_PLATFORM`, `LAST_INSTALL`). The file is machine-specific, so `.gitignore` excludes it; if the folder stored in it has disappeared in the meantime, the script says so and asks for a new one.
+4. Select the AI agent platform you use (1–6).
+5. Select the **two languages** — see the *Language settings* section below. Both have a default, acceptable with Enter:
+   * **Language of the prompts** (what the agent *reads*): `1) English [default]` / `2) Magyar`
+   * **Language of the project** (what the agent *writes*): `1) Magyar [default]` / `2) English`
 
-**Nem interaktív (scriptelt) telepítés.** Ha **egyetlen** flaget sem adsz meg, a fenti interaktív út fut változatlanul. Flagekkel viszont automatizálható:
+**Non-interactive (scripted) installation.** If you give **no** flag at all, the interactive route above runs unchanged. With flags, however, it can be automated:
 
 ```bash
-./install.sh --platform claude --prompt-lang en --project-lang hu --path ~/projekt
+./install.sh --platform claude --prompt-lang en --project-lang hu --path ~/project
 ```
 
-| Flag (`install.sh`) | PowerShell | Érték | Alapértelmezés |
+| Flag (`install.sh`) | PowerShell | Value | Default |
 |---|---|---|---|
-| `--platform` | `-Platform` | `claude` \| `codex` \| `antigravity` \| `cursor` \| `copilot` | — (kérdezi) |
+| `--platform` | `-Platform` | `claude` \| `codex` \| `antigravity` \| `cursor` \| `copilot` | — (asks) |
 | `--prompt-lang` | `-PromptLang` | `hu` \| `en` | `en` |
 | `--project-lang` | `-ProjectLang` | `hu` \| `en` | `hu` |
-| `--path` | `-Path` | a célprojekt könyvtára | — (kérdezi) |
-| `--force` | `-Force` | ütközésnél felülír | — |
-| `--help` | `-Help` | súgó | — |
+| `--path` | `-Path` | the directory of the target project | — (asks) |
+| `--force` | `-Force` | overwrite on conflict | — |
+| `--help` | `-Help` | help | — |
 
-Részlegesen megadott flagek esetén a megadottakat használja, a többit interaktívan kérdezi. **Ütközésnél `--force` nélkül a nem interaktív mód MEGÁLL** — nem ír felül csendben.
+If flags are given partially, it uses the ones provided and asks for the rest interactively. **On a conflict without `--force` the non-interactive mode STOPS** — it does not overwrite silently.
 
-### Támogatott platformok és ágensek:
-A keretrendszer öt népszerű fejlesztő platformra képes beállítani a környezetet:
-
+### Supported platforms and agents:
+The framework can set up the environment for five popular developer platforms:
 1. **Google Antigravity CLI:**
-   * A projekt gyökerében létrehozza a `.agents/` konfigurációs mappát.
-   * Az ágenseket a `.agents/agents/<név>/agent.json` mappaszerkezetbe, a skilleket pedig a `.agents/skills/bs-<név>/SKILL.md` könyvtárba linkeli be.
+   * Creates the `.agents/` configuration folder in the project root.
+   * Links the agents into the `.agents/agents/<name>/agent.json` folder structure, and the skills into the `.agents/skills/bs-<name>/SKILL.md` directory.
 2. **Claude Code:**
-   * A projekt gyökerében létrehozza a `.claude/` konfigurációs mappát.
-   * Az ágenseket a `.claude/agents/<név>.md` (Markdown) formátumban linkeli be, a skilleket pedig a `.claude/skills/bs-<név>/SKILL.md` alá.
+   * Creates the `.claude/` configuration folder in the project root.
+   * Links the agents in `.claude/agents/<name>.md` (Markdown) format, and the skills under `.claude/skills/bs-<name>/SKILL.md`.
 3. **Cursor (Agent CLI):**
-   * A projekt gyökerében létrehozza a `.cursor/` konfigurációs mappát.
-   * A subagenteket a `.cursor/agents/<név>.md` (Markdown) formátumban linkeli be (a read-only agentek `readonly: true`-t kapnak), a skilleket pedig a `.cursor/skills/bs-<név>/SKILL.md` alá.
+   * Creates the `.cursor/` configuration folder in the project root.
+   * Links the subagents in `.cursor/agents/<name>.md` (Markdown) format (the read-only agents get `readonly: true`), and the skills under `.cursor/skills/bs-<name>/SKILL.md`.
 4. **GitHub Copilot (CLI & IDE):**
-   * A projekt gyökerében létrehozza a `.github/` konfigurációs mappát.
-   * Az ágenseket a `.github/agents/<név>.agent.md` fájlként linkeli be, a skilleket pedig globális utasításokként a `.github/instructions/bs-<név>.instructions.md` fájlba rendezi.
+   * Creates the `.github/` configuration folder in the project root.
+   * Links the agents as `.github/agents/<name>.agent.md` files, and arranges the skills as global instructions in `.github/instructions/bs-<name>.instructions.md`.
 5. **Codex CLI:**
-   * A subagenteket a `.codex/agents/<név>.toml` **TOML** fájlokként hozza létre (natív `model` + `model_reasoning_effort` mezőkkel; a read-only agentek `sandbox_mode = "read-only"`-t kapnak).
-   * A skilleket a `.agents/skills/bs-<név>/SKILL.md` alá helyezi — a Codex a projekt-szintű skilleket innen olvassa.
-   * ⚠️ **Figyelem:** a Codex és az Antigravity **közös** `.agents/skills/` mappát használ, ezért egy projektbe a kettő közül csak az egyik telepíthető. A telepítő figyelmeztet és rákérdez, ha a másik már jelen van.
+   * Creates the subagents as `.codex/agents/<name>.toml` **TOML** files (with native `model` + `model_reasoning_effort` fields; the read-only agents get `sandbox_mode = "read-only"`).
+   * Places the skills under `.agents/skills/bs-<name>/SKILL.md` — Codex reads project-level skills from there.
+   * ⚠️ **Caution:** Codex and Antigravity use a **shared** `.agents/skills/` folder, so only one of the two can be installed into a given project. The installer warns and asks if the other one is already present.
 
-### Nyelvi beállítások — két független tengely
+### Language settings — two independent axes
 
-A keretrendszer **két, egymástól független** nyelvi beállítást ismer. Nem ugyanaz a kettő, és **nem is kell egyezniük**:
+The framework knows **two mutually independent** language settings. They are not the same thing, and they **do not have to match**:
 
-| Beállítás | Mit határoz meg | Alapértelmezés |
+| Setting | What it determines | Default |
 |---|---|---|
-| **Prompt nyelve** | Milyen nyelven vannak az **instrukciók, amiket az ágens olvas** (a `skills-*` / `agents-*` / `shared-*` fa nyelve). A te dokumentumaidat nem érinti. | **English** |
-| **Projekt nyelve** | Milyen nyelven **ír az ágens**: `spec.md`, `plan.md`, `tasks.md`, `conventions.md`, riportok, `docs-generated/` — és amit **neked válaszol** a chatben. | **Magyar** |
+| **Language of the prompts** | The language of the **instructions the agent reads** (the language of the `skills-*` / `agents-*` / `shared-*` tree). It does not affect your documents. | **English** |
+| **Language of the project** | The language the **agent writes in**: `spec.md`, `plan.md`, `tasks.md`, `conventions.md`, reports, `docs-generated/` — and the language it **answers you** in, in the chat. | **Magyar** |
 
-**A négy kombináció:**
+**The four combinations:**
 
-| Prompt | Projekt | Mikor ez a jó |
+| Prompt | Project | When this is the right one |
 |---|---|---|
-| **EN** | **HU** | *Az alapértelmezés.* Magyar csapat, magyar leadandó dokumentáció — de az ágens angol instrukciót kap, ami olcsóbb tokenben és amit a gyengébb/olcsóbb modellek pontosabban követnek. |
-| HU | HU | Ha a prompt-szöveget is magyarul akarod olvasni/karbantartani. |
-| EN | EN | Nemzetközi projekt. |
-| HU | EN | Ritka, de érvényes: magyar karbantartó, angol leadandó. |
+| **EN** | **HU** | *The default.* Hungarian team, Hungarian deliverable documentation — but the agent gets English instructions, which are cheaper in tokens and which weaker/cheaper models follow more accurately. |
+| HU | HU | If you want to read/maintain the prompt text in Hungarian too. |
+| EN | EN | International project. |
+| HU | EN | Rare, but valid: Hungarian maintainer, English deliverable. |
 
-**Mindkettő telepítéskor dől el, és BEDRÓTOZÓDIK a telepített promptokba.** A projektbe **semmilyen nyelvi mező nem kerül** — sem a `conventions.md`-be, sem máshova —, ezért:
+**Both are decided at install time and are WIRED IN to the installed prompts.** **No language field of any kind is written into the project** — neither into `conventions.md` nor anywhere else — therefore:
 
-- utólag **csak újratelepítéssel** változtatható;
-- meglévő projektnél **nincs migrációs teendő**: amíg nem telepítesz újra, minden a régiben marad;
-- a telepítő **záró összefoglalója kiírja mindkét nyelvet** — ez az egyetlen hely, ahol szembesülsz a választásoddal.
+- afterwards it can be changed **only by reinstalling**;
+- for an existing project there is **no migration to do**: until you reinstall, everything stays as it was;
+- the installer's **closing summary prints both languages** — this is the only place where you are confronted with your choice.
 
-> **A fő kockázat: nyelvi átszivárgás.** Angol instrukció + magyar projekt esetén a modell (különösen a gyengébb) hajlamos angol szavakat szivárogtatni a magyar dokumentumba, vagy az egész artefaktumot angolul megírni. Az ez elleni fő fegyver az **`output-language` blokk**: minden skill és minden agent legelejére — közvetlenül a H1 után — bekerül egy blokk, amely **a projekt nyelvén** mondja ki, hogy mit kell azon a nyelven írni (artefaktumok, a felhasználónak szóló mondatok), mi marad angol (azonosítók, fájlnevek, parancsok, szabály-ID-k), és hogy **a keverés javítandó hiba**. A célnyelven megfogalmazott szabály egyszerre utasítás és nyelvi horgony — mérhetően jobban tart, mint egy angolul megfogalmazott „write in Hungarian".
+> **The main risk: language bleed.** With English instructions + a Hungarian project, the model (especially a weaker one) tends to bleed English words into the Hungarian document, or to write the whole artifact in English. The main weapon against this is the **`output-language` block**: at the very beginning of every skill and every agent — right after the H1 — a block is inserted which states, **in the language of the project**, what has to be written in that language (artifacts, sentences addressed to the user), what stays English (identifiers, file names, commands, rule IDs), and that **mixing is a defect to be fixed**. A rule phrased in the target language is at once an instruction and a linguistic anchor — it measurably holds better than a "write in Hungarian" phrased in English.
 
-> **A kapu-scriptek is követik a projekt nyelvét.** A determinisztikus kapuk (riport-kapu, DoD-ellenőrzés, kör-napló, analyze-kapu, TC8) nem hardcode-olt magyar szövegre illesztenek: a telepítő a választott projekt-nyelv szótárát a scriptek mellé írja (`lang-keys.json`), és a scriptek abból veszik a szekciócímeket, mezőneveket és státusz-értékeket. Amit *keresnek* és amit az artefaktumba *írnak*, tehát a projekt nyelvén van. A bemenetük ugyanakkor **nyelvfüggetlen**: mindkét nyelv alakját elfogadják, így egy magyarul indult projekt angol újratelepítés után sem esik ki.
+> **The gate scripts follow the language of the project too.** The deterministic gates (report gate, DoD check, round log, analyze gate, TC8) do not match on hardcoded Hungarian text: the installer writes the dictionary of the chosen project language next to the scripts (`lang-keys.json`), and the scripts take the section titles, field names and status values from it. So what they *search for* and what they *write* into the artifact is in the language of the project. Their input, on the other hand, is **language-independent**: they accept the forms of both languages, so a project that started in Hungarian does not fall out after an English reinstall.
 >
-> **⚠️ Egy maradék `projekt = English` mellett:** a kapu-scriptek **konzol-üzenetei** magyarok (ezek a futtatónak és az ágensnek szólnak, nem kerülnek artefaktumba). A telepítő ezt a választásnál külön jelzi.
+> **⚠️ One remainder with `project = English`:** the **console messages** of the gate scripts are Hungarian (these address the runner and the agent, they never end up in an artifact). The installer flags this separately at the point of choice.
 
-### Hogyan lehet használni?
-A telepítés után az adott platform automatikusan beolvassa a symlinkelt definíciókat:
-* **Google Antigravity CLI / Claude Code / Cursor Agent CLI / Codex CLI:** Indítsd el a CLI-t a célprojekt mappájában (Cursornál az `agent` paranccsal). A chat felületen a `/` (per) karakter leütésével előhívhatod a skillek listáját. Mindegyik skill egységesen a `berkispec - <fázis>: <leírás>` névvel fog megjelenni, így azonnal láthatod az SDD lépések sorrendjét és célját. Kezdéshez hívd meg a `bs-init-project` skillt! (Codexnél a subagenteket a `/agent` paranccsal listázhatod/válthatsz köztük.)
-* **GitHub Copilot:** A Copilot Chat ablakában vagy a Copilot CLI-ben a `@` szimbólummal (pl. `@bs-init-project`) tudod közvetlenül aktiválni a kívánt fázis utasításait.
+### How can it be used?
+After installation the given platform reads the symlinked definitions automatically:
+* **Google Antigravity CLI / Claude Code / Cursor Agent CLI / Codex CLI:** Start the CLI in the folder of the target project (with the `agent` command in the case of Cursor). In the chat interface you can bring up the list of skills by pressing the `/` (slash) character. Every skill appears uniformly under the name `berkispec - <phase>: <description>`, so you can see the order and purpose of the SDD steps immediately. To start, invoke the `bs-init-project` skill! (In Codex you can list/switch between subagents with the `/agent` command.)
+* **GitHub Copilot:** In the Copilot Chat window or in the Copilot CLI you can activate the instructions of the desired phase directly with the `@` symbol (e.g. `@bs-init-project`).
 
 ---
 
 
 ## 3. Quick start
 
-A BerkiSpec egy fegyelmezett, spec-driven development (SDD) keretrendszer AI-ágensekkel való páros programozáshoz.
+BerkiSpec is a disciplined, spec-driven development (SDD) framework for pair programming with AI agents.
 
-### A keretrendszer működési elve:
-* **Ciklusok (Cycles):** A fejlesztést jól körülhatárolt, egyértelmű céllal leírható, könnyen kézben tartható egységekre (ciklusokra) osztjuk. Minden új ciklus saját Git branch-et kap, és a ciklus összes tervezési és naplózási dokumentuma a projekt gyökerében lévő `specs/cycle-NN-<cycle-name>/` mappába kerül.
-* **Fázisok (Phases):** Minden ciklus szigorú fázisokra van bontva, amelyek végigvezetik a folyamatot a követelményektől a megvalósításig és a merge-ig.
+### The operating principle of the framework:
+* **Cycles:** development is divided into well-bounded units (cycles) that can be described with an unambiguous goal and kept easily under control. Every new cycle gets its own Git branch, and all design and logging documents of the cycle go into the `specs/cycle-NN-<cycle-name>/` folder in the project root.
+* **Phases:** every cycle is broken down into strict phases that lead the process from the requirements through to implementation and merge.
 
-### Két fejlesztési út:
-A feladat összetettségétől függően kétféle flow áll rendelkezésre:
-1. **Teljes SDD Flow:** Részletes specifikációt (`spec.md`), technikai tervet (`plan.md`) és feladatlistát (`tasks.md`) készít, valamint automatikus önjavító minőségi hurkokat (analyze, validate, review) futtat.
-2. **Könnyű (Lightweight) Flow:** Kisebb módosításokhoz, konfigurációkhoz vagy egyszerű scriptekhez. Egy lépésben fut le, nincs külön fázisbontása.
+### Two development routes:
+Depending on the complexity of the task, two flows are available:
+1. **Full SDD flow:** produces a detailed specification (`spec.md`), a technical plan (`plan.md`) and a task list (`tasks.md`), and runs automatic self-healing quality loops (analyze, validate, review).
+2. **Lightweight flow:** for smaller changes, configurations or simple scripts. It runs in one step, without a separate phase breakdown.
 
-### Alapvető parancsok (Slash Commands):
-A telepítés után a platform chat felületén a `/` karakter leütésével érheted el a skilleket:
+### Basic commands (slash commands):
+After installation you can reach the skills in the platform's chat interface by pressing the `/` character:
 
-* **`/bs-init-project`**: A projekt legelső inicializálása (létrehozza a `conventions.md` fájlt).
-* **`/bs-add-cycles`**: Új fejlesztési ciklus hozzáadása az ütemtervhez (`roadmap.md`).
-* **`/bs-write-spec`**: Követelmények rögzítése, új ciklus specifikációjának elkészítése (`spec.md` + `spec-questions.md`).
-* **`/bs-write-plan`**: Részletes technikai megvalósítási terv kidolgozása (`plan.md` + `plan-questions.md`).
-* **`/bs-write-tasks`**: A technikai terv lebontása mérhető feladatokra (`tasks.md` + `tasks-questions.md`).
-* **`/bs-analyze`**: Kereszt-fázisos konzisztencia-ellenőrzés és automatikus javítás (spec/plan/tasks egyezés).
-* **`/bs-implement`**: Tényleges kódfejlesztés a feladatlista alapján, a haladás rögzítésével a `tasks.md`-ben.
-* **`/bs-validate`**: Tesztek, lint, build **és kódreview** (reviewer agent) ellenőrzése egyetlen automatikus javító hurokban (sikeres futtatás után 'Kész' státusz).
-* **`/bs-doc-sync`**: Az élő dokumentáció (`docs-generated/`) és README-k szinkronizálása a kódváltozásokkal, valamint a `specs/test-conventions.md` (visszatérő teszt-elvárások és receptek) karbantartása.
-* **`/bs-merge`**: A ciklus branch beolvasztása (lokális squash vagy PR), kötelező felhasználói megerősítéssel. A kódreview már a `/bs-validate`-ben lefutott.
-* **`/bs-cycle-status`**: Ciklusok státuszának ellenőrzése (interaktív TUI vagy parancssori státusz).
-* **`/bs-brainstorm`**: Feltáró ötletelés és közös tervezés **a spec előtt** — perzisztens munkafájllal (`.bs-brainstorm/`), olcsó `researcher` feltárással; a végén átad a `/bs-add-cycles`-nak vagy a `/bs-quick-flow`-nak.
-* **`/bs-quick-flow`**: Az egyszerűsített (lightweight) flow elindítása kis feladatokhoz (spec → task → implementáció).
-* **`/bs-export-doc`**: Verziózott PDF export a markdown doksikból (mermaid ábrákkal együtt) az `export/` mappába — paraméter nélkül az `architecture.md`-ből és a `system-overview.md`-ből.
-* **`/bs-manual-test-plan`**: **Kézi tesztterv** összeállítása a ciklushoz (`manual-test-plan.md`): komponens-indítás, tesztadatok, kézi hívási szekvenciák (`curl` + `.http`), elvárt eredmények és az automata tesztek eredményének helye. Két mód: `Tervezett` (implementáció előtt, a `plan.md` alapján) vagy `As-built` (validálás után, a kódhoz ellenőrizve). Előfeltétele az `analyze-report.md` `PASS` státusza; nem fázis, nem változtat ciklus-státuszt, és bármikor újrafuttatható (a kézi kiegészítéseket megőrzi).
-
----
-
-
-## 4. Mappastruktúra
-
-```
-berkispec/                            # repo gyökér
-├── README.md                         # ez a fájl (a keretrendszer dokumentációja)
-└── prompts/
-    ├── skills-hu/                    # Fázis-skillek (00–09) — a fő ágens futtatja; a mappanév a PROMPT-nyelv (`-hu` / `-en`)
-    │   ├── 00-init-project.md
-    │   ├── 01-add-cycles.md
-    │   ├── 02-write-spec.md
-    │   ├── 03-write-plan.md
-    │   ├── 04-write-tasks.md
-    │   ├── 05-analyze.md             # kereszt-fázisos konzisztencia ellenőrzés
-    │   ├── 06-implement.md
-    │   ├── 07-validate.md
-    │   ├── 08-doc-sync.md            # élő dokumentáció-szinkron (docs-generated/)
-    │   ├── 09-merge.md               # csak beolvasztás — a review a 07-ben fut
-    │   ├── brainstorm.md             # feltáró ötletelés a spec előtt (.bs-brainstorm/ munkafájl) — segédparancs
-    │   ├── quick-flow.md             # egyszerűsített, háromfázisú flow kis feladatokhoz (spec→task→implement) — segédparancs
-    │   ├── cycle-status.md           # ciklusok státuszának ellenőrzése (interaktív TUI vagy közvetlen) — segédparancs
-    │   └── export-doc.md             # verziózott PDF export a markdown doksikból (mermaid ábrákkal) — segédparancs
-    ├── agents-hu/                    # Specialista ágensek (Task tool subagent-ként hívva); a mappanév a PROMPT-nyelv
-    │   ├── reviewer.md               # code review a 07 fázisban (a teljes kör 2. lépése — statikus réteg)
-    │   ├── analyzer.md               # kereszt-fázisos SZEMANTIKAI elemzés (read-only, 1–5. kategória) a 05 fázisban — HÁROM párhuzamos körben, hatókör-paraméterrel (SH1)
-    │   ├── analyzer-exec.md          # VÉGREHAJTHATÓSÁGI elemzés (read-only, 6. kategória) — az analyzerrel párhuzamosan fut (E)
-    │   ├── researcher.md             # kódbázis-/dokumentum-kutatás (00/01/02/03/06 + brainstorm) — legolcsóbb tier
-    │   ├── test-runner.md            # tesztek/Sonar/E2E mechanikus futtatása a 07 fázisban — default tier (szándékosan nem a legolcsóbb, lásd 5.3)
-    │   ├── doc-sync-planner.md       # 08 doc-sync: read-only tervkészítő diagnoszta (doc-sync-plan.md + kész csereszöveg-patch)
-    │   ├── spec-fixer.md             # 05 önjavító hurok: 02 fix-mód belépő (vékony wrapper)
-    │   ├── plan-fixer.md             # 05 önjavító hurok: 03 fix-mód belépő (vékony wrapper)
-    │   ├── tasks-fixer.md            # 05 önjavító hurok: 04 fix-mód belépő (vékony wrapper)
-    │   ├── implement-fixer.md        # 07 önjavító hurok: 06 fix-mód belépő (vékony wrapper)
-    │   ├── review-fixer.md           # 09 önjavító hurok: 06 fix-mód belépő (vékony wrapper)
-    │   └── gemini-agent/             # Antigravity-specifikus agent.json másolatok (per-agent almappa)
-    ├── shared-hu/                    # Skillek ÉS agent-promptok közötti megosztott szövegblokkok (build-time inline); a mappanév a PROMPT-nyelv
-    │   ├── context-check.md          # fázis-indító kontextus-ellenőrzés (friss-e a kontextus, futott-e `/clear`); minden fázis-skill hivatkozza
-    │   ├── python-cmd.md             # platformfüggő Python-hívás jegyzete (`python3` / `python` / `py -3`); a szkriptet hívó skillek hivatkozzák
-    │   ├── git-preflight.md          # közös git-preflight (no-VCS kapu, munkafa-ellenőrzés, branch-nyitó preflight); a telepítő a hivatkozó skillekbe beágyazza
-    │   ├── parallel-cycles.md        # párhuzamos ciklusok (PW1/PW2): a 01–05 tervezési ablak worktree-ben, a 06 előtti kapu; a 01 és a 06 hivatkozza
-    │   ├── input-from-prev.md        # közös fázis-átadás leírás (*-input-from-prev.md, IP1); a 01/02/03/04/07 hivatkozza
-    │   ├── conventions-change.md     # GC1: mikor/hogyan módosíthat egy ciklus a conventions.md-n, és melyik kapu melyik szekciót olvassa; a 03 skill + a 03 minőségi kapuja beemeli
-    │   ├── path-format.md            # útvonal-konvenció (RP1): kód-hivatkozás a repó gyökeréhez, dokumentum-link a fájl könyvtárához relatív; a 02/03/04 minőségi kapuja beemeli
-    │   ├── artifact-voice.md         # közös artefaktum-hang szabály (AV1: skill-szöveg ne szivárogjon a spec/plan/tasks-ba); a 02/03/04 hivatkozza
-    │   ├── phase-commit.md           # közös fázis-záró commit eljárás (PC1: user-jóváhagyás → státuszírás → kötelező commit + ellenőrzés); a 02/03/04/05/07 hivatkozza
-    │   ├── quality-check-{spec,plan,tasks}.md  # a 02/03/04 minőségellenőrzése; a skill ÉS a hozzá tartozó fixer-agent is beemeli (D13)
-    │   ├── fix-mode-{spec,plan,tasks}.md       # a 02/03/04 Fix-mód (analyze-hurok belépő) szekciója; a skill ÉS a {spec,plan,tasks}-fixer agent is beemeli (D13)
-    │   └── questions-tasks.md        # a 04 kérdés-nyilvántartó rendje (tasks-questions.md); a skill és a tasks-fixer is beemeli
-    ├── skills-en/ · agents-en/ · shared-en/   # ugyanaz a három fa ANGOL prompt-nyelven — azonos fájlnevek, azonos szerkezet (teljes szimmetria: NINCS suffix nélküli, kitüntetett fa)
-    ├── lang/                         # PROJEKT-nyelvi tartalom — az egyetlen hely, ahol a két nyelv találkozik
-    │   ├── status-keys.json          # a projekt-nyelvi szekciónevek / mezőnevek / státusz-értékek szótára (`hu` + `en` szelet); ebből oldódnak fel a `<sec:…>` / `<field:…>` / `<status:…>` tokenek build-time
-    │   ├── hu/                       # a magyar projekt-nyelvi blokkok (user-facing mondatok, artefaktum-sablonok) + `descriptions.json` (skill/agent leírók)
-    │   │   └── <skill|agent|shared>.md   # `<!-- ANCHOR:<horgony> -->` szekciókkal; a promptban `<!-- INCLUDE:lang/<fájl>.md#<horgony> -->` marker hivatkozza
-    │   └── en/                       # ugyanez angolul — azonos fájlnevek, azonos horgonyok
-    ├── scripts/                      # automatizációs scriptek (a telepítő minden *.py-t átmásol a célprojektbe)
-    │   ├── install-helper.py         # a telepítő motorja (modell- + effort-hozzárendelés, fájlmásolás, `INCLUDE:shared/…` inline-olás (BD14), `<platform-scripts-mappa>` feloldása (BD15)) — NEM kerül a célprojektbe
-    │   ├── cycle-status.py           # a cycle-status skill futtató scriptje
-    │   ├── ds22-gate-check.py        # a 08-doc-sync DS22 Réteg 1 magkapuja (determinisztikus, LLM nélkül)
-    │   ├── tc8-gate-check.py         # a 08-doc-sync TC8 kapuja a specs/test-conventions.md-re (determinisztikus, 5 check)
-    │   ├── analyze-gate-check.py     # a 05-analyze mechanikus kapuja: plan-`[P-…]` ↔ task-hivatkozás, marker, `⟂`, `DoD-NN`, kötelező táblák, futtatott artefaktumok (A1), plan-horgonyok (A2), artefaktum-hang (A3), a DoD→plan→task lefedettségi lánc (C1–C3), KF1 üres cellák (C4), KO1 koordináta-placeholder/üres cella (C6), task-határon átnyúló shell-változó (C5), a plan `TS-NN` teszt-forgatókönyveinek végrehajthatósága (TS1–TS6), a teszt-cél környezet egyezése (EV1–EV5) + a KÉT GENERÁLT RIPORT-TÁBLA, a `## Leltár` az analyzer-execnek (AG3/AG4) és a `--emit-slices` szeletei a szemantikai köröknek (SH1)
-    │   ├── sync-gemini-agents.py     # a gemini-agent/*/agent.json `Instructions` szekciójának szinkronja az agents/*.md prompttal (`--check` a CI-hez) — NEM kerül a célprojektbe
-    │   ├── lang-parity-check.py      # a kétnyelvű prompt-fák paritás-kapuja (§11): fájllista, INCLUDE-marker ↔ horgony, frontmatter, szabály-ID, szekció-szerkezet, kódblokk, imperatívusz-darabszám, `<sec:…>`/`<field:…>`/`<status:…>` token — `--strict` a záráshoz — NEM kerül a célprojektbe
-    │   ├── manual-test-gate-check.py # a bs-manual-test-plan determinisztikus kapuja (MG1–MG10): fejléc-státusz, kötelező szekciók, placeholder/üres cella, tesztcsoport-teljesség, kétirányú DoD-lefedettség, indító parancsok, gépi parancs-egyezés + as-built eredmény-útvonalak, RP1 útvonal-formátum, `curl` ↔ ```http szimmetria, TG-NN azonosítók
-    │   ├── report-gate-check.py      # a 06/07 TR3 kapuja: a conventions.md `## Teszt-riportolás` szerinti riportok megvannak-e az adott fázis-mappában (--report-subdir test-report/validate/round-NN | test-report/implement); + riport-fázis-lekérdezés (--phases, TR6) és test-report/ layout-őr (TR5/c)
-    │   ├── failure-counter.py        # a 07 hurok futás-naplója + leállási korlátok (per-item 3 egymást követő / 5 összes bukás, 5 egymást követő FAIL-futás) — determinisztikus, `--status` read-only móddal
-    │   ├── run-tests.py              # 07: tesztfuttatás a plan.md gépi táblájából — a nyers teszt-log SOHA nem kerül LLM-kontextusba (TR1/TR2)
-    │   ├── round-log.py              # 07: a validation-report.md `## Kör N` blokkjainak nyitása/zárása + a round-NN mappa (VD9, TR5)
-    │   ├── validate-gate-check.py    # 07: gyűjtőkapu — státuszok, nyitott taskok/DoD-pipák, IP1, nyitott Must Fix, kör-blokk ↔ mappa egyezés
-    │   ├── dod-check.py              # 07: DoD ↔ bizonyíték join a kör JUnit-eredményeivel (DI1/DI2)
-    │   ├── contract-guard.py         # 07: VD3a szerződés-integritás kapu — védett útvonalak + csalás-minták a diffben
-    │   ├── sonar-gate.py             # 07: Sonar Quality Gate az API-ból (QG státusz, bukott feltételek, BLOCKER/CRITICAL/MAJOR) — QG1 külön kilépő kóddal
-    │   ├── worktree-setup.py         # PW4: a párhuzamos ciklushoz nyitott git worktree-be átmásolja a hiányzó agentic eszköz-mappákat (mind az 5 platform: .claude/, .agents/, .codex/, .cursor/, .github/ + .gemini/, AGENTS.md, CLAUDE.md, .mcp.json) — csak a nem-követett és hiányzó fájlokat, meglévőt nem ír felül; ismeretlen eszköz-mappát felismer
-    │   └── export-doc.py             # a bs-export-doc skill futtató scriptje (pandoc + mermaid-filter → verziózott PDF)
-    ├── models.json                   # modell- + effort-konfiguráció platformonként (tier→{model,effort} + per-agent felülírás; lásd 5.3)
-    ├── meta-improve-prompts.md       # prompt-fejlesztési meta-sablon
-    ├── inprove-list.md               # prompt-fejlesztési lista
-    ├── inprove-list2.md              # prompt-fejlesztési lista (folytatás)
-    └── inprove-list3.md              # prompt-fejlesztési lista (ciklus = branch a 01 fázisban)
-```
-
-**A segédszkriptek platformfüggetlenek.** Minden fájlműveletük explicit UTF-8 kódolással fut, és a kimenetüket UTF-8-ra kapcsolják (`errors="replace"`) — enélkül egy örökölt kódlapú Windows-konzolon (cp852/cp1250/cp1252) a `print()` `UnicodeEncodeError`-t dobna, és a szkript **a fájlművelet elvégzése UTÁN** állna le hibás kilépő kóddal; a hívó ágens ilyenkor sikertelennek hinné a naplózást, és megismételné. **Windowson a `python3` gyakran nem létezik** (vagy a Microsoft Store stubja) — ott `python` vagy `py -3` a helyes hívás; a skillek ezt minden szkript-hívásnál jelzik.
-
-> A `specs/`, `docs-generated/` és a forráskód (`src/`, `apps/`, …) **nem** ebben a repóban él — ezeket a keretrendszer akkor hozza létre, amikor egy tényleges projektben használod (lásd a „docs-generated/ — élő dokumentáció" szekciót).
-
-> A `docs-generated/` mappa (a projekt gyökerében, nem a `prompts/` alatt) a `08-doc-sync` fázis által karbantartott **élő, generált dokumentáció** otthona: `system-overview.md` (as-built működésleírás), `architecture.md`, `CHANGELOG.md`, `design-drift.md` és a mappa-index `README.md`. Részletes leírás lent, a „docs-generated/ — élő dokumentáció" szekcióban.
-
-**Skill vs ágens:**
-- **Skill** = recept. A `00–09` fázis-promptok statikus módszertanok: leírják a fő ágensnek a HOGYAN-t. Mindig a felhasználó által indított fő ágens futtatja őket.
-- **Ágens** = specialista végrehajtó. Az `agents/` alatti fájlok dedikált rendszerpromptok, amelyeket egy skill futás közben **Task tool subagent-ként** indít el (kontextus-őrzés végett).
+* **`/bs-init-project`**: the very first initialisation of the project (creates the `conventions.md` file).
+* **`/bs-add-cycles`**: adding a new development cycle to the roadmap (`roadmap.md`).
+* **`/bs-write-spec`**: capturing the requirements, producing the specification of a new cycle (`spec.md` + `spec-questions.md`).
+* **`/bs-write-plan`**: working out the detailed technical implementation plan (`plan.md` + `plan-questions.md`).
+* **`/bs-write-tasks`**: breaking the technical plan down into measurable tasks (`tasks.md` + `tasks-questions.md`).
+* **`/bs-analyze`**: cross-phase consistency check and automatic correction (spec/plan/tasks agreement).
+* **`/bs-implement`**: actual code development based on the task list, recording the progress in `tasks.md`.
+* **`/bs-validate`**: checking tests, lint, build **and code review** (reviewer agent) in a single automatic fixing loop (after a successful run, the 'Done' status).
+* **`/bs-doc-sync`**: synchronising the living documentation (`docs-generated/`) and the READMEs with the code changes, and maintaining `specs/test-conventions.md` (recurring test expectations and recipes).
+* **`/bs-merge`**: merging the cycle branch (local squash or PR), with mandatory user confirmation. The code review has already run in `/bs-validate`.
+* **`/bs-cycle-status`**: checking the status of the cycles (interactive TUI or command-line status).
+* **`/bs-brainstorm`**: exploratory ideation and joint design **before the spec** — with a persistent working file (`.bs-brainstorm/`) and cheap `researcher` exploration; at the end it hands over to `/bs-add-cycles` or `/bs-quick-flow`.
+* **`/bs-quick-flow`**: starting the simplified (lightweight) flow for small tasks (spec → task → implementation).
+* **`/bs-export-doc`**: versioned PDF export from the markdown docs (together with the mermaid diagrams) into the `export/` folder — with no parameter, from `architecture.md` and `system-overview.md`.
+* **`/bs-manual-test-plan`**: assembling the **manual test plan** for the cycle (`manual-test-plan.md`): component startup, test data, manual call sequences (`curl` + `.http`), expected results and the location of the automated test results. Two modes: `Planned` (before implementation, based on `plan.md`) or `As-built` (after validation, verified against the code). Its prerequisite is the `PASS` status of `analyze-report.md`; it is not a phase, it does not change the cycle status, and it can be re-run at any time (it preserves the manual additions).
 
 ---
+## 4. The full berki spec flow (00–09)
 
-## 5. Teljes berki spec flow (00–09)
+This chapter describes the **full, many-phase** development route with its flowcharts — from the project setup (00–01) through the per-cycle loop (02–09) to the merge, including the self-healing loops. The **other route**, the simplified three-phase flow, is detailed further down, in the "Simplified (lightweight) flow" chapter.
+> **Code markers:** in the text, codes of the form `DS`/`VD`/`RD`/`LC`/`SK` + a number (e.g. `DS22`, `RD6`, `LC1`) are the internal rule identifiers of the skill files. Their detailed definition lives in the given skill; here they only serve as searchable anchors, you do not need to resolve them to understand the README.
 
-Ez a fejezet a **teljes, sokfázisú** fejlesztési utat írja le a folyamatábráival — a projekt-setuptól (00–01) a per-ciklus loopon át (02–09) a merge-ig, az önjavító hurkokkal együtt. A **másik utat**, az egyszerűsített háromfázisú flow-t lentebb, az „Egyszerűsített (lightweight) flow" fejezet részletezi.
+### 4.1 High-level summary
 
-> **Kód-jelölések:** a szövegben a `DS`/`VD`/`RD`/`LC`/`SK` + szám alakú kódok (pl. `DS22`, `RD6`, `LC1`) a skill-fájlok belső szabály-azonosítói. A részletes definíciójuk az adott skillben él; itt csak visszakereshető horgonyként szerepelnek, a README megértéséhez nem kell feloldani őket.
-
-### 5.1 Magas szintű összefoglalás
-
-Ez a diagram összefoglalja a 00–09 fázisok egymás utáni folyamatát, a kezdőpontokat, az interjú loopokat és a hibajavítási visszacsatolásokat.
+This diagram summarises the sequential process of phases 00–09, the entry points, the interview loops and the defect-fixing feedback paths.
 
 ```mermaid
 flowchart TD
@@ -375,12 +285,12 @@ flowchart TD
     classDef start fill:#f1f5f9,stroke:#64748b,stroke-width:2px,color:#1e293b;
     classDef userInput fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
 
-    %% Kezdőpontok
-    Start1(["Kezdés üres projektben"]):::start
-    Start2(["Új ciklus hozzáadása"]):::start
-    BS(["<b>/bs-brainstorm</b> (opcionális)<br/>feltáró ötletelés a spec előtt<br/>.bs-brainstorm/brainstorm-NN.md"]):::userInput
+    %% Entry points
+    Start1(["Start in an empty project"]):::start
+    Start2(["Add a new cycle"]):::start
+    BS(["<b>/bs-brainstorm</b> (optional)<br/>exploratory ideation before the spec<br/>.bs-brainstorm/brainstorm-NN.md"]):::userInput
 
-    %% Fázisok dobozai
+    %% Phase boxes
     0["<b>0. Project Setup</b><br/>(create conventions.md)"]:::setup
     1["<b>1. Init Cycles</b><br/>(create roadmap.md, cycle dir)"]:::setup
     2["<b>2. Create Spec</b><br/>(create spec.md)"]:::design
@@ -389,26 +299,26 @@ flowchart TD
     5["<b>5. Analyze</b><br/>(cross-phase consistency check)"]:::design
     6["<b>6. Implement</b><br/>(create code from plan.md and tasks.md)"]:::dev
     7["<b>7. Validate</b><br/>(regression, sonar and E2E check)"]:::dev
-    8["<b>8. Doc-sync</b><br/>(docs-generated/ konzisztencia + objektív kapu)"]:::doc
+    8["<b>8. Doc-sync</b><br/>(docs-generated/ consistency + objective gate)"]:::doc
     9["<b>9. Review and Merge</b><br/>(reviewer agent and merge)"]:::review
-    End([Ciklus befejezve]):::start
+    End([Cycle finished]):::start
 
-    %% Tisztázó interjú csomópontok
-    Int0(["Felhasználói interjú"]):::userInput
-    Int1(["Felhasználói interjúk"]):::userInput
-    Int2(["Felhasználói interjúk"]):::userInput
-    Int3(["Felhasználói interjú"]):::userInput
+    %% Clarifying interview nodes
+    Int0(["User interview"]):::userInput
+    Int1(["User interviews"]):::userInput
+    Int2(["User interviews"]):::userInput
+    Int3(["User interview"]):::userInput
 
-    %% Kezdő kapcsolatok
+    %% Starting connections
     Start1 --> 0
     Start2 --> 1
 
-    %% Opcionális előszoba: a brainstorm nem fázis — a munkafájlból desztillált
-    %% cycle-design-input.md-n keresztül ad bemenetet a 00/01 fázisnak (BS18).
-    BS -. "még nincs conventions.md" .-> 0
+    %% Optional antechamber: the brainstorm is not a phase — it feeds phase 00/01
+    %% through the cycle-design-input.md distilled from the working file (BS18).
+    BS -. "no conventions.md yet" .-> 0
     BS -. "brainstorm: NN → cycle-design-input.md" .-> 1
 
-    %% Fázisok közötti átmenetek és visszacsatolások
+    %% Transitions and feedback paths between the phases
     0 --> 1
     0 <--> Int0
 
@@ -423,44 +333,43 @@ flowchart TD
 
     4 --> 5
 
-    %% Analyze önjavító hurok (05):
-    %% FAIL esetén az orchestrátor a legkorábbi érintett fázis (02/03/04) fix-módját
-    %% indítja (fixer-subagentek), majd a meglévő 2→3→4→5 forward úton re-deriválás
-    %% (02→03→04) → újra-analyze, max X=3-ig.
-    5 -. "FAIL → spec-fixer (02 fix-mód)" .-> 2
-    5 -. "FAIL → plan-fixer (03 fix-mód)" .-> 3
-    5 -. "FAIL → tasks-fixer (04 fix-mód)" .-> 4
-    5 <--> Int5(["Felhasználói interjú<br/>(fixer nyitott kérdése → válasz → folytatás)"]):::userInput
-    5 -- "max X elérve PASS nélkül → megáll + kérdez" --> StopAnalyze(["Hurok feladva — humán döntés"]):::userInput
+    %% The analyze self-healing loop (05):
+    %% on FAIL the orchestrator starts the fix mode of the earliest affected phase
+    %% (02/03/04) (fixer subagents), then re-derivation along the existing 2→3→4→5
+    %% forward path (02→03→04) → re-analyze, up to max X=3.
+    5 -. "FAIL → spec-fixer (02 fix mode)" .-> 2
+    5 -. "FAIL → plan-fixer (03 fix mode)" .-> 3
+    5 -. "FAIL → tasks-fixer (04 fix mode)" .-> 4
+    5 <--> Int5(["User interview<br/>(open question of a fixer → answer → continue)"]):::userInput
+    5 -- "max X reached without PASS → stops + asks" --> StopAnalyze(["Loop abandoned — human decision"]):::userInput
     5 -- "PASS" --> 6
 
     6 --> 7
 
-    %% Validate önjavító hurok (07) — tesztek ÉS kódreview egy hurokban (RV1):
-    %% FAIL esetén az orchestrátor (07) az implement-fixer vagy a review-fixer
-    %% subagentet (06 fix-mód) indítja → újra-validálás, amíg PASS — három leállási
-    %% korláttal; tervezési hiba esetén felfelé eszkalál 03/02-re (VD5).
-    7 -. "FAIL (teszt/Sonar/DoD vagy Must Fix)<br/>→ implement-fixer / review-fixer → re-validate" .-> 6
-    7 <--> Int7(["Felhasználói interjú<br/>(3-próba STOP / eszkaláció)"]):::userInput
-    7 -- "tervezési hiba → eszkaláció 03/02-re" --> StopValidateEsc(["Tervezési fázis (03/02) felülvizsgálat"]):::userInput
-    7 -- "leállási korlát betelt PASS nélkül → megáll + kérdez" --> StopValidate(["Hurok megáll — humán döntés"]):::userInput
+    %% The validate self-healing loop (07) — tests AND code review in one loop (RV1):
+    %% on FAIL the orchestrator (07) starts the implement-fixer or the review-fixer
+    %% subagent (06 fix mode) → re-validation until PASS — with three stopping
+    %% limits; on a design defect it escalates upwards to 03/02 (VD5).
+    7 -. "FAIL (test/Sonar/DoD or Must Fix)<br/>→ implement-fixer / review-fixer → re-validate" .-> 6
+    7 <--> Int7(["User interview<br/>(3-attempt STOP / escalation)"]):::userInput
+    7 -- "design defect → escalation to 03/02" --> StopValidateEsc(["Design phase (03/02) review"]):::userInput
+    7 -- "stopping limit exhausted without PASS → stops + asks" --> StopValidate(["Loop stops — human decision"]):::userInput
     7 -- "PASS" --> 8
 
-    %% Doc-sync (08): terv (doc-sync-planner) → mechanikus végrehajtás → objektív kapu (DS22).
-    %% NEM önjavító subagent-hurok; kapu-bukásnál ember-vezérelt javítás (doc-sync-questions.md).
-    8 <--> Int8d(["Felhasználói interjú<br/>(kapu-bukás / döntési pont → doc-sync-questions.md)"]):::userInput
-    8 -- "docs-generated/ konzisztens (objektív kapu zöld)" --> 9
+    %% Doc-sync (08): plan (doc-sync-planner) → mechanical execution → objective gate (DS22).
+    %% NOT a self-healing subagent loop; on a gate failure, human-driven correction (doc-sync-questions.md).
+    8 <--> Int8d(["User interview<br/>(gate failure / decision point → doc-sync-questions.md)"]):::userInput
+    8 -- "docs-generated/ consistent (objective gate green)" --> 9
 
-    %% Merge (09): nincs hurok és nincs subagent — a review már a 07-ben lefutott.
-    %% Ha a 08 óta változott kód, előbb újra-doc-sync (DS23.2), majd KÉZI megerősítésű merge (RD8).
-    9 -. "változott kód a 08 óta → újra-doc-sync (DS23.2)" .-> 8
-    9 -. "kódváltozás a hurokban → újra 08-doc-sync" .-> 8
-    9 -- "tiszta review + zöld validálás → merge (kézi megerősítés, RD8)" --> End
+    %% Merge (09): no loop and no subagent — the review has already run in 07.
+    %% If code changed since 08, doc-sync runs again first (DS23.2), then a MANUALLY confirmed merge (RD8).
+    9 -. "code changed since 08 → doc-sync again (DS23.2)" .-> 8
+    9 -. "code change in the loop → 08-doc-sync again" .-> 8
+    9 -- "clean review + green validation → merge (manual confirmation, RD8)" --> End
 ```
 
-### 5.2 Részletes folyamat
-
-Az alábbi részletes ábra bemutatja az egyes fázisok közötti pontos átmeneteket, a bemeneti/kimeneti fájlokat, a felhasználói interakciós pontokat (User Input), valamint a hibák esetén fellépő visszacsatolási loopokat.
+### 4.2 The detailed process
+The detailed diagram below shows the exact transitions between the individual phases, the input/output files, the points of user interaction (User Input), and the feedback loops that kick in when something fails.
 
 ```mermaid
 flowchart TD
@@ -472,63 +381,63 @@ flowchart TD
     classDef doc fill:#f3e8ff,stroke:#8b5cf6,stroke-width:2px,color:#1e293b;
     classDef userInput fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
 
-    subgraph Setup ["<b>⚙️ PROJEKT SETUP (EGYSZER)</b>"]
-        P00["00 — Projekt inicializálás"]:::setup
-        P00_Loop{"Vannak még kérdések?"}:::decision
+    subgraph Setup ["<b>⚙️ PROJECT SETUP (ONCE)</b>"]
+        P00["00 — Project initialisation"]:::setup
+        P00_Loop{"Any questions left?"}:::decision
         DocConv["conventions.md"]:::doc
-        In00(["User Input: Projekt célok & válaszok"]):::userInput
+        In00(["User Input: project goals & answers"]):::userInput
 
-        P01["01 — Ciklusok kezelése"]:::setup
-        P01_Loop{"Vannak még nyitott kérdések?"}:::decision
-        DocRoadmap["specs/roadmap.md (Státusz: Kész)"]:::doc
-        In01(["User Input: HLD/LLD vagy leírás"]):::userInput
+        P01["01 — Managing cycles"]:::setup
+        P01_Loop{"Any open questions left?"}:::decision
+        DocRoadmap["specs/roadmap.md (Status: Done)"]:::doc
+        In01(["User Input: HLD/LLD or description"]):::userInput
     end
 
-    subgraph Design ["<b>📐 TERVEZÉSI FÁZIS (CIKLUSONKÉNT)</b>"]
-        P02["02 — Spec írás"]:::design
-        P02_Loop{"Vannak még kérdések? (spec-questions.md)"}:::decision
-        DocSpec["specs/cycle-NN-*/spec.md (Státusz: Tervezésre kész)"]:::doc
-        In02(["User Input: Ciklus választás & spec válaszok"]):::userInput
+    subgraph Design ["<b>📐 DESIGN PHASE (PER CYCLE)</b>"]
+        P02["02 — Writing the spec"]:::design
+        P02_Loop{"Any questions left? (spec-questions.md)"}:::decision
+        DocSpec["specs/cycle-NN-*/spec.md (Status: Ready for planning)"]:::doc
+        In02(["User Input: cycle selection & spec answers"]):::userInput
 
-        P03["03 — Plan írás"]:::design
-        P03_Loop{"Vannak még kérdések? (plan-questions.md)"}:::decision
-        DocPlan["specs/cycle-NN-*/plan.md (Státusz: Task írásra kész)"]:::doc
-        In03(["User Input: Tervezési válaszok"]):::userInput
+        P03["03 — Writing the plan"]:::design
+        P03_Loop{"Any questions left? (plan-questions.md)"}:::decision
+        DocPlan["specs/cycle-NN-*/plan.md (Status: Ready for tasks)"]:::doc
+        In03(["User Input: design answers"]):::userInput
 
-        P04["04 — Tasks írás"]:::design
-        DocTasks["specs/cycle-NN-*/tasks.md (Státusz: Implementálásra kész)"]:::doc
+        P04["04 — Writing the tasks"]:::design
+        DocTasks["specs/cycle-NN-*/tasks.md (Status: Ready for implementation)"]:::doc
 
         P05["05 — Analyze"]:::design
-        P05_Check{"Konzisztens? (analyze-report.md)"}:::decision
+        P05_Check{"Consistent? (analyze-report.md)"}:::decision
         DocAnalyze["specs/cycle-NN-*/analyze/analyze-report.md (PASS/FAIL)"]:::doc
     end
 
-    subgraph Development ["<b>💻 IMPLEMENTÁCIÓ & ELLENŐRZÉS (ITERATÍV)</b>"]
-        P06["06 — Implementálás"]:::dev
-        P06_Loop["Kód fejlesztése + tasks.md haladás rögzítése"]:::dev
-        DocTasksReady["specs/cycle-NN-*/tasks.md (Státusz: Validálásra kész)"]:::doc
-        In06(["User Input: Ciklus implementációs indítása"]):::userInput
+    subgraph Development ["<b>💻 IMPLEMENTATION & VERIFICATION (ITERATIVE)</b>"]
+        P06["06 — Implementation"]:::dev
+        P06_Loop["Developing the code + recording progress in tasks.md"]:::dev
+        DocTasksReady["specs/cycle-NN-*/tasks.md (Status: Ready for validation)"]:::doc
+        In06(["User Input: starting the implementation of the cycle"]):::userInput
 
-        P07["07 — Validálás és kódreview"]:::dev
-        P07_Run{"Tesztek & SonarQube futtatása<br/>(test-runner subagent)"}:::decision
-        P07_Review{"Zöld tesztek → kódreview<br/>(reviewer subagent, RV1)"}:::decision
-        DocReport["specs/cycle-NN-*/test-report/<br/>validation-report.md + code-review.md<br/>+ validate/round-NN/ (riportok, sonar)"]:::doc
-        P07_Check{"Sikeres? (PASS)<br/>zöld tesztek + tiszta review"}:::decision
+        P07["07 — Validation and code review"]:::dev
+        P07_Run{"Running the tests & SonarQube<br/>(test-runner subagent)"}:::decision
+        P07_Review{"Green tests → code review<br/>(reviewer subagent, RV1)"}:::decision
+        DocReport["specs/cycle-NN-*/test-report/<br/>validation-report.md + code-review.md<br/>+ validate/round-NN/ (reports, sonar)"]:::doc
+        P07_Check{"Successful? (PASS)<br/>green tests + clean review"}:::decision
 
         P08["08 — Doc-sync"]:::dev
-        P08_Plan["doc-sync-planner subagent<br/>→ doc-sync-plan.md (per-fájl terv<br/>+ kész csereszöveg-patch)"]:::doc
+        P08_Plan["doc-sync-planner subagent<br/>→ doc-sync-plan.md (per-file plan<br/>+ finished replacement-text patch)"]:::doc
         DocGen["docs-generated/ (system-overview, architecture, CHANGELOG, design-drift, README)"]:::doc
-        P08_Gate{"Objektív konzisztencia-kapu zöld?<br/>(DS22 — ds22-gate-check.py<br/>+ TC8 — tc8-gate-check.py)"}:::decision
+        P08_Gate{"Objective consistency gate green?<br/>(DS22 — ds22-gate-check.py<br/>+ TC8 — tc8-gate-check.py)"}:::decision
 
         P09["09 — Merge"]:::dev
-        P09_DocCheck{"Változott kód a 08 óta?"}:::decision
+        P09_DocCheck{"Code changed since 08?"}:::decision
 
-        Merge["Merge (lokális squash vagy PR, a conventions.md Merge stratégiája szerint)"]:::setup
-        In08(["User Input: Merge megerősítés"]):::userInput
+        Merge["Merge (local squash or PR, per the Merge strategy of conventions.md)"]:::setup
+        In08(["User Input: merge confirmation"]):::userInput
     end
 
     %% Connections
-    Start([Kezdés]) --> P00
+    Start([Start]) --> P00
 
     %% User Inputs
     In00 --> P00
@@ -539,23 +448,23 @@ flowchart TD
     In08 --> Merge
 
     P00 --> P00_Loop
-    P00_Loop -- "Igen" --> P00
-    P00_Loop -- "Nem (Lezárva)" --> DocConv
+    P00_Loop -- "Yes" --> P00
+    P00_Loop -- "No (Closed)" --> DocConv
     DocConv --> P01
 
     P01 --> P01_Loop
-    P01_Loop -- "Igen" --> P01
-    P01_Loop -- "Nem (Kész)" --> DocRoadmap
+    P01_Loop -- "Yes" --> P01
+    P01_Loop -- "No (Done)" --> DocRoadmap
 
     DocRoadmap --> P02
     P02 --> P02_Loop
-    P02_Loop -- "Igen" --> P02
-    P02_Loop -- "Nem" --> DocSpec
+    P02_Loop -- "Yes" --> P02
+    P02_Loop -- "No" --> DocSpec
 
     DocSpec --> P03
     P03 --> P03_Loop
-    P03_Loop -- "Igen" --> P03
-    P03_Loop -- "Nem" --> DocPlan
+    P03_Loop -- "Yes" --> P03
+    P03_Loop -- "No" --> DocPlan
 
     DocPlan --> P04
     P04 --> DocTasks
@@ -564,139 +473,137 @@ flowchart TD
     P05 --> DocAnalyze
     DocAnalyze --> P05_Check
 
-    %% Analyze önjavító hurok (05)
-    P05_Check -- "FAIL" --> P05_Fixer["fixer-subagent<br/>(02/03/04 fix-mód, [analyze-loop])"]:::design
-    P05_Fixer -- "fixer nyitott kérdést gyűjt<br/>(*-questions.md)" --> P05_Q(["User Input: FÁZIS/Knn válasz<br/>(orchestrátor kérdezi)"]):::userInput
+    %% The analyze self-healing loop (05)
+    P05_Check -- "FAIL" --> P05_Fixer["fixer subagent<br/>(02/03/04 fix mode, [analyze-loop])"]:::design
+    P05_Fixer -- "the fixer collects open questions<br/>(*-questions.md)" --> P05_Q(["User Input: PHASE/Knn answer<br/>(asked by the orchestrator)"]):::userInput
     P05_Q --> P05_Fixer
-    P05_Fixer -- "downstream re-deriválás<br/>02→03→04 (reconciliation)" --> P05
-    P05_Check -- "max X=3 elérve PASS nélkül" --> P05_Stop["Hurok feladva → analyze-report FAIL<br/>(marker marad) + humán döntés"]:::doc
-    P05_Check -- "PASS (marker le, 1 commit)" --> P06
+    P05_Fixer -- "downstream re-derivation<br/>02→03→04 (reconciliation)" --> P05
+    P05_Check -- "max X=3 reached without PASS" --> P05_Stop["Loop abandoned → analyze-report FAIL<br/>(the marker stays) + human decision"]:::doc
+    P05_Check -- "PASS (marker removed, 1 commit)" --> P06
 
     P06 --> P06_Loop
     P06_Loop --> DocTasksReady
 
     DocTasksReady --> P07
     P07 --> P07_Run
-    P07_Run -- "zöld (teljes kör 1-3. lépés)" --> P07_Review
-    P07_Run -. "bukott teszt / Sonar / DoD<br/>(a review nem is fut)" .-> DocReport
+    P07_Run -- "green (steps 1-3 of the full round)" --> P07_Review
+    P07_Run -. "failed test / Sonar / DoD<br/>(the review does not even run)" .-> DocReport
     P07_Review --> DocReport
     DocReport --> P07_Check
 
-    %% Validate önjavító hurok (07) — tesztek ÉS review egy hurokban
-    P07_Check -- "FAIL: teszt / Sonar / DoD" --> P07_Fixer["implement-fixer subagent<br/>(06 fix-mód, [validate-loop])<br/>## Validációs javítások"]:::dev
-    P07_Check -- "FAIL: Must Fix finding (MF-NN)" --> P07_RFixer["review-fixer subagent<br/>(06 fix-mód, [validate-loop])<br/>## Review javítások"]:::dev
-    P07_Fixer -- "javítás kész → könnyű kör,<br/>majd teljes megerősítő kör" --> P07
-    P07_RFixer -- "javítás kész → könnyű kör,<br/>majd teljes megerősítő kör + re-review" --> P07
-    P07_Fixer -. "eszkalációs jelzés (VD5)" .-> P07_Esc
-    P07_RFixer -. "eszkalációs jelzés (VD5)" .-> P07_Esc
-    P07_Check -- "3-próba / 5 összes / 5 FAIL-futás<br/>megrekedt kód-bug" --> P07_Stop["Hurok megáll → STOP + humán<br/>([validate-loop] marker + javító-szekciók maradnak)"]:::doc
-    P07_Check -- "tervezési hiba (VD5):<br/>csak teszt/DoD/finding-módosítással lenne zöld" --> P07_Esc["Eszkaláció: státusz-visszafordítás<br/>03/02-re → tervezési fázis"]:::doc
+    %% The validate self-healing loop (07) — tests AND review in one loop
+    P07_Check -- "FAIL: test / Sonar / DoD" --> P07_Fixer["implement-fixer subagent<br/>(06 fix mode, [validate-loop])<br/>## Validation fixes"]:::dev
+    P07_Check -- "FAIL: Must Fix finding (MF-NN)" --> P07_RFixer["review-fixer subagent<br/>(06 fix mode, [validate-loop])<br/>## Review fixes"]:::dev
+    P07_Fixer -- "fix done → light round,<br/>then a full confirming round" --> P07
+    P07_RFixer -- "fix done → light round,<br/>then a full confirming round + re-review" --> P07
+    P07_Fixer -. "escalation signal (VD5)" .-> P07_Esc
+    P07_RFixer -. "escalation signal (VD5)" .-> P07_Esc
+    P07_Check -- "3 attempts / 5 total / 5 FAIL runs<br/>stuck code bug" --> P07_Stop["Loop stops → STOP + human<br/>(the [validate-loop] marker + fix sections stay)"]:::doc
+    P07_Check -- "design defect (VD5):<br/>it would only be green by changing a test/DoD/finding" --> P07_Esc["Escalation: status rollback<br/>to 03/02 → design phase"]:::doc
     P07_Esc --> P03
 
     %% Validation Pass
-    P07_Check -- "PASS (Igen)" --> DocStatusKesz["spec.md, plan.md, tasks.md státusza: Kész"]:::doc
+    P07_Check -- "PASS (Yes)" --> DocStatusKesz["status of spec.md, plan.md, tasks.md: Done"]:::doc
     DocStatusKesz --> P08
 
-    %% Doc-sync (08): terv → mechanikus végrehajtás → objektív kapu (NEM önjavító subagent-hurok)
+    %% Doc-sync (08): plan → mechanical execution → objective gate (NOT a self-healing subagent loop)
     P08 --> P08_Plan
     P08_Plan --> DocGen
     DocGen --> P08_Gate
-    P08_Gate -. "kapu-bukás / döntési pont → doc-sync-questions.md<br/>(ember-vezérelt javítás, DS10)" .-> P08DS_Q(["User Input: doc-sync kérdés / javítás"]):::userInput
+    P08_Gate -. "gate failure / decision point → doc-sync-questions.md<br/>(human-driven correction, DS10)" .-> P08DS_Q(["User Input: doc-sync question / correction"]):::userInput
     P08DS_Q --> P08_Plan
-    P08_Gate -- "kapu zöld → docs-generated/ konzisztens" --> P09
+    P08_Gate -- "gate green → docs-generated/ consistent" --> P09
 
-    %% Merge (09) — nincs hurok, nincs subagent; a review már a 07-ben lefutott
+    %% Merge (09) — no loop, no subagent; the review has already run in 07
     P09 --> P09_DocCheck
-    P09_DocCheck -. "Igen → merge előtt újra-doc-sync (DS23.2)" .-> P08
-    P09_DocCheck -- "Nem → merge" --> Merge["Merge (kézi megerősítés, RD8)"]
-    Merge --> End([Ciklus befejezve])
+    P09_DocCheck -. "Yes → doc-sync again before the merge (DS23.2)" .-> P08
+    P09_DocCheck -- "No → merge" --> Merge["Merge (manual confirmation, RD8)"]
+    Merge --> End([Cycle finished])
 ```
+### 4.3 Automatic selection of models and effort levels
 
-### 5.3 Modellek és effort-szintek automatikus választása
+> **Principle: maximum token saving.** Every step runs on the **cheapest agent sufficient for it**; we spend the expensive model and deep reasoning only where it is indispensable. Quality does not come from the strength of the model, but from the **strict contracts** (mandatory checklists, "summary only", deterministic scripts).
 
-> **Elv: maximális token-megtakarítás.** Minden lépés a hozzá **elégséges legolcsóbb ágensen** fut; a drága modellt és a mély reasoningot csak ott költjük, ahol nélkülözhetetlen. A minőséget nem a modell ereje adja, hanem a **szigorú kontraktusok** (kötelező ellenőrzőlisták, „csak összefoglaló", determinisztikus scriptek).
+The tuning happens on **two independent axes**:
+- **Model** — *which* model runs (tier: `deep_reasoning_agent` / `default` / `research_agent`).
+- **Effort** — *how many* reasoning/thinking tokens it burns (`high` / `medium` / `low`).
 
-A hangolás **két független tengelyen** történik:
-- **Modell** — *melyik* modell fut (tier: `deep_reasoning_agent` / `default` / `research_agent`).
-- **Effort** — *mennyi* reasoning/thinking-tokent éget (`high` / `medium` / `low`).
+The two **do not coincide**: e.g. the fixers run on the `default` **model**, but at **`low` effort**, because they receive a precise, pre-identified defect list — they do not have to discover the problem.
 
-A kettő **nem esik egybe**: pl. a fixerek a `default` **modellen** futnak, de **`low` efforton**, mert pontos, előre azonosított hibalistát kapnak — nem nekik kell felfedezni a problémát.
+**Model tier — who gets what:**
 
-**Modell-tier — ki mit kap:**
-
-| Tier (`models.json` kulcs) | Ki kapja | Claude / Antigravity / Copilot / Cursor / Codex | Miért ez a tier |
+| Tier (`models.json` key) | Who gets it | Claude / Antigravity / Copilot / Cursor / Codex | Why this tier |
 |---|---|---|---|
-| `deep_reasoning_agent` (legdrágább) | **kizárólag** `analyzer` (05) — iterációnként **három párhuzamos kör**, körönként szeletelt bemenettel (SH1) | `claude-opus-4-8` / `pro` (tier) / `Claude Opus 4.8` / `claude-opus-5` / `gpt-5.6-sol` | Kereszt-fázisos konzisztencia-**diagnózis** (spec/plan/tasks/conventions) — a legmélyebb reasoning; egy itt vétett hiba a legdrágább downstream (rossz diagnózisra rossz kód épül). |
-| `default` | **minden más:** orchestrátor-skillek (05, 07…), a 4 fixer (`spec`/`plan`/`tasks`/`implement`-fixer), `reviewer`, `review-fixer`, `doc-sync-planner`, `test-runner` | `claude-sonnet-5` / `flash` (tier) / `Claude Sonnet 5` / `claude-sonnet-5` / `gpt-5.6-luna` | A fixerek **kész, pontos hibalistát** kapnak (megoldás/eszkaláció, nem felfedezés); az orchestrátorok bookkeeping-et végeznek (marker, számláló, routing) a subagent **kész** jelentése alapján — nem diagnózis. |
-| `research_agent` (legolcsóbb) | `researcher` (00/01/02/03/06 + `bs-brainstorm`), `cycle-status` skill | `claude-haiku-4-5-20251001` / `flash` (tier) / `Claude Haiku 4.5` / `claude-sonnet-5` (low) / `gpt-5.4-mini` | Tiszta grep/glob/read fan-out, ill. determinisztikus script-futtatás — **nulla tervezési ítélet**; a „csak összefoglaló, soha nyers fájltartalom" kontraktus véd. Antigravityn nincs olcsóbb tier a `flash`-nél, ezért ott a `default` tierrel esik egybe; Cursorban nincs Haiku, ott a `default` Sonnet 5 fut `low` efforton. |
+| `deep_reasoning_agent` (most expensive) | **exclusively** the `analyzer` (05) — **three parallel rounds** per iteration, each with a sliced input (SH1) | `claude-opus-4-8` / `pro` (tier) / `Claude Opus 4.8` / `claude-opus-5` / `gpt-5.6-sol` | Cross-phase consistency **diagnosis** (spec/plan/tasks/conventions) — the deepest reasoning; a mistake made here is the most expensive downstream (bad code is built on a bad diagnosis). |
+| `default` | **everything else:** orchestrator skills (05, 07…), the 4 fixers (`spec`/`plan`/`tasks`/`implement`-fixer), `reviewer`, `review-fixer`, `doc-sync-planner`, `test-runner` | `claude-sonnet-5` / `flash` (tier) / `Claude Sonnet 5` / `claude-sonnet-5` / `gpt-5.6-luna` | The fixers receive a **finished, precise defect list** (solution/escalation, not discovery); the orchestrators do bookkeeping (marker, counter, routing) based on the **finished** report of the subagent — not diagnosis. |
+| `research_agent` (cheapest) | `researcher` (00/01/02/03/06 + `bs-brainstorm`), the `cycle-status` skill | `claude-haiku-4-5-20251001` / `flash` (tier) / `Claude Haiku 4.5` / `claude-sonnet-5` (low) / `gpt-5.4-mini` | Pure grep/glob/read fan-out, or deterministic script execution — **zero design judgement**; the "summary only, never raw file content" contract protects it. On Antigravity there is no tier cheaper than `flash`, so there it coincides with the `default` tier; in Cursor there is no Haiku, so there the `default` Sonnet 5 runs at `low` effort. |
 
-**Effort-leosztás — mennyi reasoning:**
+**Effort allocation — how much reasoning:**
 
-| Effort | Ki kapja | Miért |
+| Effort | Who gets it | Why |
 |---|---|---|
-| `high` (default effort) | `analyzer`, és minden nem-felülírt agent | Nyílt végű felfedezés/diagnózis, ahol a mély reasoning fizet. Ez a **biztonságos alapértelmezés** (a `models.json` `default` effortja). |
-| `medium` | `reviewer`, `doc-sync-planner` | Ítéletet igényel, de **kötött szempontlista** mentén (nem nyílt felfedezés). |
-| `low` | a 4 fixer + `review-fixer`, `test-runner`, `researcher`, `cycle-status` | Pontos hibalistát célzottan javító, ill. tisztán mechanikus munka — a reasoning-mélység itt nem fizet, csak tokent éget. |
+| `high` (default effort) | `analyzer`, and every non-overridden agent | Open-ended discovery/diagnosis, where deep reasoning pays. This is the **safe default** (the `default` effort of `models.json`). |
+| `medium` | `reviewer`, `doc-sync-planner` | Requires judgement, but along a **fixed list of criteria** (not open-ended discovery). |
+| `low` | the 4 fixers + `review-fixer`, `test-runner`, `researcher`, `cycle-status` | Work that fixes a precise defect list in a targeted way, or is purely mechanical — reasoning depth does not pay here, it only burns tokens. |
 
-**Egy szándékos kivétel:** a `test-runner` mechanikus (tesztek/Sonar/E2E futtatása), mégis `default` **modellen** (nem a legolcsóbbon) fut — a több lépéses Bash-orchesztráció (portütközés, config-visszaállítás) és a projektenként eltérő teszt-/Sonar-kimenet megbízható, **konzisztens tesztnevű** összegzése kritikus: egy elgépelt név csendben elronthatná a 07-hurok per-item 3-próba számlálóját (VD4). (Az effortja viszont `low` — a pontosság formakövetés, nem reasoning-mélység kérdése.)
+**One deliberate exception:** the `test-runner` is mechanical (running tests/Sonar/E2E), yet it runs on the `default` **model** (not the cheapest) — the multi-step Bash orchestration (port collision, config restoration) and the reliable summarisation of test/Sonar output that differs per project **with consistent test names** is critical: a mistyped name could silently corrupt the per-item 3-attempt counter of the 07 loop (VD4). (Its effort, however, is `low` — accuracy here is a matter of following a form, not of reasoning depth.)
 
-**Konfiguráció és telepítés:**
-- **Forrás:** [`prompts/models.json`](prompts/models.json) — platformonként (`claude` / `antigravity` / `copilot` / `cursor` / `codex`) a 3 tier `{model, effort}` objektumként, plusz a defaulttól eltérő agentek **saját nevű sorként** (csak az `effort` mezővel; a modelljük a `default` tierből jön). Az `install-helper.py` `AGENT_MODEL_KEYS` szótára rendeli az `analyzer`/`researcher`/`cycle-status` stemeket a tierekhez (az `analyzer-exec` szándékosan nincs benne: a kapu leltára készen adja neki a jelölteket, tehát `default` tieren fut); ami nincs sem itt, sem saját sorként a `models.json`-ban, `default` modellt és `default` (=`high`) effortot kap.
-- **Beírás telepítéskor** (`./install.sh`): Antigravity → `agent.json` `"model"` kulcs, **tier-értékkel** (`pro` / `flash` / `inherit`); Claude Code / Copilot → az agent-fájl YAML frontmatter `model` + `effort` mezője; Cursor → az agent-fájl YAML frontmatter `model` mezője, **modell-azonosítóval és zárójeles paraméterrel**: `model: claude-opus-5[effort=high]` (a Cursor nem ismer külön `effort:` mezőt); Codex → a `.codex/agents/<név>.toml` `model` + `model_reasoning_effort` kulcsa (+ read-only agenteknél `sandbox_mode = "read-only"`).
-- **A skillek** (orchestrátor fő ágensek, nem subagentek) **sem `model`-t, sem `effort`-ot nem kapnak** — egyetlen platformon sem. A skill-szintű `model` ugyanis **nem része az Agent Skills alap-szabványnak** (az csak `name`/`description`/`license`/`compatibility`/`metadata`/`allowed-tools`), hanem Claude Code-kiterjesztés, amit a célplatformokon a modellváltás **nem, vagy nem megbízhatóan** követ:
-  - **Codex:** a SKILL.md csak `name` + `description`-t ismer → egy `model` inert.
-  - **Copilot:** az `.instructions.md` nem ismer `model` mezőt (az csak *prompt*-fájlnál van) → inert.
-  - **Antigravity:** a `model` az *agent* frontmatter mezője, a skillé nem → inert.
-  - **Cursor:** a `model`-kiterjesztést legfeljebb részlegesen ismeri → nem garantált.
-  - **Claude Code:** a dokumentáció ígéri a skill-`model` váltást, de a valóságban **runtime-ban nem hat** ([anthropics/claude-code #45191](https://github.com/anthropics/claude-code/issues/45191), „not planned"-ként lezárva).
-  Mivel egy beírt skill-`model` a legjobb esetben inert, a legrosszabban félrevezető (nem létező képességet sugall), **sehová nem injektáljuk**. A modell-hangolás **kizárólag az agentek/subagentek** szintjén hat megbízhatóan (Claude subagent `model`/`effort`, Codex `.codex/agents/*.toml` `model`/`model_reasoning_effort`) — ott marad meg.
-- **Effort natív támogatása:** Claude Code-ban a subagent `effort:` frontmatter-mező, Codexben a `.codex/agents/*.toml` `model_reasoning_effort` mezője **natívan hat** (a fájl értéke elsőbbséget élvez). A többi platformon (Antigravity/Copilot) az érték **látható ajánlás** (frontmatter + „Recommended Effort" alert) — az Antigravity sémájában nincs is `effort` mező, ezért oda csak az alertbe kerül. A Cursor `model` mezője viszont natív — ott az effort is natívan hat a `[effort=...]` paraméterben. Fontos: a Cursor a **modell-azonosítót** várja (`claude-opus-5`), nem megjelenített nevet („Opus 4.8"); érvénytelen azonosítónál csendben a szülő ágens modelljére esik vissza. Cursornál a read-only agentek (`analyzer`, `analyzer-exec`, `researcher`, `doc-sync-planner`) `readonly: true`-t, Codexnél `sandbox_mode = "read-only"`-t kapnak.
-- **Manuális váltás:** ha nem a telepített ágensekre támaszkodsz, kövesd a fenti leosztást a CLI/IDE modell- és effort-választójában.
+**Configuration and installation:**
+- **Source:** [`prompts/models.json`](prompts/models.json) — per platform (`claude` / `antigravity` / `copilot` / `cursor` / `codex`) the 3 tiers as `{model, effort}` objects, plus the agents that differ from the default **as rows named after themselves** (with only the `effort` field; their model comes from the `default` tier). The `AGENT_MODEL_KEYS` dictionary of `install-helper.py` maps the `analyzer`/`researcher`/`cycle-status` stems to the tiers (`analyzer-exec` is deliberately not in it: the inventory of the gate hands it the candidates ready-made, so it runs on the `default` tier); whatever is in neither place, nor as its own row in `models.json`, gets the `default` model and the `default` (=`high`) effort.
+- **Writing it in at install time** (`./install.sh`): Antigravity → the `"model"` key of `agent.json`, with a **tier value** (`pro` / `flash` / `inherit`); Claude Code / Copilot → the `model` + `effort` fields of the agent file's YAML frontmatter; Cursor → the `model` field of the agent file's YAML frontmatter, **with a model identifier and a parameter in brackets**: `model: claude-opus-5[effort=high]` (Cursor knows no separate `effort:` field); Codex → the `model` + `model_reasoning_effort` keys of `.codex/agents/<name>.toml` (+ `sandbox_mode = "read-only"` for the read-only agents).
+- **The skills** (orchestrator main agents, not subagents) **get neither a `model` nor an `effort`** — on any platform. A skill-level `model` is namely **not part of the base Agent Skills standard** (that only has `name`/`description`/`license`/`compatibility`/`metadata`/`allowed-tools`), but a Claude Code extension, which the target platforms **do not, or do not reliably, honour** for switching models:
+  - **Codex:** SKILL.md only knows `name` + `description` → a `model` is inert.
+  - **Copilot:** `.instructions.md` knows no `model` field (that only exists for a *prompt* file) → inert.
+  - **Antigravity:** `model` is a field of the *agent* frontmatter, not of the skill → inert.
+  - **Cursor:** it knows the `model` extension at best partially → not guaranteed.
+  - **Claude Code:** the documentation promises the skill-`model` switch, but in reality it **has no effect at runtime** ([anthropics/claude-code #45191](https://github.com/anthropics/claude-code/issues/45191), closed as "not planned").
+  Since a skill-`model` written in is inert in the best case and misleading in the worst (it suggests a capability that does not exist), **we inject it nowhere**. Model tuning takes reliable effect **exclusively at the level of the agents/subagents** (Claude subagent `model`/`effort`, Codex `.codex/agents/*.toml` `model`/`model_reasoning_effort`) — that is where it stays.
+- **Native support for effort:** in Claude Code the subagent `effort:` frontmatter field, and in Codex the `model_reasoning_effort` field of `.codex/agents/*.toml`, **take effect natively** (the value in the file takes precedence). On the other platforms (Antigravity/Copilot) the value is a **visible recommendation** (frontmatter + a "Recommended Effort" alert) — Antigravity's schema has no `effort` field at all, so there it only goes into the alert. Cursor's `model` field, on the other hand, is native — there the effort also takes effect natively in the `[effort=...]` parameter. Important: Cursor expects the **model identifier** (`claude-opus-5`), not a display name ("Opus 4.8"); on an invalid identifier it silently falls back to the parent agent's model. In Cursor the read-only agents (`analyzer`, `analyzer-exec`, `researcher`, `doc-sync-planner`) get `readonly: true`, and in Codex `sandbox_mode = "read-only"`.
+- **Manual switching:** if you do not rely on the installed agents, follow the allocation above in the model and effort selector of your CLI/IDE.
 
-**Antigravity-specifikum — a `model` mező TIER, nem modellnév** ([Antigravity: Subagents](https://antigravity.google/docs/subagents))
+**Antigravity specifics — the `model` field is a TIER, not a model name** ([Antigravity: Subagents](https://antigravity.google/docs/subagents))
 
-Az Antigravity custom agent sémájában a `model` mező **modell-tiert** vesz fel, nem konkrét modell nevét:
+In Antigravity's custom agent schema the `model` field takes a **model tier**, not the name of a concrete model:
 
 ```
-model: pro       # a legerősebb tier
-model: flash     # gyors/olcsó tier
-model: inherit   # a szülő ágens modellje (alapértelmezés)
+model: pro       # the strongest tier
+model: flash     # the fast/cheap tier
+model: inherit   # the parent agent's model (default)
 ```
 
-- **A modellnév érvénytelen.** A korábban beírt `"model": "Claude Opus 4.6"` nem tier → a subagent az `inherit` alapértelmezésre esik vissza, azaz **a szülő ágens modelljén fut** (jellemzően Flash-en). Ez néma: a fájlban ott a „helyes" modellnév, a futás mégis a szülőé — pontosan ezért futott az `analyzer` Flash-en akkor is, amikor az `agent.json`-ban Opus szerepelt.
-- **`effort` mező nincs a sémában.** A tier maga hordozza a képesség-szintet; az `effort` értéket ezért csak **látható ajánlásként** (alert) írjuk ki, az `agent.json`-ba nem. Ennek egy következménye van a leosztásban: mivel a `flash`-nél nincs olcsóbb tier, a `research_agent` és a `default` **ugyanazt kapja** — az effort-alapú megkülönböztetés itt nem érvényesíthető gépiesen.
-- **Tier-leképezés:** `deep_reasoning_agent` → `pro`, `default` és `research_agent` → `flash`.
+- **The model name is invalid.** The `"model": "Claude Opus 4.6"` written in earlier is not a tier → the subagent falls back to the `inherit` default, i.e. it **runs on the parent agent's model** (typically Flash). This is silent: the "correct" model name sits there in the file, yet the run is the parent's — this is exactly why the `analyzer` ran on Flash even when `agent.json` said Opus.
+- **There is no `effort` field in the schema.** The tier itself carries the capability level; that is why we write the `effort` value out only as a **visible recommendation** (alert), not into `agent.json`. This has one consequence for the allocation: since there is no tier cheaper than `flash`, `research_agent` and `default` **get the same thing** — the effort-based distinction cannot be enforced mechanically here.
+- **Tier mapping:** `deep_reasoning_agent` → `pro`, `default` and `research_agent` → `flash`.
 
-> A `.agents/agents/<név>/agent.json` formátumot a jelenlegi Antigravity-doksi már nem említi — a leírt hely `.agents/agents/<név>.md` YAML frontmatterrel. Az `agent.json` a gyakorlatban továbbra is betöltődik (a telepített ágensek megjelennek és futnak), ezért egyelőre maradunk nála; ha az Antigravity ejti a támogatását, a telepítő `process_antigravity` függvénye az a pont, ahol a `.md` formátumra kell váltani.
+> The `.agents/agents/<name>/agent.json` format is no longer mentioned by the current Antigravity docs — the documented location is `.agents/agents/<name>.md` with YAML frontmatter. In practice `agent.json` still loads (the installed agents appear and run), so for now we stay with it; if Antigravity drops support for it, the `process_antigravity` function of the installer is the point where the switch to the `.md` format has to be made.
 
-**Cursor-specifikum — a subagent `model` mező** ([Cursor: Subagents](https://cursor.com/docs/subagents))
+**Cursor specifics — the subagent `model` field** ([Cursor: Subagents](https://cursor.com/docs/subagents))
 
-A Cursor subagent-frontmatter mezői: `name`, `description`, `model`, `readonly`, `is_background`. **Külön `effort:` mező nincs** — a paraméterek a modell azonosítójához tapadnak szögletes zárójellel, vesszővel elválasztva:
+The fields of a Cursor subagent frontmatter: `name`, `description`, `model`, `readonly`, `is_background`. **There is no separate `effort:` field** — the parameters attach to the model's identifier in square brackets, separated by commas:
 
 ```yaml
 model: claude-opus-5[effort=high]        # effort= / context= / fast=
 model: claude-sonnet-5[effort=low]
-model: inherit                            # a szülő ágens modellje (alapértelmezés)
+model: inherit                            # the parent agent's model (default)
 ```
 
-Három dolog, ami könnyen félrevisz:
+Three things that easily mislead:
 
-1. **Azonosítót vár, nem megjelenített nevet.** A `model: Opus 4.8` alak nem érvényes; `claude-opus-5` / `claude-sonnet-5` kell.
-2. **A modellválasztó UI címkéi nem a frontmatter-forma.** A Cursor felületén látható `claude-opus-5-thinking-high` / `gpt-5.6-sol-medium` stílusú slugok a *picker* nevei; a dokumentált frontmatter-alak az azonosító + `[effort=…]`. Claude-ból a slug-listán csak `-thinking-high` létezik, tehát a `-thinking-low` / `-thinking-medium` alakok érvénytelenek — pont az alacsony effortú agenteknél (fixerek, `test-runner`, `researcher`) hibáznának.
-3. **Az érvénytelen érték NÉMA.** Ha az azonosítót a Cursor nem ismeri fel — vagy felismeri, de nincs hozzá jogosultság (admin letiltotta, a csomag nem tartalmazza, illetve legacy request-alapú csomagnál Max Mode kellene) —, akkor **hibaüzenet nélkül a szülő ágens modelljére esik vissza**. A tünet csak a viselkedésen látszik: pl. az `analyzer` látszólag fut, de nem Opus 5-ön.
+1. **It expects an identifier, not a display name.** The form `model: Opus 4.8` is not valid; it has to be `claude-opus-5` / `claude-sonnet-5`.
+2. **The labels of the model picker UI are not the frontmatter form.** The slugs visible in Cursor's interface in the style of `claude-opus-5-thinking-high` / `gpt-5.6-sol-medium` are the names of the *picker*; the documented frontmatter form is the identifier + `[effort=…]`. From Claude, only `-thinking-high` exists in the slug list, so the forms `-thinking-low` / `-thinking-medium` are invalid — and they would fail precisely for the low-effort agents (fixers, `test-runner`, `researcher`).
+3. **An invalid value is SILENT.** If Cursor does not recognise the identifier — or recognises it but there is no entitlement for it (an admin disabled it, the plan does not include it, or with a legacy request-based plan Max Mode would be needed) — then it **falls back to the parent agent's model without an error message**. The symptom only shows in the behaviour: e.g. the `analyzer` seemingly runs, but not on Opus 5.
 
-Emiatt a `models.json` **`cursor` szekciójába mindig modell-azonosítót írj**; az effortot a telepítő fűzi hozzá (`install-helper.py` → `inject_cursor_agent`). Ugyanitt egy tier-eltérés: **Cursorban nincs Haiku**, ezért a `research_agent` a `default` Sonnet 5-öt kapja `low` efforton — ugyanaz a megoldás, mint Antigravityn a Flash-sel.
+For this reason, always write a **model identifier into the `cursor` section** of `models.json`; the effort is appended by the installer (`install-helper.py` → `inject_cursor_agent`). One tier divergence belongs here too: **there is no Haiku in Cursor**, so `research_agent` gets the `default` Sonnet 5 at `low` effort — the same solution as with Flash on Antigravity.
 
-### 5.4 Az 05-analyze önjavító hurok (részletes)
+### 4.4 The 05-analyze self-healing loop (in detail)
 
-Ez az ábra **kizárólag az 05-analyze lépést** mutatja be, a subagentek és a kérdés-folyam feltüntetésével. Az orchestrátor (05-analyze) read-only: a **gépies réteget** a `analyze-gate-check.py` kapu, a **szemantikai diagnózist** az `analyzer` **három párhuzamos köre** (ez az egyetlen pont a teljes rendszerben, ami a legdrágább, `deep_reasoning_agent` tier-en fut — lásd 5.3), a **végrehajthatósági diagnózist** az `analyzer-exec` (`default` tier, velük **párhuzamosan**), a **javítást** a fixer-subagentek (02/03/04 fix-mód, `default` tier) végzik; a felhasználót mindig az **orchestrátor** (szintén `default` tier) kérdezi, fázis-jelzéssel.
+This diagram shows **only the 05-analyze step**, with the subagents and the question flow indicated. The orchestrator (05-analyze) is read-only: the **mechanical layer** is done by the `analyze-gate-check.py` gate, the **semantic diagnosis** by the **three parallel rounds** of the `analyzer` (this is the only point in the whole system that runs on the most expensive, `deep_reasoning_agent` tier — see 4.3), the **executability diagnosis** by `analyzer-exec` (`default` tier, **in parallel** with them), and the **correction** by the fixer subagents (02/03/04 fix mode, `default` tier); the user is always asked by the **orchestrator** (also `default` tier), with a phase indicator.
 
-Négy rövidítő ág van benne, mert ezek adják a fázis megtakarításának nagy részét: a fixer **maga futtatja a kaput visszatérés előtt** (GS1), így a fixer utáni kapu-kör (G) védőhálóvá szelídült — ha mégis csak mechanikus hibát talált, az visszamegy ugyanahhoz a fixerhez, analyzer-kör és iteráció-fogyasztás nélkül; ha a fixer **semmit nem változtatott** (N), a hurok nem indít analyzert, hanem megáll és kérdez; és ha minden `Must Fix` **lokális**, a fixerek **egyetlen üzenetben, párhuzamosan** indulnak, downstream re-deriválás nélkül (LF1).
+There are four shortcut branches in it, because these deliver the bulk of the phase's savings: the fixer **runs the gate itself before returning** (GS1), so the gate round after the fixer (G) has softened into a safety net — if it did find a merely mechanical defect after all, that goes back to the same fixer, without an analyzer round and without consuming an iteration; if the fixer **changed nothing** (N), the loop does not start an analyzer, but stops and asks; and if every `Must Fix` is **local**, the fixers start **in a single message, in parallel**, without downstream re-derivation (LF1).
 
-Az ötödik — és a legnagyobb megtakarítást hozó — ág a **triázs-megállás (TR1)**: **minden diagnoszta-kör után** a hurok megáll, és egyetlen kérdésben a felhasználó dönti el, mely **új** `Must Fix` tételeket javítsuk egyáltalán. A jóváhagyott tételek az **`analyze-task.md`** javítási listára kerülnek — a fixerek kizárólag ezen dolgoznak —, az elvetettek pedig `elvetve (triázs)` állapottal a riportban maradnak (audit-nyom), és nem blokkolják a `PASS`-t. Egy körön belül a hurok nem kérdez: végigmegy a listán, és amit közben újként talál, arról a **következő** triázsban kérdez. Már eldöntött tételre soha nem kérdez rá újra; a tisztán mechanikus (kapu-)tételek pedig kérdés nélkül kerülnek a listára.
+The fifth — and biggest-saving — branch is the **triage stop (TR1)**: **after every diagnostician round** the loop stops, and in a single question the user decides which **new** `Must Fix` items to fix at all. The approved items go onto the **`analyze-task.md`** fix list — the fixers work exclusively from that — while the rejected ones stay in the report with the state `rejected (triage)` (an audit trail), and do not block the `PASS`. Within a round the loop does not ask: it works through the list, and whatever it finds as new in the meantime is asked about in the **next** triage. It never asks again about an item already decided; and purely mechanical (gate) items go onto the list without a question.
 
-**Az analízis mappája (AD1).** Az analízis minden fájlja a ciklus `analyze/` almappájában él: `analyze-report.md`, `analyze-task.md`, a kapu által kimetszett `slices/` (gitignore-olt) és minden segédfájl. A ciklus gyökere így a tervezési dokumentumoké marad.
-
+**The folder of the analysis (AD1).** Every file of the analysis lives in the cycle's `analyze/` subfolder: `analyze-report.md`, `analyze-task.md`, the `slices/` cut out by the gate (gitignored) and every helper file. The root of the cycle thus stays that of the design documents.
 ```mermaid
 flowchart TD
     classDef orch fill:#e0f2fe,stroke:#0d9488,stroke-width:2px,color:#1e293b;
@@ -706,81 +613,81 @@ flowchart TD
     classDef script fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d;
     classDef userInput fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
 
-    O["<b>05-analyze orchestrátor</b><br/>(read-only: vezényel,<br/>analyze-report.md-t ír,<br/>státusz-markert kezel)"]:::orch
-    GATE["<b>analyze-gate-check.py</b><br/>mechanikus kapu<br/>(Must Fix + Javaslatok<br/>+ generált mátrixok + Leltár)"]:::script
-    AZ["<b>analyzer</b> ×3 ‖ <b>analyzer-exec</b><br/>NÉGY PÁRHUZAMOS kör<br/>(read-only diagnózis: 1+3.,<br/>2+5., 4. és 6. kategória)"]:::agent
-    FIX["<b>fixer-subagent</b><br/>spec/plan/tasks-fixer<br/>(02/03/04 fix-mód,<br/>önhordó prompt — D13)"]:::agent
-    Q["*-questions.md<br/>(fixer ír új Knn-t)"]:::doc
-    REP["analyze/analyze-report.md<br/>(+ Hurok-napló)"]:::doc
-    TASK["analyze/analyze-task.md<br/>(jóváhagyott javítási lista —<br/>a fixerek ezen dolgoznak)"]:::doc
-    User(["Felhasználó"]):::userInput
+    O["<b>05-analyze orchestrator</b><br/>(read-only: conducts,<br/>writes analyze-report.md,<br/>handles the status marker)"]:::orch
+    GATE["<b>analyze-gate-check.py</b><br/>mechanical gate<br/>(Must Fix + Suggestions<br/>+ generated matrices + Inventory)"]:::script
+    AZ["<b>analyzer</b> ×3 ‖ <b>analyzer-exec</b><br/>FOUR PARALLEL rounds<br/>(read-only diagnosis: categories 1+3,<br/>2+5, 4 and 6)"]:::agent
+    FIX["<b>fixer subagent</b><br/>spec/plan/tasks-fixer<br/>(02/03/04 fix mode,<br/>self-contained prompt — D13)"]:::agent
+    Q["*-questions.md<br/>(the fixer writes a new Knn)"]:::doc
+    REP["analyze/analyze-report.md<br/>(+ Loop log)"]:::doc
+    TASK["analyze/analyze-task.md<br/>(the approved fix list —<br/>the fixers work from this)"]:::doc
+    User(["User"]):::userInput
 
-    Check{"Van nyitott tétel az<br/>analyze-task.md-en?"}:::decision
-    MaxX{"max X = 3<br/>elérve?"}:::decision
-    NoChg{"4.a Változott<br/>bármi? (N)"}:::decision
-    MechOnly{"4.b Csak mechanikus<br/>hiba? (G/GS1)"}:::decision
-    Down{"5. downstream-hatás:<br/>van? (D11)"}:::decision
-    TRI{"③.a TRIÁZS (TR1):<br/>minden kör után, az ÚJ<br/>tételekre: mit javítsunk?"}:::decision
+    Check{"Is there an open item in<br/>analyze-task.md?"}:::decision
+    MaxX{"max X = 3<br/>reached?"}:::decision
+    NoChg{"4.a Did anything<br/>change? (N)"}:::decision
+    MechOnly{"4.b Mechanical<br/>defect only? (G/GS1)"}:::decision
+    Down{"5. downstream effect:<br/>any? (D11)"}:::decision
+    TRI{"③.a TRIAGE (TR1):<br/>after every round, on the NEW<br/>items: what shall we fix?"}:::decision
 
-    O -- "⓿ minden kör előtt" --> GATE
-    GATE -- "① Leltár → analyzer-exec · mátrix → s2<br/>szeletek → a 3 szemantikai kör" --> AZ
-    AZ -- "② négy megállapítás-lista" --> O
-    O -- "③ összefésül (dedup) + ír" --> REP
+    O -- "⓿ before every round" --> GATE
+    GATE -- "① Inventory → analyzer-exec · matrix → s2<br/>slices → the 3 semantic rounds" --> AZ
+    AZ -- "② four finding lists" --> O
+    O -- "③ merges (dedup) + writes" --> REP
     O --> TRI
-    TRI -- "elvetve (triázs)<br/>→ nem blokkol" --> REP
-    TRI -- "jóváhagyva → felkerül" --> TASK
-    TASK -- "nyitott tételek" --> Check
-    Check -- "Nincs → PASS<br/>(marker le, 1 commit)" --> Done(["Tovább: 06-implement"]):::orch
+    TRI -- "rejected (triage)<br/>→ does not block" --> REP
+    TRI -- "approved → goes on the list" --> TASK
+    TASK -- "open items" --> Check
+    Check -- "None → PASS<br/>(marker removed, 1 commit)" --> Done(["Onwards: 06-implement"]):::orch
 
-    Check -- "Van → FAIL" --> MaxX
-    MaxX -- "Igen → feladva<br/>(report FAIL, marker marad)" --> Stop(["Megáll + humán döntés"]):::userInput
+    Check -- "Some → FAIL" --> MaxX
+    MaxX -- "Yes → abandoned<br/>(report FAIL, the marker stays)" --> Stop(["Stops + human decision"]):::userInput
 
-    MaxX -- "Nem" --> O2["④ legkorábbi célfázis<br/>+ [analyze-loop] marker"]:::orch
-    O2 -- "⑤ indít (az analyze-task.md<br/>rá szűrt nyitott tételeivel)" --> FIX
-    FIX -- "⑥ döntéshez: új Knn-t gyűjt" --> Q
-    FIX -- "⑦ összefoglaló + downstream-hatás" --> NoChg
-    NoChg -- "Nem, és nincs új kérdés<br/>→ analyzer NEM indul" --> User
-    NoChg -- "Igen" --> MechOnly
-    MechOnly -- "Igen → vissza ugyanannak<br/>a fixernek (max 2×,<br/>nem új iteráció)" --> FIX
-    MechOnly -- "Nem" --> Down
-    Down -- "nincs → downstream fixer<br/>NEM indul" --> O
-    Down -- "van → célzott reconciliation<br/>02→03→04" --> FIX
-    O -- "⑧ kérdez: FÁZIS/Knn + iter n/max X" --> User
-    User -- "⑨ válasz → fixert újraindít" --> FIX
-    O -- "⑩ újra-analyze (EGY teljes kör)" --> GATE
+    MaxX -- "No" --> O2["④ earliest target phase<br/>+ [analyze-loop] marker"]:::orch
+    O2 -- "⑤ starts it (with the open items of<br/>analyze-task.md filtered to it)" --> FIX
+    FIX -- "⑥ for a decision: collects a new Knn" --> Q
+    FIX -- "⑦ summary + downstream effect" --> NoChg
+    NoChg -- "No, and no new question<br/>→ the analyzer does NOT start" --> User
+    NoChg -- "Yes" --> MechOnly
+    MechOnly -- "Yes → back to the same<br/>fixer (max 2×,<br/>not a new iteration)" --> FIX
+    MechOnly -- "No" --> Down
+    Down -- "none → the downstream fixer<br/>does NOT start" --> O
+    Down -- "some → targeted reconciliation<br/>02→03→04" --> FIX
+    O -- "⑧ asks: PHASE/Knn + iter n/max X" --> User
+    User -- "⑨ answer → restarts the fixer" --> FIX
+    O -- "⑩ re-analyze (ONE full round)" --> GATE
 ```
 
-**A működés lépésről lépésre:**
+**How it works, step by step:**
 
-1. **A subagent gyűjti a kérdést, nem kérdez.** A fixer-subagent (02/03/04 fix-mód) a döntést igénylő pontokat **nem teszi fel közvetlenül a felhasználónak** — nincs interaktív csatornája. Ehelyett új `Knn` bejegyzésként felveszi a megfelelő `*-questions.md`-be (`spec-questions.md` / `plan-questions.md` / `tasks-questions.md`).
-2. **És visszaadja az orchestrátornak.** A fixer a futása végén tömör összefoglalót ad: mit javított, és milyen új `Knn` kérdés-azonosítókat vett fel. (Az ábrán: ⑥ gyűjt, ⑦ visszaad.)
-3. **Az orchestrátor teszi fel a kérdést a felhasználónak**, mindig jelezve, melyik fázishoz kapcsolódik: **fázis-fejléc + `FÁZIS/Knn` prefix** (pl. `[PLAN · iter 2/3 · PLAN/K05]`). Egyszerre egy kérdés, a válasz végén kattintható link az érintett `*-questions.md`-re.
-4. **A válasz átvezetése után a hurok folytatódik:** az orchestrátor beírja a döntést a `*-questions.md`-be (`[x]` + összefoglaló), újraindítja a fixert, majd a downstream re-deriválás (`02→03→04`) és az újra-analyze következik. A kérdés-megállás **nem** számít új iterációnak, és nem fogyaszt a `max X`-ből.
+1. **The subagent collects the question, it does not ask it.** The fixer subagent (02/03/04 fix mode) **does not put** the points requiring a decision **to the user directly** — it has no interactive channel. Instead it adds them as a new `Knn` entry to the appropriate `*-questions.md` (`spec-questions.md` / `plan-questions.md` / `tasks-questions.md`).
+2. **And it returns them to the orchestrator.** At the end of its run the fixer gives a concise summary: what it fixed, and which new `Knn` question identifiers it added. (In the diagram: ⑥ collects, ⑦ returns.)
+3. **The orchestrator puts the question to the user**, always indicating which phase it belongs to: **phase header + `PHASE/Knn` prefix** (e.g. `[PLAN · iter 2/3 · PLAN/K05]`). One question at a time, with a clickable link to the affected `*-questions.md` at the end of the answer.
+4. **Once the answer has been carried through, the loop continues:** the orchestrator writes the decision into `*-questions.md` (`[x]` + summary), restarts the fixer, and then the downstream re-derivation (`02→03→04`) and the re-analyze follow. A question stop does **not** count as a new iteration and does not consume from `max X`.
 
-A hurok két, egymástól független módon áll le: **PASS** (nincs több `Must Fix` → marker le, egyetlen commit, tovább a 06-ra), vagy **`max X = 3` elérve PASS nélkül** (a report `FAIL`, a `[analyze-loop]` marker az érintett dokumentumokon marad, az orchestrátor összefoglal és humán döntést kér).
+The loop stops in two mutually independent ways: **PASS** (no more `Must Fix` → marker removed, a single commit, onwards to 06), or **`max X = 3` reached without a PASS** (the report is `FAIL`, the `[analyze-loop]` marker stays on the affected documents, the orchestrator summarises and asks for a human decision).
 
-### 5.5 Az 07-validate önjavító hurok (részletes) — tesztek + kódreview
+### 4.5 The 07-validate self-healing loop (in detail) — tests + code review
 
-Ez az ábra **kizárólag az 07-validate lépést** mutatja be, a subagentek feltüntetésével (a fenti analyze-ábra párja). Az orchestrátor (07) PASS-ig **determinisztikus ellenőrző** — a tesztek/Sonar/E2E tényleges futtatását a **`test-runner` subagent** végzi (`default` tier — mechanikus végrehajtás, nem dönt, de a megbízható log-/riport-értelmezés miatt szándékosan nem a legolcsóbb tier-en fut), a DoD-ot és a PASS/FAIL döntést az orchestrátor hozza —, FAIL esetén **orchestrátor**: a **javítást** az `implement-fixer` subagent (= a 06 fix-módja) végzi, a re-validálást és a döntéseket az orchestrátor.
+This diagram shows **only the 07-validate step**, with the subagents indicated (the counterpart of the analyze diagram above). Up to PASS the orchestrator (07) is a **deterministic checker** — the actual execution of the tests/Sonar/E2E is done by the **`test-runner` subagent** (`default` tier — mechanical execution, it makes no decisions, but it deliberately does not run on the cheapest tier because of the reliable interpretation of logs/reports), and the DoD and the PASS/FAIL decision are made by the orchestrator — and on FAIL it becomes an **orchestrator**: the **correction** is done by the `implement-fixer` subagent (= the fix mode of 06), and the re-validation and the decisions by the orchestrator.
 
-**A fázis determinisztikus rétege — „ha van rá szkript, ne olvass fájlt" (VD11/b).** A 07 a keretrendszer legszkriptesebb fázisa, mert a kérdéseinek nagy része gépi:
+**The deterministic layer of the phase — "if there is a script for it, do not read a file" (VD11/b).** 07 is the most script-driven phase of the framework, because most of its questions are machine-decidable:
 
-| Kérdés | Ki válaszolja | Mit vált ki |
+| Question | Who answers it | What it saves |
 |---|---|---|
-| Lefutottak-e a tesztek, hány zöld/piros? | `run-tests.py` a `plan.md` **gépi futtatási táblájából** | a `test-runner` subagentet **és** a nyers teszt-logot (a fázis legnagyobb token-tétele) — a subagent fallback marad, ha nincs tábla |
-| Átment-e a Quality Gate, van-e blokkoló finding? | `sonar-gate.py` (Sonar Web API) | a `sonar-report.md` elolvasását és a severity-szűrést; a QG1 (küszöb vs. finding) külön kilépő kód |
-| Teljesülnek-e a DoD-pontok? | `dod-check.py` — join a spec `· _bizonyíték:_` mezői és a kör JUnit-eredményei között | az emlékezetből adott ✓-t; csak a bizonyíték nélküli pont marad ítéletnek |
-| Nyúlt-e a fixer a szerződéshez? | `contract-guard.py` (védett útvonalak + csalás-minták) | a teljes `git diff` elolvasását **minden** fixer-visszatérés után |
-| Zárt-e minden task/DoD/IP1-tétel/finding, stimmel-e a kör-blokk? | `validate-gate-check.py` | öt fájl beolvasását egyetlen hívásra |
-| Elkészült-e a kör-napló? | `round-log.py open/step/close` | körönként ~1–1,5k output tokent, és a „nem keletkezett riport" hibaosztályt |
+| Did the tests run, how many green/red? | `run-tests.py`, from the **machine-readable run table** of `plan.md` | the `test-runner` subagent **and** the raw test log (the biggest token item of the phase) — the subagent remains as a fallback if there is no table |
+| Did the Quality Gate pass, is there a blocking finding? | `sonar-gate.py` (Sonar Web API) | reading `sonar-report.md` and filtering by severity; QG1 (threshold vs. finding) is a separate exit code |
+| Are the DoD points satisfied? | `dod-check.py` — a join between the spec's `· _evidence:_` fields and the JUnit results of the round | the ✓ given from memory; only a point without evidence remains a judgement call |
+| Did the fixer touch the contract? | `contract-guard.py` (protected paths + cheating patterns) | reading the full `git diff` after **every** fixer return |
+| Is every task/DoD/IP1 item/finding closed, does the round block match? | `validate-gate-check.py` | reading five files, in a single call |
+| Has the round log been produced? | `round-log.py open/step/close` | ~1–1.5k output tokens per round, and the "no report was produced" defect class |
 
-Ami **szándékosan LLM marad:** a `reviewer` (szemantikai diff-ítélet), a fixerek (kódírás), a plan-hiány diagnózisa, a VD5 eszkalációs döntés, a QG1 „javítható-e a ciklus hatókörében" kérdés, és a bizonyíték nélküli DoD-pontok megítélése — ahol egy szkript hamis zöldet vagy hamis riasztást adna.
+What **deliberately stays an LLM:** the `reviewer` (semantic diff judgement), the fixers (writing code), the diagnosis of a missing plan, the VD5 escalation decision, the QG1 "can it be fixed within the scope of the cycle" question, and judging the DoD points without evidence — where a script would give a false green or a false alarm.
 
-**A hurok inkrementális (VD10).** Teljes kör — gyors tesztek → Sonar + kódreview → nehéz tesztek/regresszió → DoD/kapuk — csak **kettő** fut: az **első** és a **záró megerősítő**. A köztes javító körökben a **teljes gyors teszt-készlet** fut (plusz kizárólag az az egy item, ha a bukás nehéz teszt, Sonar vagy review-finding volt — utóbbinál a `reviewer` inkrementálisan, csak a nyitott `MF-NN`-ekre), mert a Sonar és a konténeres E2E újrafuttatása körönként a fázis költségének a nagy részét adja, miközben a javítás egyetlen itemre irányult. **PASS kizárólag teljes körből adható** — egy zöld könnyű kör után kötelező a megerősítő teljes kör. A könnyű kör is egy kör: a `failure-counter.py` naplózása és a 3/5/5 leállási korlát változatlanul számol.
+**The loop is incremental (VD10).** A full round — fast tests → Sonar + code review → heavy tests/regression → DoD/gates — runs only **twice**: the **first** one and the **closing confirming** one. In the intermediate fixing rounds the **complete fast test set** runs (plus exclusively the one item, if the failure was a heavy test, Sonar or a review finding — in the latter case the `reviewer` runs incrementally, only on the open `MF-NN`s), because re-running Sonar and the containerised E2E per round accounts for most of the phase's cost, while the fix targeted a single item. **PASS can only be given from a full round** — after a green light round, the confirming full round is mandatory. A light round is a round too: the logging of `failure-counter.py` and the 3/5/5 stopping limit keep counting unchanged.
 
-**Amit a 07 orchestrátor szándékosan NEM csinál (VD11/VD12).** Nem olvassa be a teljes `plan.md`-t a fő kontextusba (azt a `test-runner` olvassa; a fő ágensnek célzott `grep` marad a plan-hiány ellenőrzésére), **nem olvassa végig a módosított fájlokat** (a diffet a `reviewer` subagent nézi át — kódkommentek/docstringek naprakészsége is nála van), és nem ellenőriz **komponens-README-ket** (az a `08-doc-sync` kizárólagos outputja). Az orchestrátor a *bizonyítékot* és az *elfogadási feltételeket* értékeli, a részletes olvasás a subagenteké.
+**What the 07 orchestrator deliberately does NOT do (VD11/VD12).** It does not read the whole `plan.md` into the main context (that is read by the `test-runner`; the main agent is left with a targeted `grep` to check for a missing plan), it **does not read the modified files through** (the diff is reviewed by the `reviewer` subagent — the up-to-dateness of code comments/docstrings is with it too), and it does not check **component READMEs** (that is the exclusive output of `08-doc-sync`). The orchestrator evaluates the *evidence* and the *acceptance criteria*; detailed reading belongs to the subagents.
 
-**A 06-implement egy futásban dolgozza fel a task listát (IM1).** Egy task lezárása — pipa a `tasks.md`-ben, `check-log` bejegyzés, task-commit — **nem** fázis-vég: az ágens a commit után azonnal a következő elvégzetlen taskot veszi, ugyanabban a körben. A fázis csak öt okból áll meg: teljesült egy *Megállási szabály*, nem teljesül egy fejezet `Gépi előfeltétel:` blokkja, a task explicit futó infrastruktúrát követel és az nem ellenőrizhető, a `[CHECK]` háromszor bukott, vagy minden task kész. Ez a szabály azért kell kimondva, mert a keretrendszer többi fázisában a „**A válasz végén helyezd el a … kattintható linkjét**" mondat **megállás-jelző** (kérdés vagy fázis-vég) — a 06-ban ez a mondat ezért taskonként **nem** szerepel, csak a fázis záró üzenetében. Enélkül az ágens minden task után visszaadta a szót, és a fázis csak kézi „folytasd" üzenetekkel haladt.
+**06-implement processes the task list in a single run (IM1).** Closing a task — the tick in `tasks.md`, the `check-log` entry, the task commit — is **not** the end of the phase: right after the commit the agent takes the next unfinished task, in the same round. The phase stops for five reasons only: a *Stopping rule* was met, the `Machine prerequisite:` block of a chapter is not satisfied, the task explicitly requires running infrastructure and that cannot be verified, the `[CHECK]` failed three times, or every task is done. This rule has to be stated because in the rest of the framework's phases the sentence "**At the end of the answer, place the clickable link to …**" is a **stop signal** (a question or the end of a phase) — which is why in 06 that sentence does **not** appear per task, only in the closing message of the phase. Without this, the agent handed control back after every task, and the phase only progressed on manual "continue" messages.
 
 ```mermaid
 flowchart TD
@@ -790,152 +697,154 @@ flowchart TD
     classDef decision fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1e293b;
     classDef userInput fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
 
-    O["<b>07-validate orchestrátor</b><br/>(DoD-ot maga értékeli,<br/>validation-report.md-t ír,<br/>státusz-markert kezel)"]:::orch
-    TR["<b>test-runner</b> subagent<br/>(unit/integration/Sonar/E2E<br/>futtatása, tényszerű összegzés<br/>— nem dönt)"]:::agent
-    RV["<b>reviewer</b> subagent<br/>(read-only diagnózis a cycle diffre<br/>→ code-review.md: Must Fix / Suggestion)"]:::agent
-    FIX["<b>implement-fixer</b> / <b>review-fixer</b><br/>subagent (06 fix-mód: kódjavítás<br/>a hibalistára)"]:::agent
-    TASKS["tasks.md<br/>## Validációs javítások /<br/>## Review javítások<br/>([validate-loop] marker)"]:::doc
+    O["<b>07-validate orchestrator</b><br/>(evaluates the DoD itself,<br/>writes validation-report.md,<br/>handles the status marker)"]:::orch
+    TR["<b>test-runner</b> subagent<br/>(runs unit/integration/Sonar/E2E,<br/>factual summary<br/>— makes no decision)"]:::agent
+    RV["<b>reviewer</b> subagent<br/>(read-only diagnosis on the cycle diff<br/>→ code-review.md: Must Fix / Suggestion)"]:::agent
+    FIX["<b>implement-fixer</b> / <b>review-fixer</b><br/>subagent (06 fix mode: code fix<br/>for the defect list)"]:::agent
+    TASKS["tasks.md<br/>## Validation fixes /<br/>## Review fixes<br/>([validate-loop] marker)"]:::doc
     HIST["validation-report.md<br/>(# Validation History,<br/>Consecutive Failures)"]:::doc
 
-    Run{"Minden zöld?<br/>(gyors teszt + Sonar + review<br/>+ nehéz teszt + DoD)"}:::decision
+    Run{"Everything green?<br/>(fast test + Sonar + review<br/>+ heavy test + DoD)"}:::decision
     ThreeStrike{"Consecutive<br/>Failures = 3?"}:::decision
-    Design{"Tervezési hiba?<br/>(csak teszt/DoD/finding-<br/>módosítással lenne zöld)"}:::decision
+    Design{"Design defect?<br/>(it would only be green by<br/>changing a test/DoD/finding)"}:::decision
 
-    O -- "indítja" --> TR
-    TR -- "strukturált riport" --> O
-    O -- "① gyors tesztek zöldek → statikus réteg:<br/>Sonar + review (RV1/VD13)" --> RV
-    RV -- "Must Fix / Suggestion lista" --> O
-    O -- "② statikus réteg zöld → nehéz tesztek,<br/>majd DoD/kapuk → értékel" --> Run
-    Run -- "Igen → PASS<br/>(marker le, 1 commit)" --> Done(["Tovább: 08-doc-sync"]):::orch
+    O -- "starts it" --> TR
+    TR -- "structured report" --> O
+    O -- "① fast tests are green → static layer:<br/>Sonar + review (RV1/VD13)" --> RV
+    RV -- "Must Fix / Suggestion list" --> O
+    O -- "② static layer green → heavy tests,<br/>then DoD/gates → evaluates" --> Run
+    Run -- "Yes → PASS<br/>(marker removed, 1 commit)" --> Done(["Onwards: 08-doc-sync"]):::orch
 
-    Run -- "Nem → FAIL<br/>③ naplóz" --> HIST
+    Run -- "No → FAIL<br/>③ logs it" --> HIST
     HIST --> ThreeStrike
-    ThreeStrike -- "Igen" --> Design
-    Design -- "Igen → VD5" --> Esc(["Eszkaláció 03/02-re<br/>(státusz-visszafordítás)<br/>→ tervezési fázis"]):::userInput
-    Design -- "Nem → VD4" --> Stop(["STOP + humán<br/>hogyan tovább?"]):::userInput
+    ThreeStrike -- "Yes" --> Design
+    Design -- "Yes → VD5" --> Esc(["Escalation to 03/02<br/>(status rollback)<br/>→ design phase"]):::userInput
+    Design -- "No → VD4" --> Stop(["STOP + human<br/>how to proceed?"]):::userInput
 
-    ThreeStrike -- "Nem" --> O3["④ javító-taskok<br/>+ [validate-loop] marker"]:::orch
+    ThreeStrike -- "No" --> O3["④ fix tasks<br/>+ [validate-loop] marker"]:::orch
     O3 --> TASKS
-    O3 -- "⑤ indít (hibalista)" --> FIX
-    FIX -- "⑥ kódjavítás<br/>(KÓDOT a szerződéshez, soha fordítva)" --> TASKS
-    FIX -- "⑦ összefoglaló / eszkalációs jelzés" --> O
-    FIX -. "eszkalációs jelzés → VD5" .-> Design
-    O -- "⑧ újra-validál (könnyű kör → teljes megerősítő kör)" --> Run
+    O3 -- "⑤ starts it (defect list)" --> FIX
+    FIX -- "⑥ code fix<br/>(the CODE to the contract, never the reverse)" --> TASKS
+    FIX -- "⑦ summary / escalation signal" --> O
+    FIX -. "escalation signal → VD5" .-> Design
+    O -- "⑧ re-validates (light round → full confirming round)" --> Run
 ```
 
-**A működés lépésről lépésre:**
+**How it works, step by step:**
 
-1. **Az orchestrátor (07) elindítja a `test-runner` subagentet** (tesztek + Sonar + E2E futtatása, `default` tier — csak tényszerű összegzést ad vissza, nem dönt), majd a riport alapján maga értékeli a DoD-ot és dönt PASS/FAIL-ről. **A runner két forrásból dolgozik, semmi másból (TR4):** minden **ciklus-specifikus** részlet (parancsok, URL-ek, portok, teszt-userek, token-szerzés, indítási sorrend) a **`plan.md`**-ből — ezért követeli meg a 03 fázis az önhordó plant (TC1/a) —, a projekt-szintű eszköz-információ (futtató, mappastruktúra, riport-tábla, Sonar) a `conventions.md`-ből. A `test-conventions.md`-t nem olvassa, régi ciklusokból nem dolgozik, és **nem találgat**: ha egy futtatási részlet hiányzik a planból, `Plan-hiány`-t jelent — az orchestrátor pedig **nem fixert indít rá, hanem a tervezéshez eszkalál** (a hiányt a kód javítása nem oldja meg). A subagent jelentése **bizonyítékköteles (TR1)**: kategóriánként a kiadott parancs + `X passed / Y failed / Z skipped`; a **0 futtatott teszt FAIL, nem PASS (TR2)** — ez zárja ki a „vacuous PASS"-t. Ha a **gyors tesztek** zöldek egy teljes körben, az orchestrátor elindítja a **statikus réteget** (VD13): a `sonar-gate.py`-t és a **`reviewer` subagentet** (RV1) a cycle diffre — read-only diagnózis, `test-report/code-review.md`. A **nehéz tesztek (E2E/regresszió) csak ez után** futnak, és csak ha a statikus réteg tiszta: a Sonar és a review stack nélkül fut, a findingjaik javítása viszont megváltoztatja a kódot, tehát fordított sorrendben minden statikus finding ára egy eldobott E2E-futás lenne. A Sonar- és a review-findingok **egy batchbe** kerülnek: egy naplóbejegyzés, egy fixer-menet, egy VD3a kapu. A `Must Fix` findingok a kört FAIL-re fordítják, ugyanabba a naplóba és ugyanazokba a korlátokba futva, mint a teszthibák; a `Suggestions` nem blokkol. PASS → **automatikus** (VD7, nincs megerősítés): a `[validate-loop]` marker lekerül, egyetlen lezáró commit, tovább a 08-ra.
-2. **A kör eredményét naplózza** a `# Validation History`-ba — a `failure-counter.py` szkripttel. **Egy validálási kör = egy futás-bejegyzés (VD4a):** részeredményt (pl. „a gyors tesztek zöldek") tilos külön naplózni, mert a közbeiktatott PASS megszakítaná az egymást követő bukások láncát, és a leállás soha nem lépne életbe.
-3. **Három leállási korlát, mind a szkript kilépő kódjából (`exit 3`):** per-item **3 egymást követő** bukás (a klasszikus 3-próba, VD4), per-item **5 összes** bukás (a megszakított láncot is megfogja), és **5 egymást követő FAIL-futás** (VD4b globális backstop a divergáló hurokra, amikor körönként más elem bukik). Az `exit 1` hibás hívást jelent — a napló nem módosult, kézzel naplózni tilos. A megállás típusát a **tervezési-hiba heurisztika (VD5)** dönti el.
-4. **Ha folytatható:** felveszi a javító-taskokat — teszt/Sonar/DoD → `## Validációs javítások`, review-finding → `## Review javítások` —, `[validate-loop]` markert tesz a `tasks.md`-re, és elindítja a bukás típusához tartozó fixert (`implement-fixer` ill. `review-fixer`, mindkettő = 06 fix-mód) a konkrét hibalistával. **Üres hibalistával nem indul iteráció** — a „Quality Gate FAIL, de nincs BLOCKER/CRITICAL/MAJOR" eset (QG1) külön ág: kód-oldalon javítható küszöb → konkrét task, egyébként STOP + humán.
-5. **A fixer a KÓDOT igazítja a teszthez/DoD-hoz/findinghoz (VD3 anti-„teszt-csalás") — SOHA fordítva.** Tilos a teszt gyengítése/skip/törlése, hardcode, DoD-leszállítás, a `Must Fix` elnémítása vagy törlése javítás nélkül. A fixer visszaad: javítás-összefoglaló + (ha van) **eszkalációs jelzés**.
-6. **Szerződés-integritás kapu (VD3a) — determinisztikus, nem bizalmi kérdés.** A fixer visszatérése után, **még az újra-validálás előtt**, az orchestrátor `git diff`-fel megnézi, hozzányúlt-e a tesztfájlokhoz, a `spec.md`-hez, a `code-review.md`-hez vagy a Sonar-konfighoz. Gyengítés esetén: `git checkout --` visszaállítás + eszkaláció — nem próbálkozik ugyanazzal az itemmel újra. Enélkül a VD3 csak szándék lenne, és egy lazított assertion hamis PASS-ig futna.
-7. **Az orchestrátor újra-validál** (új kör → új naplóbejegyzés). Zöld → PASS (1. pont). FAIL → új iteráció (2. ponttól).
-8. **Megállás a korlátoknál (a hurok user-érintkezése, VD7):** megrekedt **kód-bug** → STOP + humán („hogyan tovább?"); **divergáló hurok** → STOP + humán a nem-konvergálás tényével; **tervezési hiba** → eszkaláció 03/02-re (VD5, státusz-visszafordítással), átadva a tervezési huroknak — a 06-ban körözés helyett. A fixer eszkalációs jelzése és a VD3a kapu találata a korlát bevárása nélkül is kiváltja az eszkalációt.
-9. **A `validation-report.md` = teljes validálási riport (VD9):** nem egysoros run-log, hanem futásnapló. Körönként egy `## Kör N` blokk — **végrehajtási sorrend időbélyeggel** (mi futott, mi maradt ki és miért), a `test-runner` bizonyítékai szó szerint, a bukott elemek a számlálóikkal, `DoD-NN` tábla, a javító kör nyoma (felvett taskok → fixer visszajelzése → VD3a kapu eredménye), és a kör döntése. A blokkok **hozzáfűződnek** (korábbi kör nem íródik felül), így az újrafuttatások láthatók; az `## Összegzés` kigyűjti, mely elemek futottak többször. A fájl végén a szkript írta `# Validation History`. A review körei is ide kerülnek — egyetlen közös számlálón a teszthibákkal. `/clear` után ez az egyetlen hely, ahol a validálás rekonstruálható — a chat nem az.
+1. **The orchestrator (07) starts the `test-runner` subagent** (running tests + Sonar + E2E, `default` tier — it only returns a factual summary, it makes no decision), then evaluates the DoD itself based on the report and decides PASS/FAIL. **The runner works from two sources and nothing else (TR4):** every **cycle-specific** detail (commands, URLs, ports, test users, token acquisition, startup order) comes from **`plan.md`** — which is why phase 03 requires a self-contained plan (TC1/a) — and the project-level tooling information (runner, folder structure, report table, Sonar) from `conventions.md`. It does not read `test-conventions.md`, it does not work from old cycles, and it **does not guess**: if a run detail is missing from the plan, it reports a `Plan gap` — and the orchestrator **does not start a fixer for it, it escalates to design** (fixing the code does not resolve the gap). The subagent's report is **evidence-bound (TR1)**: per category, the command issued + `X passed / Y failed / Z skipped`; and **0 executed tests is a FAIL, not a PASS (TR2)** — this rules out the "vacuous PASS". If the **fast tests** are green in a full round, the orchestrator starts the **static layer** (VD13): `sonar-gate.py` and the **`reviewer` subagent** (RV1) on the cycle diff — read-only diagnosis, `test-report/code-review.md`. The **heavy tests (E2E/regression) run only after this**, and only if the static layer is clean: Sonar and the review run without a stack, but fixing their findings changes the code, so in the reverse order the price of every static finding would be a discarded E2E run. The Sonar and the review findings go **into one batch**: one log entry, one fixer pass, one VD3a gate. `Must Fix` findings turn the round to FAIL, running into the same log and the same limits as test failures; `Suggestions` do not block. PASS → **automatic** (VD7, no confirmation): the `[validate-loop]` marker comes off, a single closing commit, onwards to 08.
+2. **It logs the result of the round** into `# Validation History` — with the `failure-counter.py` script. **One validation round = one run entry (VD4a):** logging a partial result (e.g. "the fast tests are green") separately is forbidden, because an interposed PASS would break the chain of consecutive failures, and the stop would never take effect.
+3. **Three stopping limits, all from the script's exit code (`exit 3`):** per item **3 consecutive** failures (the classic 3-attempt rule, VD4), per item **5 total** failures (this catches the broken chain too), and **5 consecutive FAIL runs** (VD4b, a global backstop for a diverging loop, where a different item fails in each round). `exit 1` means a bad invocation — the log was not modified, and logging by hand is forbidden. The type of the stop is decided by the **design-defect heuristic (VD5)**.
+4. **If it can continue:** it adds the fix tasks — test/Sonar/DoD → `## Validation fixes`, review finding → `## Review fixes` — puts a `[validate-loop]` marker on `tasks.md`, and starts the fixer belonging to the type of failure (`implement-fixer` or `review-fixer`, both = 06 fix mode) with the concrete defect list. **No iteration starts with an empty defect list** — the "Quality Gate FAIL, but there is no BLOCKER/CRITICAL/MAJOR" case (QG1) is a separate branch: a threshold fixable on the code side → a concrete task, otherwise STOP + human.
+5. **The fixer adapts the CODE to the test/DoD/finding (VD3, anti-"test cheating") — NEVER the other way round.** Weakening/skipping/deleting a test, hardcoding, lowering the DoD, silencing or deleting a `Must Fix` without a fix are all forbidden. The fixer returns: a fix summary + (if any) an **escalation signal**.
+6. **The contract-integrity gate (VD3a) — deterministic, not a matter of trust.** After the fixer returns, **still before the re-validation**, the orchestrator uses `git diff` to check whether it touched the test files, `spec.md`, `code-review.md` or the Sonar config. In case of weakening: restore with `git checkout --` + escalation — it does not try the same item again. Without this, VD3 would be mere intent, and a loosened assertion would run all the way to a false PASS.
+7. **The orchestrator re-validates** (a new round → a new log entry). Green → PASS (point 1). FAIL → a new iteration (from point 2).
+8. **Stopping at the limits (the user contact of the loop, VD7):** a stuck **code bug** → STOP + human ("how to proceed?"); a **diverging loop** → STOP + human with the fact of non-convergence; a **design defect** → escalation to 03/02 (VD5, with a status rollback), handing over to the design loop — instead of circling in 06. The fixer's escalation signal and a hit of the VD3a gate trigger the escalation without waiting for the limit.
+9. **`validation-report.md` = the full validation report (VD9):** not a one-line run log, but a run journal. One `## Round N` block per round — the **execution order with timestamps** (what ran, what was left out and why), the `test-runner`'s evidence verbatim, the failed items with their counters, the `DoD-NN` table, the trace of the fixing round (tasks added → the fixer's feedback → the result of the VD3a gate), and the verdict of the round. The blocks are **appended** (an earlier round is not overwritten), so the re-runs are visible; the `## Overall summary` collects which items ran more than once. At the end of the file comes the `# Validation History` written by the script. The rounds of the review go here too — on a single shared counter with the test failures. After a `/clear` this is the only place where the validation can be reconstructed — the chat is not.
 
-### 5.6 Önjavító hurkok (analyze + validate) — közös konvenciók
+### 4.6 Self-healing loops (analyze + validate) — shared conventions
 
-Két fázis vezényel önjavító hurkot: az **05-analyze** (a tervezési dokumentumok konzisztenciája) és az **07-validate** (a kód helyessége **és** a kód-review — RV1). A két hurok ugyanazokra a közös konvenciókra épül, hogy ne csússzanak szét:
+Two phases orchestrate a self-healing loop: **05-analyze** (the consistency of the design documents) and **07-validate** (the correctness of the code **and** the code review — RV1). The two loops build on the same shared conventions so that they do not drift apart:
 
-**Az `05-analyze` hurka determinisztikus rétegű, és iterációnként EGY analyzer-futás (AG1/AG3/AG4/D10/D11/D13/E/G).** Minden futás előtt lefut a **mechanikus kapu** (`analyze-gate-check.py`): a gépiesen eldönthető ellenőrzések (plan-`[P-…]` ↔ task-hivatkozás mindkét irányban, marker-jelenlét, `[OPS]` repo-fájlon, státusz-frissítő task, `⟂` szimmetria, `DoD-NN` egyediség, kötelező táblák megléte — **és a végrehajthatóság gépies rétege: futtatott artefaktumok létezése, plan-`path:sor` horgonyok feloldása, artefaktum-hang kemény padlója**) szkriptben futnak, nem LLM-ben — olcsóbban és hamis riasztás nélkül. A kapu emellett **leltárt** ad az `analyzer-exec`-nek (a horgonyzott sorok szövege, az artefaktumok állapota, az ítéletet igénylő hang-találatok, AG3): ettől a 6. kategóriához **nem kell repó-felderítő `Grep`/`Glob` köröket futtatni**, csak ítélni. Minden diagnoszta-kör futása **teljes a saját hatókörében**, és iterációnként **egy** — a 2. futástól megkapja az előző `Must Fix` listát (tételenkénti verifikáció) és a tervezési dokumentumok `git diff`-jét (**navigáció**, nem hatókör-szűkítés). **PASS kizárólag teljes körből adható, vagyis mind a négy diagnoszta-kör lefutásából.** *(Korábban itt két futás állt — egy „delta" és egy közvetlenül utána, javítás nélküli „záró teljes sweep" —, ami soha nem takarított meg futást, csak duplázta a fázis legdrágább lépését.)* A **downstream re-deriválás feltételes**: a fixer visszatérési összefoglalójának kötelező `downstream-hatás:` mezője dönti el, hogy a `03`/`04` fixert egyáltalán el kell-e indítani — egy megfogalmazás-pontosítás után a teljes lánc újrafuttatása felesleges. A **fixer-subagentek nem olvasnak fázis-skillt (D13)**: a Fix-mód szekció és a fázis minőségi kapuja `prompts/shared-hu/{fix-mode,quality-check}-*.md`-ből **build-time beemelve** ott van a wrapper-promptban, így a javítás célzott marad (a 03 esetében ~900 sor beolvasása helyett).
+**The `05-analyze` loop has a deterministic layer, and there is ONE analyzer run per iteration (AG1/AG3/AG4/D10/D11/D13/E/G).** Before every run the **mechanical gate** (`analyze-gate-check.py`) executes: the machine-decidable checks (plan-`[P-…]` ↔ task reference in both directions, marker presence, `[OPS]` on a repo file, the status-updating task, `⟂` symmetry, `DoD-NN` uniqueness, the presence of mandatory tables — **and the mechanical layer of executability: the existence of executed artifacts, the resolution of plan `path:line` anchors, the hard floor of artifact voice**) run in a script, not in an LLM — more cheaply and without false alarms. On top of that, the gate hands an **inventory** to the `analyzer-exec` (the text of the anchored lines, the state of the artifacts, the voice hits requiring judgement, AG3): thanks to this, category 6 **does not have to run repo-discovery `Grep`/`Glob` rounds**, only to judge. Every diagnostician round's run is **complete within its own scope**, and there is **one** per iteration — from the 2nd run onwards it receives the previous `Must Fix` list (item-by-item verification) and the `git diff` of the design documents (**navigation**, not scope narrowing). **PASS can only be given from a full round, i.e. from all four diagnostician rounds having run.** *(There used to be two runs here — a "delta" one and, immediately after it, without any fix, a "closing full sweep" — which never saved a run, it only doubled the most expensive step of the phase.)* The **downstream re-derivation is conditional**: the mandatory `downstream-effect:` field of the fixer's return summary decides whether the `03`/`04` fixer has to be started at all — after a rewording, re-running the whole chain is pointless. The **fixer subagents do not read a phase skill (D13)**: the Fix-mode section and the phase's quality gate are there in the wrapper prompt, **included at build time** from `prompts/shared-hu/{fix-mode,quality-check}-*.md`, so the correction stays targeted (instead of reading ~900 lines in the case of 03).
 
-**Amit a kapu ezen felül átvett az LLM-től (AG4/G/E).** A `DoD-NN → [P-…] → task` lefedettségi lánc **tranzitívan zárt**, ezért a szkript vezeti le: a `05` **két riport-táblája** (`Lefedettségi mátrix`, `Plan-szekció ↔ task`) **generálva** érkezik, és az orchestrátor szó szerint fűzi a riportba. Ehhez a `03` `Fordított lefedettség` táblájának első oszlopa viseli a szekció `[P-…]` azonosítóját (`S3` check). Az `analyzer`-nek így a **tartalmi** ítélet marad („a task valóban lefedi-e a DoD szándékát"), nem a tábla összerakása — épp az a rész tűnt el, amiről a prompt maga írja, hogy megerősítés-torzításra hajlamos. Szintén a kapuba került a `Környezeti koordináták` placeholdere és üres cellája (`C6` — KO1: a plan kötelező koordináta-szekciója, ahol az URL-ek, portok, indító parancsok, példa REST hívások, teszt-userek és jelszavaik élnek), a `Konfiguráció-életút` üres cellája (`C4`), a `Spec-lefedettség` TP1-teljessége (`C3`) és a **task-határon átnyúló shell-változó** (`C5`: `VAR=` az egyik taskban, `$VAR` egy másikban → külön shell, üres változó, érvénytelen deploy/rollback) — ez utóbbi a 6.f leggyakrabban átcsúszó esete volt. A **6.b/6.f jelöltjeit** (prózában ígért teszt, destruktív művelet) a kapu leltárba szedi, így az `analyzer-exec` nem szekciókat olvas át célpontot keresve, hanem listát ítél meg.
+**What else the gate took over from the LLM (AG4/G/E).** The `DoD-NN → [P-…] → task` coverage chain is **transitively closed**, so the script derives it: the **two report tables** of `05` (`Coverage matrix`, `Plan section ↔ task`) arrive **generated**, and the orchestrator splices them into the report verbatim. For this, the first column of the `Reverse coverage` table of `03` carries the section's `[P-…]` identifier (`S3` check). What is left for the `analyzer` is thus the **substantive** judgement ("does the task really cover the intent of the DoD"), not the assembly of the table — and it is precisely the part that the prompt itself describes as prone to confirmation bias that disappeared. Also moved into the gate: the placeholder and the empty cell of `Environment coordinates` (`C6` — KO1: the plan's mandatory coordinate section, where the URLs, ports, startup commands, example REST calls, test users and their passwords live), the empty cell of `Configuration lifecycle` (`C4`), the TP1 completeness of `Spec coverage` (`C3`) and the **shell variable crossing a task boundary** (`C5`: `VAR=` in one task, `$VAR` in another → a separate shell, an empty variable, an invalid deploy/rollback) — this last one was the most frequently slipping case of 6.f. The **candidates of 6.b/6.f** (a test promised in prose, a destructive operation) are collected into an inventory by the gate, so the `analyzer-exec` does not read through sections looking for a target, but judges a list.
 
-**Iteráció-takarékosság: mechanikus visszacsatolás a fixer után (G).** A hurok leggyakoribb ismétlődése nem szemantikai, hanem az, hogy a fixer eltöri a hivatkozási rendet (`— plan [P-…]` hiány, elavult `Plan-lefedettség` tábla, marker) — a `tasks-fixer` promptja ezt „a hurok leggyakoribb csendes rombolásának" nevezi. Ezért a fixer **a visszatérése előtt maga futtatja a kaput** (GS1), és a `kapu:` mezőben jelenti az eredményt — a mechanikus regresszió így ott javul, ahol keletkezett, egyetlen subagent-körfordulás nélkül. Az orchestrátor kapu-futása (G) ezután **védőháló**: ha mégis mechanikus találat van, az **ugyanahhoz a fixerhez** megy vissza — analyzer-futás nélkül, a hurokszámláló növelése nélkül (legfeljebb kétszer egy iterációban). Egy ilyen kör eredetileg egy teljes analyzer-futásba és egy egész iterációba került, a GS1 előtt pedig egy orchestrátor↔fixer körfordulásba.
+**Iteration thrift: mechanical feedback after the fixer (G).** The most frequent repetition of the loop is not semantic; it is that the fixer breaks the referential order (a missing `— plan [P-…]`, a stale `Plan coverage` table, a marker) — the prompt of the `tasks-fixer` calls this "the most frequent silent destruction of the loop". That is why the fixer **runs the gate itself before returning** (GS1) and reports the result in the `gate:` field — mechanical regression is thus fixed where it arose, without a single subagent round trip. The orchestrator's gate run (G) is then a **safety net**: if there is a mechanical hit after all, it goes back **to the same fixer** — without an analyzer run and without incrementing the loop counter (at most twice within one iteration). Originally such a round cost a full analyzer run and a whole iteration, and before GS1 an orchestrator↔fixer round trip.
 
-**Párhuzamos diagnózis (E/SH1).** A read-only diagnózist **négy kör** végzi, egyetlen üzenetben indítva: az `analyzer` definíció **háromszor**, hatókör-paraméterrel (`s1-dup-underspec` = 1+3., `s2-coverage` = 2+5., `s3-conventions` = 4. kategória), az `analyzer-exec` egyszer a 6.-ra. A négy hatókör kimenete diszjunkt, ezért a fázis eltelt ideje a leglassabb köré lesz, nem a négy összege. Hogy ennek ne a token-költség háromszorozása legyen az ára, a kapu `--emit-slices` módja **kimetszi** minden körnek a saját bemenetét (`analyze/slices/<hatókör>.md`) — így egyik kör sem olvassa a teljes négyest, és a szeletek átfedése miatt a teljes bemenet nagyságrendileg 1,3–1,5× marad, nem 3×. Az összefésülés (egyesített `Must Fix` lista → legkorábbi célfázis, duplikátum-szűrés, körönként külön azonosító-prefix: `AF`/`AC`/`AN`/`AX`) az orchestrátoré.
+**Parallel diagnosis (E/SH1).** The read-only diagnosis is performed by **four rounds**, started in a single message: the `analyzer` definition **three times**, with a scope parameter (`s1-dup-underspec` = categories 1+3, `s2-coverage` = 2+5, `s3-conventions` = category 4), and `analyzer-exec` once for category 6. The output of the four scopes is disjoint, so the elapsed time of the phase becomes that of the slowest round, not the sum of the four. So that the price of this is not a tripling of the token cost, the gate's `--emit-slices` mode **cuts out** each round's own input (`analyze/slices/<scope>.md`) — this way no round reads the full foursome, and because of the overlap of the slices the total input stays roughly 1.3–1.5×, not 3×. The merging (a unified `Must Fix` list → the earliest target phase, deduplication, a separate identifier prefix per round: `AF`/`AC`/`AN`/`AX`) belongs to the orchestrator.
 
-**Csonkítás-mentesség: a spec kidolgozott artefaktumai szó szerint kerülnek a plan-be (KX3).** A `plan.md`-nek önhordónak kell lennie (a `test-runner` a spec-et nem olvassa), a 03 mégis rendszeresen **„tervvé absztrahálta"** a spec-ben már kidolgozott anyagot: az OpenAPI-leíró helyére „a spec részletesen definiálja" került, a teljes payload helyére mezőnév-lista, a tízlépéses teszt-forgatókönyv helyére egy összefoglaló sor. A 02-nek eddig **volt** védelme az összevonás ellen (`KX2` — „ne zanzásítsd a teszteseteket"), a 03-nak **nem**, sőt három ellen-nyomás dolgozott ellene: a „*a plan terv, nem archívum*" szabály (ami a repó forrásfájljaira szól), a „*a spec absztrakciós szintjét fel kell oldani, nem reprodukálni*" megfogalmazás, és a `05-analyze` **duplikáció-kategóriája**, ami a spec→plan átvételt redundanciának minősíthette. A `KX3` mindhármat feloldja, és kimondja az irányt: **bővítés és pontosítás igen, összevonás és elhagyás nem**. A szabályt a mechanikus kapu **méri** is: a `V1` check a spec szerződés-blokkjainak (OpenAPI/JSON/YAML/SQL/`curl`) jellegzetes sorait keresi a plan-ben, a `V2` a két teszt-szekció terjedelmét veti össze — a prózában vagy táblában kidolgozott tartalom csonkítása pedig az `analyzer` 3. kategóriájában marad. Mindkettő a `03` lezárásakor is fut (`--plan-only`), tehát a hiba a keletkezése helyén derül ki.
+**Truncation-freedom: the elaborated artifacts of the spec go into the plan verbatim (KX3).** `plan.md` has to be self-contained (the `test-runner` does not read the spec), yet 03 regularly **"abstracted into a plan"** the material already elaborated in the spec: in place of the OpenAPI descriptor came "the spec defines this in detail", in place of the full payload a list of field names, and in place of the ten-step test scenario a single summary line. Up to now 02 **did** have protection against merging (`KX2` — "do not compress the test cases"), while 03 did **not**; on the contrary, three counter-pressures worked against it: the rule "*the plan is a design, not an archive*" (which addresses the source files of the repo), the phrasing "*the abstraction level of the spec has to be resolved, not reproduced*", and the **duplication category** of `05-analyze`, which could classify the spec→plan carry-over as redundancy. `KX3` releases all three, and states the direction: **expansion and clarification yes, merging and omission no**. The mechanical gate also **measures** the rule: the `V1` check looks for the characteristic lines of the spec's contract blocks (OpenAPI/JSON/YAML/SQL/`curl`) in the plan, and `V2` compares the extent of the two test sections — while the truncation of content elaborated in prose or a table remains in category 3 of the `analyzer`. Both also run at the closing of `03` (`--plan-only`), so the defect surfaces where it arose.
 
-**Egy zöld teszt nem bizonyítja, HOL volt zöld (EV1–EV5).** Egy éles ciklus az OpenShift dev környezetre telepített, a tesztjei viszont **lokális** célpontra futottak: az `apps/mobile-bank/playwright.dev-e2e.config.ts` — egy `test:playwright:dev-e2e` **nevű** npm-scripthez tartozó config — `baseURL: "http://127.0.0.1:5178"` értéket hordozott. Minden teszt zöld lett, a validálás PASS-ra zárt, és így nem derült ki, hogy a dev-re telepített komponens el sem indult. A hiba **nem** a plan felületességéből jött: a `Környezeti koordináták` szekció végig dev URL-eket sorolt. A baj az volt, hogy **a teszt tényleges célpontja sehol nem volt látható**: a gépi futtatási tábla parancsa (`npm --prefix apps/mobile-bank run test:playwright:dev-e2e`) egy npm-script nevére mutatott, a cím pedig egy konfigfájlban lakott — és a bizonyíték (JUnit XML, Allure) sem rögzíti, melyik hostot szólította meg a futás. **A parancs neve nem bizonyíték, a cím az.** Öt determinisztikus check zárja: `EV1` a ciklus kötelező `**Cél-környezet:**` mezője, `EV2` a futtatási tábla új `Környezet` oszlopa kategóriánként, `EV3` a nem-lokális kategória parancsában **literálisan** ott a cél-host (env-változóval vagy kapcsolóval — nem konfigba rejtve), `EV4` az `Előfeltétel` cellában ugyanarra a hostra menő **elérhetőségi probe** (a `run-tests.py` az előfeltételt futtatja, tehát egy le sem futó deploy FAIL-t ad, nem zöld pipát), `EV5` pedig kizárja a `localhost`-ot a nem-lokális kategóriákból és — ha a cél-környezet nem lokális — a `TS-NN` forgatókönyvek hívásaiból. Futásidőben a `run-tests.py` ugyanezt **futtatás előtt** ellenőrzi (`exit 4`), és a kategória környezetét beírja a `results.json`-ba és a kimenetbe (`@ dev`), hogy a kör bizonyítékából utólag is látszódjon, hol volt zöld. A `Környezet` oszlop a tábla **nyolcadik**, utolsó oszlopa: a régi, hét oszlopos táblák változatlanul futnak.
+**A green test does not prove WHERE it was green (EV1–EV5).** A live cycle deployed to the OpenShift dev environment, yet its tests ran against a **local** target: `apps/mobile-bank/playwright.dev-e2e.config.ts` — the config belonging to an npm script **named** `test:playwright:dev-e2e` — carried the value `baseURL: "http://127.0.0.1:5178"`. Every test went green, the validation closed with a PASS, and so it never came to light that the component deployed to dev had not even started. The defect did **not** come from a superficial plan: the `Environment coordinates` section listed dev URLs throughout. The trouble was that **the actual target of the test was nowhere visible**: the command of the machine-readable run table (`npm --prefix apps/mobile-bank run test:playwright:dev-e2e`) pointed at the name of an npm script, and the address lived in a config file — and the evidence (JUnit XML, Allure) does not record which host the run addressed either. **The name of the command is not evidence; the address is.** Five deterministic checks close this: `EV1` is the cycle's mandatory `**Target environment:**` field, `EV2` the run table's new `Environment` column per category, `EV3` requires the target host to be **literally** in the command of a non-local category (with an env variable or a switch — not hidden in a config), `EV4` a **reachability probe** to the same host in the `Prerequisite` cell (`run-tests.py` executes the prerequisite, so a deploy that never ran gives a FAIL, not a green tick), and `EV5` excludes `localhost` from the non-local categories and — if the target environment is not local — from the calls of the `TS-NN` scenarios. At runtime `run-tests.py` checks the same thing **before the run** (`exit 4`), and writes the category's environment into `results.json` and into the output (`@ dev`), so that it can be seen from the round's evidence afterwards too where it was green. The `Environment` column is the **eighth**, last column of the table: the old, seven-column tables keep running unchanged.
 
-**A teszt-forgatókönyv nem próza (TS1–TS6).** Egy visszatérő panasz: a `03` a spec teszteseteit „nagy vonalakban" veszi át — típus és érintett fájl igen, lépés, hívás és elvárt eredmény nem —, és ez akkor is így történt, amikor a felhasználó a spec-ben lépésről lépésre leírta. A prompt oldaláról **minden szabály megvolt** (TC1/a önhordóság, KX3 csonkítás-mentesség, a `quality-check-plan` „lépésenkénti híváslánc" pontja), csak egyik sem volt **ellenőrizhető**: a `Tesztelési stratégia` szabad próza volt, a `V2` kapu pedig **aggregált** sorszámot mért a spec teszt-szekciójához képest — a gépi futtatási tábla és a bootstrapping hosszától az egyes esetek még lehettek egymondatosak. A megoldás egy **kötelező, per-teszteset szerkezet**: a `plan.md` `### Teszt-forgatókönyvek` szekciója `TS-NN` blokkokból áll (`Mit tesztelünk` · `Előfeltétel` · négyoszlopos lépés-tábla · `Takarítás`), és a meglévő `analyze-gate-check.py` hat determinisztikus checkkel méri (TS1: van-e egyáltalán · TS2: teljes-e a blokk · TS3: **lépésenként** kitöltött és konkrét-e a hívás és az elvárt eredmény · TS4: placeholder-tilalom · TS5: **kétirányú** `DoD-NN` ↔ `TS-NN` lefedettség · TS6: hézagmentes azonosítók). A TS3 kemény padlója a kulcs: az „elvárt eredmény" cellában legalább egy backtickes érték vagy szám kell álljon — a „sikeresen lefut" nem eldönthető, tehát nem elvárt eredmény. A forma nem új: a `bs-manual-test-plan` `TG-NN` csoportjai pontosan ezt használják, csak az `05` **után** futnak és „összeszerelnek" — így ha a plan vékony volt, a kézi tesztterv is az lett. A `TS-NN` ugyanennek a **felfelé mozgatása** a keletkezés helyére, ahol a `test-runner` is olvassa.
+**A test scenario is not prose (TS1–TS6).** A recurring complaint: `03` takes over the spec's test cases "in broad strokes" — the type and the affected file yes, the step, the call and the expected result no — and this happened even when the user had described it step by step in the spec. From the prompt side **every rule was in place** (TC1/a self-containedness, KX3 truncation-freedom, the "step-by-step call chain" point of `quality-check-plan`), only none of them was **checkable**: the `Testing strategy` was free prose, and the `V2` gate measured an **aggregated** line count against the spec's test section — with the length of the machine-readable run table and the bootstrapping, the individual cases could still be one-liners. The solution is a **mandatory, per-test-case structure**: the `### Test scenarios` section of `plan.md` consists of `TS-NN` blocks (`What we test` · `Prerequisite` · a four-column step table · `Cleanup`), and the existing `analyze-gate-check.py` measures it with six deterministic checks (TS1: does it exist at all · TS2: is the block complete · TS3: is the call and the expected result filled in and concrete **per step** · TS4: placeholder prohibition · TS5: **bidirectional** `DoD-NN` ↔ `TS-NN` coverage · TS6: gapless identifiers). The hard floor of TS3 is the key: the "expected result" cell must contain at least one backticked value or number — "runs successfully" is not decidable, so it is not an expected result. The form is not new: the `TG-NN` groups of `bs-manual-test-plan` use exactly this, they just run **after** `05` and "assemble" — so if the plan was thin, the manual test plan became thin too. `TS-NN` is the **upward move** of the same thing to the place where it arises, where the `test-runner` reads it too.
 
-**Egy fogalom, három útvonal-alak (TR5/c) — és a hivatalos riport-fázis (TR6).** Egy éles ciklus `test-report/` mappájában két rekurzív fa keletkezett (`test-report/test-report/validate/round-04/`, `test-report/specs/cycle-NN-.../test-report/...`), a REST kérés/válasz audit-naplók pedig sehol nem voltak meg. Egyik sem véletlen: ugyanannak a kör-/fázis-mappának **három bázisa** él a rendszerben — `run-tests.py --round-dir` (repó gyökér), `report-gate-check.py --report-subdir` (ciklus-mappa) és a projekt riport-parancsainak `<phase-dir>` / `REPORT_PHASE_DIR` alakja (`test-report/`) —, a `07` skill kettőt írt ki egymástól 170 sorra, magyarázat nélkül, a harmadikat pedig meg sem említette. A `plan.md` gépi táblájában ugyanez a `{round}` helyőrzőn csapódott le (`…/test-report/{round}`). Az így elrontott bázis **nem hibaüzenetet ad, hanem egy rekurzív riport-fát**, amit semmi nem mért. A megoldás négy rétegű: **(a)** a `07` 0/a szekciója egy táblában, egyszer definiálja mind a három alakot és a bázisukat, a `test-report/` felső szintje pedig **zárt lista** (idegen mappa = útvonal-hiba, nem megőrzendő bizonyíték — a takarítási tilalom csak a `round-NN/`-re szól); **(b)** a szkriptek mind a három alakot **elfogadják és normalizálják**, a `run-tests.py` pedig minden futásnál kiírja a helyes `REPORT_PHASE_DIR=` értéket; **(c)** a `plan.md` táblája két, nem felcserélhető helyőrzőt kap (`{round}` = teljes útvonal, `{phase}` = fázis-mappa), és a `run-tests.py` a **futtatás előtt** megfogja a dupla prefixet (`exit 3` — nem esik vissza a `test-runner`-re, mert ez a `03` hiánya); **(d)** a `report-gate-check.py` **layout-őre** a kör lezárásakor `exit 1`-gyel bukat minden idegen mappát, megnevezve, melyik alak került rossz bázisra. A hiányzó audit-naplók külön tanulság: a TR3 kapu **kizárólag a tábla sorait** kéri számon, a szekció prózáját nem — ezért a `00-init` sablonja most kimondja, hogy az alkalmazás-oldali bizonyíték is táblasor. Végül a `test-report/implement/` **hivatalos fázis-mappa** lett (TR6): a `**Riport-fázisok:**` mező dönti el, hogy a `06` csak a `check-log.md`-t írja-e (alapértelmezés), vagy a záró állapotról a teljes riport-készletet is — utóbbi esetben ugyanaz a kapu zárja, `--report-subdir test-report/implement`-tel. Korábban a `06` skillje kimondottan tiltotta a riport-generálást, miközben a projektek fázis-mappaként használták az `implement/`-et: a tartalmára **soha nem futott kapu**.
+**A preserving rule creates no test — a generating recipe is needed too (TD0–TD6).** After the introduction of `TS1–TS6` the complaint **did not go away**, it only moved: `03` now wrote formally flawless `TS-NN` blocks, but in substance still a single request-response pair in a single step. The diagnosis: every test rule in the framework was **preserving** — `KX2`/`KX3` protect the detail that the input **carries**, and `TS3` provides a **hard floor** (at least one backticked value in the expected result). A weak model, however, optimises exactly to the floor: one step, one backtick, gate green. From a one-sentence input ("token renewal must not be duplicated when several instances run") zero detail survives, because there was zero — so the missing step is not **preservation** but **creation**. The user had been compensating for this by hand: writing the scenario step by step into `spec.md`, which meant the **only source** of the detail was the user. The new shared block (`prompts/shared-hu/test-scenario-design.md`, included by the `03` skill and the `plan-fixer`) turns this around — it converts test design into **questions to be answered**, so that it does not have to be inferred: **`TD1`** a dimension inventory over six dimensions (instance count/concurrency, initial state, lifecycle band, resource scope, input class, order/timing), with the product written out — this decides **how many** scenarios are needed, and it is what makes a "2 scopes × 2 expiry bands = 4 scenarios" list derivable rather than ad hoc; **`TD2`** the **observation quartet** — direct response · **counted** side effect · **directly read** state · **negative control** — because following the template produces only the first, and a wrong store key name is **invisible** in a 200 response; **`TD3`** countability: an "exactly once" / "is not duplicated" / "produces no logs" expectation can only be proved by counting, so the **source of the count** must be named (mock request journal, counter, metric), otherwise it has to be planned in or it becomes a question; **`TD4`** the negative control for isolation: a `DoD-NN` committing to isolation is **not covered** until the path meant to be protected is exercised while the effect is under way, with `unchangedness` as the expected result; **`TD5`** a **filled-in, nine-step calibration sample** (copy the density, not the subject), because a weak model copies a shape, it does not follow a rule; **`TD6`** a six-point self-check before the section is closed. The **`TD0`** scope marker keeps the spec/plan boundary: in the spec phase steps 1–2 run at **behaviour level** and commands are FORBIDDEN, in `<sec:plan_test_scenarios>` the same six rules run with literal values. **This block is deliberately a recipe, not a gate:** the points of `TD6` are the candidates for a later deterministic check (a mandatory state-verification row, and a spec-test-case ↔ `TS-NN` step-count ratio), but it is only worth paying for gate teeth once a real cycle shows that the recipe alone is not enough.
 
-**A kapu-konfiguráció együtt mozog a struktúrával (GC1) — és a TR5 migrációs őr (TR5/b).** Egy éles ciklus a `test-report/` szerkezetét alakította át, és frissítette a `specs/test-conventions.md`-t — a `conventions.md` `## Teszt-riportolás` tábláját viszont nem, holott **azt olvassa** a 07 TR3 kapuja (`report-gate-check.py`). A hiba két fázissal a keletkezése után, a validálásban derült volna ki. Két, egymást erősítő keretrendszer-hiány állt mögötte: **(a)** a TR5-tel (2026-08-07) megváltozott a tábla utolsó oszlopának **jelentése** (`test-report/` gyökér → **kör-mappa**), a **formátuma viszont nem** — így minden korábban inicializált projekt táblája csendben át van értelmezve, és semmi nem jelezte; **(b)** nem volt kimondva, hogy egy ciklus mikor és hogyan módosíthatja a `conventions.md`-t, sem hogy a kapu-olvasott konvenció frissítése a ciklus része. A megoldás: a `## Teszt-riportolás` szekcióban **kötelező** az `**Artefaktum-útvonal alapja:**` jelölő (`kör-mappa` vagy `test-report`), és a TR3 kapu a jelölő hiányában **nem találgat** — `exit 2` + a pótlandó sor (régi, flat sémánál pedig explicit módban a `test-report/` gyökérhez oldja fel az útvonalakat, tehát a migráció előtt sem ad hamis bukást). A `GC1` szabály (`prompts/shared-hu/conventions-change.md`, a 03 skill és a 03 minőségi kapuja beemeli) felsorolja, **melyik kapu melyik szekciót olvassa**, és kimondja a négy feltételt, ami mellett egy ciklus konvenciót módosíthat (explicit döntés + a plan tervezi konkrét tartalommal + van rá `[GREEN]` task + a kapu ugyanebben a ciklusban újra fut). A `05` kapuja gépiesen jelzi (`G1`), a `TC1/c` határvonal pedig kimondja: **riport-artefaktum, útvonal-alap és riport-parancs → `conventions.md`; teszt-recept és koordináta → `specs/test-conventions.md`** — az egyik frissítése nem helyettesíti a másikat.
+**One concept, three path forms (TR5/c) — and the official report phase (TR6).** In the `test-report/` folder of a live cycle two recursive trees appeared (`test-report/test-report/validate/round-04/`, `test-report/specs/cycle-NN-.../test-report/...`), while the REST request/response audit logs were nowhere to be found. Neither was an accident: **three bases** of the same round/phase folder live in the system — `run-tests.py --round-dir` (repo root), `report-gate-check.py --report-subdir` (cycle folder) and the `<phase-dir>` / `REPORT_PHASE_DIR` form of the project's report commands (`test-report/`) — and the `07` skill wrote two of them out 170 lines apart from each other, without explanation, while not mentioning the third at all. In the machine-readable table of `plan.md` the same thing landed on the `{round}` placeholder (`…/test-report/{round}`). A base spoiled this way **does not produce an error message, it produces a recursive report tree**, which nothing measured. The solution has four layers: **(a)** section 0/a of `07` defines all three forms and their bases once, in a table, and the top level of `test-report/` is a **closed list** (a foreign folder = a path defect, not evidence to be kept — the cleanup prohibition covers only `round-NN/`); **(b)** the scripts **accept and normalise** all three forms, and `run-tests.py` prints the correct `REPORT_PHASE_DIR=` value on every run; **(c)** the table of `plan.md` gets two non-interchangeable placeholders (`{round}` = the full path, `{phase}` = the phase folder), and `run-tests.py` catches the double prefix **before the run** (`exit 3` — it does not fall back to the `test-runner`, because this is a gap in `03`); **(d)** the **layout guard** of `report-gate-check.py` fails with `exit 1` at the closing of the round on every foreign folder, naming which form landed on the wrong base. The missing audit logs are a separate lesson: the TR3 gate holds **only the rows of the table** to account, not the prose of the section — which is why the template of `00-init` now states that application-side evidence is a table row too. Finally, `test-report/implement/` became an **official phase folder** (TR6): the `**Report phases:**` field decides whether `06` writes only `check-log.md` (the default), or the full report set about the closing state as well — in the latter case the same gate closes it, with `--report-subdir test-report/implement`. Earlier the `06` skill explicitly forbade report generation, while projects were using `implement/` as a phase folder: **no gate ever ran** on its contents.
 
-**Útvonal-konvenció egyetlen helyen (RP1).** A „relatív útvonalat használj" szabály korábban **három helyen, eltérő tartalommal** élt, és önmagával ütközött: a 03/04 minőségi kapuja a **fájl saját könyvtárához** képest relatív alakot kért (`../../src/app.ts`), a plan struktúra-példái viszont **repó-gyökérhez** relatívat (`src/file.ts:14`), miközben a mechanikus kapu horgony-checkje (`A2`) a repó gyökeréhez oldja fel — vagyis a kapu szabályát követő plan a saját kapujában bukott volna meg. A feloldás egyetlen közös blokkban él (`prompts/shared-hu/path-format.md`, a 02/03/04 minőségi kapuja beemeli): **kód- és fájl-hivatkozás** (érintett komponens, tervezett módosítás, `path:sor` horgony, parancs argumentuma) → **a repó gyökeréhez** képest relatív, mert a parancsok ott futnak és a kapu is oda oldja fel; **dokumentum-link** → **a fájl saját könyvtárához** képest relatív, hogy kattintható legyen; abszolút, gép-specifikus (`/home/…`, `C:\Users\…`) és `file://` alak egyik esetben sem érvényes. A kapu `R1` checkje ezt gépiesen jelzi, a régi, fájl-relatív horgonyokat pedig **feloldja és javaslatot ad** (`A2c`) — futó ciklust nem dob vissza miatta.
+**The gate configuration moves together with the structure (GC1) — and the TR5 migration guard (TR5/b).** A live cycle reshaped the structure of `test-report/` and updated `specs/test-conventions.md` — but not the `## Test reporting` table of `conventions.md`, even though **that** is what the TR3 gate of 07 reads (`report-gate-check.py`). The defect would have surfaced two phases after it arose, in the validation. Two mutually reinforcing framework gaps were behind it: **(a)** with TR5 (2026-08-07) the **meaning** of the table's last column changed (`test-report/` root → the **round folder**), while its **format did not** — so the table of every previously initialised project is silently reinterpreted, and nothing flagged it; **(b)** it was not stated when and how a cycle may modify `conventions.md`, nor that updating a gate-read convention is part of the cycle. The solution: the `**Artifact path base:**` marker is **mandatory** in the `## Test reporting` section (`round folder` or `test-report`), and in the absence of the marker the TR3 gate **does not guess** — `exit 2` + the line to be supplied (and with the old, flat scheme it resolves the paths to the `test-report/` root in explicit mode, so it does not produce a false failure before the migration either). The `GC1` rule (`prompts/shared-hu/conventions-change.md`, included by the 03 skill and the 03 quality gate) lists **which gate reads which section**, and states the four conditions under which a cycle may modify a convention (an explicit decision + the plan designs it with concrete content + there is a `[GREEN]` task for it + the gate runs again in the same cycle). The gate of `05` flags it mechanically (`G1`), and the `TC1/c` boundary states: **report artifact, path base and report command → `conventions.md`; test recipe and coordinate → `specs/test-conventions.md`** — updating one does not substitute for the other.
 
-**Shift-left: a kapu a 03 és 04 lezárásakor is fut (M).** Ugyanaz a szkript a `03-plan` lezárásánál `--plan-only` módban (a `tasks.md` még nem létezik: `[P-…]` formátum, kötelező táblák, `S3`, `C1`, `C3` TP1, `C4` KF1, `C6` KO1, horgonyok, artefaktum-hang, `DoD-NN` azonosítók), a `04-tasks` lezárásánál pedig teljes módban. Bármely `Must Fix` → **nincs státuszváltás**: a saját fázis javítja, friss kontextusban. Ez a `05` iterációszámát csökkenti, és a hibát ott javítja, ahol keletkezett — nem két fázissal később, egy fixer-subagent és egy analyzer-kör árán.
+**The path convention in a single place (RP1).** The "use a relative path" rule used to live in **three places with differing content**, and it contradicted itself: the quality gate of 03/04 asked for a form relative to the **file's own directory** (`../../src/app.ts`), while the plan's structure examples used one relative to the **repo root** (`src/file.ts:14`), whereas the anchor check of the mechanical gate (`A2`) resolves to the repo root — meaning a plan that followed the gate's rule would have failed in its own gate. The resolution lives in a single shared block (`prompts/shared-hu/path-format.md`, included by the quality gate of 02/03/04): a **code and file reference** (affected component, planned change, `path:line` anchor, argument of a command) → relative to **the repo root**, because the commands run there and the gate resolves there too; a **document link** → relative to **the file's own directory**, so that it is clickable; an absolute, machine-specific (`/home/…`, `C:\Users\…`) or `file://` form is not valid in either case. The `R1` check of the gate flags this mechanically, and it **resolves the old, file-relative anchors and gives a suggestion** (`A2c`) — it does not throw a running cycle back over it.
 
-**„Változott-e egyáltalán?" őrszem (N).** Ha egy fixer után a `git diff` a ciklus mappáján üres **és** új `Knn` kérdés sem született, a következő analyzer-kör bizonyosan ugyanazt a listát adná — ezért a hurok ilyenkor **megáll és kérdez**, analyzer-futás nélkül. Ez az a hibamód (a fixer nem tudja eldönteni a javítást, de a kérdés felvételét is elfelejti), amely őrszem nélkül mindhárom iterációt végigégeti ugyanazon a `Must Fix` listán.
+**Shift-left: the gate also runs at the closing of 03 and 04 (M).** The same script runs at the closing of `03-plan` in `--plan-only` mode (`tasks.md` does not exist yet: `[P-…]` format, mandatory tables, `S3`, `C1`, `C3` TP1, `C4` KF1, `C6` KO1, anchors, artifact voice, `DoD-NN` identifiers), and at the closing of `04-tasks` in full mode. Any `Must Fix` → **no status change**: the phase itself fixes it, in a fresh context. This reduces the iteration count of `05`, and fixes the defect where it arose — not two phases later, at the price of a fixer subagent and an analyzer round.
 
-- **LC1 — Egységes marker.** A hurok suffix-markerrel jelzi a visszanyitott dokumentum státuszát: analyze → `[analyze-loop]` (a tervezési doksikon), validate → `[validate-loop]` (a `tasks.md`-n — teszt- és review-javításnál egyaránt ez az egy marker). A marker = a hurok aktív (auto-státusz, megerősítés nélkül), és megszakítás után jelzi, ki nyitotta vissza. Lezáráskor (PASS) lekerül; feladáskor (bármelyik leállási korlát betelt) marad a megrekedt állapot jelzésére.
-- **LC2 — Hurok-napló.** Mindkét hurok iterációnként naplóz: analyze → `analyze-report.md` Hurok-napló; validate → `test-report/validation-report.md` `# Validation History` (a review körei is ide, **közös** számlálón a teszthibákkal). Innen rekonstruálható a megszakított futás.
-- **LC3 — Fixer-wrapper.** A javítást vékony `agents/*-fixer.md` wrapper végzi, amely a megfelelő skill **Fix-mód** szekciójára delegál — nincs logika-duplikáció. Analyze → `spec/plan/tasks-fixer` (= 02/03/04 fix-mód); validate → `implement-fixer` (= 06 fix-mód, `## Validációs javítások`) és `review-fixer` (= 06 fix-mód, `## Review javítások`).
-- **LC4 — Commit a hurok végén.** Egyetlen lezáró commit (PASS vagy feladás), nem iterációnként. A megszakítás-biztonságot a marker + a hurok-napló adja.
+**The "did anything change at all?" sentinel (N).** If after a fixer the `git diff` on the cycle folder is empty **and** no new `Knn` question was born either, the next analyzer round would certainly return the same list — so in that case the loop **stops and asks**, without an analyzer run. This is the failure mode (the fixer cannot decide the fix, but also forgets to record the question) that, without a sentinel, burns through all three iterations on the same `Must Fix` list.
 
-**A két hurok különbsége:** az analyze korlátja a globális `max X = 3` iteráció; a validate-hurokban **három korlát fut párhuzamosan**, mindet a `failure-counter.py` érvényesíti a kilépő kódjával: per-item **3 egymást követő** bukás (a beragadt elemet fogja meg), per-item **5 összes** bukás (az ingadozó elemet), és **5 egymást követő FAIL-iteráció** (globális backstop a divergáló hurokra). A hurok-napló bejegyzései **iterációnként egyszer** készülnek — részeredmény naplózása megszakítaná a bukás-láncot, és a leállás nem lépne életbe. A validate-hurokban a kód a **szerződéshez (teszt/DoD/finding) igazodik — VD3 anti-„csalás"** —, és ha egy FAIL/finding csak a szerződés módosításával vagy elnémításával lenne zöld/tiszta, az tervezési/szerződés-ügy: a hurok **felfelé eszkalál (VD5)** a tervezési fázisra (03/02), nem lazítja a tesztet/findinget. Ezt **determinisztikus kapu** támasztja alá (VD3a): a fixer visszatérése után `git diff` ellenőrzi a tesztfájlokat / `spec.md`-t / `code-review.md`-t / Sonar-konfigot, és a szerződés gyengítését visszaállítja (`git checkout --`) + eszkalációnak minősíti.
+- **LC1 — A uniform marker.** The loop indicates the status of a reopened document with a suffix marker: analyze → `[analyze-loop]` (on the design docs), validate → `[validate-loop]` (on `tasks.md` — this one marker for both test and review fixes). The marker = the loop is active (auto status, without confirmation), and after an interruption it shows who reopened it. At the closing (PASS) it comes off; on abandonment (any stopping limit exhausted) it stays, to signal the stuck state.
+- **LC2 — The loop log.** Both loops log per iteration: analyze → the Loop log of `analyze-report.md`; validate → `# Validation History` in `test-report/validation-report.md` (the rounds of the review go here too, on a **shared** counter with the test failures). An interrupted run can be reconstructed from here.
+- **LC3 — The fixer wrapper.** The correction is done by a thin `agents/*-fixer.md` wrapper that delegates to the **Fix-mode** section of the appropriate skill — there is no logic duplication. Analyze → `spec/plan/tasks-fixer` (= 02/03/04 fix mode); validate → `implement-fixer` (= 06 fix mode, `## Validation fixes`) and `review-fixer` (= 06 fix mode, `## Review fixes`).
+- **LC4 — A commit at the end of the loop.** A single closing commit (PASS or abandonment), not one per iteration. Interruption safety is provided by the marker + the loop log.
 
-**Miért egy hurok a teszt és a review (RV1)?** Egy review-javítás elronthat egy tesztet, ezért fix után újra kell tesztelni — korábban ezt a `09-review` saját „re-validate" ága csinálta, a 07 teljes gépezetének (kör-mappák, riport-kapu, számlálók) megismétlésével. Egyetlen hurokban a review a **teljes kör 2. lépése** (a statikus réteg fele, a Sonar mellett): csak zöld gyors tesztek után fut, de még a drága nehéz tesztek előtt (VD13), a findingjei ugyanabba a naplóba és ugyanazokba a korlátokba futnak, és a `09` fázisból csak a **kézi megerősítésű merge** marad (RD8).
+**The difference between the two loops:** the limit of analyze is the global `max X = 3` iterations; in the validate loop **three limits run in parallel**, all enforced by `failure-counter.py` through its exit code: per item **3 consecutive** failures (this catches the stuck item), per item **5 total** failures (the flapping item), and **5 consecutive FAIL iterations** (a global backstop for a diverging loop). The entries of the loop log are produced **once per iteration** — logging a partial result would break the failure chain, and the stop would not take effect. In the validate loop the code adapts **to the contract (test/DoD/finding) — VD3, anti-"cheating"** — and if a FAIL/finding could only be turned green/clean by modifying or silencing the contract, that is a design/contract matter: the loop **escalates upwards (VD5)** to the design phase (03/02), it does not weaken the test/finding. This is backed by a **deterministic gate** (VD3a): after the fixer returns, `git diff` checks the test files / `spec.md` / `code-review.md` / the Sonar config, and any weakening of the contract is restored (`git checkout --`) + classified as an escalation.
 
-> **A `08-doc-sync` NEM harmadik önjavító hurok.** Külön kategória: **objektív, projektfüggetlen konzisztencia-kapu (DS22)** + **ember-vezérelt** javítás (`doc-sync-questions.md`, DS10) — nincs LC1–LC4-stílusú subagent-önjavító hurka (a `doc-sync-planner` read-only tervkészítő, nem fixer). A „fázis vezényel önjavító hurkot" tehát **kettő** marad (analyze / validate+review). A `08-doc-sync` és a 07 review-kapuja ráadásul **független minőségi kapuk** (DS23): a reviewer kizárólag a **kódra** ad findingot (`test-report/code-review.md`), a generált doksik helyességét a doc-sync **saját kapuja** garantálja — nincs finding-keveredés a kettő között.
+**Why are the test and the review one loop (RV1)?** A review fix can break a test, so after a fix you have to test again — earlier this was done by the separate "re-validate" branch of `09-review`, repeating the whole machinery of 07 (round folders, report gate, counters). In a single loop the review is **step 2 of the full round** (one half of the static layer, next to Sonar): it runs only after green fast tests, but still before the expensive heavy tests (VD13), its findings run into the same log and the same limits, and all that is left of phase `09` is the **manually confirmed merge** (RD8).
 
-### 5.7 Példa prompt-folyam (egy ciklus végigvezetése)
+> **`08-doc-sync` is NOT a third self-healing loop.** It is a separate category: an **objective, project-independent consistency gate (DS22)** + **human-driven** correction (`doc-sync-questions.md`, DS10) — it has no LC1–LC4-style subagent self-healing loop (the `doc-sync-planner` is a read-only planner, not a fixer). So the number of "phases that orchestrate a self-healing loop" stays **two** (analyze / validate+review). On top of that, `08-doc-sync` and the review gate of 07 are **independent quality gates** (DS23): the reviewer gives findings exclusively on the **code** (`test-report/code-review.md`), while the correctness of the generated docs is guaranteed by doc-sync's **own gate** — there is no finding mix-up between the two.
 
-Egy konkrét ciklus, `cycle-02-oidc-login` végigvitele a promptok sorrendjében. A `00`/`01` **egyszeri** setup, a `02`–`09` **ciklusonként** ismétlődik. Minden fázist a saját indító promptjával, **új chat sessionban** indíts; a `<cycle-name>` és egyéb helyőrzőket cseréld ki. Az alábbi blokkban a `→` sorok a fázisban zajló interakciót (interjú, jóváhagyás, hurok) jelölik.
+### 4.7 Example prompt flow (walking through one cycle)
+
+Walking through a concrete cycle, `cycle-02-oidc-login`, in the order of the prompts. `00`/`01` are a **one-off** setup, `02`–`09` repeat **per cycle**. Start every phase with its own starting prompt, in a **new chat session**; replace `<cycle-name>` and the other placeholders. In the block below, the `→` lines mark the interaction taking place in the phase (interview, approval, loop).
 
 ```
-# ①  00 — Projekt inicializálás  (csak üres projektnél, egyszer)
-Futtasd a parancsot: `/bs-init-project input: OIDC-alapú bejelentkezés a mobil-bank frontendhez`
-   → az ágens végigkérdezi a konvenciókat (tech stack, teszt, merge stratégia) → conventions.md
+# ①  00 — Project initialisation  (only for an empty project, once)
+Run the command: `/bs-init-project input: OIDC-based login for the mobile bank frontend`
+   → the agent asks through the conventions (tech stack, tests, merge strategy) → conventions.md
 
-# ②  01 — Ciklusok kezelése
-Futtasd a parancsot: `/bs-add-cycles input: Új ciklus — OIDC login a mobil-bank frontendhez`
-   → névjavaslat: cycle-02-oidc-login → "ok" → specs/roadmap.md (Kész) + ciklusmappa
+# ②  01 — Managing cycles
+Run the command: `/bs-add-cycles input: New cycle — OIDC login for the mobile bank frontend`
+   → name proposal: cycle-02-oidc-login → "ok" → specs/roadmap.md (Done) + the cycle folder
 
-# ③  02 — Spec írás
-Futtasd a parancsot: `/bs-write-spec input: @specs/roadmap.md`
-   → spec-questions.md kérdések egyenként → válaszok → "a spec kész, mehet" → spec.md (Tervezésre kész)
+# ③  02 — Writing the spec
+Run the command: `/bs-write-spec input: @specs/roadmap.md`
+   → spec-questions.md questions one by one → answers → "the spec is ready, go" → spec.md (Ready for planning)
 
-# ④  03 — Plan írás
-Futtasd a parancsot: `/bs-write-plan input: @specs/cycle-02-oidc-login/spec.md`
-   → kötelező első kérdés: E2E teszt stratégia → válaszok → "jóváhagyom" → plan.md (Task írásra kész)
+# ④  03 — Writing the plan
+Run the command: `/bs-write-plan input: @specs/cycle-02-oidc-login/spec.md`
+   → mandatory first question: E2E test strategy → answers → "approved" → plan.md (Ready for tasks)
 
-# ⑤  04 — Tasks írás
-Futtasd a parancsot: `/bs-write-tasks input: @specs/cycle-02-oidc-login/plan.md`
-   → "mehet" → tasks.md (Implementálásra kész)
+# ⑤  04 — Writing the tasks
+Run the command: `/bs-write-tasks input: @specs/cycle-02-oidc-login/plan.md`
+   → "go" → tasks.md (Ready for implementation)
 
 # ⑥  05 — Analyze
-Futtasd a parancsot: `/bs-analyze input: @specs/cycle-02-oidc-login`
-   → kereszt-fázisos ellenőrzés; a talált tételekből TE választod ki (triázs), mit javítson → önjavító hurok az analyze-task.md-n → analyze-report.md (PASS)
+Run the command: `/bs-analyze input: @specs/cycle-02-oidc-login`
+   → cross-phase check; from the items found, YOU choose (triage) what it should fix → self-healing loop on analyze-task.md → analyze-report.md (PASS)
 
-# ⑦  06 — Implementálás
-Futtasd a parancsot: `/bs-implement input: @specs/cycle-02-oidc-login/tasks.md`
-   → kód + tasks.md haladás → tasks.md (Validálásra kész)
+# ⑦  06 — Implementation
+Run the command: `/bs-implement input: @specs/cycle-02-oidc-login/tasks.md`
+   → code + progress in tasks.md → tasks.md (Ready for validation)
 
-# (bármikor az 05 után, nem számozott lépés) — kézi tesztterv
-# Futtasd a parancsot: `/bs-manual-test-plan input: @specs/cycle-02-oidc-login`
-#    → manual-test-plan.md (Tervezett vagy As-built módban) — nem fázis, nem változtat státuszt
+# (at any time after 05, an unnumbered step) — the manual test plan
+# Run the command: `/bs-manual-test-plan input: @specs/cycle-02-oidc-login`
+#    → manual-test-plan.md (in Planned or As-built mode) — not a phase, it changes no status
 
-# ⑧  07 — Validálás
-Futtasd a parancsot: `/bs-validate input: @specs/cycle-02-oidc-login`
-   → gyors tesztek → Sonar + kódreview (reviewer subagent) → nehéz tesztek + DoD;
-     FAIL esetén önjavító hurok → PASS → spec/plan/tasks státusz: Kész
+# ⑧  07 — Validation
+Run the command: `/bs-validate input: @specs/cycle-02-oidc-login`
+   → fast tests → Sonar + code review (reviewer subagent) → heavy tests + DoD;
+     on FAIL a self-healing loop → PASS → status of spec/plan/tasks: Done
 
 # ⑨  08 — Doc-sync
-Futtasd a parancsot: `/bs-doc-sync input: @specs/cycle-02-oidc-login`
-   → docs-generated/ frissítése + objektív kapu → konzisztens dokumentáció
+Run the command: `/bs-doc-sync input: @specs/cycle-02-oidc-login`
+   → updating docs-generated/ + the objective gate → consistent documentation
 
 # ⑩  09 — Merge
-Futtasd a parancsot: `/bs-merge input: @specs/cycle-02-oidc-login`
-   → kapuk ellenőrzése (státusz + tiszta review + doc-sync) → merge (kézi megerősítéssel)
+Run the command: `/bs-merge input: @specs/cycle-02-oidc-login`
+   → checking the gates (status + clean review + doc-sync) → merge (with manual confirmation)
 ```
 
-A következő ciklus (`cycle-03-...`) ismét a `02`-vel indul — a `00`/`01` nem ismétlődik.
+The next cycle (`cycle-03-...`) starts with `02` again — `00`/`01` do not repeat.
 
-## 6. Egyszerűsített (lightweight) flow
+## 5. Simplified (lightweight) flow
 
-A fenti 00–09 ábrák a **teljes berki spec flow-t** írják le. Ez a szekció a **másik utat**, az egyszerűsített, háromfázisú flow-t részletezi — kis, jól körülhatárolt feladatokhoz (konfiguráció, egyszerűbb script, kisebb javítás), amelyek 3-4 lépésben megoldhatók. Kanonikus hívó parancsa a `/bs-quick-flow`; a flow-választásról lásd fent a „Két fejlesztési út" szekciót.
+The 00–09 diagrams above describe the **full berki spec flow**. This section details the **other route**, the simplified, three-phase flow — for small, well-bounded tasks (configuration, a simpler script, a minor fix) that can be solved in 3-4 steps. Its canonical invoking command is `/bs-quick-flow`; for choosing between the flows see the "Two development routes" section above.
 
-A teljes flow-val szemben itt **nincs** külön `plan.md` (a technikai vázlat a `spec.md`-be kerül), **nincs** `analyze`/`validate`/`doc-sync`/`review` fázis és **nincs** automatizált önjavító hurok — a minőségi kapuk inline futnak, a dokumentáció frissítése pedig a 3. fázis része. A háromfázisú út: `spec.md` → `task.md` → implementáció, minden fázis végén **kötelező konzisztencia-ellenőrzéssel**, a fázisváltások előtt pedig **⛔ explicit felhasználói jóváhagyással**.
+Compared with the full flow, here there is **no** separate `plan.md` (the technical outline goes into `spec.md`), **no** `analyze`/`validate`/`doc-sync`/`review` phase and **no** automated self-healing loop — the quality gates run inline, and updating the documentation is part of phase 3. The three-phase route: `spec.md` → `task.md` → implementation, with a **mandatory consistency check** at the end of every phase, and **⛔ explicit user approval** before every phase transition.
 
-**Hogyan indul egy ciklus?** A Felhasználó átad egy feladatot, az ágens előkészíti a git ágat, majd egy rövid **interjúval (grill)** tisztázza a célt — addig kérdez, amíg minden információ megvan a `spec.md`-hez. A **flow-méret döntés ennek az interjúnak az alapján** születik: az ágens folyamatosan mérlegeli, hogy a feladat tényleg belefér-e az egyszerűsített flow-ba (3-4 lépés, egyetlen komponens, nincs összetett előzetes tervezés). Ha a feladat túlnő ezen (nagyobb kódírás, több komponens, integráció, összetett tervezés), az ágens **megáll még a `spec.md` előtt**, és a teljes berki spec folyamatot javasolja (`01-add-cycles`). Csak ha a feladat valóban kicsi, javasol ciklusszámot és nevet, kér jóváhagyást, és hozza létre a ciklusmappát.
+**How does a cycle start?** The user hands over a task, the agent prepares the git branch, and then clarifies the goal with a short **interview (grill)** — it keeps asking until it has all the information for `spec.md`. The **flow-size decision is made on the basis of this interview**: the agent continuously weighs whether the task really fits into the simplified flow (3-4 steps, a single component, no complex up-front design). If the task outgrows this (more code to write, several components, integration, complex design), the agent **stops even before `spec.md`** and proposes the full berki spec process (`01-add-cycles`). Only if the task really is small does it propose a cycle number and a name, ask for approval, and create the cycle folder.
 
-### 6.1 Folyamatábra
+### 5.1 Flowchart
 
 ```mermaid
 flowchart TD
@@ -946,146 +855,145 @@ flowchart TD
     classDef doc fill:#f3e8ff,stroke:#8b5cf6,stroke-width:2px,color:#1e293b;
     classDef userInput fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
 
-    Start(["Felhasználó átad egy feladatot"]):::userInput
-    Git["① Git ág előkészítése<br/>(feature ág, tiszta munkafa)"]:::design
-    Interview["② Cél megadása + interjú (grill)<br/>kérdez, amíg minden tiszta a spec.md-hez"]:::design
-    SizeCheck{"A feladat tényleg kicsi?<br/>(3-4 lépés · egy komponens ·<br/>nincs összetett tervezés)"}:::decision
-    Redirect(["Túlnő rajta → átirányítás<br/>a teljes flow-ra (01-add-cycles)"]):::userInput
-    NameApprove["③ Ciklusszám + névjavaslat<br/>→ ⛔ felhasználói jóváhagyás"]:::design
-    Dir["④ Ciklusmappa létrehozása<br/>(specs/cycle-NN-...)"]:::design
+    Start(["The user hands over a task"]):::userInput
+    Git["① Preparing the git branch<br/>(feature branch, clean working tree)"]:::design
+    Interview["② Giving the goal + interview (grill)<br/>it asks until everything is clear for spec.md"]:::design
+    SizeCheck{"Is the task really small?<br/>(3-4 steps · one component ·<br/>no complex design)"}:::decision
+    Redirect(["It outgrows this → redirect<br/>to the full flow (01-add-cycles)"]):::userInput
+    NameApprove["③ Cycle number + name proposal<br/>→ ⛔ user approval"]:::design
+    Dir["④ Creating the cycle folder<br/>(specs/cycle-NN-...)"]:::design
 
-    P1["<b>1. fázis — Specifikáció (spec.md)</b><br/>cél, paraméterek, technikai vázlat<br/>(plan-helyettesítő), tesztstratégia, README-terv"]:::design
-    C1["Konzisztencia-ellenőrzés<br/>(utak, nevek, portok egyeznek)"]:::doc
-    Stop1{"⛔ Felhasználói<br/>jóváhagyás?"}:::userInput
+    P1["<b>Phase 1 — Specification (spec.md)</b><br/>goal, parameters, technical outline<br/>(plan substitute), test strategy, README plan"]:::design
+    C1["Consistency check<br/>(paths, names, ports match)"]:::doc
+    Stop1{"⛔ User<br/>approval?"}:::userInput
 
-    P2["<b>2. fázis — Feladatlista (task.md)</b><br/>pipálható lépések, teszt a dokumentáció elé,<br/>logikus teszt-sorrend"]:::design
-    C2["Konzisztencia-ellenőrzés<br/>(task.md ↔ spec.md)"]:::doc
-    Stop2{"⛔ Felhasználói<br/>jóváhagyás?"}:::userInput
+    P2["<b>Phase 2 — Task list (task.md)</b><br/>tickable steps, the test before the documentation,<br/>a logical test order"]:::design
+    C2["Consistency check<br/>(task.md ↔ spec.md)"]:::doc
+    Stop2{"⛔ User<br/>approval?"}:::userInput
 
-    P3["<b>3. fázis — Megvalósítás</b><br/>kód a task.md szerint,<br/>valós idejű pipálás, leftover-sweep"]:::dev
-    Test{"Tesztek zöldek?"}:::decision
-    Stuck{"Beragadás?<br/>(2-3 kör azonos hiba)"}:::decision
-    Ask(["Állj meg → célzott,<br/>előremozdító kérdés a Felhasználónak"]):::userInput
-    Close(["Lezárás: dokumentáció frissítve<br/>+ Jira-prefixű záró commit"]):::start
+    P3["<b>Phase 3 — Implementation</b><br/>code per task.md,<br/>real-time ticking, leftover sweep"]:::dev
+    Test{"Are the tests green?"}:::decision
+    Stuck{"Stuck?<br/>(2-3 rounds, same defect)"}:::decision
+    Ask(["Stop → a targeted,<br/>forward-moving question to the user"]):::userInput
+    Close(["Closing: documentation updated<br/>+ closing commit with a Jira prefix"]):::start
 
     Start --> Git --> Interview --> SizeCheck
-    SizeCheck -- "Nem (túlnő rajta)" --> Redirect
-    SizeCheck -- "Igen" --> NameApprove --> Dir --> P1
+    SizeCheck -- "No (it outgrows this)" --> Redirect
+    SizeCheck -- "Yes" --> NameApprove --> Dir --> P1
     P1 --> C1 --> Stop1
-    Stop1 -- "Nem → várakozás" --> Stop1
-    Stop1 -- "Igen" --> P2
+    Stop1 -- "No → waiting" --> Stop1
+    Stop1 -- "Yes" --> P2
     P2 --> C2 --> Stop2
-    Stop2 -- "Nem → várakozás" --> Stop2
-    Stop2 -- "Igen" --> P3
+    Stop2 -- "No → waiting" --> Stop2
+    Stop2 -- "Yes" --> P3
     P3 --> Test
-    Test -- "Nem (bukik) → javít,<br/>majd újra az ÖSSZES teszt" --> Stuck
-    Stuck -- "Nem" --> P3
-    Stuck -- "Igen" --> Ask
+    Test -- "No (it fails) → fix,<br/>then ALL the tests again" --> Stuck
+    Stuck -- "No" --> P3
+    Stuck -- "Yes" --> Ask
     Ask --> P3
-    Test -- "Igen" --> Close
-    P3 -. "spec-hiba → vissza az 1. fázisba<br/>+ újra-jóváhagyás" .-> P1
+    Test -- "Yes" --> Close
+    P3 -. "spec defect → back to phase 1<br/>+ re-approval" .-> P1
 ```
 
-### 6.2 A három fázis röviden
+### 5.2 The three phases in brief
 
-| Fázis | Kimenet | Fő szabály | Kapu a fázis végén |
+| Phase | Output | Main rule | Gate at the end of the phase |
 |---|---|---|---|
-| **1. Specifikáció** | `spec.md` | Cél + paraméterek + **technikai vázlat** (a `plan.md`-t helyettesítő állványzat: érintett fájlok, kulcs-elemek, végrehajtási sorrend, fő hibaág) + tesztstratégia + README-terv. Projektfájlt itt **nem** módosít. | Konzisztencia-ellenőrzés → **⛔ explicit jóváhagyás** |
-| **2. Feladatlista** | `task.md` | A technikai vázlatra épülő, pipálható lépések. A tesztelés a dokumentáció-frissítés **elé** kerül, logikus **teszt-sorrenddel** (erőforrást előbb létrehozni, csak utána ellenőrizni). | Konzisztencia-ellenőrzés (a `spec.md`-vel is) → **⛔ explicit jóváhagyás** |
-| **3. Megvalósítás** | kód + frissített dokumentáció | Kizárólag a `task.md` szerint, valós idejű pipálással. Csere/átnevezés után **leftover-sweep** (`grep` a régi alakra). Bukó teszt → javít + **az összes** teszt újra. | Tesztek zöldek + dokumentáció kész + egyeztetve → **Jira-prefixű záró commit** |
+| **1. Specification** | `spec.md` | Goal + parameters + a **technical outline** (the scaffolding that substitutes for `plan.md`: affected files, key elements, execution order, main error branch) + test strategy + README plan. It modifies **no** project file here. | Consistency check → **⛔ explicit approval** |
+| **2. Task list** | `task.md` | Tickable steps built on the technical outline. Testing comes **before** the documentation update, in a logical **test order** (create the resource first, only then check it). | Consistency check (against `spec.md` too) → **⛔ explicit approval** |
+| **3. Implementation** | code + updated documentation | Exclusively per `task.md`, with real-time ticking. After a replacement/rename, a **leftover sweep** (`grep` for the old form). A failing test → fix + **all** the tests again. | Tests green + documentation done + agreed → **closing commit with a Jira prefix** |
 
-### 6.3 Két beépített kör-megszakító
+### 5.3 Two built-in loop breakers
+- **Stuck detection (phase 3):** if the same defect still fails after 2-3 fixing rounds, or the solution goes round in circles, the agent **stops**, summarises what it tried + the exact error message + its hypotheses, and asks a **targeted question broken down to a decision or a piece of data** — it does not keep trying blindly.
+- **Phase rollback on a spec defect:** if it turns out during the implementation that `spec.md` is incomplete or wrong, **deviating from it silently is forbidden** — back to phase 1, update `spec.md` (and `task.md` if needed), then **re-approval**, and only then onwards.
 
-- **Beragadás-felismerés (3. fázis):** ha ugyanaz a hiba 2-3 javítási kör után is bukik, vagy körben jár a megoldás, az ágens **megáll**, összefoglalja mit próbált + a pontos hibaüzenetet + a hipotéziseit, és **célzott, döntésre/adatra lebontott kérdést** tesz fel — nem próbálkozik tovább vakon.
-- **Fázis-visszalépés spec-hibára:** ha implementáció közben derül ki, hogy a `spec.md` hiányos vagy téves, **tilos csendben eltérni** tőle — vissza az 1. fázisba, `spec.md` (és ha kell, `task.md`) frissítés, majd **újra-jóváhagyás**, és csak utána tovább.
+### 5.4 Optional agents (all read-only, none of them mandatory)
 
-### 6.4 Opcionális ágensek (mind read-only, egyik sem kötelező)
+The simplified flow deliberately uses **few** specialists, and all of them **optionally** — for a small task the main agent does the work without a subagent too. With a weaker/cheaper model all three can be safely skipped.
 
-Az egyszerűsített flow szándékosan **kevés** specialistát használ, és mindet **opcionálisan** — kis feladatnál a fő ágens subagent nélkül is elvégzi a munkát. Gyengébb/olcsóbb modellel bátran kihagyható mind a három.
-
-| Ágens | Fázis | Mit ad | Mikor érdemes |
+| Agent | Phase | What it gives | When it is worth it |
 |---|---|---|---|
-| [`researcher`](prompts/agents-hu/researcher.md) | 1. (spec.md) | Érintett forrásfájlok (`path:sor–sor`) + frissítendő dokumentumok listája | Meglévő kódbázis módosításakor, ha nem nyilvánvaló az érintett fájlkör |
-| [`analyzer`](prompts/agents-hu/analyzer.md) | 2. (task.md) | `spec.md` ↔ `task.md` konzisztencia-diagnózis (lefedettségi rés, alulspecifikáció) | Több követelményes, könnyen kicsúszó task-listánál |
-| [`reviewer`](prompts/agents-hu/reviewer.md) | 3. (commit előtt) | Diff code review → `Must Fix` / `Suggestion` | Nem triviális kódváltozásnál, commit előtti kapuként |
+| [`researcher`](prompts/agents-hu/researcher.md) | 1 (spec.md) | Affected source files (`path:line–line`) + a list of documents to update | When modifying an existing codebase, if the set of affected files is not obvious |
+| [`analyzer`](prompts/agents-hu/analyzer.md) | 2 (task.md) | `spec.md` ↔ `task.md` consistency diagnosis (coverage gap, under-specification) | For a task list with several requirements that easily slips |
+| [`reviewer`](prompts/agents-hu/reviewer.md) | 3 (before the commit) | Diff code review → `Must Fix` / `Suggestion` | For a non-trivial code change, as a gate before the commit |
 
-> **Amit ez a flow NEM használ:** a fixer-wrappereket (`spec/plan/tasks/bs-implement/review-fixer`) és a `doc-sync-planner`-t — ezek a teljes flow önjavító hurkainak és a `docs-generated/` szinkronjának belépői. Itt nincs automatizált hurok (a hibákat a fő ágens inline javítja), és nincs külön generált doc-réteg (a dokumentáció a 3. fázis része). Ha ezek valóban indokolttá válnának, az annak a jele, hogy **a teljes berki spec flow-ra kell váltani**.
+> **What this flow does NOT use:** the fixer wrappers (`spec/plan/tasks/bs-implement/review-fixer`) and the `doc-sync-planner` — these are the entry points of the full flow's self-healing loops and of the `docs-generated/` sync. There is no automated loop here (defects are fixed inline by the main agent), and there is no separate generated doc layer (the documentation is part of phase 3). If these genuinely became warranted, that is the sign that **you have to switch to the full berki spec flow**.
 
-### 6.5 Indító prompt (copy-paste)
-
-```
-/bs-quick-flow input: <a feladat rövid leírása>
-```
-
-### 6.6 Példa prompt
-
-Egy kis feladat végigvitele. Itt **egyetlen indító prompt** van; utána a flow **társalgásos** — a fázisváltásokat a te rövid, természetes nyelvű jóváhagyásaid vezérlik a ⛔ kapuknál (nincsenek külön fázis-promptok, mint a teljes flow-ban). Az alábbi blokkban az idézőjeles sorok a te válaszaid:
+### 5.5 Starter prompt (copy-paste)
 
 ```
-# ①  Indítás — a feladat átadása
-/bs-quick-flow input: Adj a legacy-login apphoz egy `/health` végpontot, ami 200 OK-t ad "status: ok" JSON-nal.
-
-# ②  Interjú + méret + név  (az ágens vezeti; te válaszolsz)
-   → git ág előkészítése + grill-interjú → mivel a feladat kicsi, javasol: cycle-03-add-health-check
-   te: "ok, mehet ezzel a névvel"
-
-# ③  ⛔ 1. fázis — spec.md jóváhagyása
-   → spec.md + konzisztencia-ellenőrzés után megáll
-   te: "jóváhagyom a spec-et, jöhet a task.md"
-
-# ④  ⛔ 2. fázis — task.md jóváhagyása
-   → task.md után megáll
-   te: "rendben, kezdheted az implementációt"
-
-# ⑤  3. fázis — megvalósítás
-   → implementál a task.md szerint, tesztel, frissíti a dokumentációt → Jira-prefixű záró commit
+/bs-quick-flow input: <a short description of the task>
 ```
 
-> Ha az interjú (②) alatt kiderül, hogy a feladat mégis nagyobb, az ágens itt megáll, és a teljes flow-t (`01-add-cycles`) javasolja — lásd a 4.1 ábra „túlnő rajta" ágát. A flow-váltás döntése a tiéd.
+### 5.6 Example prompt
+
+Walking through a small task. There is **a single starting prompt** here; after that the flow is **conversational** — the phase transitions are driven by your short, natural-language approvals at the ⛔ gates (there are no separate phase prompts as in the full flow). In the block below, the quoted lines are your answers:
+
+```
+# ①  Start — handing over the task
+/bs-quick-flow input: Add a `/health` endpoint to the legacy-login app that returns 200 OK with a "status: ok" JSON.
+
+# ②  Interview + size + name  (the agent leads; you answer)
+   → preparing the git branch + the grill interview → since the task is small, it proposes: cycle-03-add-health-check
+   you: "ok, go with that name"
+
+# ③  ⛔ Phase 1 — approving spec.md
+   → it stops after spec.md + the consistency check
+   you: "I approve the spec, task.md can come"
+
+# ④  ⛔ Phase 2 — approving task.md
+   → it stops after task.md
+   you: "fine, you can start the implementation"
+
+# ⑤  Phase 3 — implementation
+   → it implements per task.md, tests, updates the documentation → closing commit with a Jira prefix
+```
+
+> If it turns out during the interview (②) that the task is bigger after all, the agent stops here and proposes the full flow (`01-add-cycles`) — see the "it outgrows this" branch of diagram 5.1. The decision to switch flows is yours.
 
 ---
 
-## 7. Skill-index
+## 6. Skill index
 
-| Parancs | Fázis | Bemenet | Kimenet (záró státusz) |
+| Command | Phase | Input | Output (closing status) |
 |---|---|---|---|
-| `/bs-init-project` | Projekt init | Projekt leírás | `conventions.md` |
-| `/bs-add-cycles` | Ciklusok kezelése | HLD/LLD vagy leírás | `specs/roadmap.md` (`Kész`) |
-| `/bs-write-spec` | Spec | Roadmap + ciklus neve | `spec.md` (`Tervezésre kész`) |
-| `/bs-write-plan` | Plan | `spec.md` | `plan.md` (`Task írásra kész`) — **önhordó és csonkítás-mentes** (KX3: a spec kidolgozott artefaktumai szó szerint); a lezárás előtt **Lezárási kapu (TP2)** + **mechanikus kapu** (`analyze-gate-check.py --plan-only`, M) |
-| `/bs-write-tasks` | Tasks | `plan.md` | `tasks.md` (`Implementálásra kész`) — a lezárás előtt **mechanikus kapu** (`analyze-gate-check.py`, M): `Must Fix` esetén nincs státuszváltás |
-| `/bs-analyze` | Analyze | ciklus mappa | `analyze/analyze-report.md` (PASS/FAIL) + `analyze/analyze-task.md` (a triázsban jóváhagyott javítási lista) — mechanikus kapu + **négy párhuzamos diagnoszta-kör** (`analyzer` × 3 hatókör az 1–5. kategóriára, `analyzer-exec` a 6.-ra); a két lefedettségi táblát a kapu **generálja**. FAIL esetén orchestrált önjavító hurok (fixer-subagentek, `max X=3`, iterációnként **egy** analyzer-kör) |
-| `/bs-implement` | Implementálás | `tasks.md` | kód + `tasks.md` (`Validálásra kész`) + `test-report/implement/check-log.md` (a `[CHECK]` futások append-only naplója), és ha a projekt az `implement`-et riport-fázisnak deklarálta (TR6), a `test-report/implement/` teljes riport-készlete is — a task listát **egy futásban** dolgozza fel (IM1): a task-commit nem fázis-vég |
-| `/bs-validate` | Validálás + kódreview | ciklus mappa | PASS/FAIL + `test-report/` (`validation-report.md`, `code-review.md`, `validate/round-NN/`); PASS → státuszok `Kész` — a tesztek/Sonar/E2E futtatását a `test-runner`, a diff átnézését a `reviewer` subagent végzi, a PASS/FAIL döntést és a DoD-ot az orchestrátor; FAIL esetén orchestrált önjavító hurok (`implement-fixer` / `review-fixer`, három leállási korlát, VD3a szerződés-kapu, VD5 eszkaláció) |
-| `/bs-doc-sync` | Doc-sync | ciklus mappa + `docs-generated/` + `specs/test-conventions.md` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README mappa-index) + komponens README-k + `specs/test-conventions.md` (promóció / `Utolsó futás` bump / elavult tétel törlése, TC1–TC11) + `doc-sync-plan.md` — terv (`doc-sync-planner`) → mechanikus végrehajtás → objektív kapu (DS22, 3/4 pont a `ds22-gate-check.py` scripttel, LLM nélkül) + TC8 kapu a regiszterre (`tc8-gate-check.py`, teljesen szkriptelt); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
-| `/bs-merge` | Merge | ciklus mappa, `conventions.md` | merged branch / PR + lezárt roadmap — nincs hurok és nincs subagent; a kapuk (státusz, tiszta review, doc-sync) bukása visszairányít a `07`-re vagy a `08`-ra; a merge kézi megerősítéssel (RD8) |
-| `/bs-quick-flow` | **Egyszerűsített flow** (külön út) | feladat leírása | `spec.md` + `task.md` + implementáció — háromfázisú, kis feladatokhoz; opcionális `researcher`/`analyzer`/`reviewer`; túlnövéskor átirányít a `/bs-add-cycles`-ra |
-| `/bs-brainstorm` | **Ötletelés** (segédparancs, a flow előtt) | téma szabad szöveggel, vagy `folytassuk a NN-est` | `.bs-brainstorm/brainstorm-NN-<slug>.md` — perzisztens munkafájl (tények forrással, alternatívák trade-offokkal, döntések, nyitott kérdések, javasolt ciklus-vágás). Nem fázis, nem változtat státuszt; kódot és a mappán kívül semmit nem ír. Átadás: `/bs-add-cycles brainstorm: NN` (BS18) vagy `/bs-quick-flow`. |
-| `/bs-export-doc` | **PDF export** (segédparancs) | markdown fájl(ok), opcionális — üresen a `docs-generated/architecture.md` és `system-overview.md` | `export/<név>-v<N>.pdf` — fájlonként független verziószám (utolsó + 1, v1-től); pandoc + `mermaid-filter` + xelatex, a ciklus a címlapon (`Lefedve: cycle-NN-ig · vN`). Nem fázis: nincs előfeltétele, nem változtat státuszt. |
-| `/bs-manual-test-plan` | **Kézi tesztterv** (segédparancs, az 05 után bármikor) | ciklus mappa (opcionális), opcionálisan `mód: tervezett` / `mód: as-built` | `manual-test-plan.md` — komponens-indítás, tesztadatok, `TG-NN` tesztcsoportok (`curl` + `.http`, konkrét elvárt eredménnyel), kétirányú `DoD-NN` lefedettség és az automata teszteredmények helye. Előfeltétel: `analyze-report.md` = `PASS`. Determinisztikus kapu (`manual-test-gate-check.py`, MG1–MG10). Nem fázis: nem változtat ciklus-státuszt, újrafuttatáskor néma merge + `Változásnapló`. |
-| `/bs-cycle-status` | **Státusz ellenőrző** | ciklus neve vagy elérési útja (opcionális) | Kimutatja a ciklusok státuszát (Kész/Folyamatban), és interaktív TUI vagy közvetlen módon részletesen listázza a fázisok előrehaladását (KÉSZ, KÉSZ*, FOLYAMATBAN, MÉG NEM FUTOTT) felismerve a flow típusát. |
+| `/bs-init-project` | Project init | Project description | `conventions.md` |
+| `/bs-add-cycles` | Managing cycles | HLD/LLD or a description | `specs/roadmap.md` (`Done`) |
+| `/bs-write-spec` | Spec | Roadmap + the name of the cycle | `spec.md` (`Ready for planning`) |
+| `/bs-write-plan` | Plan | `spec.md` | `plan.md` (`Ready for tasks`) — **self-contained and truncation-free** (KX3: the elaborated artifacts of the spec verbatim); before the closing, the **Closing gate (TP2)** + the **mechanical gate** (`analyze-gate-check.py --plan-only`, M) |
+| `/bs-write-tasks` | Tasks | `plan.md` | `tasks.md` (`Ready for implementation`) — before the closing, the **mechanical gate** (`analyze-gate-check.py`, M): on a `Must Fix` there is no status change |
+| `/bs-analyze` | Analyze | the cycle folder | `analyze/analyze-report.md` (PASS/FAIL) + `analyze/analyze-task.md` (the fix list approved in the triage) — the mechanical gate + **four parallel diagnostician rounds** (`analyzer` × 3 scopes for categories 1–5, `analyzer-exec` for category 6); the two coverage tables are **generated** by the gate. On FAIL, an orchestrated self-healing loop (fixer subagents, `max X=3`, **one** analyzer round per iteration) |
+| `/bs-implement` | Implementation | `tasks.md` | code + `tasks.md` (`Ready for validation`) + `test-report/implement/check-log.md` (the append-only log of the `[CHECK]` runs), and if the project has declared `implement` a report phase (TR6), the full report set of `test-report/implement/` too — it processes the task list **in a single run** (IM1): a task commit is not the end of the phase |
+| `/bs-validate` | Validation + code review | the cycle folder | PASS/FAIL + `test-report/` (`validation-report.md`, `code-review.md`, `validate/round-NN/`); PASS → statuses become `Done` — the tests/Sonar/E2E are run by the `test-runner` and the diff is reviewed by the `reviewer` subagent, while the PASS/FAIL decision and the DoD are the orchestrator's; on FAIL, an orchestrated self-healing loop (`implement-fixer` / `review-fixer`, three stopping limits, the VD3a contract gate, VD5 escalation) |
+| `/bs-doc-sync` | Doc-sync | the cycle folder + `docs-generated/` + `specs/test-conventions.md` | a consistent `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README folder index) + component READMEs + `specs/test-conventions.md` (promotion / `Last run` bump / deletion of a stale item, TC1–TC11) + `doc-sync-plan.md` — plan (`doc-sync-planner`) → mechanical execution → the objective gate (DS22, 3 of 4 points with the `ds22-gate-check.py` script, without an LLM) + the TC8 gate on the register (`tc8-gate-check.py`, fully scripted); on a gate failure → human-driven correction (`doc-sync-questions.md`) |
+| `/bs-merge` | Merge | the cycle folder, `conventions.md` | a merged branch / PR + a closed roadmap — there is no loop and no subagent; a failure of the gates (status, clean review, doc-sync) redirects back to `07` or `08`; the merge happens with manual confirmation (RD8) |
+| `/bs-quick-flow` | **Simplified flow** (a separate route) | a description of the task | `spec.md` + `task.md` + implementation — three-phase, for small tasks; optional `researcher`/`analyzer`/`reviewer`; on outgrowing it, it redirects to `/bs-add-cycles` |
+| `/bs-brainstorm` | **Ideation** (a helper command, before the flow) | a topic in free text, or `let's continue number NN` | `.bs-brainstorm/brainstorm-NN-<slug>.md` — a persistent working file (facts with sources, alternatives with trade-offs, decisions, open questions, a proposed cycle split). Not a phase, it changes no status; it writes no code and nothing outside the folder. Handover: `/bs-add-cycles brainstorm: NN` (BS18) or `/bs-quick-flow`. |
+| `/bs-export-doc` | **PDF export** (a helper command) | markdown file(s), optional — empty means `docs-generated/architecture.md` and `system-overview.md` | `export/<name>-v<N>.pdf` — an independent version number per file (the last one + 1, from v1); pandoc + `mermaid-filter` + xelatex, with the cycle on the title page (`Covered: up to cycle-NN · vN`). Not a phase: it has no prerequisite and changes no status. |
+| `/bs-manual-test-plan` | **Manual test plan** (a helper command, any time after 05) | the cycle folder (optional), optionally `mode: planned` / `mode: as-built` | `manual-test-plan.md` — component startup, test data, `TG-NN` test groups (`curl` + `.http`, with concrete expected results), bidirectional `DoD-NN` coverage and the location of the automated test results. Prerequisite: `analyze-report.md` = `PASS`. A deterministic gate (`manual-test-gate-check.py`, MG1–MG10). Not a phase: it changes no cycle status, and on a re-run it does a silent merge + a `Change log`. |
+| `/bs-cycle-status` | **Status checker** | the name or path of a cycle (optional) | It reports the status of the cycles (Done/In progress), and lists the progress of the phases in detail (DONE, DONE*, IN PROGRESS, NOT YET RUN) in an interactive TUI or directly, recognising the type of the flow. |
 
-A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a kimenetet, a szomszédos fázisokat (`prev`/`next`) és a hívott subagenteket. Az egyszerűsített flow skill és a segédparancsok (`bs-brainstorm`, `bs-export-doc`, `bs-manual-test-plan`) ettől eltérő, `name`/`description` alapú frontmattert használnak (nem fázisok, lásd a „Két fejlesztési út" szekciót).
+The **frontmatter** of the phase skills (`00–09`) records the prerequisites, the output, the neighbouring phases (`prev`/`next`) and the subagents called. The simplified-flow skill and the helper commands (`bs-brainstorm`, `bs-export-doc`, `bs-manual-test-plan`) use a different, `name`/`description`-based frontmatter (they are not phases, see the "Two development routes" section).
 
-## 8. Agent-index
+## 7. Agent index
 
-| Ágens | Hívja | Mit csinál | Kimenet |
+| Agent | Called by | What it does | Output |
 |---|---|---|---|
-| `agents/reviewer.md` | 07 | Git diff code review a validálási kör 2. lépéseként (statikus réteg — zöld gyors tesztek után, a nehéz tesztek előtt) | `test-report/code-review.md` (Must Fix + Suggestions) |
-| `agents/analyzer.md` | 05 | Kereszt-fázisos **szemantikai** konzisztencia-diagnózis (read-only, **1–5. kategória**: duplikáció, ambiguitás, alulspecifikáció, konvenció-ütközés, a lefedettség **tartalmi** ítélete a kapu generált mátrixán). **Hatókör-paraméterrel három párhuzamos körben fut** (SH1), körönként a kapu által kimetszett szeletből. Repóhoz nem nyúl. **Az egyetlen agent a rendszerben, ami a legdrágább (`deep_reasoning_agent`, Opus-osztályú) tier-en fut** — lásd 5.3 | megállapítás-lista → `analyze-report.md` |
-| `agents/analyzer-exec.md` | 05 | **Végrehajthatósági** diagnózis (read-only, **6. kategória**: prózában ígért teszt, artefaktum-tulajdon, destruktív művelet teljessége, horgony-szimbólum, artefaktum-hang) a `plan.md` + `tasks.md` + kapu-leltár hármasból. Az `analyzer`-rel **párhuzamosan** fut (E), `default` tieren: a leltár készen adja a jelölteket, tehát nem felfedez, hanem behatárolt listát ítél meg | megállapítás-lista + Végrehajthatósági leltár |
-| `agents/researcher.md` | 00, 01, 02, 03, 06, `bs-brainstorm` | **Mód A** (03): forrásfájl-azonosítás + dokumentáció-kutatás a spec alapján. **Mód B** (00/01/02/06 + brainstorm): ad-hoc kódbázis-kutatás (modul/szimbólum/nagy fájl megértése egy konkrét kérdésre; brainstormban **párhuzamosan indítva**, leletet adva, nem ítéletet). Legolcsóbb (`research_agent`) tier — tiszta grep/glob/read fan-out, nincs benne tervezési ítélet | path-listák / tömör összefoglaló, soha nyers fájltartalom |
-| `agents/test-runner.md` | 07 | Unit/integration/Sonar/E2E/regressziós tesztek lefuttatása, portütközés-elhárítás, ideiglenes erőforrás-takarítás — **tényszerű összegzést ad, nem dönt** PASS/FAIL-ről. `default` tier (szándékosan **nem** a legolcsóbb — a projektenként eltérő teszt-/Sonar-kimenet megbízható, konzisztens összegzése a 3-próba számláló miatt kritikus) | strukturált PASS/FAIL riport kategóriánként |
-| `agents/doc-sync-planner.md` | 08 | A `docs-generated/` mappa + ciklus-diff **read-only** diagnózisa; per-fájl pipálható terv + DS22 kapu-leltár. **A csereszöveget is ő írja meg** (sebészi patch: cél-szekció + jelenlegi részlet + új szöveg) — így a fő ágensnek nem kell újraolvasnia/újrakomponálnia a doksikat, csak alkalmaz | `doc-sync-plan.md` tervjavaslat + csereszövegek + `doc-sync-questions.md` kérdések |
-| `agents/spec-fixer.md` | 05 | Az önjavító hurok 02 fix-mód belépője (vékony wrapper → `/bs-write-spec` Fix-mód). `default` tier — az `analyzer` már pontos, előre azonosított hibalistát ad neki, nem kell felfedeznie a problémát. **Visszatérés előtt maga futtatja a mechanikus kaput** (GS1) | javított `spec.md` + új `spec-questions.md` `Knn`-ek |
-| `agents/plan-fixer.md` | 05 | Az önjavító hurok 03 fix-mód belépője (vékony wrapper → `/bs-write-plan` Fix-mód). `default` tier (ua. indoklás) | javított `plan.md` + új `plan-questions.md` `Knn`-ek |
-| `agents/tasks-fixer.md` | 05 | Az önjavító hurok 04 fix-mód belépője (vékony wrapper → `/bs-write-tasks` Fix-mód). `default` tier (ua. indoklás) | javított `tasks.md` + új `tasks-questions.md` `Knn`-ek |
-| `agents/implement-fixer.md` | 07 | A validate-hurok 06 fix-mód belépője (vékony wrapper → `/bs-implement` Fix-mód). `default` tier — a 06 anti-„teszt-csalás" garde-ja kifejezetten számol azzal, hogy olcsóbb LLM futtatja | javított kód + lezárt `## Validációs javítások` taskok (+ esetleges eszkalációs jelzés) |
-| `agents/review-fixer.md` | 09 | A review-hurok 06 fix-mód belépője (vékony wrapper → `/bs-implement` Fix-mód, `## Review javítások` bemenet) | javított kód + lezárt `## Review javítások` taskok (+ esetleges eszkalációs jelzés) |
+| `agents/reviewer.md` | 07 | Git diff code review as step 2 of the validation round (the static layer — after green fast tests, before the heavy tests) | `test-report/code-review.md` (Must Fix + Suggestions) |
+| `agents/analyzer.md` | 05 | Cross-phase **semantic** consistency diagnosis (read-only, **categories 1–5**: duplication, ambiguity, under-specification, convention clash, the **substantive** judgement of coverage on the gate's generated matrix). **It runs in three parallel rounds with a scope parameter** (SH1), each round from the slice cut out by the gate. It does not touch the repo. **The only agent in the system that runs on the most expensive (`deep_reasoning_agent`, Opus-class) tier** — see 4.3 | a finding list → `analyze-report.md` |
+| `agents/analyzer-exec.md` | 05 | **Executability** diagnosis (read-only, **category 6**: a test promised in prose, artifact ownership, the completeness of a destructive operation, anchor symbol, artifact voice) from the trio of `plan.md` + `tasks.md` + the gate inventory. It runs **in parallel** with the `analyzer` (E), on the `default` tier: the inventory hands it the candidates ready-made, so it does not discover, it judges a bounded list | a finding list + an Executability inventory |
+| `agents/researcher.md` | 00, 01, 02, 03, 06, `bs-brainstorm` | **Mode A** (03): source file identification + documentation research based on the spec. **Mode B** (00/01/02/06 + brainstorm): ad-hoc codebase research (understanding a module/symbol/large file for a concrete question; in the brainstorm **started in parallel**, giving findings, not judgements). The cheapest (`research_agent`) tier — pure grep/glob/read fan-out, with no design judgement in it | path lists / a concise summary, never raw file content |
+| `agents/test-runner.md` | 07 | Running unit/integration/Sonar/E2E/regression tests, resolving port collisions, cleaning up temporary resources — **it gives a factual summary, it does not decide** PASS/FAIL. `default` tier (deliberately **not** the cheapest — the reliable, consistent summarisation of test/Sonar output that differs per project is critical because of the 3-attempt counter) | a structured PASS/FAIL report per category |
+| `agents/doc-sync-planner.md` | 08 | The **read-only** diagnosis of the `docs-generated/` folder + the cycle diff; a tickable per-file plan + the DS22 gate inventory. **It writes the replacement text too** (a surgical patch: target section + the current snippet + the new text) — so the main agent does not have to re-read/re-compose the docs, it only applies | the `doc-sync-plan.md` plan proposal + replacement texts + `doc-sync-questions.md` questions |
+| `agents/spec-fixer.md` | 05 | The 02 fix-mode entry point of the self-healing loop (a thin wrapper → the Fix mode of `/bs-write-spec`). `default` tier — the `analyzer` already gives it a precise, pre-identified defect list, it does not have to discover the problem. **Before returning it runs the mechanical gate itself** (GS1) | a corrected `spec.md` + new `spec-questions.md` `Knn`s |
+| `agents/plan-fixer.md` | 05 | The 03 fix-mode entry point of the self-healing loop (a thin wrapper → the Fix mode of `/bs-write-plan`). `default` tier (same rationale) | a corrected `plan.md` + new `plan-questions.md` `Knn`s |
+| `agents/tasks-fixer.md` | 05 | The 04 fix-mode entry point of the self-healing loop (a thin wrapper → the Fix mode of `/bs-write-tasks`). `default` tier (same rationale) | a corrected `tasks.md` + new `tasks-questions.md` `Knn`s |
+| `agents/implement-fixer.md` | 07 | The 06 fix-mode entry point of the validate loop (a thin wrapper → the Fix mode of `/bs-implement`). `default` tier — the anti-"test cheating" guard of 06 explicitly reckons with a cheaper LLM running it | corrected code + closed `## Validation fixes` tasks (+ a possible escalation signal) |
+| `agents/review-fixer.md` | 09 | The 06 fix-mode entry point of the review loop (a thin wrapper → the Fix mode of `/bs-implement`, with a `## Review fixes` input) | corrected code + closed `## Review fixes` tasks (+ a possible escalation signal) |
 
 ---
 
-## 9. Frontmatter séma
+## 8. Frontmatter schema
 
 **Skill (`skills/*.md`):**
 
@@ -1094,23 +1002,23 @@ A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a 
 phase: 02
 name: write-spec
 prerequisites:
-  - "specs/roadmap.md státusz: Kész"
+  - "specs/roadmap.md status: Done"
 output:
-  - "specs/cycle-NN-<name>/spec.md státusz: Tervezésre kész"
+  - "specs/cycle-NN-<name>/spec.md status: Ready for planning"
 prev: 01-add-cycles
 next: 03-write-plan
-subagents: []        # Task tool-on hívott specialisták (agents/ alatti fájlok)
-shared: []           # opcionális: shared/ alatti közös blokkok, amiket a telepítő build-time inline-ol (pl. a 00/01 shared/git-preflight.md-t)
+subagents: []        # specialists invoked via the Task tool (files under agents/)
+shared: []           # optional: shared blocks under shared/ that the installer inlines at build time (e.g. 00/01 include shared/git-preflight.md)
 ---
 ```
 
-**Ágens (`agents/*.md`):**
+**Agent (`agents/*.md`):**
 
 ```yaml
 ---
 name: reviewer
-description: "Read-only kód-review diagnoszta (test-report/code-review.md). A 07-validate skill hívja."
-role: "Kód-review specialista ágens"
+description: "Read-only code review diagnostician (test-report/code-review.md). Called by the 07-validate skill."
+role: "Code review specialist agent"
 called_by: ["skills/07-validate.md"]
 inputs: [...]
 outputs: [...]
@@ -1118,376 +1026,374 @@ tools: ["Read", "Bash", "Grep"]
 ---
 ```
 
-- A **`description`** az ágens-regisztráció **kanonikus, kötelező** mezője: a Claude Code (és a Cursor) `name` + `description` alapján ismeri fel a subagentet és dönt a hívásáról, ezért „mit + mikor hívd" jellegű legyen. A `role` egy rövid emberi címke, amely megmarad; ha a `description` hiányozna, a telepítő a Codexnél/Cursornál erre esik vissza, de a Claude/Copilot frontmatterbe a `description` **kell**.
-- A **`shared`** (skilleknél) a `shared/` alatti közös szövegblokkokat jelzi, amelyeket a skill `<!-- INCLUDE:shared/<fájl> -->` markerrel hivatkoz, és a telepítő **build-time inline** beágyaz. A `shared/context-check.md`-t **minden fázis-skill**, a `shared/python-cmd.md`-t minden szkriptet hívó skill (`03`, `04`, `05`, `07`, `08`, `10`, `export-doc`), a `shared/git-preflight.md`-t a `00`/`01` (branch-nyitó fázisok), a `shared/input-from-prev.md`-t a `01`/`02`/`03`/`04`/`07` (fázisok közötti átadás, IP1), a `shared/artifact-voice.md`-t a `02`/`03`/`04` (artefaktum-hang, AV1), a `shared/phase-commit.md`-t a `02`/`03`/`04`/`05`/`07` (fázis-záró commit, PC1), a `shared/path-format.md`-t a `02`/`03`/`04` minőségi kapuja (útvonal-konvenció, RP1), a `shared/conventions-change.md`-t a `03` (kapu-konfiguráció, GC1) hivatkozza. **A markert a subagent-promptok is használhatják** (`prompts/agents-hu/*.md` és a gemini `agent.json` `Instructions` szekciója), és a beemelt fájl maga is tartalmazhat markert (a telepítő rekurzívan oldja fel). Ezen múlik a D13: a `shared/quality-check-{spec,plan,tasks}.md` és a `shared/fix-mode-{spec,plan,tasks}.md` egyszerre kerül a fázis-skillbe és a hozzá tartozó fixer-agent promptjába, így a fixer **nem olvas fázis-skillt** a javításhoz.
+- **`description`** is the **canonical, mandatory** field of the agent registration: Claude Code (and Cursor) recognises the subagent from `name` + `description` and decides about calling it on that basis, so it should be of the "what + when to call it" kind. `role` is a short human label that is kept; if `description` were missing, the installer falls back to it for Codex/Cursor, but for the Claude/Copilot frontmatter `description` **is required**.
+- **`shared`** (for skills) indicates the shared text blocks under `shared/` that the skill references with a `<!-- INCLUDE:shared/<file> -->` marker and that the installer embeds **inline at build time**. `shared/context-check.md` is referenced by **every phase skill**, `shared/python-cmd.md` by every skill that calls a script (`03`, `04`, `05`, `07`, `08`, `10`, `export-doc`), `shared/git-preflight.md` by `00`/`01` (the branch-opening phases), `shared/input-from-prev.md` by `01`/`02`/`03`/`04`/`07` (the handover between phases, IP1), `shared/artifact-voice.md` by `02`/`03`/`04` (artifact voice, AV1), `shared/phase-commit.md` by `02`/`03`/`04`/`05`/`07` (the phase-closing commit, PC1), `shared/path-format.md` by the quality gate of `02`/`03`/`04` (the path convention, RP1), and `shared/conventions-change.md` by `03` (the gate configuration, GC1). **The subagent prompts may use the marker too** (`prompts/agents-hu/*.md` and the `Instructions` section of the gemini `agent.json`), and the included file may itself contain a marker (the installer resolves them recursively). D13 hinges on this: `shared/quality-check-{spec,plan,tasks}.md` and `shared/fix-mode-{spec,plan,tasks}.md` go into the phase skill and into the prompt of its matching fixer agent at the same time, so the fixer **does not read a phase skill** for the correction.
 
-A frontmatter egyébként **eszközfüggetlen** (saját séma, nem egy konkrét ágens-eszközhöz kötött); a telepítő fordítja a cél-platform natív formátumára (Claude/Cursor `.md`, Codex `.toml`, Copilot `.agent.md`, Antigravity `agent.json`).
+The frontmatter is otherwise **tool-independent** (its own schema, not tied to a concrete agent tool); the installer translates it into the native format of the target platform (Claude/Cursor `.md`, Codex `.toml`, Copilot `.agent.md`, Antigravity `agent.json`).
 
-**A `05-analyze` `subagents:` mezője** a két read-only diagnoszta-definíció (`analyzer` — három hatókörrel, párhuzamosan indítva —, `analyzer-exec`) mellett a három fixer-wrappert is felsorolja: `agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`. **A `07-validate` `subagents:` mezője** az `agents/test-runner.md`-t (tesztek/Sonar/E2E mechanikus futtatása, `default` tier), az `agents/reviewer.md`-t (read-only kód-diagnózis a kör 2. lépéseként) és a két fixer-wrappert — `agents/implement-fixer.md` (teszt/Sonar/DoD) és `agents/review-fixer.md` (Must Fix findingok) — tartalmazza. **A `08-doc-sync` `subagents:` mezője** az `agents/doc-sync-planner.md` read-only tervkészítő diagnosztát tartalmazza (a per-fájl `doc-sync-plan.md` szerzője; a doksik tényleges írása a fő ágensé — nincs fixer-wrapper, mert ez nem önjavító hurok). **A `09-merge` fázisnak nincs `subagents:` mezője** — a review a 07-be került, a merge-fázis pedig csak kapukat ellenőriz és beolvaszt. **A `00-init-project`, `01-add-cycles`, `02-write-spec` és `06-implement` `subagents:` mezője** az `agents/researcher.md`-t tartalmazza ad-hoc kódbázis-kutatáshoz (Mód B) — ugyanaz az ágens, amit a `03-write-plan` a rendszerezett forrásfájl-azonosításhoz (Mód A) használ. Fontos a skill/agent szétválasztás megőrzése: **a fix-mód viselkedése egyetlen helyen él**, és a wrapper-agent csak belépő — nincs logika-duplikáció. Ennek **két megvalósítása** van:
-- **02/03/04 (analyze-hurok, D13):** a fix-mód és a fázis minőségi kapuja a `prompts/shared-hu/{fix-mode,quality-check}-*.md` fájlokban él, és **build-time beemelődik a skillbe ÉS a fixer-wrapperbe is**. A fixer így **nem olvas fázis-skillt** — a promptja önhordó (a `plan-fixer` ~200 sor a 908 soros `03-write-plan.md` beolvasása helyett).
-- **06 (a 07 önjavító hurka):** az `implement-fixer` és a `review-fixer` továbbra is a **`06-implement.md` „Fix-mód" szekciójának beolvasásával** delegál (`## Validációs javítások`, illetve `## Review javítások` bemeneti szekcióval, azonos mechanikával). Itt a kiemelés még nem történt meg — a 06 skill jóval rövidebb (294 sor), de a 07 hurka körönként hívja a fixert, tehát ugyanaz a megtakarítás elérhető, ha a szekció ugyanígy `shared/`-be kerül.
+**The `subagents:` field of `05-analyze`** lists, besides the two read-only diagnostician definitions (`analyzer` — with three scopes, started in parallel — and `analyzer-exec`), the three fixer wrappers too: `agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`. **The `subagents:` field of `07-validate`** contains `agents/test-runner.md` (the mechanical execution of tests/Sonar/E2E, `default` tier), `agents/reviewer.md` (read-only code diagnosis as step 2 of the round) and the two fixer wrappers — `agents/implement-fixer.md` (test/Sonar/DoD) and `agents/review-fixer.md` (Must Fix findings). **The `subagents:` field of `08-doc-sync`** contains the `agents/doc-sync-planner.md` read-only planning diagnostician (the author of the per-file `doc-sync-plan.md`; the actual writing of the docs belongs to the main agent — there is no fixer wrapper, because this is not a self-healing loop). **Phase `09-merge` has no `subagents:` field** — the review moved into 07, and the merge phase only checks gates and merges. **The `subagents:` field of `00-init-project`, `01-add-cycles`, `02-write-spec` and `06-implement`** contains `agents/researcher.md` for ad-hoc codebase research (Mode B) — the same agent that `03-write-plan` uses for the systematic identification of source files (Mode A). Preserving the skill/agent separation matters: **the behaviour of the fix mode lives in a single place**, and the wrapper agent is only an entry point — there is no logic duplication. This has **two implementations**:
+- **02/03/04 (the analyze loop, D13):** the fix mode and the phase's quality gate live in the `prompts/shared-hu/{fix-mode,quality-check}-*.md` files, and are **included at build time into the skill AND into the fixer wrapper**. The fixer thus **does not read a phase skill** — its prompt is self-contained (the `plan-fixer` is ~200 lines instead of reading the 908-line `03-write-plan.md`).
+- **06 (the self-healing loop of 07):** the `implement-fixer` and the `review-fixer` still delegate **by reading the "Fix mode" section of `06-implement.md`** (with a `## Validation fixes` or a `## Review fixes` input section respectively, on identical mechanics). Here the extraction has not happened yet — the 06 skill is considerably shorter (294 lines), but the 07 loop calls the fixer once per round, so the same saving is available if the section is moved into `shared/` the same way.
 
 ---
 
-## 10. conventions.md — Projekt konvenciók
+## 9. conventions.md — Project conventions
 
-**Fájl:** `conventions.md` (projekt gyökér)
+**File:** `conventions.md` (project root)
 
-**Mikor jön létre:** A `/bs-init-project` parancs futtatásakor jön létre egyszer, új projekt indulásakor.
+**When it is created:** it is created once, when the `/bs-init-project` command is run at the start of a new project.
 
-**Szerepe:** A projekt központi konvenciós dokumentuma — egy helyen rögzíti a projekt-specifikus technikai megállapodásokat, így az ágensnek nem kell ad-hoc döntéseket hoznia. Minden fázis-skill (01–09) hivatkozik rá és beolvassa. **Puszta léte a „kész" jelölés:** ha létezik, a 01–09 csak létezés-ellenőrzést végez (nincs külön státuszmező). A `08-doc-sync` ezen felül a `## Projekt referenciák` szekciót használja forrás-grounding regiszterként (HLD/LLD/openapi/külső doksik útjai a drift-összevetéshez és a DS22 Réteg 2 kapuhoz).
+**Its role:** the central conventions document of the project — it records the project-specific technical agreements in one place, so that the agent does not have to make ad-hoc decisions. Every phase skill (01–09) references and reads it. **Its mere existence is the "done" marker:** if it exists, 01–09 only perform an existence check (there is no separate status field). On top of that, `08-doc-sync` uses the `## Project references` section as a source-grounding register (the paths of the HLD/LLD/openapi/external docs for the drift comparison and for the DS22 Layer 2 gate).
 
-**Mit tartalmaz:**
-- **Tech stack & környezet:** projekt áttekintés, nyelvek, runtime-ok, portok.
-- **Projekt referenciák:** HLD, LLD, OpenAPI leírók, adatbázis sémák elérési útjai.
-- **Tesztelési konvenciók:** tesztszintek és a hozzájuk **ajánlott default** keretrendszerek (a fejlesztő a 00-ban megerősíti vagy felülírja), futtatási parancsok.
-- **Sonar minőségellenőrzés (opcionális szekció):** a scanner-parancs mellett a **host URL** és a **token env-változójának neve** is ide kerül (a token maga **soha**) — ebből találja meg a `sonar-gate.py` a projektet. Alternatíva: `SONAR_HOST_URL` / `SONAR_PROJECT_KEY` / `SONAR_TOKEN` környezeti változók, vagy a repo `sonar-project.properties`-e.
-- **Teszt-riportolás (TR3 — kötelező szekció):** kategóriánként az eszköz, a **riport-generáló parancs** és az az **artefaktum-név**, aminek minden ciklus `test-report/` mappájába — azon belül a **validálási kör almappájába** (`validate/round-NN/`) — be kell kerülnie (Allure/Playwright HTML, pytest-html, JUnit XML, coverage). A tábla utolsó oszlopa **a kör-mappához képest relatív**. A 00 fázis a felhasználóval együtt tölti ki (kötelező kérdés, placeholder nem maradhat), a `07-validate` pedig **determinisztikus kapuval** (`report-gate-check.py`) kéri számon: hiányzó artefaktum → a validálás nem zárható PASS-ra. Ha a projekt tudatosan nem generál riportot, azt a `**Riport-generálás kötelező:** nem` + indoklás rögzíti. A `**Riport-fázisok:**` mező (TR6) mondja meg, **mely fázisok** kötelesek a készletet előállítani: `validate` (alapérték), `implement`, vagy mindkettő — az `implement` esetén a `06-implement` a státuszváltás előtt generál és ugyanezzel a kapuval zár. **Az alkalmazás-oldali bizonyíték is táblasor, nem próza:** a REST kérés/válasz audit-napló, a korrelációs nyom és az alkalmazás-log-kivonat ugyanúgy a táblába kerül, mint a teszt-eszköz riportja — amit a tábla nem kér, azt a kapu nem is keresi.
-- **Merge stratégia:** szolgáltató (GitHub / Bitbucket / GitLab / Lokális), PR target branch, merge típus, access teszt parancs. **Egyetlen igazságforrás a visszaintegrálásra** (ciklus-branch a 09-ben, init-branch a 00-ban); ha nincs döntés/remote, a default a közvetlen merge `main`-be (BQ7).
-- **Sonar minőségellenőrzés:** szerver-indítási és scanner parancsok, Quality Gate elvárások.
-- **Git és branching konvenciók:** verziókezelő-flag (van git / „NINCS VCS"), fő branch, a **ciklus = branch** modell, branch-elnevezési stratégia, commit granularitás (lásd lent).
-- **Kockázatok és korlátok.**
+**What it contains:**
+- **Tech stack & environment:** project overview, languages, runtimes, ports.
+- **Project references:** the paths of the HLD, the LLD, OpenAPI descriptors and database schemas.
+- **Testing conventions:** the test levels and the frameworks **recommended as defaults** for them (the developer confirms or overrides them in 00), and the run commands.
+- **Sonar quality check (an optional section):** besides the scanner command, the **host URL** and the **name of the token's env variable** go here as well (the token itself **never**) — this is how `sonar-gate.py` finds the project. Alternatives: the `SONAR_HOST_URL` / `SONAR_PROJECT_KEY` / `SONAR_TOKEN` environment variables, or the repo's `sonar-project.properties`.
+- **Test reporting (TR3 — a mandatory section):** per category, the tool, the **report-generating command** and the **artifact name** that has to end up in every cycle's `test-report/` folder — and within that, in the **subfolder of the validation round** (`validate/round-NN/`) — (Allure/Playwright HTML, pytest-html, JUnit XML, coverage). The last column of the table is **relative to the round folder**. Phase 00 fills it in together with the user (a mandatory question, no placeholder may remain), and `07-validate` holds it to account with a **deterministic gate** (`report-gate-check.py`): a missing artifact → the validation cannot be closed with a PASS. If the project deliberately generates no report, that is recorded by `**Report generation required:** no` + a justification. The `**Report phases:**` field (TR6) says **which phases** are obliged to produce the set: `validate` (the default value), `implement`, or both — in the case of `implement`, `06-implement` generates before the status change and closes with the same gate. **Application-side evidence is a table row too, not prose:** the REST request/response audit log, the correlation trace and the application log excerpt go into the table just like the report of a test tool — what the table does not ask for, the gate does not look for either.
+- **Merge strategy:** provider (GitHub / Bitbucket / GitLab / Local), PR target branch, merge type, access test command. **The single source of truth for re-integration** (the cycle branch in 09, the init branch in 00); if there is no decision/remote, the default is a direct merge into `main` (BQ7).
+- **Sonar quality check:** server startup and scanner commands, Quality Gate expectations.
+- **Git and branching conventions:** the version-control flag (git present / "NO VCS"), the main branch, the **cycle = branch** model, the branch naming strategy, commit granularity (see below).
+- **Risks and limitations.**
 
-### Branching stratégia — ciklus = branch (a 01 fázisban)
+### Branching strategy — cycle = branch (in phase 01)
 
-Minden fejlesztési ciklus **külön git branch-en** fut, és a branch **a `01-add-cycles` fázisban jön létre** `main`-ről (nem a 02/06-ban) — a 02+ fázisok már ezen dolgoznak. A modell a `conventions.md` `## Git és branching konvenciók` és `## Merge stratégia` szekcióiból vezérlődik:
+Every development cycle runs **on a separate git branch**, and the branch **is created in the `01-add-cycles` phase** off `main` (not in 02/06) — phases 02+ already work on it. The model is driven from the `## Git and branching conventions` and `## Merge strategy` sections of `conventions.md`:
 
-- **Branch = ciklus (BD1–BD3):** a ciklus-branch a ciklus legelején, `main`-ről ágazik le. Alapértelmezett név: **`feature/cycle-NN-<name>`** (a `conventions.md` branch-elnevezési stratégiája felülírhatja — pl. Jira-prefix). A **mappanév** ettől függetlenül mindig prefix nélkül, tisztán `cycle-NN-<name>`.
-- **Preflight leágazás előtt (BD6/BQ3/BQ4):** a branch-nyitó fázisok (`00`, `01`) a leágazás előtt biztosítják, hogy friss, tiszta `main`-en állunk (nincs commitálatlan vagy nem-pusholt változás → `git pull`); resume esetén (már a ciklus branch-én vagyunk) nincs teendő, nincs figyelmeztetés (BQ3). Ha nem a `main`-en és nem az aktuális ciklus branch-én állunk, a fázis a `## Merge stratégia` szerinti merge/PR-figyelmeztetést ad, és a felhasználót kéri, hogy váltson `main`-re.
-- **A 00 saját branch-e (BD12):** a `00-init-project` maga a `feature/init-project` branch-en fut, és a végén a `## Merge stratégia` szerint (BQ7 default: közvetlen merge) integrálódik vissza `main`-be.
-- **Számozás branch-scannel (BQ2):** az új ciklusszám a main `roadmap.md`/`ls specs/` **és** a (lokális + remote) feature branch-ek `cycle-NN` számainak maximuma + 1 — így nem ütközik párhuzamosan nyitott, még nem merge-elt ciklusokkal.
-- **Visszaintegrálás (BD7/BD15/BQ7):** a 09 a `## Merge stratégia` szerint zárja a ciklust (PR vagy lokális squash merge); ugyanez a szekció adja a 00 init-branch és a 01/00 branch-figyelmeztetés szabályát is — egyetlen igazságforrás.
-- **No-VCS ág (BD11):** ha a `conventions.md` szerint nincs (és nem is lesz) verziókezelő, **minden git-lépés kimarad** minden fázisban — csak a `specs/cycle-NN-<name>/` mappa és a `roadmap.md` készül, branch/commit/merge nélkül.
+- **Branch = cycle (BD1–BD3):** the cycle branch forks off `main` at the very beginning of the cycle. The default name: **`feature/cycle-NN-<name>`** (the branch naming strategy of `conventions.md` may override it — e.g. with a Jira prefix). The **folder name**, independently of that, is always without a prefix, purely `cycle-NN-<name>`.
+- **Preflight before forking (BD6/BQ3/BQ4):** before forking, the branch-opening phases (`00`, `01`) make sure we are standing on a fresh, clean `main` (no uncommitted or unpushed changes → `git pull`); in the case of a resume (we are already on the cycle branch) there is nothing to do and no warning (BQ3). If we are neither on `main` nor on the current cycle's branch, the phase gives the merge/PR warning per `## Merge strategy` and asks the user to switch to `main`.
+- **The own branch of 00 (BD12):** `00-init-project` itself runs on the `feature/init-project` branch, and at the end it is integrated back into `main` per `## Merge strategy` (BQ7 default: a direct merge).
+- **Numbering by scanning branches (BQ2):** the new cycle number is the maximum of the `cycle-NN` numbers in main's `roadmap.md`/`ls specs/` **and** in the (local + remote) feature branches, + 1 — this way it does not collide with cycles opened in parallel that have not been merged yet.
+- **Re-integration (BD7/BD15/BQ7):** 09 closes the cycle per `## Merge strategy` (a PR or a local squash merge); the same section also gives the rule for the 00 init branch and for the 01/00 branch warning — a single source of truth.
+- **The no-VCS branch (BD11):** if per `conventions.md` there is no version control (and there will not be one), **every git step is skipped** in every phase — only the `specs/cycle-NN-<name>/` folder and `roadmap.md` are produced, without a branch/commit/merge.
 
-A branch-nyitó fázisok (`00`, `01`) közös git-előkészítését (no-VCS kapu, munkafa-ellenőrzés, friss/tiszta `main` + resume-felismerés) egyetlen megosztott leírás rögzíti — `prompts/shared-hu/git-preflight.md` —, amelyet a telepítő **build-time inline** beágyaz a `00` és `01` skillek telepített változatába, így nincs duplikáció, és a telepített SKILL önmagában teljes (BD13/BD14). A **`02`** csak a `01`-ben létrehozott branch meglétét ellenőrzi, a **`09`** a merge-nél vált branch-et; a **`03`–`08`** fázisoknak csak rövid munkafa-ellenőrzésük van, branch-logika nélkül (fölösleges token-költség elkerülése).
+The shared git preparation of the branch-opening phases (`00`, `01`) — the no-VCS gate, the working-tree check, a fresh/clean `main` + resume detection — is recorded by a single shared description, `prompts/shared-hu/git-preflight.md`, which the installer embeds **inline at build time** into the installed version of the `00` and `01` skills, so there is no duplication and the installed SKILL is complete on its own (BD13/BD14). **`02`** only checks the existence of the branch created in `01`, and **`09`** switches branches at the merge; phases **`03`–`08`** only have a short working-tree check, without branch logic (to avoid needless token cost).
 
-### Párhuzamos ciklusok — tervezési ablak worktree-vel (PW1/PW2, BD16)
+### Parallel cycles — a design window with a worktree (PW1/PW2, BD16)
 
-Két ciklus **párhuzamosan is haladhat**, külön `git worktree`-ben, külön agens-munkamenetben — de csak a **tervezési sávban**. A `06`–`09` szakasz **egyszálú**: a `06` a forrásfát írja (valódi merge-konfliktus), a `07` közös futtatási erőforrást fogyaszt (portok, dev deploy, registry-tag, közös DB/IdP), a `08` garantáltan ütköző fájlokat ír (`docs-generated/`, `specs/test-conventions.md`), a `09` pedig a `main`-t igényli.
+Two cycles **can also progress in parallel**, in separate `git worktree`s, in separate agent sessions — but only in the **design band**. The `06`–`09` stretch is **single-threaded**: `06` writes the source tree (a real merge conflict), `07` consumes shared runtime resources (ports, dev deploy, registry tag, a shared DB/IdP), `08` writes guaranteed-conflicting files (`docs-generated/`, `specs/test-conventions.md`), and `09` requires `main`.
 
-| Fázis | Párhuzamos? |
+| Phase | Parallel? |
 |---|---|
-| `01`–`05` (ciklus, spec, plan, tasks, analyze) | **igen** — csak a `specs/cycle-NN-<name>/` mappát írják |
-| `06`–`09` (implementálás, validálás, doc-sync, merge) | **nem** — `PW1`: egyszerre egy ciklus lehet ebben a szakaszban |
+| `01`–`05` (cycle, spec, plan, tasks, analyze) | **yes** — they only write the `specs/cycle-NN-<name>/` folder |
+| `06`–`09` (implementation, validation, doc-sync, merge) | **no** — `PW1`: only one cycle can be in this stretch at a time |
 
-**Indítás** (a `main` a fő worktree-ben marad, nem kell átváltani):
+**Starting it** (`main` stays in the main worktree, there is no need to switch):
 
 ```bash
 git fetch origin
-git worktree add ../<projekt>-cNN -b feature/cycle-NN-<name> origin/main
-python3 <platform-scripts-mappa>/worktree-setup.py ../<projekt>-cNN   # PW4 — eszköz-mappák pótlása
-# a második terminálban: cd ../<projekt>-cNN, majd /bs-write-spec input: cycleNN
+git worktree add ../<project>-cNN -b feature/cycle-NN-<name> origin/main
+python3 <platform-scripts-folder>/worktree-setup.py ../<project>-cNN   # PW4 — supplying the tool folders
+# in the second terminal: cd ../<project>-cNN, then /bs-write-spec input: cycleNN
 ```
 
-**`PW5` — az ágenst is át kell költöztetni.** Az agentic eszköz a munkamenet **indulási mappájához** van kötve: a worktree létrehozása után be kell zárni, a CLI-ben `cd ../<projekt>-cNN`, majd **ott újraindítani** ugyanazt az eszközt. Ezért a `01` a `PW3/B` ágon a worktree létrehozása után **megáll** — ciklusmappát nem hoz létre és a roadmap-be nem ír —, hanem kiadja az átköltözési utasítást a worktree **abszolút útvonalával** és az eszköz indítóparancsával; a tervezés az új mappában, elölről fut le.
+**`PW5` — the agent has to be moved over too.** An agentic tool is bound to the **starting folder** of the session: after creating the worktree it has to be closed, then `cd ../<project>-cNN` in the CLI, and **restarted there** — the same tool. That is why, on the `PW3/B` branch, `01` **stops** after creating the worktree — it creates no cycle folder and writes nothing into the roadmap — and instead issues the relocation instruction with the **absolute path** of the worktree and the tool's start command; the design then runs in the new folder, from the beginning.
 
-**`PW4` — az agentic eszköz-mappák pótlása.** A worktree csak a git által **követett** fájlokat kapja meg. Az agentic eszközök konfigurációja (`.claude/`, `.agents/`, `.codex/`, `.cursor/`, `.github/`, `AGENTS.md`, `CLAUDE.md`, `.mcp.json`) projektenként hol commitálva van, hol gitignore-olva — az utóbbi esetben az új worktree-ben **nincsenek meg a `bs-*` skillek, a subagentek és a kapu-scriptek**, tehát az ott induló ágens vakon áll. A `worktree-setup.py` a fő worktree gyökeréből átmásolja a **hiányzó** fájlokat; meglévőt soha nem ír felül és nem töröl (idempotens, `--dry-run`-nal előre megnézhető), a `__pycache__`/`node_modules`/`.venv` kimarad, és `--extra <útvonal>`-lal további tartalom is hozható. A `01` `PW3/B` ága ezt a lépést magától lefuttatja, és a linked worktree-be visszatérve is ellenőrzi, hogy megvan-e az eszköz-mappa.
+**`PW4` — supplying the agentic tool folders.** A worktree only receives the files **tracked** by git. The configuration of the agentic tools (`.claude/`, `.agents/`, `.codex/`, `.cursor/`, `.github/`, `AGENTS.md`, `CLAUDE.md`, `.mcp.json`) is committed in some projects and gitignored in others — in the latter case the new worktree **does not have the `bs-*` skills, the subagents and the gate scripts**, so the agent starting there stands blind. `worktree-setup.py` copies the **missing** files over from the root of the main worktree; it never overwrites or deletes an existing one (it is idempotent, and can be previewed with `--dry-run`), `__pycache__`/`node_modules`/`.venv` are excluded, and further content can be brought along with `--extra <path>`. The `PW3/B` branch of `01` runs this step by itself, and it also checks on returning into the linked worktree whether the tool folder is there.
 
-A lista a telepítő **mind az öt platformjának** célmappáját lefedi (`claude` → `.claude/`, `antigravity` → `.agents/`, `codex` → `.codex/` + `.agents/skills/`, `copilot` → `.github/`, `cursor` → `.cursor/`) — a telepítő a projekt gyökerébe semmit nem ír, a gyökér-fájlok (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.mcp.json`) az eszközök saját konvenciói. Két finomság: a **git által követett** fájlt a script sosem másolja (azt a worktree a saját branch-e szerint kapja meg — különben a commitált `.github/` a fő ág verziójával untracked szemetet hagyna a `git status`-ban), és a listán kívüli, de agentic-nek látszó gyökérmappát (`skills/bs-*`, `agents/` vagy kapu-script a `scripts/`-ben) **felismeri és jelzi**, hogy egy később hozzáadott platform ne maradjon csendben kimásolatlanul.
+The list covers the target folder of **all five platforms** of the installer (`claude` → `.claude/`, `antigravity` → `.agents/`, `codex` → `.codex/` + `.agents/skills/`, `copilot` → `.github/`, `cursor` → `.cursor/`) — the installer writes nothing into the project root, and the root files (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.mcp.json`) are the tools' own conventions. Two subtleties: the script never copies a file **tracked by git** (the worktree receives that per its own branch — otherwise a committed `.github/` would leave untracked litter in `git status` with the main branch's version), and it **recognises and flags** a root folder outside the list that looks agentic (`skills/bs-*`, `agents/` or a gate script in `scripts/`), so that a platform added later does not silently stay uncopied.
 
-**Így néz ki a szerkesztőben.** A VS Code a megnyitott repó **linkelt worktree-jeit külön repository-ként** sorolja fel a Source Control panelen — a fő checkout `master`/`main` branch-en, alatta behúzva a worktree a ciklus feature branch-én:
+**This is how it looks in the editor.** VS Code lists the **linked worktrees of the opened repo as separate repositories** in the Source Control panel — the main checkout on the `master`/`main` branch, and indented under it the worktree on the cycle's feature branch:
 
-![A VS Code Source Control panelje párhuzamos ciklus alatt: a fő repó és a linkelt worktree külön bejegyzésként, külön commit-dobozzal](docs/worktree-vscode-source-control.png)
+![The Source Control panel of VS Code during a parallel cycle: the main repo and the linked worktree as separate entries, with separate commit boxes](docs/worktree-vscode-source-control.png)
 
-Amit a képen érdemes észrevenni: a `CHANGES` alatt **két külön commit-doboz** van, és mindegyik a **saját branch-ére** commitol (`Commit on "master"` ↔ `Commit on "feature/c…"`). Ez két fizikailag külön munkafa, közös `.git`-tel — a doboz-tévesztés az egyetlen valódi kockázat ebben a felállásban: a fő dobozba írt commit a `main`-re megy, nem a ciklus ágára. A worktree-nél megjelenő `Publish Branch` gomb csak annyit jelent, hogy az új feature branch-nek még nincs upstreamje (`git push -u origin <branch>`).
+What is worth noticing in the picture: under `CHANGES` there are **two separate commit boxes**, and each one commits **to its own branch** (`Commit on "master"` ↔ `Commit on "feature/c…"`). These are two physically separate working trees with a shared `.git` — mistaking the box is the only real risk in this arrangement: a commit written into the main box goes to `main`, not to the cycle's branch. The `Publish Branch` button that appears at the worktree only means that the new feature branch has no upstream yet (`git push -u origin <branch>`).
 
-A linked worktree a **teljes fát** megkapja a branchének állapotában, saját HEAD-del és indexszel: a két agens munkafa-ellenőrzése nem látja egymást, és a másik ciklus `specs/cycle-MM-*/` mappája **meg sem jelenik**, amíg az nincs merge-elve. Épp ezért scanneli a ciklusszámozás a branch-neveket (BQ2), nem az `ls specs/`-et. A `node_modules/`/`target/`/build-cache untracked, tehát worktree-nként külön — lemezköltség, de teljes build-izoláció.
+A linked worktree receives the **whole tree** in the state of its branch, with its own HEAD and index: the working-tree checks of the two agents do not see each other, and the `specs/cycle-MM-*/` folder of the other cycle **does not even appear** until it has been merged. This is exactly why the cycle numbering scans the branch names (BQ2), not `ls specs/`. `node_modules/`/`target/`/the build cache are untracked, so they are separate per worktree — a disk cost, but full build isolation.
 
-**`PW3` — a `01` maga ajánlja fel (nem kell kérni).** A `git-preflight` **első** lépése a worktree-helyzet felmérése (`git worktree list` + `git rev-parse --git-common-dir`), és csak utána nézi a branch-et. Ha a `01` indításakor egy **másik, még le nem zárt ciklus** feature branch-én állunk, az ágens nem a `main`-re váltást kéri, hanem **egyetlen kérdésben** felajánlja mindkét utat: **A)** soros — a másik ciklus lezárása (merge/PR), majd `main`-re váltás és tervezés a fő mappában; **B)** párhuzamos — külön worktree, és onnan indul a tervezés. Ha a másik ciklus még nem zárható le, a **B)** az ajánlott. Ilyenkor a ciklusnév még nincs meg, ezért a worktree **detached** HEAD-del készül (`git worktree add --detach ../<projekt>-cNN origin/main`), és a branch a névadás után, a `BD5` szerint jön létre benne.
+**`PW3` — `01` offers it by itself (you do not have to ask).** The **first** step of the `git-preflight` is to assess the worktree situation (`git worktree list` + `git rev-parse --git-common-dir`), and only after that does it look at the branch. If, when `01` is started, we are standing on the feature branch of **another cycle that has not been closed yet**, the agent does not ask for a switch to `main`, but offers both routes **in a single question**: **A)** serial — closing the other cycle (merge/PR), then switching to `main` and designing in the main folder; **B)** parallel — a separate worktree, and the design starts from there. If the other cycle cannot be closed yet, **B)** is the recommended one. In that case the cycle name does not exist yet, so the worktree is created with a **detached** HEAD (`git worktree add --detach ../<project>-cNN origin/main`), and the branch is created in it after the naming, per `BD5`.
 
-**`PW2` — határátlépés a `06` előtt (a `06` kapuja kikényszeríti):** (1) a másik ciklus merge-elve, (2) **visszaköltözés a fő worktree-be** (`git worktree remove`, majd ott `git switch feature/cycle-NN-<name>`), így a `06`–`09` pontosan úgy fut, mint egyszálú munkában, (3) **az `05-analyze` újrafuttatása** — ez maga hozza be a friss fő branch-et (BR1, lásd lent) és azon validál. A `06` csak `PASS` után nyílik; a felhasználónak és az ágensnek külön rebase-lépést nem kell csinálnia.
+**`PW2` — crossing the boundary before `06` (the gate of `06` enforces it):** (1) the other cycle is merged, (2) **moving back into the main worktree** (`git worktree remove`, then `git switch feature/cycle-NN-<name>` there), so that `06`–`09` run exactly as in single-threaded work, (3) **re-running `05-analyze`** — this brings in the fresh main branch itself (BR1, see below) and validates on that. `06` only opens after a `PASS`; neither the user nor the agent has to do a separate rebase step.
 
-### Friss alap az analyze előtt (BR1)
+### A fresh base before the analyze (BR1)
 
-Az `05-analyze` értéke abból jön, hogy a tervet a **tényleges** kódbázishoz méri (horgonyok `path:sor`, futtatott artefaktumok létezése, plan↔kód konzisztencia). Ezért a fázis előfeltétele ellenőrzi, hogy a fő branch előrement-e a ciklus ágának elágazása óta (`git log $(git merge-base HEAD origin/main)..origin/main`) — és **csak akkor** hozza be (rebase, ha a branch nincs pusholva; merge, ha PR nyitva van rá), külön engedélykérés nélkül, konfliktus esetén STOP-pal. Ha a lista üres — a párhuzamos ablakban ez a normál eset, mert a másik ciklus még nincs merge-elve —, a fázis **nem nyúl a branch előzményéhez**: az `05` az önjavító hurokban többször is lefuthat, és a fölösleges előzmény-átírás pusholt ágon force-push-t provokálna. Így az `05` lesz az **alap-konzisztencia kapuja**: a `06` PW2-kapuja nem külön rebase-t ír elő, hanem friss `05` `PASS`-t. A `09` `W2` lépése ugyanezt a mechanikát futtatja a merge előtt.
+The value of `05-analyze` comes from measuring the design against the **actual** codebase (`path:line` anchors, the existence of executed artifacts, plan↔code consistency). That is why the prerequisite of the phase checks whether the main branch has moved forward since the cycle branch forked off (`git log $(git merge-base HEAD origin/main)..origin/main`) — and **only then** does it bring it in (a rebase if the branch has not been pushed; a merge if a PR is open on it), without asking for separate permission, with a STOP in case of a conflict. If the list is empty — in the parallel window this is the normal case, because the other cycle has not been merged yet — the phase **does not touch the branch's history**: `05` can run several times inside the self-healing loop, and needlessly rewriting history would provoke a force push on a pushed branch. This way `05` becomes the **gate of base consistency**: the PW2 gate of `06` does not prescribe a separate rebase, but a fresh `05` `PASS`. The `W2` step of `09` runs the same mechanics before the merge.
 
-Ha a BR1 **behozott** valamit, két dolog történik még. Egyrészt a fázis előállítja a **rebase-fájllistát** (`git diff --name-only "$PRE" HEAD -- . ':(exclude)specs/*'`), és **mind a négy diagnoszta-kör bemenetébe** beteszi azzal a kérdéssel, hogy a plan/tasks hivatkozásai, horgonyai és szignatúra-feltevései állnak-e még ezekre a fájlokra (BR1/a). Erre azért van szükség, mert az analyzer navigációs diffje (D10) a **tervezési dokumentumokat** nézi — a rebase viszont a **forrásfát** változtatta meg, amiről különben semmit nem látna. A fájllista fókusz, nem hatókör-szűkítés, és **külön „rebase-javító kör" nincs**: a talált elcsúszás a szokásos úton megy `Must Fix` → legkorábbi célfázis → fixer. Másrészt az `analyze-report.md` fejlécébe bekerül a **`Validált alap`** (fő branch neve + SHA, a ciklus ágának csúcsa, és hogy a BR1 hozott-e be valamit) — ezt a `06` kapuja és a `09` `W2`-je **összeveti a saját futásakori állapottal**, így determinisztikusan kiderül, ha egy `PASS` időközben elavult.
+If BR1 **did** bring something in, two more things happen. First, the phase produces the **rebase file list** (`git diff --name-only "$PRE" HEAD -- . ':(exclude)specs/*'`) and puts it into the input of **all four diagnostician rounds** with the question of whether the references, anchors and signature assumptions of the plan/tasks still hold for these files (BR1/a). This is needed because the analyzer's navigation diff (D10) looks at the **design documents** — whereas the rebase changed the **source tree**, of which it would otherwise see nothing. The file list is a focus, not a scope narrowing, and there is **no separate "rebase fixing round"**: any misalignment found goes the usual way, `Must Fix` → the earliest target phase → a fixer. Second, the **`Validated base`** goes into the header of `analyze-report.md` (the name and SHA of the main branch, the tip of the cycle branch, and whether BR1 brought anything in) — the gate of `06` and the `W2` of `09` **compare this with the state at their own run**, so it becomes deterministically clear if a `PASS` has gone stale in the meantime.
 
-A szabály egyetlen helyen él — `prompts/shared-hu/parallel-cycles.md` —, és build-time inline-olódik a `01` (ismertetés) és a `06` (kapu) skillbe. A `09` ehhez két determinisztikus ellenőrzést ad: **`W1`** (linked worktree-ben a `git switch main` megtagadva → STOP, visszaköltözés) és **`W3`** (a ciklus ága worktree-ben kicsekkolva → `git worktree remove` a `git branch -D` előtt).
+The rule lives in a single place — `prompts/shared-hu/parallel-cycles.md` — and is inlined at build time into the `01` (the explanation) and the `06` (the gate) skill. To this, `09` adds two deterministic checks: **`W1`** (in a linked worktree, `git switch main` is refused → STOP, move back) and **`W3`** (if the cycle's branch is checked out in a worktree, `git worktree remove` before `git branch -D`).
 
-### Integrációs frissítés a merge előtt (W2)
+### An integration refresh before the merge (W2)
 
-A `09` a merge-megerősítés **előtt** ellenőrzi, hogy a fő branch előrement-e a ciklus ágának elágazása óta (`git log $(git merge-base HEAD origin/main)..origin/main`). Ha igen, a `07` zöld tesztjei és a `08` doksija **elavult alapon** készültek, tehát a merge egy soha nem tesztelt kombinációt hozna létre. Ilyenkor a fázis behozza a fő branch-et a ciklus ágába (rebase vagy merge, a push/PR-állapot szerint), majd a változás jellege szerint irányít: **forrás/teszt változott → vissza a `07`-re**, **generált doksi / `conventions.md` / `test-conventions.md` változott → vissza a `08`-ra** (a generált tartalmat nem kézzel oldjuk fel, hanem újragenerálja a `08`). Ez a kapu **worktree nélkül is** működik és hasznos: eddig a `09` akkor is merge-elt, ha a `main` közben előrement.
+**Before** the merge confirmation, `09` checks whether the main branch has moved forward since the cycle branch forked off (`git log $(git merge-base HEAD origin/main)..origin/main`). If it has, the green tests of `07` and the docs of `08` were produced **on a stale base**, so the merge would create a combination that was never tested. In that case the phase brings the main branch into the cycle branch (a rebase or a merge, depending on the push/PR state), and then routes according to the nature of the change: **source/test changed → back to `07`**, **a generated doc / `conventions.md` / `test-conventions.md` changed → back to `08`** (generated content is not resolved by hand, `08` regenerates it). This gate **works and is useful without a worktree too**: up to now `09` merged even if `main` had moved forward in the meantime.
 
-### Fázis-záró commit (PC1)
+### The phase-closing commit (PC1)
 
-A három artefaktum-író fázis (`02`-spec, `03`-plan, `04`-tasks) **a felhasználói jóváhagyás pillanatában lezárul és commitol**: megerősítés → státuszírás → `git add specs/cycle-NN-<name>/` + `git commit -m "cycle-NN: <fázis-tag>"` → determinisztikus ellenőrzés (`git log -1 --oneline` + üres `git status --short` a ciklus mappájára) → a commit azonosítója bekerül a záró üzenetbe. A három lépés **egyetlen, megszakíthatatlan lépéssor**: a fázis nem attól kész, hogy a státusz átáll, hanem attól, hogy a státuszváltás commitolva van — a skillek megállási szabályai ezért külön tiltják a „státusz kész, commit nincs" állapotot. Külön engedélyt a commitra nem kérünk (a fázis lezárásának jóváhagyása magában foglalja); a No-VCS ágon az egész lépés kimarad. **Ugyanez a kötelező commit vonatkozik a két önjavító hurok-fázisra is** (`05`-analyze, `07`-validate), egy eltéréssel: ott a hurok **alatt nincs** köztes commit, a fázis-záró commit a hurok lezárásakor **egyszer** történik — de **minden lezáró ágon kötelező** (PASS, `max X`/3-próba STOP, felfelé eszkaláció, Quality Gate-bukás), és felhasználói megerősítést nem igényel. **Fázishatár (PE1):** a fázis a záró üzenettel (commit-azonosító + `/clear` + a következő fázis parancsa) véget ér — az ágens ugyanabban a körben a következő fázisból **semmit nem kezdhet el**, a következő artefaktumot (`plan.md`, `tasks.md`, kód) létre sem hozza. Ez a szabály **felülír** minden továbbmenetelre biztató kontextus-összefoglalót/checkpointot, korábbi saját tervet és korábbi körből származó „menjünk végig a folyamaton" kérést; csak a felhasználó **erre a körre szóló, explicit** kérése írja felül. A commit üzenete pontosan `cycle-NN: <fázis-tag>` — conventional-commit prefix (`docs(...)`, `feat:`) nélkül, mert a 07/09 erre a formátumra keres vissza. A közös eljárás egy helyen él — `prompts/shared-hu/phase-commit.md` —, és build-time inline-olódik a `02`/`03`/`04`/`05`/`07` skillekbe; a `01`, `06` és `08` a saját záró szekciójában hordozza ugyanezt a fázishatár-szabályt. A háromfázisú `quick-flow` ugyanezt a mintát követi a saját (Jira-prefixes) commit-konvenciójával a `spec.md` és a `task.md` jóváhagyásakor.
+The three artifact-writing phases (`02`-spec, `03`-plan, `04`-tasks) **close and commit at the moment of the user's approval**: confirmation → writing the status → `git add specs/cycle-NN-<name>/` + `git commit -m "cycle-NN: <phase-tag>"` → a deterministic check (`git log -1 --oneline` + an empty `git status --short` on the cycle folder) → the commit's identifier goes into the closing message. The three steps are **a single, uninterruptible sequence**: a phase is not done because the status flips, but because the status change has been committed — which is why the stopping rules of the skills separately forbid the "status done, no commit" state. We do not ask for separate permission for the commit (the approval of the phase's closing includes it); on the no-VCS branch the whole step is skipped. **The same mandatory commit applies to the two self-healing loop phases too** (`05`-analyze, `07`-validate), with one difference: there is **no** intermediate commit **during** the loop, the phase-closing commit happens **once**, at the closing of the loop — but it is mandatory **on every closing branch** (PASS, `max X`/3-attempt STOP, upward escalation, a Quality Gate failure), and it requires no user confirmation. **Phase boundary (PE1):** the phase ends with the closing message (the commit identifier + `/clear` + the command of the next phase) — in the same round the agent **must not start anything** from the next phase, it must not even create the next artifact (`plan.md`, `tasks.md`, code). This rule **overrides** every context summary/checkpoint that encourages moving on, every earlier plan of its own, and every "let's go through the whole process" request from an earlier round; only the user's **explicit request for this round** overrides it. The message of the commit is exactly `cycle-NN: <phase-tag>` — without a conventional-commit prefix (`docs(...)`, `feat:`), because 07/09 search back for this format. The shared procedure lives in one place — `prompts/shared-hu/phase-commit.md` — and is inlined at build time into the `02`/`03`/`04`/`05`/`07` skills; `01`, `06` and `08` carry the same phase-boundary rule in their own closing section. The three-phase `quick-flow` follows the same pattern with its own (Jira-prefixed) commit convention, at the approval of `spec.md` and `task.md`.
 
 ---
 
-## 11. Egy ciklus artifact fájljai
+## 10. The artifact files of a cycle
 
-Minden ciklus saját mappát kap: `specs/cycle-NN-<cycle-name>/`
+Every cycle gets its own folder: `specs/cycle-NN-<cycle-name>/`
 
-| Fájl | Fázis | Tartalom |
+| File | Phase | Content |
 |------|-------|----------|
-| `spec.md` | 02 | Üzleti viselkedés, követelmények, érintett területek, mock stratégia, Definition of Done. A DoD-pontok **stabil `DoD-NN` azonosítót** (DI1) és — erősen ajánlottan — **`· _bizonyíték:_`** mezőt kapnak (DI2: tesztnév / `cmd:` / `manual:`), amiből a 07 a `dod-check.py`-jal **gépi joinnal** értékel, LLM-ítélet nélkül. |
-| `spec-questions.md` | 02 | A specifikációval kapcsolatos nyitott kérdések. A spec csak akkor `Tervezésre kész`, ha itt nincs `- [ ]`. |
-| `plan.md` | 03 | Technikai végrehajtási terv, érintett komponensek, tervezett módosítások, teszt/ellenőrzési stratégia. **Önhordó:** a spec minden tesztesete és `DoD-NN` pontja leképződik plan-tesztesetre (TP1, `Spec-lefedettség` tábla), a `test-conventions.md` receptjei fizikailag bemásolva (TC1/a), a **környezet-felkészítés** (token-beszerzés, stack-indítás, egyedi komponens build/deploy/rollback, seed) szó szerinti parancsokkal (TP3), a kötelező **`## Környezeti koordináták`** szekció (KO1: komponens base URL-ek, portok, health endpointok, szó szerinti indító/leállító parancsok, példa REST hívások a token-beszerzéssel, teszt- és API-userek jelszavakkal, minden paraméter — placeholder és üres cella nélkül, a `C6` kapuval kikényszerítve), a **konfiguráció-életút** minden futtatási módra (KF1) és a **fordított lefedettség** (minden plan-képességhez spec-forrás — SC1) — a lezárás előtt kötelező a teljes *Lezárási kapu* (TP2). Kötelező része a **`### Gépi futtatási tábla (run-tests.py)`** (TP4): kategória / típus (`gyors`\|`nehéz`) / előfeltétel / parancs / eredményfájl / formátum / takarítás — ebből futtat a 07 szkripttel, így a nyers teszt-log nem kerül LLM-kontextusba. Hiánya esetén a 07 a `test-runner` subagentre esik vissza. Szintén kötelező a **`### Teszt-forgatókönyvek`** szekció (TS1): tesztesetenként egy `TS-NN` blokk `DoD-NN` hivatkozással, `Mit tesztelünk` / `Előfeltétel` / lépés-tábla / `Takarítás` sorokkal — a lépés-tábla minden sora **szó szerint futtatható hívást** és **konkrét, ellenőrizhető elvárt eredményt** hordoz (a „sikeresen lefut" jellegű megfogalmazást a TS3 kemény padlója kizárja). Ez a `bs-manual-test-plan` `TG-NN` csoportjainak elsődleges forrása. Kötelező a **`**Cél-környezet:**`** mező (EV1) és a futtatási tábla **`Környezet`** oszlopa (EV2): nem-lokális kategóriánál a cél-host a **parancsban** áll (EV3), az `Előfeltétel` ugyanoda hív elérhetőségi probe-bal (EV4), és `localhost` tilos (EV5). |
-| `plan-questions.md` | 03 | A tervezési szakasz nyitott kérdései. A plan csak akkor `Task írásra kész`, ha itt nincs `- [ ]`. |
-| `tasks.md` | 04 | Checkboxos task lista (`[RED]`/`[GREEN]`/`[CHECK]`/`[OPS]` jelölésekkel — marker minden taskon kötelező) + prerequisite dokumentumok. Osztott környezetet érintő destruktív `[OPS]` műveletnél kötelező a jóváhagyó és a rollback task. **Plan-kapcsolat (PID1):** minden task a plan stabil `[P-…]` szekció-azonosítójára hivatkozik (nem sorszámra), egy elsődleges forrásra, több task esetén részhatókör-jelöléssel; a csoport-fejlécek felsorolják a lefedett plan-ID-kat, a fájl végén pedig kötelező a `Plan-lefedettség` fordított tábla (plan-szekció → taskok). |
-| `tasks-questions.md` | 04 | A tasks szakasz nyitott kérdései (főleg az 05 fix-mód használja). A `tasks.md` csak akkor `Implementálásra kész`, ha itt nincs `- [ ]`. |
-| `cycle-design-input.md` | létrehozza: 01 · **kitölti: a felhasználó** · fogyasztja: **02, 03** | Ciklus design input (CD1): a felhasználó saját szavaival írt, szabad formájú ciklus-specifikáció (elvárások, vázlat, példák). A 01 üres sablonként hozza létre a ciklus mappájában és felhívja rá a figyelmet; **kitöltése opcionális**. Ha van benne tartalom, a `bs-write-spec` a **viselkedési** részét dolgozza fel (a `roadmap.md` bejegyzése mellett, elsődleges bemenetként), a `bs-write-plan` pedig automatikusan beolvassa és a **technikai/eljárás-jellegű** részét emeli — önhordóan — a `plan.md`-be. Egyik fázis sem írja át a fájlt. |
-| `spec-input-from-prev.md` | írja: 01 · fogyasztja: **02** | Fázisok közötti átadás (IP1): a 01-ben elhangzott, de a roadmap-be nem illő viselkedési részletek. Csak ha van átadandó infó. |
-| `plan-input-from-prev.md` | írja: 01, 02 · fogyasztja: **03** | A spec-ből kivett vagy a kutatás során felszínre került technikai/implementációs részletek. |
-| `tasks-input-from-prev.md` | írja: 02, 03 · fogyasztja: **04** | Előkészítő lépések és sorrend-megkötések a task-bontáshoz. |
-| `validate-input-from-prev.md` | írja: 03, 04 · fogyasztja: **07** | Futtatási előfeltételek és üzemeltetési tudnivalók a validáláshoz (pl. „a stack indítása előtt VPN kell"). |
-| `analyze/analyze-report.md` | 05 | Kereszt-fázisos konzisztencia jelentés (PASS/FAIL), 6 kategória (1+3., 2+5. és 4. az `analyzer` három hatóköre, 6. az `analyzer-exec`), **a kapu által generált** lefedettségi mátrix és `Plan-szekció ↔ task` tábla (az orchestrátor szó szerint fűzi be, majd az `Érintett DoD-sorok` szerint javítja), **végrehajthatósági leltár**, **Hurok-napló** (az önjavító hurok iterációnkénti audit-nyoma). **Az analízis minden fájlja a ciklus `analyze/` almappájában él** (AD1). |
-| `analyze/analyze-task.md` | 05 | A **triázsban (TR1) jóváhagyott javítási lista** — a fixer-subagentek kizárólag ennek nyitott tételein dolgoznak. Ide csak az kerül, amit a felhasználó javításra jelölt (plusz a mechanikus kapu tételei, kérdés nélkül); az elvetett tételek külön szekcióban maradnak, ez a későbbi körök szűrésének memóriája. Egyetlen írója az orchestrátor. |
-| `analyze/slices/` | 05 | A mechanikus kapu `--emit-slices` kimenete: a három szemantikai `analyzer`-kör bemenete, a tervezési dokumentumok szó szerinti kimetszéseként. `.gitignore`-ral rejti magát, nem kerül commitba. |
-| `imp-decision.md` | 06 | Implementációs döntési napló: nem egyértelmű megoldások és a 3-próba szabály utáni leállások. |
-| `test-report/implement/` | 06 | **Hivatalos fázis-mappa (TR6).** Mindig tartalmazza a `check-log.md`-t; ha a `conventions.md` `**Riport-fázisok:**` mezője felsorolja az `implement`-et, akkor a 06 záró állapotának teljes riport-készletét is (ugyanaz a tábla, ugyanaz a `report-gate-check.py` kapu, `--report-subdir test-report/implement`). Ha nem, a bizonyítékot a 07 első TELJES köre adja. |
-| `test-report/implement/check-log.md` | 06 | A `[CHECK]` futások append-only naplója: idő, task, hányadik próba, mód (normál / validate-loop), a **ténylegesen kiadott parancs** és a darabszámok (`X passed / Y failed / Z skipped`) — a bukott próbák is. Enélkül az implementációs fázisból csak a `- [x]` pipa maradna, ami állítja a zöldet, de nem bizonyítja (a chat `/clear` után nincs). |
-| `test-report/validation-report.md` | 07 | **A `## Kör N` blokkokat a `round-log.py` írja** (open/step/close), a `# Validation History`-t a `failure-counter.py` — az orchestrátor csak a szabad szöveges mezőket adja. Validációs futástörténet, regressziós/Sonar hibák, consecutive failures számlálók — egyben az **07 önjavító hurok naplója** (LC2), a megszakított futás horgonya. A körök **típusa is látszik** (TELJES / KÖNNYŰ — VD10): a költséges lépések (E2E, regresszió, Sonar, review) csak az első és a záró megerősítő körben futnak, a köztes javító körökben a teljes gyors teszt-készlet. PASS **kizárólag teljes körből** adható. |
-| `test-report/validate/round-NN/` | 07 | Körönként külön mappa a kör **összes** teszt-artefaktumával (a `conventions.md` `## Teszt-riportolás` táblája szerint: Allure/Playwright HTML, coverage, JUnit XML) **és** a `sonar-report.md`/`.html`-lel. A mappa száma = a `## Kör N` sorszáma; korábbi körök mappái sosem íródnak felül (TR5). |
-| `manual-test-plan.md` | *(nem fázis — `/bs-manual-test-plan`, az 05 után bármikor)* | Kézi tesztterv: `Környezet és indítás` (komponens, port, health endpoint, szó szerinti indító/leállító parancs), `Tesztadatok` (userek jelszóval, tokenek, seed, takarítás — TC5 titok-szabállyal), `Automata tesztek` (a plan gépi futtatási táblája + az eredmények helye), `TG-NN` **kézi tesztcsoportok** (mit tesztelünk · előfeltétel · lépés-tábla konkrét elvárt eredménnyel · `curl` **és** `.http` blokk · takarítás), `Nem kézzel tesztelhető` (MT10: indoklás + mi fedi), `Lefedettség` (`DoD-NN → TG-NN`) és `Változásnapló`. **Kétmódú:** `Tervezett` (a tervből, valós kódon nem verifikált) vagy `As-built` (a kódhoz ellenőrizve — eltérésnél a kód nyer). Determinisztikus kapu: `manual-test-gate-check.py` (MG1–MG10). **Nulla visszacsatolás:** a 07 és a 09 nem kapuz rá, eredményfájl nem készül. |
-| `doc-sync-plan.md` | 08 | A `doc-sync-planner` per-fájl pipálható terve a `docs-generated/` frissítéséhez (mit kell tenni / nincs teendő + drift-megállapítások). A végrehajtás **és** a megszakítás-utáni folytatás determinisztikus horgonya (a fő ágens pipálja). |
-| `doc-sync-questions.md` | 08 | A doc-sync döntési pontjai és kapu-bukásai (`Knn`). A fő ágens kérdez egyenként; nyitott `[ ]` kérdésnél a fázis megáll. Sosem törlünk, csak `[x]`. |
-| `test-report/code-review.md` | 07 | A `reviewer` ágens code review jelentése: `MF-NN` **Must Fix** (blokkol) + `S-NN` **Suggestions** (nem blokkol). Nincs benne napló — a review körei a `validation-report.md` `# Validation History`-jába kerülnek, a teszthibákkal közös számlálón. Nyitott finding esetén a `tasks.md` `## Review javítások` szekciója is keletkezik. |
+| `spec.md` | 02 | Business behaviour, requirements, affected areas, mock strategy, Definition of Done. The DoD points get a **stable `DoD-NN` identifier** (DI1) and — strongly recommended — an **`· _evidence:_`** field (DI2: a test name / `cmd:` / `manual:`), from which 07 evaluates with a **machine join** using `dod-check.py`, without an LLM judgement. |
+| `spec-questions.md` | 02 | The open questions relating to the specification. The spec is only `Ready for planning` if there is no `- [ ]` here. |
+| `plan.md` | 03 | The technical execution plan, the affected components, the planned changes, the test/verification strategy. **Self-contained:** every test case and `DoD-NN` point of the spec is mapped onto a plan test case (TP1, the `Spec coverage` table), the recipes of `test-conventions.md` are physically copied in (TC1/a), the **environment preparation** (token acquisition, starting the stack, the build/deploy/rollback of an individual component, seeding) with verbatim commands (TP3), the mandatory **`## Environment coordinates`** section (KO1: component base URLs, ports, health endpoints, verbatim start/stop commands, example REST calls including the token acquisition, test and API users with their passwords, every parameter — without a placeholder or an empty cell, enforced by the `C6` gate), the **configuration lifecycle** for every run mode (KF1) and the **reverse coverage** (a spec source for every plan capability — SC1) — before the closing, the full *Closing gate* (TP2) is mandatory. A mandatory part of it is the **`### Machine-readable run table (run-tests.py)`** (TP4): category / type (`fast`\|`heavy`) / prerequisite / command / result file / format / cleanup — 07 runs from this with a script, so the raw test log never enters the LLM context. In its absence, 07 falls back to the `test-runner` subagent. Also mandatory is the **`### Test scenarios`** section (TS1): one `TS-NN` block per test case with a `DoD-NN` reference, with `What we test` / `Prerequisite` / a step table / `Cleanup` rows — every row of the step table carries a **verbatim runnable call** and a **concrete, checkable expected result** (the hard floor of TS3 rules out phrasings of the "runs successfully" kind). This is the primary source of the `TG-NN` groups of `bs-manual-test-plan`. The **design** of the scenarios is driven by the `TD0–TD6` recipe (`shared-hu/test-scenario-design.md`): a dimension inventory for the count (TD1), the observation quartet for the content (TD2 — a counted side effect, directly read state, a negative control), countability (TD3), proof of isolation (TD4), a calibration sample (TD5) and a self-check before the closing (TD6). The **`**Target environment:**`** field (EV1) and the **`Environment`** column of the run table (EV2) are mandatory: for a non-local category the target host stands **in the command** (EV3), the `Prerequisite` calls the same place with a reachability probe (EV4), and `localhost` is forbidden (EV5). |
+| `plan-questions.md` | 03 | The open questions of the design stage. The plan is only `Ready for tasks` if there is no `- [ ]` here. |
+| `tasks.md` | 04 | A checkboxed task list (with `[RED]`/`[GREEN]`/`[CHECK]`/`[OPS]` markers — a marker is mandatory on every task) + the prerequisite documents. For a destructive `[OPS]` operation affecting a shared environment, the approver and the rollback task are mandatory. **The plan link (PID1):** every task references the plan's stable `[P-…]` section identifier (not a serial number), a single primary source, with a sub-scope marker in the case of several tasks; the group headers list the plan IDs covered, and at the end of the file the reverse `Plan coverage` table (plan section → tasks) is mandatory. |
+| `tasks-questions.md` | 04 | The open questions of the tasks stage (used mostly by the 05 fix mode). `tasks.md` is only `Ready for implementation` if there is no `- [ ]` here. |
+| `cycle-design-input.md` | created by: 01 · **filled in by: the user** · consumed by: **02, 03** | The cycle design input (CD1): a free-form cycle specification written by the user in their own words (expectations, an outline, examples). 01 creates it as an empty template in the cycle folder and draws attention to it; **filling it in is optional**. If there is content in it, `bs-write-spec` processes its **behavioural** part (next to the entry in `roadmap.md`, as a primary input), and `bs-write-plan` reads it automatically and lifts its **technical/procedural** part — self-containedly — into `plan.md`. Neither phase rewrites the file. |
+| `spec-input-from-prev.md` | written by: 01 · consumed by: **02** | The handover between phases (IP1): behavioural details that came up in 01 but do not fit into the roadmap. Only if there is information to hand over. |
+| `plan-input-from-prev.md` | written by: 01, 02 · consumed by: **03** | Technical/implementation details taken out of the spec or surfaced during the research. |
+| `tasks-input-from-prev.md` | written by: 02, 03 · consumed by: **04** | Preparatory steps and ordering constraints for the task breakdown. |
+| `validate-input-from-prev.md` | written by: 03, 04 · consumed by: **07** | Run prerequisites and operational knowledge for the validation (e.g. "a VPN is needed before starting the stack"). |
+| `analyze/analyze-report.md` | 05 | The cross-phase consistency report (PASS/FAIL), 6 categories (1+3, 2+5 and 4 are the three scopes of the `analyzer`, 6 is the `analyzer-exec`), the coverage matrix and the `Plan section ↔ task` table **generated by the gate** (the orchestrator splices them in verbatim, then corrects them per the `Affected DoD rows`), an **executability inventory**, and a **Loop log** (the per-iteration audit trail of the self-healing loop). **Every file of the analysis lives in the cycle's `analyze/` subfolder** (AD1). |
+| `analyze/analyze-task.md` | 05 | The **fix list approved in the triage (TR1)** — the fixer subagents work exclusively on its open items. Only what the user marked for fixing gets here (plus the items of the mechanical gate, without a question); the rejected items stay in a separate section, which is the memory for filtering in later rounds. Its only writer is the orchestrator. |
+| `analyze/slices/` | 05 | The output of the mechanical gate's `--emit-slices`: the input of the three semantic `analyzer` rounds, as a verbatim excision of the design documents. It hides itself with a `.gitignore` and is not committed. |
+| `imp-decision.md` | 06 | The implementation decision log: non-obvious solutions and the stops after the 3-attempt rule. |
+| `test-report/implement/` | 06 | **An official phase folder (TR6).** It always contains `check-log.md`; if the `**Report phases:**` field of `conventions.md` lists `implement`, then also the full report set of the closing state of 06 (the same table, the same `report-gate-check.py` gate, with `--report-subdir test-report/implement`). If not, the evidence is given by the first FULL round of 07. |
+| `test-report/implement/check-log.md` | 06 | The append-only log of the `[CHECK]` runs: time, task, which attempt, mode (normal / validate-loop), the **command actually issued** and the counts (`X passed / Y failed / Z skipped`) — including the failed attempts. Without it, all that would remain from the implementation phase is the `- [x]` tick, which asserts the green but does not prove it (after a `/clear` the chat is gone). |
+| `test-report/validation-report.md` | 07 | **The `## Round N` blocks are written by `round-log.py`** (open/step/close) and the `# Validation History` by `failure-counter.py` — the orchestrator only supplies the free-text fields. The validation run history, regression/Sonar defects, consecutive-failure counters — and at the same time the **log of the 07 self-healing loop** (LC2), the anchor of an interrupted run. The **type of the rounds is visible too** (FULL / LIGHT — VD10): the expensive steps (E2E, regression, Sonar, review) only run in the first and the closing confirming round, and in the intermediate fixing rounds the complete fast test set runs. PASS can be given **only from a full round**. |
+| `test-report/validate/round-NN/` | 07 | A separate folder per round with **all** the test artifacts of the round (per the `## Test reporting` table of `conventions.md`: Allure/Playwright HTML, coverage, JUnit XML) **and** with `sonar-report.md`/`.html`. The number of the folder = the serial number of the `## Round N`; the folders of earlier rounds are never overwritten (TR5). |
+| `manual-test-plan.md` | *(not a phase — `/bs-manual-test-plan`, any time after 05)* | The manual test plan: `Environment and startup` (component, port, health endpoint, verbatim start/stop command), `Test data` (users with passwords, tokens, seed, cleanup — with the TC5 secret rule), `Automated tests` (the plan's machine-readable run table + the location of the results), `TG-NN` **manual test groups** (what we test · prerequisite · a step table with concrete expected results · a `curl` **and** a `.http` block · cleanup), `Not manually testable` (MT10: a justification + what covers it), `Coverage` (`DoD-NN → TG-NN`) and a `Change log`. **Two modes:** `Planned` (from the design, not verified against real code) or `As-built` (verified against the code — in case of a divergence the code wins). A deterministic gate: `manual-test-gate-check.py` (MG1–MG10). **Zero feedback:** neither 07 nor 09 gates on it, and no result file is produced. |
+| `doc-sync-plan.md` | 08 | The per-file tickable plan of the `doc-sync-planner` for updating `docs-generated/` (what has to be done / no action + drift findings). The deterministic anchor of the execution **and** of resuming after an interruption (the main agent ticks it). |
+| `doc-sync-questions.md` | 08 | The decision points and gate failures of the doc-sync (`Knn`). The main agent asks them one by one; on an open `[ ]` question the phase stops. We never delete, we only tick `[x]`. |
+| `test-report/code-review.md` | 07 | The code review report of the `reviewer` agent: `MF-NN` **Must Fix** (blocking) + `S-NN` **Suggestions** (non-blocking). It contains no log — the rounds of the review go into `# Validation History` in `validation-report.md`, on a counter shared with the test failures. In the case of an open finding, the `## Review fixes` section of `tasks.md` is also created. |
 
-### 11.1 Fázisok közötti átadás (`*-input-from-prev.md`)
+### 10.1 The handover between phases (`*-input-from-prev.md`)
 
-**Milyen problémát old meg (IP1):** egy fázisban rendszeresen felszínre kerül olyan információ, ami **értékes, de nem oda tartozik** — túl technikai, túl részletes, vagy egyszerűen a következő fázis dolga. A skillek eddig ezt **törlésre** utasították: a `02-write-spec` szó szerint azt írja, hogy „ha egy mondat technológiát, fájlnevet, függvényt nevez meg → az plan-be való, töröld a spec-ből". Vagyis az infó a kukába ment, nem a következő fázisba — a `03` pedig újra felderítette (vagy nem). Ezek a fájlok adnak neki **célt a kuka helyett**.
+**What problem it solves (IP1):** in a phase, information regularly surfaces that is **valuable but does not belong there** — too technical, too detailed, or simply the business of the next phase. Up to now the skills instructed that this be **deleted**: `02-write-spec` literally says that "if a sentence names a technology, a file name or a function → that belongs in the plan, delete it from the spec". So the information went into the bin, not into the next phase — and `03` then rediscovered it (or did not). These files give it **a destination instead of the bin**.
 
-| Fájl | Ki írhat bele | Ki fogyasztja |
+| File | Who may write into it | Who consumes it |
 |---|---|---|
 | `spec-input-from-prev.md` | 01-add-cycles | **02**-write-spec |
 | `plan-input-from-prev.md` | 01, 02 | **03**-write-plan |
 | `tasks-input-from-prev.md` | 02, 03 | **04**-write-tasks |
 | `validate-input-from-prev.md` | 03, 04 | **07**-validate |
 
-Mind a ciklus mappájában (`specs/cycle-NN-<name>/`). **Egy fázis több fájlba is írhat** ugyanabban a futásban, ha az infót szét kell szórni (pl. a 02-ben felmerülő technikai részlet a `plan-input`-ba, a belőle következő tesztelési előfeltétel a `validate-input`-ba). A **06-implement** szándékosan nem kap sajátot: az eleve beolvassa a `plan.md`-t és a `tasks.md`-t, tehát az implementációs részlet oda tartozik.
+All of them in the cycle's folder (`specs/cycle-NN-<name>/`). **One phase may write into several files** in the same run, if the information has to be spread out (e.g. a technical detail arising in 02 into `plan-input`, and the testing prerequisite following from it into `validate-input`). **06-implement** deliberately does not get its own: it reads `plan.md` and `tasks.md` anyway, so an implementation detail belongs there.
 
-**A legnagyobb „táplálója" a 02 koordináta-kiszűrése (KX).** A spec-be leggyakrabban **környezeti koordináták és eljárás-leírások** szivárognak be (dev hostok, `localhost` portok, image-nevek, deploy-parancsok, teljes deployment-runbookok a `Teszt specifikáció` szekcióban), mert hasznos infónak tűnnek. A `02-write-spec` ezért egy **kötelező kiszűrő rutint** futtat — új spec írásakor **és** meglévő spec újrafutásakor is —, ami ezeket felismeri és **áthelyezi** (nem törli) a `plan-input-from-prev.md`-be, a spec-ben pedig szimbolikus hivatkozást hagy (`{PUBLIC_BASE_URL}`). Az elhatárolás egyetlen szabályban: **az endpoint-útvonal szerződés (spec), a host / base URL / port / namespace / image / parancs koordináta (plan)**. A `03-write-plan` ennek a tükrét futtatja: ha a spec túl technikai maradt, az adatot **átemeli a planbe** és jelzi a felhasználónak (a `spec.md`-t nem írja át) — mert a `plan.md`-nek **önhordónak** kell lennie: a `test-runner` kizárólag azt olvassa, tehát ami nem ott van, az soha nem fut le.
+**Its biggest "feeder" is the coordinate filtering of 02 (KX).** What most often bleeds into the spec is **environment coordinates and procedure descriptions** (dev hosts, `localhost` ports, image names, deploy commands, complete deployment runbooks in the `Test specification` section), because they look like useful information. That is why `02-write-spec` runs a **mandatory filtering routine** — both when writing a new spec **and** when re-running on an existing one — that recognises these and **moves** them (it does not delete them) into `plan-input-from-prev.md`, leaving a symbolic reference in the spec (`{PUBLIC_BASE_URL}`). The delimitation in a single rule: **the endpoint path is a contract (spec), while the host / base URL / port / namespace / image / command is a coordinate (plan)**. `03-write-plan` runs the mirror image of this: if the spec stayed too technical, it **lifts the data into the plan** and tells the user (it does not rewrite `spec.md`) — because `plan.md` has to be **self-contained**: the `test-runner` reads only that, so whatever is not there will never run.
 
-**A fogyasztó oldalon a hivatkozás nem elég (dereferencing).** Az átadott tétel gyakran magas absztrakciós szinten fogalmaz (*„képfájl build és push a registrybe a `build.sh` futtatásával"*). A `03-write-plan` **nem reprodukálhatja a bemenet absztrakciós szintjét**: ha egy tétel scriptre, eljárásra, meglévő tesztre vagy külső API-ra **hivatkozik**, a hivatkozást **fel kell oldania a forrásból** — a script tényleges parancsai, a registry-host, a teljes JSON payload minden kötelező mezővel —, és a konkrétumot a `plan.md`-be írnia, forrás-megjelöléssel. Nagy vagy szétszórt forrásnál a `researcher` subagentet hívja, **literál értékeket kérve**; a researcher erre kapott egy szűk kivételt a „soha nem nyers fájltartalom" szabálya alól (rövid, szó szerinti részletek: parancs, URL, payload, szignatúra — de nem teljes fájl, és titok helyett pointer). Ez azért kritikus, mert a `04`, a `06` és a `test-runner` **már nem látja a spec-et és a forrást**: ami nem került a `plan.md`-be, az számukra nem létezik.
+**On the consuming side, a reference is not enough (dereferencing).** A handed-over item is often phrased at a high level of abstraction (*"build the image and push it to the registry by running `build.sh`"*). `03-write-plan` **must not reproduce the abstraction level of the input**: if an item **references** a script, a procedure, an existing test or an external API, it has to **resolve the reference from the source** — the actual commands of the script, the registry host, the full JSON payload with every mandatory field — and write the concrete detail into `plan.md`, with the source indicated. For a large or scattered source it calls the `researcher` subagent, **asking for literal values**; the researcher received a narrow exception to its "never raw file content" rule for this (short, verbatim snippets: a command, a URL, a payload, a signature — but not a whole file, and a pointer instead of a secret). This is critical because `04`, `06` and the `test-runner` **no longer see the spec or the source**: whatever did not make it into `plan.md` does not exist for them.
 
-**Tétel-formátum** — checkbox-lista, a kérdés-fájlok mintájára, forrás-megjelöléssel:
+**Item format** — a checkbox list, modelled on the question files, with the source indicated:
 
 ```md
-- [ ] I01 — [az átadott információ] _(forrás: 02-write-spec)_
-- [x] I02 — [az átadott információ] _(forrás: 01-add-cycles)_ → beépítve: plan.md „Tervezett módosítások"
-- [x] I03 — [az átadott információ] _(forrás: 02-write-spec)_ → elvetve: a ciklus scope-ján kívül
+- [ ] I01 — [the handed-over information] _(source: 02-write-spec)_
+- [x] I02 — [the handed-over information] _(source: 01-add-cycles)_ → incorporated: plan.md "Planned changes"
+- [x] I03 — [the handed-over information] _(source: 02-write-spec)_ → rejected: outside the scope of the cycle
 ```
 
-**Szabályok:**
+**Rules:**
 
-- **Sosem törlünk** — a lezárt tétel `[x]` + egy soros megjegyzés (`→ beépítve: <hova>` / `→ elvetve: <miért>`).
-- **Nem blokkol menet közben**, de a **fázis lezárásakor nem maradhat nyitott tétel**: minden fogyasztó fázis minőségellenőrzésében kötelező pont, hogy minden tétel vagy beépült, vagy **explicit indokkal elvetett**. Csendben átlépni tilos — ez a védőháló egy gyengébb modell ellen, amely különben ignorálná a fájlt.
-- **Nem kérdez.** Határvonal a `*-questions.md`-hez: a **kérdés** = „nem tudom, döntsd el"; az **input-from-prev** = „tudom, de nem ide tartozik". Ami eldöntendő kérdés is, az kérdésként megy a saját fázis `*-questions.md`-jébe.
-- **Üres váz nem készül** — a fájl csak akkor jön létre, ha van mit beleírni; a hiánya nem hiba (ugyanaz az elv, mint a `test-conventions.md`-nél).
-- **Ami nem a következő fázisba, hanem egy későbbi CIKLUSBA tartozik**, az a `specs/roadmap.md`-be megy, nem ide. Ami pedig a **jövő összes ciklusában** kell (visszatérő teszt-elvárás), az a `specs/test-conventions.md`-be — annak a `08-doc-sync` a gazdája.
-- **Az önjavító hurkok fix-módjai (05/07/09) teljesen figyelmen kívül hagyják** ezeket a fájlokat — sem nem olvassák, sem nem írják. A fix-mód célzott javítás egy `Must Fix` listára; az átadás-mechanizmus újrafuttatása ott csak költség és zaj lenne.
-- **Az 05-analyze read-only diagnózisa viszont figyeli:** az `s2-coverage` kör a `spec-`/`plan-`/`tasks-input-from-prev.md` nyitott `[ ]` tételét **lefedettségi hiányként** jelzi (a `validate-input`-ot nem, mert annak a fogyasztója utána fut). A `Must Fix` azt nevezi meg, **mi maradt ki** a `spec.md`/`plan.md`/`tasks.md`-ből — nem a pipálást kéri, hiszen a fixer ezeket a fájlokat nem írja.
-- A **`quick-flow`** nem érinti: háromfázisú, egy kontextusban fut, nincs mit átadni fázisok között.
+- **We never delete** — a closed item gets `[x]` + a one-line note (`→ incorporated: <where>` / `→ rejected: <why>`).
+- **It does not block along the way**, but **no open item may remain when the phase is closed**: it is a mandatory point in the quality check of every consuming phase that every item has either been incorporated or **rejected with an explicit reason**. Stepping over it silently is forbidden — this is the safety net against a weaker model that would otherwise ignore the file.
+- **It does not ask.** The boundary against `*-questions.md`: a **question** = "I do not know, you decide"; an **input-from-prev** = "I know, but it does not belong here". Whatever is also a question to be decided goes as a question into its own phase's `*-questions.md`.
+- **No empty skeleton is created** — the file is only created if there is something to write into it; its absence is not a defect (the same principle as with `test-conventions.md`).
+- **Whatever belongs not in the next phase but in a later CYCLE** goes into `specs/roadmap.md`, not here. And whatever is needed in **every future cycle** (a recurring test expectation) goes into `specs/test-conventions.md` — whose owner is `08-doc-sync`.
+- **The fix modes of the self-healing loops (05/07/09) ignore these files completely** — they neither read nor write them. Fix mode is a targeted correction for a `Must Fix` list; re-running the handover mechanism there would be nothing but cost and noise.
+- **The read-only diagnosis of 05-analyze does watch them, though:** the `s2-coverage` round flags an open `[ ]` item of `spec-`/`plan-`/`tasks-input-from-prev.md` as a **coverage gap** (not `validate-input`, because its consumer runs afterwards). The `Must Fix` names **what was left out** of `spec.md`/`plan.md`/`tasks.md` — it does not ask for the ticking, since the fixer does not write these files.
+- It does not touch **`quick-flow`**: that is three-phase, runs in one context, and has nothing to hand over between phases.
 
-A mechanizmus közös leírása egyetlen helyen él — `prompts/shared-hu/input-from-prev.md` —, amelyet a telepítő **build-time inline** beágyaz a hivatkozó skillek (`01`, `02`, `03`, `04`, `07`) telepített változatába; a skill csak a saját, fázis-specifikus részét írja a marker körül (mit olvas be, mely fájlokba írhat).
+The shared description of the mechanism lives in one place — `prompts/shared-hu/input-from-prev.md` — which the installer embeds **inline at build time** into the installed version of the referencing skills (`01`, `02`, `03`, `04`, `07`); the skill only writes its own, phase-specific part around the marker (what it reads, which files it may write into).
 
 ---
 
-## 12. docs-generated/ — élő dokumentáció (a 08-doc-sync gazdája)
+## 11. docs-generated/ — living documentation (owned by 08-doc-sync)
 
-A projekt gyökerében lévő **`docs-generated/`** mappa a `08-doc-sync` fázis által ciklusról ciklusra karbantartott, **generált, „as-built" dokumentáció** otthona. Megkülönböztetendő a kézzel írt `docs/` mappától: **minden, amit az AI/skill gyárt vagy ami projekt-követelmény, ide kerül**, és a doc-sync **garantálja a mappa összes fájljának konzisztenciáját** a megvalósult rendszerrel (DS11). A mappát (és tartalmát) **commitálni kell** — ez a leadandó, nem kerülhet `.gitignore`-ba.
+The **`docs-generated/`** folder in the project root is the home of the **generated, "as-built" documentation** maintained cycle by cycle by the `08-doc-sync` phase. It is to be distinguished from the hand-written `docs/` folder: **everything that the AI/skill produces or that is a project requirement goes here**, and doc-sync **guarantees the consistency of every file in the folder** with the implemented system (DS11). The folder (and its contents) **must be committed** — it is the deliverable and must not go into `.gitignore`.
 
-Minden generált doksi **fejléc-blokkot** kap (DS17): `> **Lefedve:** cycle-NN-ig · **Utolsó frissítés:** cycle-NN (dátum) · **Generátor/scope:** <mit fed le, mi alapján tartandó konzisztensen>`. A fájlnevek **angolok** (kódbázis-konvenció), a tartalom **magyar** (mint a skillek).
-
-| Fájl | Mi ez | Ki / mikor írja | Hol él |
+Every generated doc gets a **header block** (DS17): `> **Covered:** up to cycle-NN · **Last updated:** cycle-NN (date) · **Generator/scope:** <what it covers, and on what basis it is to be kept consistent>`. The file names are **English** (a codebase convention), while the content is in the **project language** (as with the skills).
+| File | What it is | Who writes it / when | Where it lives |
 |---|---|---|---|
-| `README.md` | A mappa **indexe/manifesztje** — egysoros leírás fájlonként. Új generált fájl → kötelezően bekerül; elavult bejegyzés → ki (halmaz-egyezés a tényleges tartalommal, DS21). | A 08-doc-sync hozza létre a mappával együtt, és minden futáskor karbantartja. | `docs-generated/README.md` (külön a `prompts/README.md`-től és a gyökér `README.md`-től) |
-| `system-overview.md` | **As-built működési áttekintés** (onboarding/stakeholder magasság): képességek/flow-k (képesség szerint, nem ciklusonként), konszolidált szekvenciák (mermaid), állapotmodell, [feltételes] endpoint-leltár. A hiányzó köztes szint a spec és az `architecture.md` között. | A 08-doc-sync komponálja a `src/` + lezárt spec.md-k + roadmap alapján; a `02-write-spec` „pull"-ként **visszaolvassa** current-truth kiindulásként (DS5). | `docs-generated/system-overview.md` |
-| `architecture.md` | **„Hogyan épül/fut"** — komponensek, build, deployment, ops. A korábbi `docs/architecture.md` ide költözött; a 06 `TLAST` architecture-író task **nyugdíjazva** (DS4) — a doc-sync a **kizárólagos gazdája**. | A 08-doc-sync reconciliálja minden ciklusban (a korábbi 09-es dokumentációs lépésből áthozva). | `docs-generated/architecture.md` |
-| `CHANGELOG.md` | **Részletes, inkrementális, ciklusonkénti** változásnapló — mit változott a rendszer működésében/doksijában. A `system-overview.md` csak coverage-markert + linket tart rá (nem duplikál). | A 08-doc-sync minden futáskor bővíti egy új ciklus-bejegyzéssel (DS15). | `docs-generated/CHANGELOG.md` |
-| `design-drift.md` | A megvalósult rendszer **eltérései a HLD/LLD szándéktól** (DS20) — pl. RFC 8693 token exchange vs. legacy Keycloak. A megoldott eltérés nem törlődik, hanem a „Lezárt eltérések" szekcióba kerül. A `system-overview.md` tiszta as-built marad (a drift nem keveredik bele). | A 08-doc-sync tölti fel inkrementálisan; csak **explicit** (spec által megnevezett) vagy checklist-alapú drift kerül be, bizonytalan eset → `doc-sync-questions.md` (DS24d). | `docs-generated/design-drift.md` |
-| _(projekt-specifikus extra doksik)_ | Bármely további generált doksi (a skill **nem** hardcode-olja, pl. külső rendszer konfiguráció-leírás). | A mappa-bejárás találja meg, a `doc-sync-plan.md` veszi fel; a fejléc-scope dönti el az érintettséget. | `docs-generated/<fájl>` |
+| `README.md` | The **index/manifest** of the folder — a one-line description per file. A new generated file → it must be added; a stale entry → out (set equality with the actual contents, DS21). | 08-doc-sync creates it together with the folder, and maintains it on every run. | `docs-generated/README.md` (separate from `prompts/README.md` and from the root `README.md`) |
+| `system-overview.md` | An **as-built functional overview** (at onboarding/stakeholder altitude): capabilities/flows (by capability, not by cycle), consolidated sequences (mermaid), the state model, [conditionally] an endpoint inventory. The missing intermediate level between the spec and `architecture.md`. | 08-doc-sync composes it from `src/` + the closed spec.md files + the roadmap; `02-write-spec` **reads it back** as a "pull", as a current-truth starting point (DS5). | `docs-generated/system-overview.md` |
+| `architecture.md` | **"How it is built/runs"** — components, build, deployment, ops. The earlier `docs/architecture.md` moved here; the `TLAST` architecture-writing task of 06 has been **retired** (DS4) — doc-sync is its **exclusive owner**. | 08-doc-sync reconciles it in every cycle (carried over from the earlier documentation step of 09). | `docs-generated/architecture.md` |
+| `CHANGELOG.md` | A **detailed, incremental, per-cycle** change log — what changed in the behaviour/documentation of the system. `system-overview.md` only keeps a coverage marker + a link to it (it does not duplicate). | 08-doc-sync extends it with a new cycle entry on every run (DS15). | `docs-generated/CHANGELOG.md` |
+| `design-drift.md` | The **deviations of the implemented system from the HLD/LLD intent** (DS20) — e.g. RFC 8693 token exchange vs. legacy Keycloak. A resolved deviation is not deleted, it moves into the "Closed deviations" section. `system-overview.md` stays purely as-built (the drift does not get mixed into it). | 08-doc-sync fills it up incrementally; only **explicit** drift (named by the spec) or checklist-based drift gets in, and an uncertain case → `doc-sync-questions.md` (DS24d). | `docs-generated/design-drift.md` |
+| _(project-specific extra docs)_ | Any further generated doc (the skill does **not** hardcode them, e.g. the configuration description of an external system). | The folder walk finds it and `doc-sync-plan.md` picks it up; the header scope decides the affectedness. | `docs-generated/<file>` |
 
-**Konzisztencia-kapu (DS22):** a doc-sync minden futás végén lefuttat egy objektív, projektfüggetlen magkaput. Három pontja (nincs megszűnt/átnevezett azonosító a doksikban, mappa-index halmaz-egyezés, coverage-marker bump) **teljesen szkriptelt** — a `prompts/scripts/ds22-gate-check.py` végzi, nincs bennük LLM-ítélet, ezért a telepítő minden platform scripts-mappájába (`.claude/scripts/`, `.agents/scripts/`, `.github/scripts/`) automatikusan bemásolja. A 4. pontot (minden forrásbeli ábra átkerült-e) a script csak informatív mermaid-blokk-számlálással segíti, a tényleges pairing-döntés az ágensé. Feltételesen (ha a `conventions.md` `## Projekt referenciák` API-leírót deklarál) egy endpoint/interfész kereszt-ellenőrzés is fut. Bukáskor a konkrét eltérés a `doc-sync-questions.md`-be kerül, és **ember-vezérelt** javítás indul, míg a kapu zöld nem lesz.
+**The consistency gate (DS22):** at the end of every run, doc-sync executes an objective, project-independent core gate. Three of its points (no discontinued/renamed identifier in the docs, set equality of the folder index, the coverage-marker bump) are **fully scripted** — they are done by `prompts/scripts/ds22-gate-check.py`, there is no LLM judgement in them, and that is why the installer automatically copies it into the scripts folder of every platform (`.claude/scripts/`, `.agents/scripts/`, `.github/scripts/`). The 4th point (whether every diagram in the source has been carried over) is only assisted by the script with an informative mermaid-block count; the actual pairing decision belongs to the agent. Conditionally (if the `## Project references` section of `conventions.md` declares an API descriptor) an endpoint/interface cross-check also runs. On a failure, the concrete divergence goes into `doc-sync-questions.md` and a **human-driven** correction starts, until the gate goes green.
 
-### 12.1 specs/test-conventions.md — visszatérő teszt-elvárások és receptek (TC1–TC11)
+### 11.1 specs/test-conventions.md — recurring test expectations and recipes (TC1–TC11)
 
-**Fájl:** `specs/test-conventions.md` (a `specs/roadmap.md` mellett — **nem** a `docs-generated/`-ben). **Gazdája:** a `08-doc-sync`. **Fogyasztói:** a `02-write-spec` és a `03-write-plan` (a `quick-flow` csak olvassa).
+**File:** `specs/test-conventions.md` (next to `specs/roadmap.md` — **not** in `docs-generated/`). **Its owner:** `08-doc-sync`. **Its consumers:** `02-write-spec` and `03-write-plan` (`quick-flow` only reads it).
 
-**Milyen problémát old meg:** ahogy egy projekt előrehalad, kialakul, hogy **minden ciklusban mit és milyen sorrendben kell letesztelni** — és mihez milyen recept tartozik (pl. „a Keycloak dev image-t buildelni, a registry-be pusholni, a podot újraindítani, majd a token-cserét `curl`-lel ellenőrizni"). Ez a tudás eddig **ciklus-lokális** artefaktumokban (`plan-questions.md`) keletkezett és minden ciklus végén elveszett, így a következő ciklus **újra megkérdezte ugyanazt**. Ez a fájl ennek a párbeszédnek a tartós desztillátuma.
+**What problem it solves:** as a project progresses, it emerges **what has to be tested in every cycle and in what order** — and which recipe belongs to what (e.g. "build the Keycloak dev image, push it to the registry, restart the pod, then check the token exchange with `curl`"). Up to now this knowledge arose in **cycle-local** artifacts (`plan-questions.md`) and was lost at the end of every cycle, so the next cycle **asked the same thing again**. This file is the durable distillate of that dialogue.
 
-**Szerkezete — kötelező koordináta-blokk + három szekció** (a 2./3. az 1.-re hivatkozik, az 1. a 0.-ra):
+**Its structure — a mandatory coordinate block + three sections** (2/3 reference 1, and 1 references 0):
 
-| Szekció | Tartalom |
+| Section | Content |
 |---|---|
-| **0. Koordináták** (TC13 — kötelező, a fájl elején) | **Minden konkrét érték egy helyen, kereshetően:** környezetek és végpontok (környezet, komponens, URL+port, health endpoint), teszt-userek/kliensek/titkok (környezet, azonosító, titok **vagy pointer**, scope), paraméterek és env-fájlok. Ez az igazságforrás: a receptek hivatkoznak rá, nem másolják — ha egy port vagy host változik, elég itt átírni. A TC5 titok-szabály itt is él (osztott platform credential csak pointerként). A TC8 kapu ellenőrzi, hogy létezik, elöl áll és van benne **kitöltött** (nem placeholder) sor. |
-| **1. Recept-regiszter** | Paraméterek, URL-ek, portok, komponens-koordináták (repo-útvonal, image-név, registry-cél, namespace/pod), teszt-userek, példa REST/`curl` hívások, build/deploy/indító parancsok, előfeltételek és sorrend, hatókör-jelölés (`lokális` / `osztott-remote`). |
-| **2. Minden körben szükséges lokális (mock alapú) tesztek** | Az 1. szekció receptjeire hivatkozó tételek. |
-| **3. Minden körben szükséges integrációs / E2E tesztek** | Ugyanígy. |
+| **0. Coordinates** (TC13 — mandatory, at the beginning of the file) | **Every concrete value in one place, searchably:** environments and endpoints (environment, component, URL+port, health endpoint), test users/clients/secrets (environment, identifier, the secret **or a pointer**, scope), parameters and env files. This is the source of truth: the recipes reference it, they do not copy it — if a port or a host changes, it is enough to change it here. The TC5 secret rule applies here too (a shared-platform credential only as a pointer). The TC8 gate checks that it exists, stands at the front, and contains a **filled-in** (not placeholder) row. |
+| **1. Recipe register** | Parameters, URLs, ports, component coordinates (repo path, image name, registry target, namespace/pod), test users, example REST/`curl` calls, build/deploy/start commands, prerequisites and order, a scope marker (`local` / `shared-remote`). |
+| **2. Local (mock-based) tests needed in every round** | Items referencing the recipes of section 1. |
+| **3. Integration / E2E tests needed in every round** | The same. |
 
-**A promóció mindig a felhasználó döntése (TC12).** Minden doc-sync futásban a fázis **tételesen felkínálja a ciklus tesztjeit**: a `plan.md` Tesztelési stratégiájából, a `tasks.md` `[RED]`/`[CHECK]`/`TREG` taskjaiból és a `test-report/` tényleges futásaiból összeállít egy jelöltlistát, mindegyikhez odaírja az **önhordó viselkedés-leírást** (így kerülne be), a cél-szekciót, a szükséges receptet (meglévő `R-ID` vagy új) és egy **javaslatot + indokot** — majd **egy körben** megkérdezi a `doc-sync-questions.md`-ben, melyiket emelje be projekt szintre. Ez **blokkoló kérdés**: promóció nem történik válasz nélkül, és a fázis sem zárható le nyitott promóciós kérdéssel. Ami nem kerül be, az a fájl végén lévő **`## Nem promótált jelöltek (döntés-napló)`** appendixbe kerül, hogy a következő ciklus **ne kérdezzen rá újra**. Csak olyan teszt kínálható fel, amely ebben a ciklusban **ténylegesen lefutott és zöld volt** (TC3).
+**Promotion is always the user's decision (TC12).** In every doc-sync run the phase **offers the cycle's tests item by item**: from the Testing strategy of `plan.md`, the `[RED]`/`[CHECK]`/`TREG` tasks of `tasks.md` and the actual runs in `test-report/` it assembles a candidate list, and for each one it writes down the **self-contained behaviour description** (this is how it would be added), the target section, the recipe needed (an existing `R-ID` or a new one) and a **recommendation + a reason** — then, **in a single round**, it asks in `doc-sync-questions.md` which ones it should lift to project level. This is a **blocking question**: no promotion happens without an answer, and the phase cannot be closed with an open promotion question either. Whatever is not added goes into the **`## Non-promoted candidates (decision log)`** appendix at the end of the file, so that the next cycle **does not ask about it again**. Only a test that **actually ran and was green** in this cycle may be offered (TC3).
 
-**Két minőségi szabály, amit a TC8 kapu kikényszerít:**
+**Two quality rules that the TC8 gate enforces:**
 
-- **TC10 — önhordó tételek.** A 2./3. szekció „Mit ellenőriz" leírása **nem hivatkozhat más dokumentumra**: sem spec-szekció sorszámra (`1.2. FlowX Mock negatív tesztek`), sem ciklusra (`Cycle 19 init-hash tesztek`). Az olvasó (egy friss kontextusú 02/03 fázis vagy egy új kolléga) nem fogja megnyitni a lezárt `spec.md`-ket. Helyette **viselkedés-szintű** leírás kell: *„a mock `/start-process` 201-et ad érvényes `processName`-re, és 400-at hiányzó body-ra"*. A ciklus-szám az `Utolsó futás` / `Bizonyíték` oszlopba tartozik.
-- **TC10/b — a teszt részletes leírása is átjön.** A táblázat **index**, nem teszteset: minden promótált tételhez kötelező egy `### <ID>` **részletező blokk** a táblázat alatt — `Cél` / `Előfeltétel` / `Lépések` / `Elvárt eredmény`. A ciklus `spec.md`/`plan.md`-jében megírt tesztleírás **tartalma maradéktalanul átjön** (ha ott három lépés és két hibakód volt, itt is annyi lesz), de **önhordóra normalizálva**: a spec-számozás, ciklus-hivatkozás és „lásd fent" feloldva vagy törölve, a titkok pointerre cserélve. A „prózát ne írj" szabály **csak a narratív magyarázatra** vonatkozik (indoklások, tanulságok), nem a tesztesetek strukturált leírására — ezt a félreértést a skill most explicit kizárja.
-- **TC11 — futtatható koordináták.** Minden recept kötelező elemei: **`Indítás`** (hogyan húzom fel a szükséges környezetet + health-ellenőrzés; unit tesztnél explicit `N/A`), **`Példa hívás`** (teljes URL, headerek, payload, várt válasz — `curl` vagy `.http` blokk; ha token kell, a token megszerzésének hívása is), és **`Leállítás / takarítás`**. A 3. szekció környezeti előfeltételei (*„lokális Keycloak fut"*) **`R-ID`-re kell hivatkozzanak** — különben nem derül ki, hogyan teljesíthetők, és a teszt nem reprodukálható.
+- **TC10 — self-contained items.** The "What it verifies" description of sections 2/3 **must not reference another document**: neither a spec section number (`1.2. FlowX Mock negative tests`) nor a cycle (`Cycle 19 init-hash tests`). The reader (a 02/03 phase with a fresh context, or a new colleague) will not open the closed `spec.md` files. Instead, a **behaviour-level** description is required: *"the mock `/start-process` returns 201 for a valid `processName`, and 400 for a missing body"*. The cycle number belongs in the `Last run` / `Evidence` column.
+- **TC10/b — the detailed description of the test comes over too.** The table is an **index**, not a test case: for every promoted item a `### <ID>` **detail block** is mandatory below the table — `Goal` / `Prerequisite` / `Steps` / `Expected result`. The content of the test description written in the cycle's `spec.md`/`plan.md` **comes over in full** (if there were three steps and two error codes there, there will be as many here), but **normalised to be self-contained**: the spec numbering, the cycle reference and any "see above" are resolved or deleted, and the secrets are replaced with pointers. The "do not write prose" rule applies **only to narrative explanation** (justifications, lessons), not to the structured description of the test cases — the skill now explicitly rules out this misunderstanding.
+- **TC11 — runnable coordinates.** The mandatory elements of every recipe: **`Startup`** (how I bring up the environment needed + a health check; for a unit test an explicit `N/A`), **`Example call`** (the full URL, headers, payload, expected response — a `curl` or `.http` block; if a token is needed, the call to obtain the token too), and **`Shutdown / cleanup`**. The environment prerequisites of section 3 (*"a local Keycloak is running"*) **have to reference an `R-ID`** — otherwise it does not become clear how they can be satisfied, and the test is not reproducible.
 
-**A legfontosabb szabály (TC1/a) — ez NEM futtatható forrás.** A regiszterből semmi nem fut le automatikusan: a `test-runner` subagent ezt a fájlt **nem olvassa**, kizárólag a `plan.md` `Tesztelési stratégia` / `Regressziós érintettség` szekcióit. Egy recept akkor és csak akkor hajtódik végre, ha a `02`/`03` fázis azt tudatosan **beemelte** a ciklus `spec.md`/`plan.md`-jébe — ha kérdéses, a felhasználó interjúztatásával. Ez a beemelés maga az emberi kontroll-pont: **a `plan.md` a futtatás egyetlen igazsága**, a regiszter a memória.
+**The most important rule (TC1/a) — this is NOT a runnable source.** Nothing runs automatically from the register: the `test-runner` subagent **does not read** this file, only the `Testing strategy` / `Regression impact` sections of `plan.md`. A recipe is executed if and only if the `02`/`03` phase has consciously **lifted** it into the cycle's `spec.md`/`plan.md` — if in doubt, by interviewing the user. That lifting is itself the human control point: **`plan.md` is the single truth of the execution**, and the register is the memory.
 
-**A beemelés két projekciója** (a meglévő spec/plan határvonal szerint):
-- **`spec.md` → `Teszt specifikáció` / `Definition of done`:** a 2./3. szekció azon tételei, amelyeket a ciklus **elfogadási feltételként** vállal — **viselkedés-szinten**, a tétel ID-jára hivatkozva. Parancs, tesztfájl-útvonal, eszköznév ide nem kerül. A puszta „ne törjön el" jellegű regressziós tételek nem mennek a spec-be.
-- **`plan.md` → `Tesztelési stratégia` / `E2E infrastruktúra` / `Regressziós érintettség`:** a **maradéktalan, önhordó** beemelés — minden URL, port, namespace/pod, image-név, teszt-user és jelszó, paraméter, **példa `curl` hívás**, build/push/restart parancs, előfeltétel és sorrend **szó szerint**. Puszta hivatkozás és placeholder tilos (a `test-runner` csak ezt látja); a regiszterre csak **provenance**-ként hivatkozunk. Ezt a 03 minőségellenőrzése explicit ellenőrzi.
+**The two projections of the lifting** (per the existing spec/plan boundary):
+- **`spec.md` → `Test specification` / `Definition of done`:** those items of sections 2/3 that the cycle takes on as an **acceptance criterion** — at **behaviour level**, referencing the item's ID. No command, test file path or tool name goes here. Purely "must not break" style regression items do not go into the spec.
+- **`plan.md` → `Testing strategy` / `E2E infrastructure` / `Regression impact`:** the **complete, self-contained** lifting — every URL, port, namespace/pod, image name, test user and password, parameter, **example `curl` call**, build/push/restart command, prerequisite and order, **verbatim**. A bare reference or a placeholder is forbidden (the `test-runner` sees only this); the register is referenced only as **provenance**. The quality check of 03 explicitly verifies this.
 
-**Élő snapshot, nem napló (TC4):** minden tétel mellett `Utolsó futás: cycle-NN` marker; a fájl mindig az aktuális állapotot tükrözi. Ha egy komponens megszűnt vagy a tétel már nem értelmezhető, a tétel **törlődik** (nem archiválódik) — a törlés ténye és oka a `CHANGELOG.md`-be kerül, és minden törlés **külön, pipálható terv-tétel** a `doc-sync-plan.md`-ben, hogy a felhasználó lássa. Környezeti koordinátát (URL, pod) nem lehet automatikusan verifikálni, ezért 3+ ciklus régi marker esetén a doc-sync **rákérdez**.
+**A living snapshot, not a journal (TC4):** next to every item there is a `Last run: cycle-NN` marker; the file always reflects the current state. If a component has been discontinued or the item is no longer meaningful, the item is **deleted** (not archived) — the fact and the reason for the deletion go into `CHANGELOG.md`, and every deletion is a **separate, tickable plan item** in `doc-sync-plan.md`, so that the user can see it. An environment coordinate (URL, pod) cannot be verified automatically, so with a marker 3+ cycles old doc-sync **asks about it**.
 
-**Bizonyíték-alapú promóció (TC3):** nem „érzésre" dől el, mi az „alapvető". Egy tétel akkor promótálódik, ha (a) egy korábbi ciklusból származik és **ebben** a ciklusban is szerepelt a `plan.md` regressziós listájában vagy tényleg lefutott — azaz bizonyította a ciklus-független relevanciáját —, **vagy** (b) a felhasználó megerősítette. Recept csak akkor, ha **ebben a ciklusban zölden lefutott**; **kitalált parancsot tilos beírni**.
+**Evidence-based promotion (TC3):** what counts as "fundamental" is not decided "by feel". An item is promoted if (a) it comes from an earlier cycle and appeared in the regression list of `plan.md` in **this** cycle too, or actually ran — i.e. it has proved its cycle-independent relevance — **or** (b) the user has confirmed it. A recipe only if it **ran green in this cycle**; **writing in an invented command is forbidden**.
 
-**Titok-osztályozás (TC5)** — hatókör-alapú, mechanikus döntés („személyt hitelesít, vagy osztott platformhoz ad hozzáférést?"):
+**Secret classification (TC5)** — a scope-based, mechanical decision ("does it authenticate a person, or does it grant access to a shared platform?"):
 
-| Bekerülhet (dev-hatókörű, nem személyhez tartozik) | Csak pointer (személyt hitelesít / osztott platform) |
+| May be included (dev-scoped, not belonging to a person) | Pointer only (authenticates a person / a shared platform) |
 |---|---|
-| seedelt dev teszt-userek + jelszavaik, dev IdP realm-admin, lokális DB-user, mock API-kulcs, dev client-secret | klaszter/OpenShift login, registry push-credential, VPN, cloud IAM, git/CI token, bármi ami test/prod-on is működik |
+| seeded dev test users + their passwords, a dev IdP realm admin, a local DB user, a mock API key, a dev client secret | cluster/OpenShift login, a registry push credential, VPN, cloud IAM, a git/CI token, anything that also works on test/prod |
 
-Bizonytalan eset → kérdés, és amíg nincs válasz, **pointer megy, nem érték**. (A bal oszlop tételei a Clean Slate szabály miatt jellemzően már ma is a repóban vannak a seed/realm-import fájlokban.)
+An uncertain case → a question, and until there is an answer, **a pointer goes in, not a value**. (Because of the Clean Slate rule, the items in the left column are typically already in the repo today, in the seed/realm-import files.)
 
-**Bootstrap meglévő projektben (TC6):** a berkispec bekerülhet egy már a 30. ciklusában lévő projektbe, ahol a fájl soha nem létezett. Ekkor a `doc-sync-planner` **javaslatot állít össze** a meglévő anyagból (lezárt `spec.md`/`plan.md` teszt-szekciói, lezárt `plan-questions.md`-k — itt vannak a környezeti koordináták —, `test/` mappa, E2E compose, `conventions.md` referenciák), és a doc-sync **arról** folytat párbeszédet — nem üres lapról kérdez. Ha nincs egyetlen promótálható tétel sem, a fájl **nem jön létre** (üres váz nem készül, mert azt a következő fázis találgatással töltené ki). A bootstrap **független** a `docs-generated/` bootstrap-ágától.
+**Bootstrap in an existing project (TC6):** berkispec may be introduced into a project already in its 30th cycle, where the file has never existed. In that case the `doc-sync-planner` **assembles a proposal** from the existing material (the test sections of closed `spec.md`/`plan.md` files, closed `plan-questions.md` files — this is where the environment coordinates are —, the `test/` folder, the E2E compose file, the `conventions.md` references), and doc-sync holds a dialogue **about that** — it does not ask from a blank page. If there is not a single promotable item, the file **is not created** (no empty skeleton is produced, because the next phase would fill that in by guessing). The bootstrap is **independent** of the bootstrap branch of `docs-generated/`.
 
-**Kérdés-hatókör (TC7):** minden ciklusban kérdezni kell, de a terjedelem eltér — **bootstrapnél** széles interjú, **steady state-ben** rövid, célzott megerősítés a doc-sync javaslatáról („ezt promótálnám, ezt törölném, ezeket bumpolom — jó?"). A csatorna a `doc-sync-questions.md`, hogy egy megszakadt futás után is folytatható legyen.
+**Question scope (TC7):** it has to ask in every cycle, but the extent differs — a **broad interview at bootstrap**, and in **steady state** a short, targeted confirmation of doc-sync's proposal ("I would promote this, delete that, and bump these — ok?"). The channel is `doc-sync-questions.md`, so that it can be continued even after an interrupted run.
 
-**Saját kapu (TC8) — szkriptelt:** a DS22 magkapu a `docs-generated/`-re fut, ez a fájl azon kívül van, ezért saját kapuja van. A kapu **teljesen determinisztikus, LLM-ítélet nélküli** — a `prompts/scripts/tc8-gate-check.py` végzi, amit a telepítő ugyanabba a platform-scripts mappába másol, mint a `ds22-gate-check.py`-t (`.claude/scripts/`, `.agents/scripts/`, `.github/scripts/`, `.codex/scripts/`, `.cursor/scripts/`):
+**Its own gate (TC8) — scripted:** the DS22 core gate runs on `docs-generated/`, and this file is outside that, so it has its own gate. The gate is **fully deterministic, without an LLM judgement** — it is done by `prompts/scripts/tc8-gate-check.py`, which the installer copies into the same platform scripts folder as `ds22-gate-check.py` (`.claude/scripts/`, `.agents/scripts/`, `.github/scripts/`, `.codex/scripts/`, `.cursor/scripts/`):
 
 ```bash
-python3 <platform-scripts-mappa>/tc8-gate-check.py specs/test-conventions.md \
+python3 <platform-scripts-folder>/tc8-gate-check.py specs/test-conventions.md \
   --project-root . --marker cycle-NN [--stale-after 3]
 ```
 
-| # | Check | Blokkol? |
+| # | Check | Blocking? |
 |---|---|---|
-| 1 | **Útvonal-létezés** — a megnevezett repo-belső útvonalak (tesztfájl, script, compose, komponens-mappa) léteznek-e | **FAIL**, ha a szülő-mappa létezik, de a cél nem (biztos jel az elavulásra); ha repo-belsőként nem oldható fel (külső hivatkozás, image-ref, HTTP endpoint), csak **WARN** |
-| 2 | **Lógó hivatkozás** — a 2./3. szekció minden tétele létező 1. szekciós receptre (`R-ID`) hivatkozik-e | **FAIL**; a nem hivatkozott recept **WARN** |
-| 3 | **Titok-check (TC5)** — bekerült-e tiltott credential | **FAIL** biztos mintánál (PAT/kulcs-prefix, privát kulcs blokk, `oc login --password`, `docker login -p`); platform-szó + credential-szó egy sorban **WARN** |
-| 4 | **`Utolsó futás` marker (TC4)** — van-e marker, és melyik avult el | hiányzó marker **FAIL**; elavult (default 3+ ciklus) **WARN** → kérdés-trigger |
+| 1 | **Path existence** — do the named repo-internal paths (test file, script, compose, component folder) exist | **FAIL** if the parent folder exists but the target does not (a sure sign of staleness); if it cannot be resolved as repo-internal (an external reference, an image ref, an HTTP endpoint), only **WARN** |
+| 2 | **Dangling reference** — does every item of sections 2/3 reference an existing section-1 recipe (`R-ID`) | **FAIL**; an unreferenced recipe is a **WARN** |
+| 3 | **Secret check (TC5)** — has a forbidden credential been included | **FAIL** on a certain pattern (a PAT/key prefix, a private key block, `oc login --password`, `docker login -p`); a platform word + a credential word in the same line is a **WARN** |
+| 4 | **The `Last run` marker (TC4)** — is there a marker, and which one has gone stale | a missing marker is a **FAIL**; a stale one (3+ cycles by default) is a **WARN** → a question trigger |
 
-Kilépő kód: `0` = minden kemény check PASS (WARN megengedett), `1` = legalább egy FAIL, `2` = használati hiba. **Ha a fájl nem létezik, a script `0`-val, „kihagyva" jelzéssel tér vissza** (TC6: a hiánya korai ciklusban nem hiba). A WARN nem blokkol, de nem is hagyható figyelmen kívül: mindegyikre javítás vagy `doc-sync-questions.md` kérdés a válasz. Bukáskor ugyanaz az **ember-vezérelt** javító hurok fut, mint a DS22-nél.
+Exit code: `0` = every hard check PASSed (a WARN is allowed), `1` = at least one FAIL, `2` = a usage error. **If the file does not exist, the script returns `0` with a "skipped" indication** (TC6: its absence in an early cycle is not a defect). A WARN does not block, but it must not be ignored either: the answer to each one is a fix or a `doc-sync-questions.md` question. On a failure, the same **human-driven** fixing loop runs as with DS22.
 
-**Mi nem tartozik ide:** a `conventions.md` rögzíti, **hogyan** tesztelünk (eszközök, mappastruktúra, parancsok, elvek — ember birtokolja, stabil); a `plan.md` azt, mi az **új** ebben a ciklusban. Ez a fájl azt, **mit és mikor kötelező** tesztelni, komponensenként, as-built.
+**What does not belong here:** `conventions.md` records **how** we test (tools, folder structure, commands, principles — owned by a human, stable); `plan.md` records what is **new** in this cycle. This file records **what has to be tested and when**, per component, as-built.
 
-### 12.2 export/ — verziózott PDF export (`/bs-export-doc`)
+### 11.2 export/ — versioned PDF export (`/bs-export-doc`)
 
-**Parancs:** `/bs-export-doc` · **Script:** `prompts/scripts/export-doc.py` · **Kimenet:** `export/<név>-v<N>.pdf`
+**Command:** `/bs-export-doc` · **Script:** `prompts/scripts/export-doc.py` · **Output:** `export/<name>-v<N>.pdf`
 
-A `docs-generated/` doksik **markdown**ban élnek — átadható, archiválható változatot viszont PDF-ben kér az élet (stakeholder review, audit, onboarding-csomag). Ez a segédparancs ezt adja, a **mermaid ábrákkal együtt**. **Nem fázis:** nincs előfeltétele, nem változtat státuszt, bármikor futtatható.
+The `docs-generated/` docs live in **markdown** — but life asks for a shareable, archivable version in PDF (stakeholder review, audit, an onboarding pack). This helper command provides that, **together with the mermaid diagrams**. **It is not a phase:** it has no prerequisite, it changes no status, and it can be run at any time.
 
-**Mit exportál:**
-- **paraméter nélkül** a két kötelező generált doksit (`docs-generated/architecture.md`, `docs-generated/system-overview.md`);
-- **paraméterrel** a megnevezett fájl(oka)t — a skill oldja fel a szabad szöveget („a cycle-16 plan-jéből is") konkrét útvonalakra, és exportálás előtt visszaolvassa, mit fog csinálni.
+**What it exports:**
+- **without a parameter**, the two mandatory generated docs (`docs-generated/architecture.md`, `docs-generated/system-overview.md`);
+- **with a parameter**, the named file(s) — the skill resolves the free text ("from the cycle-16 plan too") into concrete paths, and reads back what it is going to do before exporting.
 
-**Verziózás:** fájlonként **független** számláló — az `export/` mappában lévő `<név>-v<N>.pdf` fájlok maximuma **+ 1**, üres mappánál `v1`. A **ciklus nem a fájlnévbe**, hanem a PDF **címlapjára** kerül (`Lefedve: cycle-16-ig · v3`), amit a script a doksi fejléc-blokkjából (DS17) olvas ki — így a fájlnév rövid marad, a PDF mégis visszakövethető. A forrásfájlokat a script **soha nem módosítja**: a build-mappába készít másolatot, és arra teszi rá a YAML fejlécet.
+**Versioning:** an **independent** counter per file — the maximum of the `<name>-v<N>.pdf` files in the `export/` folder **+ 1**, and `v1` for an empty folder. **The cycle goes not into the file name** but onto the **title page** of the PDF (`Covered: up to cycle-16 · v3`), which the script reads out of the doc's header block (DS17) — this way the file name stays short while the PDF remains traceable. The script **never modifies** the source files: it makes a copy into the build folder and puts the YAML header on that.
 
-**A lánc:** `pandoc` + **`mermaid-filter`** + `xelatex`. A `mermaid-filter` Chromiummal **előre lerendereli** a diagramot (`MERMAID_FILTER_FORMAT=pdf`), így a PDF-motor kész vektorgrafikát kap.
+**The chain:** `pandoc` + **`mermaid-filter`** + `xelatex`. `mermaid-filter` **pre-renders** the diagram with Chromium (`MERMAID_FILTER_FORMAT=pdf`), so the PDF engine receives finished vector graphics.
 
-> **Miért ez a lánc — mérési alapon.** A mermaid alapból `foreignObject`-be teszi a címkéket. Egy azonos fixtúrán (sequenceDiagram + flowchart) mérve: **WeasyPrint** alapbeállítással a flowchart **összes címkéjét elveszti** (üres dobozok — a saját, részleges SVG-motorja kihagyja a `foreignObject`-et); `htmlLabels: false`-szal megjavul. A **Chromium-alapú** utak hibátlanok: az `xelatex` azért, mert a `mermaid-filter` már renderelt grafikát ad neki, a **`pagedjs-cli`** pedig azért, mert maga Chromium. Vagyis **nem** a „LaTeX vs CSS" a döntő, hanem a `foreignObject` — és mivel az xelatex úton a diagram alapból hibátlan, a `htmlLabels` átírására **nincs szükség** (a forrás mermaid blokkjai érintetlenek maradnak, a PDF ugyanazt mutatja, mint a szerkesztői preview).
+> **Why this chain — on the basis of measurement.** By default mermaid puts the labels into a `foreignObject`. Measured on an identical fixture (a sequenceDiagram + a flowchart): **WeasyPrint** with default settings **loses every label of the flowchart** (empty boxes — its own, partial SVG engine skips the `foreignObject`); with `htmlLabels: false` it is fixed. The **Chromium-based** routes are flawless: `xelatex` because `mermaid-filter` hands it already-rendered graphics, and **`pagedjs-cli`** because it is Chromium itself. So the decisive factor is **not** "LaTeX vs CSS" but the `foreignObject` — and since on the xelatex route the diagram is flawless by default, there is **no need** to rewrite `htmlLabels` (the mermaid blocks of the source stay untouched, and the PDF shows the same thing as the editor preview).
 
-**Miért az `xelatex` a default a `pagedjs` helyett** (ugyanazon a 8–10 oldalas tesztdokumentumon):
+**Why `xelatex` is the default instead of `pagedjs`** (on the same 8–10 page test document):
 
 | | xelatex | pagedjs-cli |
 |---|---|---|
-| Oldalszám ugyanarra a tartalomra | **8** | 10 (+25%) |
-| Üres oldal | nincs | **van** (a 2. oldal 0,0% tinta) |
-| Oldalszám a láblécben / a TOC-ban | van / van, pontozott vezetővel | nincs / nincs |
-| Futásidő | 16,8 s | 15,9 s |
-| Függőség | pandoc + texlive (rendszercsomag) | + npm-globális `pagedjs-cli` (saját Chromium) |
-| Előnye | nyomdai tördelés, tömör oldalkitöltés | **CSS-alapú formázás** — sokkal könnyebb testreszabás |
+| Page count for the same content | **8** | 10 (+25%) |
+| Blank page | none | **there is one** (page 2 has 0.0% ink) |
+| Page number in the footer / in the TOC | yes / yes, with a dotted leader | no / no |
+| Runtime | 16.8 s | 15.9 s |
+| Dependency | pandoc + texlive (a system package) | + the npm-global `pagedjs-cli` (its own Chromium) |
+| Its advantage | print-quality typesetting, dense page filling | **CSS-based formatting** — much easier to customise |
 
-A motor ezért **paraméter**, nem beépített döntés: `--engine pagedjs` egy flag, ha a kinézetet CSS-ben akarod szabni (a script ilyenkor `@page` margin-boxszal pótolja az oldalszámot).
+That is why the engine is a **parameter**, not a built-in decision: `--engine pagedjs` is a flag, in case you want to shape the look in CSS (in that case the script supplies the page number with an `@page` margin box).
 
-**A script kulcs-opciói:** `--paper a3` (széles szekvencia-diagramokhoz), `--engine xelatex|pagedjs`, `--check` (csak függőség-ellenőrzés), `--dry-run` (mit készítene, milyen verziószámmal), `--export-dir`, `--keep-build`.
+**The key options of the script:** `--paper a3` (for wide sequence diagrams), `--engine xelatex|pagedjs`, `--check` (a dependency check only), `--dry-run` (what it would produce, with what version number), `--export-dir`, `--keep-build`.
 
-**Amit a script a láncon túl megold** — ezek nélkül kézi `pandoc`-hívással romlik a minőség: beágyazott `header.tex` (kódblokk-dobozolás `tcolorbox`-szal, hosszú útvonalak tördelése `fvextra`-val, `xurl`, magyar karakterek), **széles ábrák automatikus leskálázása** a szövegtükörre (`max width=\linewidth`), `--resource-path` a forrásmappára (a relatív képhivatkozások a build-mappából is feloldódnak), és `PUPPETEER_EXECUTABLE_PATH` a rendszer böngészőjére, hogy ne töltsön le még egy Chromiumot.
+**What the script solves beyond the chain** — without these, quality degrades with a manual `pandoc` call: an embedded `header.tex` (boxing code blocks with `tcolorbox`, breaking long paths with `fvextra`, `xurl`, accented characters), the **automatic scaling down of wide diagrams** to the text block (`max width=\linewidth`), `--resource-path` to the source folder (so that relative image references resolve from the build folder too), and `PUPPETEER_EXECUTABLE_PATH` pointing at the system browser, so that it does not download yet another Chromium.
 
-**Hiba esetén:** hiányzó függőségnél a script **megáll** (kilépő kód `2`) és kiírja a telepítő parancsot (`npm install -g mermaid-filter`) — mermaid-renderelés nélkül nem készít PDF-et, mert a diagramok nélkül a doksi használhatatlan. Pandoc-hibánál (`1`) kiírja a pandoc stderr-jét, a `mermaid-filter.err`-t és az xelatex logot, és **megtartja a build-mappát** hibakereséshez. Hibás mermaid szintaxis a `docs-generated/` **forráshibája** — a `08-doc-sync` fázisban javítandó, nem az exportban.
+**In case of an error:** on a missing dependency the script **stops** (exit code `2`) and prints the install command (`npm install -g mermaid-filter`) — it does not produce a PDF without mermaid rendering, because without the diagrams the doc is useless. On a pandoc error (`1`) it prints pandoc's stderr, `mermaid-filter.err` and the xelatex log, and **keeps the build folder** for debugging. Broken mermaid syntax is a **source defect of `docs-generated/`** — to be fixed in the `08-doc-sync` phase, not in the export.
 
-**Higiénia:** a `mermaid-filter` a cwd-be írja a `mermaid-filter.err`-t, ezért a pandoc az `export/.build/<név>/` mappában fut — a projekt gyökere nem szemetes. Siker esetén a build-mappa törlődik. Az **`export/` mappa `.gitignore`-ba** való: a PDF bináris, ciklusonként hízik, és bármikor újragenerálható a (verziókezelt) `docs-generated/`-ből — a skill ezt egyszer felajánlja, de csak jóváhagyással írja be.
+**Hygiene:** `mermaid-filter` writes `mermaid-filter.err` into the cwd, so pandoc runs in the `export/.build/<name>/` folder — the project root does not get littered. On success the build folder is deleted. The **`export/` folder belongs in `.gitignore`**: the PDF is binary, it grows per cycle, and it can be regenerated at any time from the (version-controlled) `docs-generated/` — the skill offers this once, but only writes it in with approval.
 
 ---
 
-## 13. Kérdéskezelés (spec-questions.md / plan-questions.md / tasks-questions.md / doc-sync-questions.md)
+## 12. Question handling (spec-questions.md / plan-questions.md / tasks-questions.md / doc-sync-questions.md)
 
-A spec (02), plan (03) és tasks (04) fázisban az ágens nyitott kérdéseit külön fájlban tartja nyilván. A `tasks-questions.md` elsősorban az 05 önjavító hurok fix-módját szolgálja (de a normál 04 flow is hivatkozhat rá). A **08-doc-sync** ugyanezt a mintát követi a `doc-sync-questions.md`-vel: a döntési pontok és a DS22 kapu-bukások `Knn`-ként ide kerülnek, a fő ágens egyenként kérdez, és nyitott `[ ]` kérdésnél a fázis megáll (a subagent — `doc-sync-planner` — sosem kérdez közvetlenül).
+In the spec (02), plan (03) and tasks (04) phases the agent keeps its open questions in a separate file. `tasks-questions.md` primarily serves the fix mode of the 05 self-healing loop (but the normal 04 flow may reference it too). **08-doc-sync** follows the same pattern with `doc-sync-questions.md`: the decision points and the DS22 gate failures go here as `Knn`s, the main agent asks them one by one, and on an open `[ ]` question the phase stops (the subagent — `doc-sync-planner` — never asks directly).
 
-**Struktúra:**
+**Structure:**
 ```md
-# Cycle NN: <cím> — Spec/Plan/Tasks kérdések
+# Cycle NN: <title> — Spec/Plan/Tasks questions
 
-- [ ] K01 — [kérdés szövege]
-- [x] K02 — [kérdés szövege] → [döntés / válasz röviden]
-- [ ] K03 — [kérdés szövege] _(K02-ből merült fel)_
+- [ ] K01 — [the text of the question]
+- [x] K02 — [the text of the question] → [the decision / the answer in brief]
+- [ ] K03 — [the text of the question] _(arose from K02)_
 ```
 
-**Szabályok:**
-- Egyszerre **egy** kérdés kerül a felhasználó elé — az ágens megvárja a választ.
-- A listából **soha nem törlünk** — lezárt kérdést `[x]`-szel jelölünk, a döntés megmarad.
-- Új kérdés a lista végére kerül a következő `Knn` számmal.
-- A fázis csak akkor zárható le, ha minden kérdés `[x]` és a felhasználó explicit megerősítette.
+**Rules:**
+- **One** question at a time is put in front of the user — the agent waits for the answer.
+- We **never delete** from the list — a closed question is marked with `[x]`, and the decision is preserved.
+- A new question goes to the end of the list with the next `Knn` number.
+- The phase can only be closed if every question is `[x]` and the user has explicitly confirmed it.
 
-**Az analyze-hurok kérdés-folyama (05):** az önjavító hurok fixer-subagentjei (`spec/plan/tasks-fixer`) is **ide** írnak kérdést, amihez valódi döntés kell — de **nem kérdeznek közvetlenül a felhasználótól**. A kérdést az **orchestrátor (05-analyze)** teszi fel, a párbeszédben **fázis-prefixszel**: `SPEC/K07`, `PLAN/K03`, `TASKS/K02` (a fájlokban a kérdés sima `Knn` marad — a fájl helye kódolja a fázist). A user-felé minden kérdés fázis-fejlécet kap: `[FÁZIS · iter n/max X · FÁZIS/Knn]`.
+**The question flow of the analyze loop (05):** the fixer subagents of the self-healing loop (`spec/plan/tasks-fixer`) also write questions **here** when a real decision is needed — but they **do not ask the user directly**. The question is put by the **orchestrator (05-analyze)**, in the dialogue with a **phase prefix**: `SPEC/K07`, `PLAN/K03`, `TASKS/K02` (in the files the question stays a plain `Knn` — the location of the file encodes the phase). Towards the user, every question gets a phase header: `[PHASE · iter n/max X · PHASE/Knn]`.
 
-**Státuszátmenetek:**
+**Status transitions:**
 
-| Állapot | Feltétel |
+| State | Condition |
 |---------|----------|
-| `Piszkozat` | Fázis indításakor |
-| `Nyitott kérdések vannak` | Van legalább egy `[ ]` kérdés |
-| `Tervezésre kész` / `Task írásra kész` / `Implementálásra kész` | Minden `[x]` + minőségellenőrzés átment + felhasználó megerősítette |
+| `Draft` | When the phase is started |
+| `Open questions` | There is at least one `[ ]` question |
+| `Ready for planning` / `Ready for tasks` / `Ready for implementation` | Everything `[x]` + the quality check passed + the user confirmed |
 
-**Loop-markerek (LC1).** Amikor egy önjavító hurok visszanyit egy dokumentumot javításra, a státusz a fázis-megfelelő nem-kész értéket egy **suffix-markerrel** kapja (pl. `Piszkozat [analyze-loop]`, `Implementálásra kész [validate-loop]`). A marker jelentése egységes: **fix-mód aktív** → a fixer a státuszt automatikusan lépteti (felhasználói megerősítés nélkül; a user csak a kérdéseknél és a végső PASS-nál lép be), és a marker egyben a megszakítás-utáni folytatás horgonya. Lezáráskor (PASS / tiszta review) lekerül; feladáskor (`max X` / 3-próba / `max 5` / eszkaláció) a megrekedt állapot jelzésére a dokumentumon marad.
+**Loop markers (LC1).** When a self-healing loop reopens a document for correction, the status takes the phase-appropriate not-done value with a **suffix marker** (e.g. `Draft [analyze-loop]`, `Ready for implementation [validate-loop]`). The meaning of the marker is uniform: **fix mode is active** → the fixer steps the status automatically (without user confirmation; the user only steps in at the questions and at the final PASS), and the marker is at the same time the anchor for resuming after an interruption. At the closing (PASS / a clean review) it comes off; on abandonment (`max X` / 3 attempts / `max 5` / escalation) it stays on the document to signal the stuck state.
 
-| Marker | Hurok / visszanyitott dokumentum | Fixer | Napló |
+| Marker | Loop / reopened document | Fixer | Log |
 |---|---|---|---|
-| `[analyze-loop]` | 05-analyze / tervezési doksik (`spec`/`plan`/`tasks`) | `spec`/`plan`/`tasks-fixer` | `analyze/analyze-report.md` (Hurok-napló) + `analyze/analyze-task.md` |
-| `[validate-loop]` | 07-validate / `tasks.md` | `implement-fixer` (teszt/Sonar/DoD) és `review-fixer` (Must Fix) — mindkettő 06 fix-mód | `validation-report.md` `# Validation History` |
+| `[analyze-loop]` | 05-analyze / the design docs (`spec`/`plan`/`tasks`) | `spec`/`plan`/`tasks-fixer` | `analyze/analyze-report.md` (the Loop log) + `analyze/analyze-task.md` |
+| `[validate-loop]` | 07-validate / `tasks.md` | `implement-fixer` (test/Sonar/DoD) and `review-fixer` (Must Fix) — both 06 fix mode | `# Validation History` in `validation-report.md` |
 
 ---
 
-## 14. Egységes `Kész` státusz-lifecycle
+## 13. A uniform `Done` status lifecycle
 
-Minden dokumentum a saját fázis-specifikus záró-státuszát kapja a keletkezésekor (`spec.md` → `Tervezésre kész`, `plan.md` → `Task írásra kész`, `tasks.md` → `Implementálásra kész`), majd **`Kész`-re lép, amint a validate (07) PASS lezárja a ciklust**. Így a 08-doc-sync és a 09-merge fázis a `spec.md`/`plan.md`/`tasks.md`-t már egységesen `Kész` státuszban várja.
-
----
-
-## 15. Sonar minőségellenőrzés
-
-A validate fázis (07) — ha a `conventions.md` tartalmaz `## Sonar minőségellenőrzés` szekciót — Podman-alapú SonarQube analízist futtat.
-
-**Folyamat:**
-1. SonarQube szerver indítása (ha még nem fut).
-2. Scanner futtatása a `conventions.md`-ben megadott módon (a projekt teszt-tooling scriptjével).
-3. A riportok az **aktuális validálási kör mappájába** kerülnek (`test-report/validate/round-NN/sonar-report.md` + `.html`); a Quality Gate FAIL non-zero státusszal áll meg.
-4. **A Quality Gate kiértékelése determinisztikus — a `sonar-gate.py` végzi a Sonar Web API-ból** (`/api/qualitygates/project_status` + `/api/issues/search`), nem a riport LLM-es elolvasásával. A kilépő kód dönt:
-   - **`0`** — QG OK (a `MINOR`/`INFO` találatok nem blokkolnak);
-   - **`1`** — QG FAIL **finding miatt**: a kiírt `BLOCKER`/`CRITICAL`/`MAJOR` lista `fájl:sor + üzenet` alakban a javító-taskok forrása (a severity-szűrés már megtörtént);
-   - **`3`** — QG FAIL **küszöb miatt, blokkoló finding nélkül** (QG1): a szkript megnevezi a bukott feltételt (pl. `new_coverage: 71.2 (küszöb: < 80)`). Ilyenkor **tilos üres hibalistával fixert indítani** — vagy konkrét lefedettségi task készül, vagy STOP + humán;
-   - **`2`** — használati hiba (hiányzó URL/projectKey/token) → a Sonar a `test-runner` subagenten keresztül fut, a régi módon.
-
-   A `--out` kapcsolóval a szkript a `sonar-report.md` bizonyítékot is legenerálja a kör-mappába (TR3).
-
-   > **⚠ A Quality Gate tipikusan CSAK az új kódot méri.** Egy örökölt (vagy baseline nélküli első elemzésből származó) `BLOCKER` mellett is lehet `OK` a gate — élő SonarQube-on ellenőrizve. Ha a projekt ezt a rést be akarja zárni, a `--fail-on BLOCKER` (vagy `BLOCKER,CRITICAL`) kapcsolóval a szkript zöld gate mellett is FAIL-t ad. **Szándékosan opt-in:** régi kódbázison bekapcsolva a hurok a ciklus scope-ján kívüli, örökölt findingokra kezdene javító-taskokat gyártani.
-5. **PASS:** a validálás folytatódik. **FAIL:** a hibák a `validation-report.md`-be kerülnek, a `tasks.md` státusza `Implementálásra kész [validate-loop]`-ra vált, és az **07 önjavító hurok** elindítja az `implement-fixer` subagentet (06 fix-mód) a Sonar-hibák javítására, majd újra-validál — a 3-próba korlátig (lásd „Validációs napló").
-
-**Módosítások detektálása (SCM & Git Blame):** a SonarQube a `.git` SCM és Git Blame adatokat használja, és a fő ághoz képest (git diff) választja külön az **új hibákat (New Issues)** az örökölt hibáktól. A Quality Gate csak az újonnan módosított sorokra vonatkozik.
+Every document gets its own phase-specific closing status when it is created (`spec.md` → `Ready for planning`, `plan.md` → `Ready for tasks`, `tasks.md` → `Ready for implementation`), and then **moves to `Done` as soon as the validate (07) closes the cycle with a PASS**. This way the 08-doc-sync and 09-merge phases expect `spec.md`/`plan.md`/`tasks.md` uniformly in the `Done` status.
 
 ---
 
-## 16. Döntési napló (imp-decision.md)
+## 14. Sonar quality check
 
-Az `imp-decision.md` az implement fázis (06) nehéz döntéseinek és zsákutcáinak naplója (`specs/cycle-NN-<cycle-name>/imp-decision.md`). Ha egy task megoldásához legalább 3 sikertelen kísérlet kellett:
+The validate phase (07) — if `conventions.md` contains a `## Sonar quality check` section — runs a Podman-based SonarQube analysis.
 
+**The process:**
+1. Starting the SonarQube server (if it is not running yet).
+2. Running the scanner as specified in `conventions.md` (with the project's test-tooling script).
+3. The reports go into the folder of the **current validation round** (`test-report/validate/round-NN/sonar-report.md` + `.html`); a Quality Gate FAIL stops with a non-zero status.
+4. **The evaluation of the Quality Gate is deterministic — it is done by `sonar-gate.py` from the Sonar Web API** (`/api/qualitygates/project_status` + `/api/issues/search`), not by reading the report with an LLM. The exit code decides:
+   - **`0`** — QG OK (the `MINOR`/`INFO` hits do not block);
+   - **`1`** — QG FAIL **because of a finding**: the printed `BLOCKER`/`CRITICAL`/`MAJOR` list in `file:line + message` form is the source of the fix tasks (the severity filtering has already happened);
+   - **`3`** — QG FAIL **because of a threshold, without a blocking finding** (QG1): the script names the failed condition (e.g. `new_coverage: 71.2 (threshold: < 80)`). In that case **starting a fixer with an empty defect list is forbidden** — either a concrete coverage task is created, or STOP + human;
+   - **`2`** — a usage error (a missing URL/projectKey/token) → Sonar then runs through the `test-runner` subagent, the old way.
+
+   With the `--out` switch the script also generates the `sonar-report.md` evidence into the round folder (TR3).
+
+   > **⚠ The Quality Gate typically measures ONLY the new code.** The gate can be `OK` even next to a legacy `BLOCKER` (or one coming from a first analysis without a baseline) — verified on a live SonarQube. If the project wants to close this gap, with the `--fail-on BLOCKER` (or `BLOCKER,CRITICAL`) switch the script gives a FAIL even with a green gate. **Deliberately opt-in:** switched on in an old codebase, the loop would start producing fix tasks for legacy findings outside the scope of the cycle.
+5. **PASS:** the validation continues. **FAIL:** the defects go into `validation-report.md`, the status of `tasks.md` changes to `Ready for implementation [validate-loop]`, and the **07 self-healing loop** starts the `implement-fixer` subagent (06 fix mode) to fix the Sonar defects, and then re-validates — up to the 3-attempt limit (see "The validation log").
+
+**Detecting modifications (SCM & Git Blame):** SonarQube uses the `.git` SCM and Git Blame data, and separates the **New Issues** from the legacy ones relative to the main branch (a git diff). The Quality Gate applies only to the newly modified lines.
+
+---
+
+## 15. The decision log (imp-decision.md)
+
+`imp-decision.md` is the log of the hard decisions and dead ends of the implement phase (06) (`specs/cycle-NN-<cycle-name>/imp-decision.md`). If solving a task required at least 3 unsuccessful attempts:
 ```md
-## T0XX — <rövid cím>
+## T0XX — <short title>
 
-**Mi volt a gond:** <hiba tömör leírása>
-**Mit próbáltunk:** <sikertelen kísérletek röviden>
-**Mi lett a megoldás:** <a végül működő megközelítés>
+**What the trouble was:** <a concise description of the defect>
+**What we tried:** <the unsuccessful attempts in brief>
+**What the solution turned out to be:** <the approach that finally worked>
 ```
 
 ---
 
-## 17. Validációs riport (validation-report.md)
+## 16. The validation report (validation-report.md)
 
-A `test-report/validation-report.md` a validate fázis (07) futásait, SonarQube eredményeit és teszthibáit követi. **A fájlt nem kézzel írja az orchestrátor:** a `## Kör N` blokkokat a `round-log.py` nyitja (`open`), tölti (`step`) és zárja (`close`) — beleértve a `round-NN/` mappa létrehozását azonos sorszámmal —, a `# Validation History`-t pedig a `failure-counter.py`. Az orchestrátor csak a szabad szöveges mezőket adja hozzá (kör döntése, DoD-indoklás). Az egymást követő bukásokat elemenként a `failure-counter.py` szkript számolja (determinisztikusan, nem az ágens kézzel) — az alábbi formátumban fűzi hozzá a bejegyzéseket:
+`test-report/validation-report.md` tracks the runs, SonarQube results and test failures of the validate phase (07). **The file is not written by hand by the orchestrator:** the `## Round N` blocks are opened (`open`), filled (`step`) and closed (`close`) by `round-log.py` — including the creation of the `round-NN/` folder with the same serial number — and the `# Validation History` by `failure-counter.py`. The orchestrator only adds the free-text fields (the verdict of the round, the DoD justification). Consecutive failures are counted per item by the `failure-counter.py` script (deterministically, not by the agent by hand) — it appends the entries in the following format:
 
 ```md
 # Validation History
@@ -1495,63 +1401,63 @@ A `test-report/validation-report.md` a validate fázis (07) futásait, SonarQube
 - **Run 1 (2025-01-15 10:30) - FAIL**
   - **Failed Item:** TokenExchangeService › should return 403 for invalid token
   - **Consecutive Failures for this item:** 1
-  - **Details:** NullPointerException a JWE dekódoláskor
+  - **Details:** NullPointerException during the JWE decoding
 
 - **Run 3 (2025-01-15 14:20) - PASS**
 ```
 
-**Leállási korlátok:** a `failure-counter.py` `exit 3`-mal áll meg, ha egy elem **3 egymást követő** vagy **5 összes** bukást ér el, vagy ha **5 egymást követő FAIL-futás** után sem konvergál a hurok (megrekedt kód-bug → STOP + humán; tervezési hiba → eszkaláció 03/02-re). **Egy validálási kör = egy `Run` bejegyzés** — részeredményt naplózni tilos, mert a közbeiktatott PASS megszakítaná a bukás-láncot.
+**Stopping limits:** `failure-counter.py` stops with `exit 3` if an item reaches **3 consecutive** or **5 total** failures, or if the loop still has not converged after **5 consecutive FAIL runs** (a stuck code bug → STOP + human; a design defect → escalation to 03/02). **One validation round = one `Run` entry** — logging a partial result is forbidden, because an interposed PASS would break the failure chain.
 
-**A fájl nem csak napló, hanem teljes riport (VD9):** a `# Validation History` fölött körönként egy `## Kör N` blokk áll — végrehajtási sorrend időbélyeggel (mi futott, mi maradt ki és miért), a `test-runner` bizonyítékai (parancs + `X passed / Y failed / Z skipped`), a **teszt-riport kapu (TR3)** eredménye, `DoD-NN` tábla, a javító kör nyoma (taskok → fixer → VD3a szerződés-kapu) és a kör döntése; a végén `## Összegzés` az újrafuttatott elemekkel. A hurok teljes mechanikáját a 3.4 szekció írja le.
+**The file is not just a log, but a full report (VD9):** above the `# Validation History` there is one `## Round N` block per round — the execution order with timestamps (what ran, what was left out and why), the evidence of the `test-runner` (the command + `X passed / Y failed / Z skipped`), the result of the **test report gate (TR3)**, the `DoD-NN` table, the trace of the fixing round (tasks → fixer → the VD3a contract gate) and the verdict of the round; and at the end, an `## Overall summary` with the re-run items. The full mechanics of the loop are described in section 4.5.
 
-**A `test-report/` mappa a riportoké is — körönkénti bontásban (TR5):** a `conventions.md` `## Teszt-riportolás` táblájában deklarált artefaktumok (Allure/Playwright HTML, coverage, JUnit XML) minden ciklusban ide kerülnek, és a ciklus git-diffjének részei. Nem a gyökérbe, hanem **körönként külön almappába**, hogy egy önjavító hurok minden köréről megmaradjon a bizonyíték — a `validation-report.md` lépés-táblájában jelzett bukáshoz így megnyitható a hozzá tartozó riport:
+**The `test-report/` folder belongs to the reports too — broken down per round (TR5):** the artifacts declared in the `## Test reporting` table of `conventions.md` (Allure/Playwright HTML, coverage, JUnit XML) go here in every cycle, and are part of the cycle's git diff. Not into the root, but into **a separate subfolder per round**, so that the evidence of every round of a self-healing loop is preserved — this way the report belonging to a failure indicated in the step table of `validation-report.md` can be opened:
 
 ```
 specs/cycle-NN-<name>/test-report/
-├── validation-report.md        # a 07 naplója — több körre átívelő, append-only
+├── validation-report.md        # the log of 07 — spanning several rounds, append-only
 ├── implement/
-│   └── check-log.md            # a 06 [CHECK]-futásainak naplója (parancs, próba, darabszámok)
+│   └── check-log.md            # the log of the [CHECK] runs of 06 (command, attempt, counts)
 └── validate/
-    ├── round-01/               # az 1. validálási kör összes artefaktuma (+ sonar-report.md/.html)
-    └── round-02/               # a 2. köré — az 1. körét sosem írja felül
+    ├── round-01/               # every artifact of the 1st validation round (+ sonar-report.md/.html)
+    └── round-02/               # those of the 2nd — it never overwrites those of the 1st
 ```
 
-A mappanév száma **kötelezően egyezik** a `validation-report.md` `## Kör N` sorszámával. A `report-gate-check.py` kapuja a `--report-subdir test-report/validate/round-NN` kapcsolóval az adott kör mappáját ellenőrzi — **teljes körben kötelezően, könnyű körben nem** (könnyű körben szándékosan nem fut minden tesztkategória, így a teljes riport-tábla nem is teljesíthető). Körök mappái sosem törlődnek: a bukott köröké a legértékesebb a hibanyomozáshoz.
+The number in the folder name **must match** the serial number of the `## Round N` in `validation-report.md`. The gate of `report-gate-check.py` checks the folder of the given round with the `--report-subdir test-report/validate/round-NN` switch — **mandatorily in a full round, not in a light one** (in a light round not every test category runs deliberately, so the full report table cannot be satisfied either). The folders of the rounds are never deleted: those of the failed rounds are the most valuable for tracking down a defect.
 
 ---
 
-## 18. Reviewer agent (agents/reviewer.md)
+## 17. The reviewer agent (agents/reviewer.md)
 
-**Mikor hívja meg:** A **07 — Validálás és kódreview** fázis, a validálási kör **2. lépéseként** (RV1) — a „statikus réteg" fele, a Sonar Quality Gate mellett. Kizárólag **teljes** körben fut (könnyű körben csak inkrementálisan, a nyitott `MF-NN`-ekre), és csak akkor, ha a **gyors tesztek** (unit/typecheck) zöldek; a nehéz tesztek (E2E/regresszió) ilyenkor **még nem futottak**. Bukott gyors teszt mellett nem indul: fordítani sem lehet a kódot. A sorrend indoka (VD13): a review-findingok javítása megváltoztatja a kódot, ezért olcsóbb előbb review-zni, és csak review-tiszta diffre elkölteni az E2E-stacket.
+**When it is called:** by the **07 — Validation and code review** phase, as **step 2** of the validation round (RV1) — one half of the "static layer", next to the Sonar Quality Gate. It runs exclusively in a **full** round (in a light round only incrementally, on the open `MF-NN`s), and only if the **fast tests** (unit/typecheck) are green; at that point the heavy tests (E2E/regression) have **not yet run**. It does not start alongside a failing fast test: the code cannot even be compiled. The rationale for the order (VD13): fixing review findings changes the code, so it is cheaper to review first and to spend the E2E stack only on a review-clean diff.
 
-**Mit csinál:** Task tool subagent-ként átnézi a cycle branch változásait (git diff a fő ág ellen), és strukturált, **gépiesen parszolható** jelentést készít:
-- **Kritikus javítandók (Must Fix)** — blokkolók; `- [ ] **MF-NN** — <file>:<line> — <leírás>` formátumban. Az `MF-NN` **stabil azonosító**: ezzel lépteti az orchestrátor a per-item leállási számlálót, ezért re-review-nál nem szabad újraszámozni.
-- **Javasolt fejlesztések (Suggestions)** — nem blokkolók, `S-NN` azonosítóval.
+**What it does:** as a Task tool subagent it reviews the changes of the cycle branch (a git diff against the main branch), and produces a structured, **machine-parseable** report:
+- **Critical fixes (Must Fix)** — blocking; in the form `- [ ] **MF-NN** — <file>:<line> — <description>`. `MF-NN` is a **stable identifier**: this is what the orchestrator uses to step the per-item stopping counter, so it must not be renumbered at a re-review.
+- **Suggested improvements (Suggestions)** — non-blocking, with an `S-NN` identifier.
 
-**Output:** `specs/cycle-NN-<cycle-name>/test-report/code-review.md`. **Naplót nem ír:** a hurok története, a próbaszámlálók és a leállási korlátok a `validation-report.md` `# Validation History`-jában élnek, a teszthibákkal **közös** számlálón.
+**Output:** `specs/cycle-NN-<cycle-name>/test-report/code-review.md`. **It writes no log:** the history of the loop, the attempt counters and the stopping limits live in `# Validation History` in `validation-report.md`, on a counter **shared** with the test failures.
 
-A `reviewer` **read-only diagnoszta** (mint az `analyzer`): csak a jelentést írja, javítást nem végez, és nem kérdez. A javítást a `review-fixer` (= 06 fix-mód), a vezénylést a 07 orchestrátor végzi.
+The `reviewer` is a **read-only diagnostician** (like the `analyzer`): it only writes the report, it performs no correction and it does not ask. The correction is done by the `review-fixer` (= 06 fix mode), and the orchestration by the 07 orchestrator.
 
-**Visszacsatolási kör:**
-- **Must Fix** → a **kör FAIL-je** (nem külön hurok): a findingok `MF-NN` néven a `## Review javítások` taskok közé kerülnek, a `review-fixer` javítja, majd könnyű kör + kötelező teljes megerősítő kör következik **re-review-val**. A részletes mechanikát lásd az [5.5 szekcióban](#55-az-07-validate-önjavító-hurok-részletes--tesztek--kódreview).
-- **Suggestion** → nem blokkol; az orchestrátor csak akkor javítja direktben, ha a scope-on belül marad és kockázatmentes (a következő kör úgyis leteszteli).
-- **Nincs Must Fix + zöld tesztek** → a validálás PASS, tovább a `08-doc-sync`-re.
+**The feedback loop:**
+- **Must Fix** → the **FAIL of the round** (not a separate loop): the findings go among the `## Review fixes` tasks under the name `MF-NN`, the `review-fixer` fixes them, and then a light round + a mandatory full confirming round follow, **with a re-review**. For the detailed mechanics see [section 4.5](#45-the-07-validate-self-healing-loop-in-detail--tests--code-review).
+- **Suggestion** → does not block; the orchestrator only fixes it directly if it stays within scope and is risk-free (the next round will test it anyway).
+- **No Must Fix + green tests** → the validation is a PASS, onwards to `08-doc-sync`.
 
 ---
 
-## 19. Ágens-specifikus integráció
+## 18. Agent-specific integration
 
-A `prompts/skills-hu/` és `prompts/agents-hu/` a **single source of truth**. A különböző ágensek más-más helyen keresik a skilleket / subagenteket:
+`prompts/skills-hu/` and `prompts/agents-hu/` are the **single source of truth**. The various agents look for the skills / subagents in different places:
 
-| Ágens | Skill-hely | Subagent-hely |
+| Agent | Location of the skills | Location of the subagents |
 |---|---|---|
-| Claude Code | `~/.claude/skills/bs-{skill_name}/SKILL.md` vagy `.claude/skills/…` | `~/.claude/agents/` vagy `.claude/agents/` |
+| Claude Code | `~/.claude/skills/bs-{skill_name}/SKILL.md` or `.claude/skills/…` | `~/.claude/agents/` or `.claude/agents/` |
 | Cursor (Agent CLI) | `.cursor/skills/bs-{skill_name}/SKILL.md` | `.cursor/agents/{agent_name}.md` |
 | Antigravity | `.agents/skills/{skill_name}/SKILL.md` | `.agents/agents/{agent_name}/agent.json` |
 | GitHub Copilot | `.github/instructions/bs-{name}.instructions.md` | `.github/agents/{agent_name}.agent.md` |
-| Codex CLI | `.agents/skills/bs-{skill_name}/SKILL.md` (közös az Antigravity-vel) | `.codex/agents/{agent_name}.toml` |
+| Codex CLI | `.agents/skills/bs-{skill_name}/SKILL.md` (shared with Antigravity) | `.codex/agents/{agent_name}.toml` |
 
-Az integrációk beállításához futtasd a [`install.sh`](install.sh) vagy a [`install.ps1`](install.ps1) scriptet:
+To set up the integrations, run the [`install.sh`](install.sh) or the [`install.ps1`](install.ps1) script:
 * **Linux/macOS:**
   ```bash
   chmod +x install.sh
@@ -1562,61 +1468,61 @@ Az integrációk beállításához futtasd a [`install.sh`](install.sh) vagy a [
   .\install.ps1
   ```
 
-### 19.0 Platform-korlát: parancs-futtatás a subagentekben (EX1)
+### 18.0 A platform limitation: running commands in the subagents (EX1)
 
-**A subagentek nem mindenhol tudnak parancsot futtatni.** Az ok nem a tool-deklaráció (az Antigravity `agent.json`-ban a `run_command` ott van a `test-runner`, `reviewer`, `implement-fixer`, `review-fixer` és `doc-sync-planner` `toolNames` listájában), hanem a **jóváhagyás**: a subagent nem tud engedélykérő promptot mutatni a felhasználónak, ezért minden parancs elhasal, ami nincs auto-engedélyezve. Antigravityn ezt visszaigazolt viselkedésként láttuk.
+**The subagents cannot run commands everywhere.** The reason is not the tool declaration (in the Antigravity `agent.json`, `run_command` is there in the `toolNames` list of `test-runner`, `reviewer`, `implement-fixer`, `review-fixer` and `doc-sync-planner`), but the **approval**: a subagent cannot show a permission prompt to the user, so every command that is not auto-approved fails. On Antigravity we saw this as confirmed behaviour.
 
-| Ki futtat parancsot | Hol fut | Érinti-e az EX1 |
+| Who runs a command | Where it runs | Is it affected by EX1 |
 |---|---|---|
-| `run-tests.py`, `round-log.py`, a kapuk | a **fő ágens** (a skill maga) | nem — a fő ágensnél a jóváhagyás működik |
-| `test-runner` subagent | subagent | **igen** — a fallback-ág letiltódhat |
-| `implement-fixer` / `review-fixer` `[CHECK]` futásai | subagent | **igen** — a javítás megvan, az ellenőrzés marad el |
-| `reviewer` `git diff`-je | subagent | **igen** — ezért a diffet az orchestrátor adja át bemenetként |
+| `run-tests.py`, `round-log.py`, the gates | the **main agent** (the skill itself) | no — with the main agent the approval works |
+| the `test-runner` subagent | a subagent | **yes** — the fallback branch may be disabled |
+| the `[CHECK]` runs of `implement-fixer` / `review-fixer` | a subagent | **yes** — the fix is made, but the verification is left out |
+| the `git diff` of the `reviewer` | a subagent | **yes** — which is why the diff is handed over by the orchestrator as an input |
 
-**Két megoldás, egymást kiegészítve:**
+**Two solutions, complementing each other:**
 
-1. **Architekturális (ez az alapértelmezés).** A 07 minden fontos futtatása a **fő ágensben**, szkriptekkel történik — ezért lett a `plan.md` `### Gépi futtatási tábla` (TP4) kötelező, és ezért fallback csak a `test-runner`. Ahol a subagent mégis blokkolt, ott az **EX1 kontraktus** lép életbe: az agent `## Futtatás blokkolva (EX1)` szekcióval tér vissza, és **soha nem talál ki eredményt** — a hívó pedig maga futtatja a szkriptet. Ha a gépi tábla is hiányzik ÉS a subagent is blokkolt, a fázis **STOP + humán**, nem PASS.
-2. **Platform-oldali (opcionális).** Ha az ágens-eszköz ismer auto-futtatási allowlistát, vedd fel rá a keretrendszer szkriptjeit és a projekt teszt-parancsait (pl. `python3 .agents/scripts/*`, `npm test`, `npx playwright`, `git diff`) — ezzel a subagentek is futtathatnak, és a fallback-ág is visszaáll.
+1. **Architectural (this is the default).** Every important run of 07 happens in the **main agent**, with scripts — that is why the `### Machine-readable run table` (TP4) of `plan.md` became mandatory, and why only the `test-runner` is a fallback. Where a subagent is blocked after all, the **EX1 contract** takes effect: the agent returns with a `## Run blocked (EX1)` section, and it **never invents a result** — and the caller then runs the script itself. If the machine-readable table is missing too AND the subagent is blocked, the phase is a **STOP + human**, not a PASS.
+2. **Platform-side (optional).** If the agent tool knows an auto-run allowlist, add the framework's scripts and the project's test commands to it (e.g. `python3 .agents/scripts/*`, `npm test`, `npx playwright`, `git diff`) — with that the subagents can run things too, and the fallback branch is restored.
 
-> **Miért nem engedjük „nagyvonalúan" tovább a blokkolt subagentet:** egy `test-runner`, amelyik nem tud futtatni, de mégis jelent, hamis `43 passed`-et adna — abból a 07 automatikus `Kész` státuszt és commitot csinál. Ezért az EX1 explicit tiltja az eredmény-kitalálást, és inkább megállítja a fázist.
+> **Why we do not "generously" let a blocked subagent carry on:** a `test-runner` that cannot run anything but still reports would give a false `43 passed` — out of which 07 makes an automatic `Done` status and a commit. That is why EX1 explicitly forbids inventing a result, and stops the phase instead.
 
 ---
 
-### 19.1 Antigravity CLI (Google DeepMind)
+### 18.1 Antigravity CLI (Google DeepMind)
 
-Ha az **Antigravity** ágenst használod a fejlesztési ciklusok futtatására, a fenti script automatikusan előkészíti a lokális munkakörnyezetet:
-1. Létrehozza a `.agents/skills/` könyvtárat, és mindegyik fázishoz symlinkeli a `SKILL.md`-t.
-2. Létrehozza a `.agents/agents/` könyvtárat, és a markdown ágens-definíciókat automatikusan a CLI által elvárt `agent.json` formátumra fordítja.
+If you use the **Antigravity** agent to run the development cycles, the script above prepares the local working environment automatically:
+1. It creates the `.agents/skills/` directory and symlinks the `SKILL.md` for each phase.
+2. It creates the `.agents/agents/` directory and automatically translates the markdown agent definitions into the `agent.json` format expected by the CLI.
 
-#### 17.1.1 Tervezési és naplózási folyamat (Planning Mode)
-Az ágens a saját belső alkalmazásmappájában (`~/.gemini/antigravity-cli/brain/`) naplóz, így ezek a fájlok nem szennyezik a projekt Git repository-ját:
-* **Tervezési szakasz:** `implementation_plan.md` tervfájl, jóváhagyásra várva.
-* **Végrehajtási szakasz:** `task.md` teendőlista.
-* **Validációs szakasz:** `walkthrough.md` összegzés.
+#### 18.1.1 The planning and logging process (Planning Mode)
+The agent logs in its own internal application folder (`~/.gemini/antigravity-cli/brain/`), so these files do not pollute the project's Git repository:
+* **Planning stage:** the `implementation_plan.md` plan file, awaiting approval.
+* **Execution stage:** the `task.md` to-do list.
+* **Validation stage:** the `walkthrough.md` summary.
 
-#### 17.1.2 Jogosultságok kezelése (Permissions)
-* **Fájlmódosítások:** a Trusted Workspace-en belül engedélyezett.
-* **Külső parancsok:** futtatás előtt manuális megerősítést igényelnek (`Ask` mód).
-* **Delegálás:** `/permissions` vagy `/config` (Allow), `--dangerously-skip-permissions` (session), vagy `~/.gemini/antigravity-cli/settings.json` (globális).
+#### 18.1.2 Handling permissions (Permissions)
+* **File modifications:** allowed inside the Trusted Workspace.
+* **External commands:** they require manual confirmation before running (`Ask` mode).
+* **Delegation:** `/permissions` or `/config` (Allow), `--dangerously-skip-permissions` (per session), or `~/.gemini/antigravity-cli/settings.json` (global).
 
-#### 17.1.3 Skillek és Ágensek indítása (TUI használat)
-Az integrációs script lefutása után az Antigravity felületén kétféleképpen is elindíthatod az egyes fázisok skill-jeit:
-* **Slash parancsok:** Minden betöltött skill automatikusan egyedi slash paranccsá válik a promptban. A parancs neve a `SKILL.md` frontmatterében megadott `name` mezőből származik (sorszám nélkül). Például a 05-ös fázis indításához egyszerűen írd be:
+#### 18.1.3 Starting the skills and agents (using the TUI)
+After the integration script has run, you can start the skills of the individual phases in two ways in the Antigravity interface:
+* **Slash commands:** every loaded skill automatically becomes a unique slash command in the prompt. The name of the command comes from the `name` field given in the frontmatter of `SKILL.md` (without the serial number). For example, to start phase 05, simply type:
   ```
   /bs-analyze
   ```
-* **Interaktív választómenü:** A `/skill` (vagy `/skills`) parancs beírásával egy vizuális menü ugrik fel a terminálban, ahonnan a nyilakkal (`↑/↓`) kiválaszthatod és az `enter` billentyűvel életre hívhatod a kívánt fázist.
-* **Egyedi ágensek listázása:** A `/agens` (vagy `/agent`) paranccsal tekintheted meg a regisztrált, egyedileg konfigurált subagenteket.
+* **An interactive selection menu:** by typing the `/skill` (or `/skills`) command, a visual menu pops up in the terminal, from which you can select the desired phase with the arrows (`↑/↓`) and bring it to life with the `enter` key.
+* **Listing the custom agents:** with the `/agens` (or `/agent`) command you can view the registered, individually configured subagents.
 
-### 19.2 Codex CLI (OpenAI)
+### 18.2 Codex CLI (OpenAI)
 
-Ha a **Codex CLI**-t használod, a telepítő két különböző helyre dolgozik, mert a Codex az agenteket és a skilleket eltérő formátumban/helyen várja:
+If you use the **Codex CLI**, the installer works into two different places, because Codex expects the agents and the skills in a different format/location:
 
-1. **Subagentek → `.codex/agents/<név>.toml`.** A Codex subagentek **TOML**-fájlok (nem markdown). A telepítő a markdown agent-definíciókat automatikusan TOML-ra fordítja, és kitölti:
-   * `name`, `description` (az agent `role`-jából), `developer_instructions` (a teljes agent-prompt);
-   * `model` és `model_reasoning_effort` — ezek **natívan hatnak** (a fájlban megadott érték elsőbbséget élvez a spawn-/`[agents]`-default/parent érték felett);
-   * `sandbox_mode = "read-only"` a read-only agenteknél (`analyzer`, `researcher`, `doc-sync-planner`).
-   * Futás közben a subagentek a `/agent` paranccsal listázhatók, illetve válthatsz közöttük.
-2. **Skillek → `.agents/skills/bs-<név>/SKILL.md`.** A Codex a **projekt-szintű** skilleket a `.agents/skills/` mappából olvassa (a `.codex/skills` csak legacy, user-szintű hely — projekt-szinten nem található meg). A skillek slash-parancsként érhetők el (pl. `/bs-analyze`).
+1. **Subagents → `.codex/agents/<name>.toml`.** Codex subagents are **TOML** files (not markdown). The installer automatically translates the markdown agent definitions into TOML, and fills in:
+   * `name`, `description` (from the agent's `role`), `developer_instructions` (the full agent prompt);
+   * `model` and `model_reasoning_effort` — these **take effect natively** (the value given in the file takes precedence over the spawn/`[agents]` default/parent value);
+   * `sandbox_mode = "read-only"` for the read-only agents (`analyzer`, `researcher`, `doc-sync-planner`).
+   * During a run the subagents can be listed with the `/agent` command, and you can switch between them.
+2. **Skills → `.agents/skills/bs-<name>/SKILL.md`.** Codex reads the **project-level** skills from the `.agents/skills/` folder (`.codex/skills` is only a legacy, user-level location — it is not found at project level). The skills are available as slash commands (e.g. `/bs-analyze`).
 
-> ⚠️ **Codex ↔ Antigravity kölcsönös kizárás.** A `.agents/skills/` mappát **a Codex ÉS az Antigravity is használja**, ezért egy projektbe a kettő közül gyakorlatilag csak az egyik telepíthető. A telepítő ezt figyeli: a platform kiválasztásakor előre figyelmeztet, és ha a másik platform már jelen van (`.codex/agents/` ↔ `.agents/agents/`), a telepítés előtt rákérdez, folytatod-e.
+> ⚠️ **Codex ↔ Antigravity mutual exclusion.** The `.agents/skills/` folder is used by **both Codex AND Antigravity**, so in practice only one of the two can be installed into a given project. The installer watches for this: it warns you in advance when the platform is selected, and if the other platform is already present (`.codex/agents/` ↔ `.agents/agents/`), it asks before the installation whether you want to continue.

@@ -470,6 +470,8 @@ _What kinds of tests are needed (unit / integration / e2e)? Which existing test 
 
 _**The recurring expectations lifted over (TC1) — mandatory if `specs/test-conventions.md` exists:** the items of sections 2 and 3 of the register that are needed in this cycle, **self-containedly** (with the recipe data belonging to them, not with a plain reference). Next to every item lifted over, write the provenance: `_(source: test-conventions.md L01)_`. If you corrected the data of an item in `plan-questions.md`, the **corrected** data goes here._
 
+<!-- INCLUDE:shared/test-scenario-design.md -->
+
 ### <sec:plan_test_scenarios> — **mandatory (TS1)**
 
 > **🔴 Why it is mandatory:** the prose above is about the test **types**, this section is about the test **content**. `plan.md` is self-contained (TC1/a): both the `test-runner` and `bs-manual-test-plan` work **exclusively** from it, and a failed test of `07` must also be reproducible by hand from it. Therefore every test case has to be worked out as an **executable scenario** — not "the login flow will be tested", but step by step: what we call, with which concrete value, and exactly what we expect back.

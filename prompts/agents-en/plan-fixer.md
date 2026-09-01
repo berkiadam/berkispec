@@ -61,3 +61,5 @@ You are the executor of the **Fix mode** of the plan phase (03), started by the 
 _This is the quality gate of phase 03. In fix mode you do not audit the whole document with it, but the sections you modified._
 
 <!-- INCLUDE:shared/quality-check-plan.md -->
+
+<!-- INCLUDE:shared/test-scenario-design.md -->
