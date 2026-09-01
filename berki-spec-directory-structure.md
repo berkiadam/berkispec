@@ -21,7 +21,7 @@ The framework consists of a single folder, `prompts/`, plus the installer in the
 |---|---|
 | `README.md` | The full framework documentation in **English**. The starter prompt block for the user lives in it, and it is the canonical description of the flow. |
 | `README-HU.md` | The same documentation in **Hungarian**. The two files are kept in sync by hand; a structural change belongs in both. |
-| `berki-spec-directory-sturcture.md` | This file — the detailed folder/file reference. |
+| `berki-spec-directory-structure.md` | This file — the detailed folder/file reference. |
 | `install.sh` / `install.ps1` | The installer entry points (Linux/macOS and Windows PowerShell). They collect the target folder, the platform and the two languages interactively, or accept them as flags (`--platform`, `--prompt-lang`, `--project-lang`, `--path`, `--force`), then hand the work to `prompts/scripts/install-helper.py`. |
 | `history` | Machine-specific installer memory (`LAST_PROJECT_PATH`, `LAST_PLATFORM`, `LAST_INSTALL`) so that a reinstall can offer the previous target. Excluded by `.gitignore`. |
 | `docs/` | Hand-written illustrations for the documentation (e.g. `worktree-vscode-source-control.png`). Not generated. |
