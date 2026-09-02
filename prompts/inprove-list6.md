@@ -1966,7 +1966,7 @@ tud vörös lenni**, és **egy nem létező függvénynévre hivatkozó parancs 
   `✗` sor a `[RED]` taskokhoz). Ha valamelyik **nem** bukik, az a check hibája — nem azt méri,
   amit gondolunk. Az `EV6`-nak és a `TR7`-nek szintén bukni kell, ha a `rest-logs` mappa és a
   `conventions.md` TR3 táblája elérhető.
-- [ ] **31.8** Commit: `feat(prompts): bizonyíték-keményítés — CK1, RED1, TB1-TB3, EV6, TR7, RV-FB1`
+- [x] **31.8** Commit: `feat(prompts): bizonyíték-keményítés — CK1, RED1, TB1-TB3, EV6, TR7, RV-FB1`
 
 ---
 
