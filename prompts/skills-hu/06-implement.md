@@ -136,6 +136,12 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
 >
 > Ez a szabály **független** attól, hogy a megállás jogos volt-e: egy jogos kérdés is csak konzisztens állapotból tehető fel.
 
+> **🔴 Teszt-task nem zárható üres vázzal (RED1/TB1).** Ebben a fázisban a teszt-írás **nem** előkészítés a `07`-nek: a teszt itt készül el, teljes törzzsel. Tilos `assert True`, `pass`, `TODO`-komment vagy asszertáció nélküli törzs — és tilos az olyan asszertáció is, ami csak a mock saját visszatérési értékét hasonlítja önmagához. A törzsnek a **rendszer válaszához vagy állapotához** kötött állítást kell tartalmaznia.
+>
+> **A „majd a 07 megírja" nem ág.** A `07` validál, nem implementál: egy üres váz onnan `X passed`-ként jön vissza, és a lánc minden későbbi bizonyítéka (DoD-join, riport, `PASS` verdikt) erre a hamis zöldre épül.
+>
+> Ez **nem** jótanács, hanem a fázis két kapujának előfeltétele: a `[RED]` taskhoz bukás-bizonyíték kell (8/b pont, `RED1`), a fázis lezárása előtt pedig a teszt-tartalom kapu (`TB1`) végigolvassa a plan `TA1` adatlapjaiban felsorolt tesztfájlokat. Az üres váz nem „majd javítjuk" — **most** akadály.
+
 1. Vedd a következő elvégzetlen taskot (`- [ ]`).
 
 2. **Visszalépés kódreview-ból (07):** Ha a ciklus a 07 review-kapujának `<status:must_fix>` findingjai miatt került vissza ide, a `tasks.md` végén lévő új feladatokat a `test-report/code-review.md` kritikus észrevételei alapján végezd el. A javítások után a záró `[CHECK]` feladatok újbóli futtatása és commitolása kötelező.

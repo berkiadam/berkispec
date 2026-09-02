@@ -1734,13 +1734,13 @@ tud vörös lenni**, és **egy nem létező függvénynévre hivatkozó parancs 
 > kérdésnek nulla hatása lett volna. A 26.2 a subagent-ágat javítja, a 28. szakasz pedig azt,
 > hogy a lista a fallback ágon is **fizikailag jelen** legyen.
 
-- [ ] **26.1 — Anti-stub mondat a `06` fázis-szintű garde-jába (HU+EN).** A `06` ma a
+- [x] **26.1 — Anti-stub mondat a `06` fázis-szintű garde-jába (HU+EN).** A `06` ma a
   **fix-módra** tartalmaz anti-teszt-csalás védőhálót (a `VD3` párja). A **normál**
   implementációs fázisra kerüljön be egy tömör tilalom, a `RED1`-re hivatkozva: teszt-író task
   nem zárható üres vázzal (`assert True`, `pass`, asszertáció nélküli törzs), és a
   „majd a 07 megírja” **nem** ág.
 
-- [ ] **26.2 — Egy KEMÉNY kérdés a `reviewer`-be (HU+EN).** `prompts/agents-{hu,en}/reviewer.md`
+- [x] **26.2 — Egy KEMÉNY kérdés a `reviewer`-be (HU+EN).** `prompts/agents-{hu,en}/reviewer.md`
   ma ennyit mond: *„Teszt lefedettség: A tesztek tényleg az új logikát fedik-e le…”* — ez
   általános. Helyette/mellette egy **eldönthető** kérdés a `<status:must_fix>` kategóriába:
   *„Van-e a diffben olyan új vagy módosított teszt-függvény, amelynek törzsében nincs a rendszer
@@ -1895,7 +1895,7 @@ tud vörös lenni**, és **egy nem létező függvénynévre hivatkozó parancs 
 
 ## 30. Dokumentáció (B rész)
 
-- [ ] **30.1 — `README-HU.md` + `README.md`.** Három helyen:
+- [x] **30.1 — `README-HU.md` + `README.md`.** Három helyen:
   - a `07-validate` determinisztikus rétegének felsorolásába az új kapuk
     (`test-substance-check.py` = `TB1`/`TB2`, a `validate-gate-check.py` `RED1`- és
     `CK1`-joinja, az `EV6` a `run-tests.py`-ban, a `TR7` a `report-gate-check.py`-ban);
@@ -1903,9 +1903,9 @@ tud vörös lenni**, és **egy nem létező függvénynévre hivatkozó parancs 
     taskonkénti `[CHECK]` futtatás (`CK1`) egy-egy mondattal;
   - a `reviewer` sorához: a szempontlista közös blokkban él, és a **fallback ág is megkapja**
     (`RV-FB1`).
-- [ ] **30.2 — `berki-spec-directory-structure.md`.** Az új script (`test-substance-check.py`)
+- [x] **30.2 — `berki-spec-directory-structure.md`.** Az új script (`test-substance-check.py`)
   és az új közös blokk (`shared-*/review-checklist.md`) felvétele, egy soros leírással.
-- [ ] **30.3 — `prompts/meta-improve-prompts.md`: új elv `7/l`.** A `7/k` (A rész) után.
+- [x] **30.3 — `prompts/meta-improve-prompts.md`: új elv `7/l`.** A `7/k` (A rész) után.
   Vázlat a meglévő elvek hangján:
 
   *A `7/g` kimondta, hogy **egy zöld teszt nem bizonyítja, HOL volt zöld**. Egy éles ciklus
@@ -1930,7 +1930,7 @@ tud vörös lenni**, és **egy nem létező függvénynévre hivatkozó parancs 
   implementálónak érdeke a pipa (`7/j`), az LLM-reviewer pedig nem kapu — a szerkezeti próza
   (a lista fizikai jelenléte mindkét ágon) viszont igen.*
 
-- [ ] **30.4 — A nyolc új ID felvétele a `README` szabály-jegyzékébe**, ha van ilyen
+- [x] **30.4 — A nyolc új ID felvétele a `README` szabály-jegyzékébe**, ha van ilyen
   (`grep -n "TR6\|EV5\|TX1" README-HU.md` mutatja a helyét): `CK1`, `RED1`, `TB1`, `TB2`, `TB3`,
   `EV6`, `TR7`, `RV-FB1` — plusz a `RED-EXEMPT` és a `CK-DEVIATION` naplójelölés.
 
@@ -1938,21 +1938,21 @@ tud vörös lenni**, és **egy nem létező függvénynévre hivatkozó parancs 
 
 ## 31. Kapuk és elfogadási kritériumok (B rész)
 
-- [ ] **31.1** `python3 prompts/scripts/lang-parity-check.py` → hiba nélkül (a `06`, `07`,
+- [x] **31.1** `python3 prompts/scripts/lang-parity-check.py` → hiba nélkül (a `06`, `07`,
   `reviewer`, az új `shared-*/review-checklist.md` és a `lang/*/06-implement.md` mindkét fán
   módosult/létrejött).
-- [ ] **31.2** `python3 prompts/scripts/lang-parity-check.py --strict` → 0 (az új közös blokknak
+- [x] **31.2** `python3 prompts/scripts/lang-parity-check.py --strict` → 0 (az új közös blokknak
   **mindkét** nyelvi fán léteznie kell).
-- [ ] **31.3** `python3 prompts/scripts/sync-gemini-agents.py --check` → 0 (a `reviewer` prompt
+- [x] **31.3** `python3 prompts/scripts/sync-gemini-agents.py --check` → 0 (a `reviewer` prompt
   változott; előtte írás módban regenerálva).
-- [ ] **31.4** Telepítési füstteszt: a `test-substance-check.py` megjelenik mind az öt platform
+- [x] **31.4** Telepítési füstteszt: a `test-substance-check.py` megjelenik mind az öt platform
   scripts-mappájában, és a telepített `06`/`07`/`reviewer` fájlokban **nincs** feloldatlan
   `INCLUDE:` marker vagy `<sec:`/`<field:`/`<status:` token. Külön ellenőrzés: a
   `review-checklist.md` tartalma **kétszer** jelenik meg a telepített fában (a `reviewer`-ben és
   a `07`-ben) — ez **szándékos** (RV-FB1), nem duplikáció-hiba.
-- [ ] **31.5** Mind a hét check **célzott bukás-próbája** lefutott: 27.5 (`CK1`), 22.6 (`RED1`),
+- [x] **31.5** Mind a hét check **célzott bukás-próbája** lefutott: 27.5 (`CK1`), 22.6 (`RED1`),
   23.4 (`TB1`), 23.6 (`TB2`), 24.5 (`EV6`), 25.4 (`TR7`), 29.3 (`TB3`).
-- [ ] **31.6** **Hamis-pozitív próba (kötelező).** Futtasd le az összes új checket **egy korábbi,
+- [x] **31.6** **Hamis-pozitív próba (kötelező).** Futtasd le az összes új checket **egy korábbi,
   sikeresen lezárt ciklusra** (nem a `cycle-30`-ra). Ami itt bukik, azt **meg kell érteni**:
   vagy valódi rés volt abban a ciklusban is (akkor írd a 33. szakaszba), vagy a check túl
   agresszív (akkor szűkítsd). **Egy kapu, ami a jó ciklust is bukatja, használhatatlan** — a
@@ -1960,7 +1960,7 @@ tud vörös lenni**, és **egy nem létező függvénynévre hivatkozó parancs 
   lazább volt): ha egy lezárt ciklus naplója intervallumos cellát tartalmaz, az **valódi**
   találat, de mérlegeld, hogy a check `bad` vagy `info` legyen a **régi** ciklusokra
   (pl. a napló első sorának dátuma alapján nem kell visszamenőlegesen bukatni).
-- [ ] **31.7 — ÉLES PRÓBA a `cycle-30`-on, regressziós tesztként.** A hét kapu közül **legalább
+- [x] **31.7 — ÉLES PRÓBA a `cycle-30`-on, regressziós tesztként.** A hét kapu közül **legalább
   négynek** buknia kell rajta: `CK1` (intervallumos naplósor + szűrő nélküli parancs), `TB2`
   (átnevezett szelektorok a `T035`–`T037`-ben), `TB1` (az `assert True` törzsek), `RED1` (nincs
   `✗` sor a `[RED]` taskokhoz). Ha valamelyik **nem** bukik, az a check hibája — nem azt méri,
@@ -2081,6 +2081,25 @@ tud vörös lenni**, és **egy nem létező függvénynévre hivatkozó parancs 
   törzs) és a `TB2` (3 elorphanodott szelektor) fogja meg, ezért a heurisztika hallgatása nem
   hagy rést. Ellenőrizve gyártott XML-eken: minden-nulla fájl → egy `·` javaslat-sor;
   vegyes (0.812 s + 0.000 s) fájl → nincs javaslat; a kilépő kód mindkét esetben `0`.
+- **F5 — a prózai pár a KÖZÖS blokkba került, nem a `reviewer.md`-be.** A 26.2 a `reviewer.md`-t nevezte
+  meg, de a 28.1 (F9) időközben a szempontlistát a `shared-{hu,en}/review-checklist.md`-be emelte.
+  Az eldönthető `TB1`-kérdés ezért oda került: így **mindkét** végrehajtási ágon (subagent és
+  `07`-fallback) jelen van — pontosan az a hatás, amit a 26. szakasz bevezetője kért („a 26.2
+  önmagában kevés"). A 26.1 anti-stub blokk a `06` *Végrehajtási szabályok* fejezetébe, az `IM2`
+  garde után került, a `RED1`/`TB1` kapukra hivatkozva.
+- **A `7/l` elv a `7/e` UTÁN áll, nem a `7/k` után.** A terv a `7/k` (A rész) mögé tette volna, de
+  az A rész nincs végrehajtva, tehát `7/k` nem létezik — a `7/l` a `7/x` csoport végére került. Az
+  A rész elvégzésekor a `7/k` egyszerűen elé szúrható, sorszám-ütközés nélkül.
+- **31.7 újramérve (regresszió).** A `cycle-30`-on a mai fán: `CK1` bukik (13. naplósor
+  `T030a-T037` intervallum + 8 hiányzó naplósor), `RED1` bukik (13 `[RED]` taskhoz nincs `✗`),
+  `TB2` bukik (3 elorphanodott szelektor), `TB1` a `--files`-os futtatásban 7 vacuous törzset talál
+  — tehát **négy** kapu fog, ahogy a 31.7 megköveteli. A `cycle-26`–`-29` a `TB1`/`TB2`-n
+  `exit 0` (hamis pozitív nincs).
+- **31.4 füstteszt mind az öt platformon.** `test-substance-check.py` mind az öt scripts-mappában
+  megvan; a telepített `06`/`07`/`reviewer` fájlokban **0** feloldatlan `INCLUDE:`/`<sec:`/`<field:`/
+  `<status:` token (hu és en prompt-nyelven is), és a `review-checklist.md` tartalma platformonként
+  **pontosan két** fájlban jelenik meg (`reviewer` + `07`) — az RV-FB1 szándéka szerint.
+
 - **Nyelvfüggetlen napló-parse.** A `check-log.md` tábláját a `Task` fejléc-cella (mindkét nyelvi
   fán ugyanaz a szó) alapján indexeljük, a parancs- és eredmény-cellát pedig **tartalom** szerint
   (backtick, ill. `✓`/`✗`) — így a nyelvfüggő fejlécnevekre (`Parancs`/`Command`) nem kell

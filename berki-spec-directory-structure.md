@@ -82,6 +82,7 @@ These are **not** skills or agents: they are blocks that a skill (or an agent pr
 | `artifact-voice.md` | AV1: skill text must not bleed into `spec.md`/`plan.md`/`tasks.md`. | `02`, `03`, `04` |
 | `phase-commit.md` | PC1: the phase-closing commit procedure and the phase boundary (PE1). | `02`, `03`, `04`, `05`, `07` |
 | `test-scenario-design.md` | TD0–TD7: the **generating** recipe for test scenarios — the dimension inventory, the observation quartet, countability, the negative control, a calibration sample and a self-check. | `03` + `plan-fixer` |
+| `review-checklist.md` | The review criteria of the code review (including the decidable `TB1` question about an empty test body) and the `<status:must_fix>` vs `<status:suggestion>` dividing line. | the `reviewer` agent **and** the reviewer-fallback block of `07` (RV-FB1) |
 | `quality-check-{spec,plan,tasks}.md` | The quality gate of phase 02/03/04, run before the closing. | the skill **and** its fixer agent (D13) |
 | `fix-mode-{spec,plan,tasks}.md` | The Fix-mode (analyze-loop entry point) section of phase 02/03/04. | the skill **and** its fixer agent (D13) |
 | `questions-tasks.md` | The question-register order of phase 04 (`tasks-questions.md`). | `04` + `tasks-fixer` |
@@ -114,6 +115,7 @@ The installer copies **every `*.py`** into the target project's platform scripts
 | `contract-guard.py` | 07 | The VD3a contract-integrity gate: protected paths + cheating patterns in the diff. | yes |
 | `sonar-gate.py` | 07 | Reads the Sonar Quality Gate from the Web API; a separate exit code for "failed on a threshold without a blocking finding" (QG1). | yes |
 | `validate-gate-check.py` | 07 | The collective gate: statuses, open tasks/DoD ticks, IP1 items, open Must Fix findings, round block ↔ folder match. | yes |
+| `test-substance-check.py` | 06/07 | `TB1`: no vacuous body (`assert True`, `pass`, a body without an assertion) in the test files listed in the `TA1` data sheets of the plan; `TB2`: the test selector of a `[CHECK]` command actually exists in the test file. | yes |
 | `report-gate-check.py` | 06/07 | The TR3 gate: are the reports required by `conventions.md` present in the phase folder; plus the report-phase query (`--phases`, TR6) and the `test-report/` layout guard (TR5/c). | yes |
 | `ds22-gate-check.py` | 08 | The DS22 Layer 1 core gate: no discontinued/renamed identifier in the docs, folder-index set equality, coverage-marker bump. | yes |
 | `tc8-gate-check.py` | 08 | The TC8 gate on `specs/test-conventions.md`: path existence, dangling reference, secret check, `Last run` marker. Returns `0` with "skipped" if the file does not exist. | yes |

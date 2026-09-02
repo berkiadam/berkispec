@@ -136,6 +136,12 @@ Decision tree for resuming — **in this order**:
 >
 > This rule is **independent** of whether the stop was justified: even a justified question can only be asked from a consistent state.
 
+> **🔴 A test task cannot be closed with an empty skeleton (RED1/TB1).** In this phase writing a test is **not** preparation for `07`: the test is finished here, with a full body. `assert True`, `pass`, a `TODO` comment or a body without an assertion are forbidden — and so is an assertion that merely compares the mock's own return value with itself. The body must contain a claim bound to the **response or the state of the system**.
+>
+> **"`07` will write it later" is not a branch.** `07` validates, it does not implement: an empty skeleton comes back from there as `X passed`, and every later piece of evidence in the chain (the DoD join, the report, the `PASS` verdict) is built on that false green.
+>
+> This is **not** advice but the precondition of the phase's two gates: a `[RED]` task requires failure evidence (item 8/b, `RED1`), and before the phase is closed the test-substance gate (`TB1`) reads through the test files listed in the `TA1` data sheets of the plan. An empty skeleton is not "we will fix it later" — it is an obstacle **now**.
+
 1. Take the next unfinished task (`- [ ]`).
 
 2. **Returning from code review (07):** If the cycle came back here because of `<status:must_fix>` findings from the 07 review gate, carry out the new tasks at the end of `tasks.md` based on the critical findings in `test-report/code-review.md`. After the fixes, re-running and committing the closing `[CHECK]` tasks is mandatory.
