@@ -72,6 +72,34 @@ Mit ellenőriz:
   TS5 kétirányú DoD-lefedettség        — minden `DoD-NN`-hez van `TS-NN`, és
                                        minden `TS-NN` létező DoD-ra hivatkozik
   TS6 `TS-NN` azonosítók               — egyediek és hézagmentesek
+  TS8 `.http` alak a REST-hez     — ahol `curl` van a forgatókönyvben, ott
+                                       ```http blokk is (és fordítva)
+  GA1 kapu-bélyeg (javaslat)           — lezárt plan fejlécében ott a
+                                       `Kapu:` sor a kapu-futás eredményével
+  TI1 `TC-NN` azonosítók               — szigorú alak, hézagmentes számsor a
+                                       plan teszt-tábláiban
+  TI2 task → teszt hivatkozás          — a `— test [TC-01]` jelölés létező
+                                       plan-teszt-azonosítóra mutat
+  TX1 egy `[CHECK]` egy teszt          — a futtató checkbox pontosan egy
+                                       teszt-azonosítót futtat
+  TT1 teszt-lefedettség                — minden `TS-NN` és minden futtatási
+                                       kategória kap gazdát a tasks.md
+                                       `Teszt-lefedettség` táblájában
+  T6  `[CHECK]` kimenet-ütközés        — két task `>`-tal ugyanabba a log-/
+                                       riportfájlba ír: a második felülírja az
+                                       elsőt, a bizonyíték eltűnik
+  PH1 futtatási fázis                  — a gépi tábla `Fázis` oszlopának értékei
+                                       érvényesek, és marad kategória a 07-re
+  TS7 spec-teszteset → `TS-NN`         — a `Spec-lefedettség` tábla minden sora
+                                       megnevez egy forgatókönyvet (vagy az
+                                       indoklást, ha nem tesztelhető): a spec
+                                       teszt-szekciójának SZERKEZETE nem
+                                       másolható át prózaként
+  TA1 teszt-artefaktum adatlap         — minden tesztfájl-fejléc alatt ott a
+                                       futtató parancs, a fixture/tesztadat és a
+                                       teszt-függvény → `TC-ID`/`TS-NN` leképezés
+  WY1 a tervezett módosítás CÉLJA      — minden `[P-…]` bejegyzés megmondja, mit
+                                       akarunk elérni és miért (spec-forrással)
   EV1 cél-környezet deklarálva         — a `Környezeti koordináták` szekcióban
                                        ott a `**Cél-környezet:**` mező
   EV2 kategóriánkénti `Környezet`      — a gépi futtatási tábla minden sora
@@ -89,6 +117,27 @@ Mit ellenőriz:
                                        repó-útvonal a tervezési dokumentumokban
   A2c horgony-formátum (RP1, javaslat) — a `path:sor` horgony a plan MAPPÁJÁHOZ
                                        képest relatív, nem a repó gyökeréhez
+
+A `--report-only` mód (a fentiektől FÜGGETLEN, a hurok LEZÁRÁSAKOR fut):
+
+  RC1 tétel-megőrzés                   — az `analyze-task.md` minden tétele
+                                       (nyitott ÉS elvetett) szó szerinti
+                                       azonosítóval megjelenik-e az
+                                       `analyze-report.md` „Javítandó tételek"
+                                       listáján. Ez az őr arra az esetre, amikor
+                                       a lezáráskor a riport ÖSSZEFOGLALÓVÁ
+                                       zsugorodik: a részletes, emberi nyelvű
+                                       diagnózis elvész, csak a puszta tény
+                                       marad, hogy „minden javítva lett" (AR1
+                                       megsértése).
+  RC2 kötelező mező hiánya             — egy megmaradt tételnél a négy
+                                       kötelező mező (`Az ellentmondás`,
+                                       `Miért blokkol`, `Hogyan lenne helyes`,
+                                       `Állapot`) valamelyike üres vagy
+                                       placeholder maradt.
+  RC3 lezáratlan tétel                 — a riport `Státusz` mezője `PASS`,
+                                       de egy tétel `[ ]` (nyitva) maradt, vagy
+                                       az `Állapot` mezője nem futott végállapotba.
 
 Ezt a három utolsó checket korábban az `analyzer` subagent végezte, `Glob`/`Grep`
 hívások sorozatával (AG3). Egy teljes analyze-futásban ez 20–50 soros
@@ -121,6 +170,7 @@ meglévő-e egy szimbólum), és nem javít.
 
 Használat:
   analyze-gate-check.py specs/cycle-NN-<name> [--repo-root .] [--emit-slices]
+  analyze-gate-check.py specs/cycle-NN-<name> --report-only   # a hurok lezárásakor
 
 Kilépő kód: 0 = nincs BLOKKOLÓ megállapítás (javaslat és leltár lehet a stdout-on)
             1 = van Must Fix (a `## Must Fix` blokk a stdout-on, gépiesen olvasható)
@@ -131,7 +181,7 @@ import re
 import sys
 from pathlib import Path
 
-from lang_keys import fld, sec
+from lang_keys import fld, sec, st
 
 
 PLAN_ID_IN_HEADING_RE = re.compile(r"^#{2,4}\s+.*?\[(P-[A-Za-z0-9][A-Za-z0-9-]*)\]", re.MULTILINE)
@@ -1066,6 +1116,8 @@ def check_test_section_volume(spec_text, plan_text, f):
 TS_HEADING_RE = re.compile(r"^#{3,5}\s*(TS-(\d+))\s*[—–-]\s*(.+?)\s*$")
 # A fejléc DoD-hivatkozásai zárójelben: `#### TS-03 — Legacy login  (DoD-02, DoD-05)`
 TS_CONCRETE_RE = re.compile(r"`[^`]+`|\d")
+# A `Mit tesztelünk` sor tartalmi padlója (TD7): ennél rövidebb nem állítás.
+TS_PURPOSE_MIN_CHARS = 45
 
 
 def parse_ts_blocks(plan_text):
@@ -1150,6 +1202,22 @@ def check_test_scenarios(spec_text, plan_text, f):
             if f"**{fld(field_key)}:**" not in body:
                 f.add("TS2", "03", f"{b['id']}: hiányzó sor: `**{fld(field_key)}:**` (TS2)")
 
+        # T2/TD7 — a `Mit tesztelünk` sor NEM lehet a cím megismétlése: a
+        # forgatókönyv célja állításként áll ott, különben egy bukott tesztről
+        # nem eldönthető, hogy a kód romlott el vagy a teszt rossz.
+        purpose = ""
+        for line in b["lines"]:
+            m = re.match(r"^\s*\*\*" + re.escape(fld("f_what_we_test")) + r":?\*\*:?\s*(.*)$", line)
+            if m:
+                purpose = m.group(1).strip()
+                break
+        if purpose:
+            if len(purpose) < TS_PURPOSE_MIN_CHARS or _normalize_label(purpose) == _normalize_label(b["cim"]):
+                f.add("TS2", "03", f"{b['id']}: a `{fld('f_what_we_test')}` sor a címet ismétli vagy "
+                      f"töredék (`{purpose[:50]}`) — TD7: ide a viselkedés kerül ELDÖNTHETŐ "
+                      "ÁLLÍTÁSKÉNT (mit bizonyít a forgatókönyv), és az elfogadási feltétel, "
+                      "amit igazol. A téma megnevezése (\u201ekonkurencia-teszt\u201d) nem cél")
+
         # T4 — placeholder
         for m in KO1_PLACEHOLDER_RE.finditer(body):
             f.add("TS4", "03", f"{b['id']}: placeholder áll konkrét érték helyett: "
@@ -1189,6 +1257,482 @@ def check_test_scenarios(spec_text, plan_text, f):
     valid = covered & known_dods if known_dods else covered
     f.note("TESZT-FORGATÓKÖNYV", f"{len(blocks)} `TS-NN` blokk, összesen {steps} lépés; "
            f"lefedett DoD: {len(valid)}/{len(known_dods) or '?'}")
+
+
+# ── WY1 — a tervezett módosítás CÉLJA ────────────────────────────────────────
+# Miért kell: a `Tervezett módosítások` eddig azt írta le, MI változik. Hogy MIT
+# akarunk elérni és MIÉRT, az csak a spec-ben állt — az implementáló, a reviewer
+# és a 07 hurok fixere viszont a plan-ből dolgozik. Cél nélkül egy eltérő, de
+# helyes megoldásról nem eldönthető, hogy jó-e, és nem eldönthető, mikor van kész
+# a változtatás. A cél a spec-ből KÖVETKEZIK (a SC1 tükre): ugyanaz a `DoD-NN`,
+# ami ehhez a `[P-…]`-hoz a `Fordított lefedettség` táblában áll.
+
+WY1_MIN_CHARS = 60
+# Egy `**Címke:**` alakú mezősor (listajel is állhat előtte).
+BOLD_LABEL_RE = re.compile(r"^\s*[-*+]?\s*\*\*\s*([^*]+?)\s*:?\s*\*\*:?\s*(.*)$", re.MULTILINE)
+
+
+def _pid_sections(plan_text, section_key):
+    """Az adott szekció `[P-…]` azonosítót viselő alszekciói → [(id, cím, törzs)]."""
+    body = section_body(plan_text, sec(section_key))
+    out, cur = [], None
+    for line in body.splitlines():
+        m = HEADING_RE.match(line)
+        if m:
+            pid = PLAN_ID_TOKEN_RE.search(m.group(2))
+            cur = {"id": pid.group(1), "cim": m.group(2), "lines": []} if pid else None
+            if cur:
+                out.append(cur)
+            continue
+        if cur is not None:
+            cur["lines"].append(line)
+    return out
+
+
+def check_planned_change_purpose(plan_text, f):
+    """WY1 — minden `[P-…]` bejegyzés megmondja, mit akarunk elérni és miért."""
+    body = section_body(plan_text, sec("planned_changes"))
+    if not body.strip():
+        f.add("WY1", "03", f"a `plan.md`-ból hiányzik a kötelező `{sec('planned_changes')}` szekció "
+              "(WY1) — a 04 kizárólag ennek a bejegyzéseiből ír taskot, tehát ami nincs itt, "
+              "az nem valósul meg. A szekció más néven, saját szerkezetben nem pótolható")
+        return
+    entries = _pid_sections(plan_text, "planned_changes")
+    if not entries:
+        f.add("WY1", "03", f"a `{sec('planned_changes')}` szekcióban nincs egyetlen `[P-…]` "
+              "azonosítót viselő bejegyzés sem (WY1/PID1) — a tasks.md ezekre hivatkozik, "
+              "és a lefedettségi lánc ezeken fut")
+        return
+    # A mezőnevet SZAVANKÉNT illesztjük, nem szó szerint: a valós planekben a
+    # címke gyakran díszített („Cél és üzleti indoklás (miért csináljuk)"), és
+    # emiatt egy szó szerinti egyezés hamis hiányt jelentene.
+    want = [w for w in re.findall(r"\w+", fld("f_purpose").lower(), re.UNICODE) if len(w) >= 3]
+    for e in entries:
+        found = None
+        for i, line in enumerate(e["lines"]):
+            m = BOLD_LABEL_RE.match(line)
+            if m and all(w in m.group(1).lower() for w in want):
+                rest = m.group(2).strip()
+                # A mező tartalma a következő sorokban is folytatódhat (behúzott bekezdés).
+                for nxt in e["lines"][i + 1:]:
+                    if not nxt.strip() or HEADING_RE.match(nxt) or re.match(r"^\s*[-*+]?\s*\*\*", nxt):
+                        break
+                    rest += " " + nxt.strip()
+                found = rest
+                break
+        if found is None:
+            f.add("WY1", "03", f"a(z) `[{e['id']}]` bejegyzésből hiányzik a "
+                  f"`**{fld('f_purpose')}:**` sor (WY1) — a plan azt is megmondja, MIT akarunk "
+                  "elérni (a változás UTÁNI viselkedés) és MIÉRT (a megszüntetett hiányosság), "
+                  "a spec-forrás megnevezésével (`DoD-NN`). A módosítás megismétlése nem cél")
+        elif len(found) < WY1_MIN_CHARS:
+            f.add("WY1", "03", f"a(z) `[{e['id']}]` bejegyzés `{fld('f_purpose')}` sora egy "
+                  f"töredék (`{found[:50]}`) — WY1: a viselkedés, ami a változás UTÁN igaz lesz, "
+                  "PLUSZ a baj, amit megszüntet, PLUSZ a spec-forrás")
+
+
+# ── TS7 — spec-teszteset → `TS-NN` (a szerkezet-másolás ellen) ───────────────
+# Miért kell: egy éles ciklusban a plan a spec teszt-szekciójának SAJÁT
+# címsor-szerkezetét hozta át (`Teszteset 0..7`, „REST szekvencia", „Verifikáció"
+# felsorolással), a `Teszt-forgatókönyvek` szekció pedig létre sem jött. A TS1
+# ezt megfogja — de csak akkor, ha egyetlen `TS-NN` sincs. Ha a fázis ír néhány
+# `TS-NN` blokkot ÉS mellette megtartja a spec prózáját, a lefedettségi rés
+# láthatatlan marad: a `Spec-lefedettség` tábla `TC-…` azonosítókra mutat, amik
+# csak tábla-sorok, nem végrehajtható forgatókönyvek.
+
+TS_REF_RE = re.compile(r"\bTS-(\d+)\b")
+# Indoklás, ami miatt egy spec-esethez nem tartozik forgatókönyv (hu + en).
+TS7_EXEMPT_WORDS = (
+    "nem tesztelhető", "nem automatizálható", "nem automatizalhato", "manuális", "manualis",
+    "kézi", "kezi", "not testable", "cannot be tested", "cannot be automated",
+    "not automatable", "manual", "n/a",
+)
+
+
+def check_spec_coverage_scenarios(plan_text, f):
+    """TS7 — a `Spec-lefedettség` tábla minden sora megnevez egy `TS-NN`-t."""
+    blocks = parse_ts_blocks(plan_text)
+    if not blocks:
+        return  # a TS1 már megállapította, hogy egyetlen forgatókönyv sincs
+    known = {b["num"] for b in blocks}
+    rows = table_rows(plan_text, sec("spec_coverage"))
+    for row in rows:
+        if len(row) < 2:
+            continue
+        source, cell = row[0], row[1]
+        refs = [int(n) for n in TS_REF_RE.findall(cell)]
+        if refs:
+            for n in refs:
+                if n not in known:
+                    f.add("TS7", "03", f"a `{sec('spec_coverage')}` tábla `{source[:50]}` sora a nem "
+                          f"létező `TS-{n:02d}` forgatókönyvre hivatkozik (TS7)")
+            continue
+        low = cell.lower()
+        if any(w in low for w in TS7_EXEMPT_WORDS):
+            f.note("TESZT-LEFEDETTSÉG", f"`{source[:50]}`: nincs `TS-NN`, indoklással — `{cell[:60]}`")
+            continue
+        f.add("TS7", "03", f"a `{sec('spec_coverage')}` tábla `{source[:50]}` sora egyetlen "
+              f"`TS-NN` forgatókönyvet sem nevez meg (TS7) — a `TC-…` azonosító csak egy tábla-sor, "
+              f"a `TS-NN` a végrehajtható forgatókönyv. Konvertáld a spec esetét `TS-NN` blokká a "
+              f"`{sec('plan_test_scenarios')}` szekcióban, vagy írd be a cellába, miért nem "
+              "tesztelhető ebben a ciklusban")
+
+
+# ── TA1 — teszt-artefaktum adatlap ──────────────────────────────────────────
+# Miért kell: a tesztfájl megtervezése nem ér véget a tesztesetek felsorolásával.
+# Ha nincs kimondva, milyen kerettel készül, milyen PARANCCSAL futtatható
+# önmagában, milyen fixture/mock/tesztadat kell hozzá (és hogy az új fájlként
+# szerepel-e a Tervezett módosításokban), és melyik teszt-függvény melyik esetet
+# fedi, akkor az implementáló találgat: a `[CHECK]` task más állományt futtat,
+# mint a terv, vagy a teszt egyedül nem futtatható.
+
+TA1_HEADING_RE = re.compile(r"^#{3,5}\s+.*?`([^`]+\.[A-Za-z0-9]{1,6})`")
+TA1_TEST_SECTIONS = ("unit_tests", "integration_tests", "e2e_tests")
+TA1_FIELDS = ("f_what_it_checks", "f_test_run", "f_test_fixtures", "f_test_cases")
+
+
+def _check_tc_table_header(block, f):
+    """TD7 — a teszteset-tábla fejlécében ott a `Mit ellenőriz` oszlop."""
+    label = fld("f_what_it_checks").lower()
+    for line in block["lines"]:
+        m = TABLE_ROW_RE.match(line)
+        if not m or SEPARATOR_ROW_RE.match(line):
+            continue
+        cells = [c.lower() for c in split_cells(m.group(1))]
+        if not any("tc-id" in c for c in cells):
+            continue  # nem teszteset-tábla fejléce
+        if not any(label in c for c in cells):
+            f.add("TA1", "03", f"a(z) `{block['path']}` teszteset-táblájából hiányzik a "
+                  f"`{fld('f_what_it_checks')}` oszlop (TD7) — minden esetnél ki kell mondani, "
+                  "milyen viselkedést ellenőriz (állításként, a `DoD-NN`-nel), nem csak a "
+                  "bemenetet és az elvárt kimenetet")
+        return
+
+
+def check_test_artifact_datasheet(plan_text, f):
+    """TA1 — minden tesztfájl-fejléc alatt ott az adatlap három sora."""
+    for key in TA1_TEST_SECTIONS:
+        body = section_body(plan_text, sec(key))
+        if not body.strip():
+            continue
+        cur, blocks = None, []
+        for line in body.splitlines():
+            m = TA1_HEADING_RE.match(line)
+            if m:
+                cur = {"path": m.group(1), "lines": []}
+                blocks.append(cur)
+                continue
+            if HEADING_RE.match(line):
+                cur = None
+                continue
+            if cur is not None:
+                cur["lines"].append(line)
+        for b in blocks:
+            text = "\n".join(b["lines"])
+            labels = [m.group(1).lower() for m in BOLD_LABEL_RE.finditer(text)]
+            missing = []
+            for k in TA1_FIELDS:
+                want_k = [w for w in re.findall(r"\w+", fld(k).lower(), re.UNICODE) if len(w) >= 3]
+                if not any(all(w in lab for w in want_k) for lab in labels):
+                    missing.append(fld(k))
+            _check_tc_table_header(b, f)
+            if missing:
+                f.add("TA1", "03", f"a(z) `{b['path']}` teszt-artefaktum adatlapjából hiányzik: "
+                      + ", ".join(f"`**{name}:**`" for name in missing)
+                      + " (TA1) — a keret és az EGY fájlra szűkített, szó szerint futtatható "
+                        "parancs, a fixture/mock/tesztadat (útvonallal; ami új, az a "
+                      f"`{sec('planned_changes')}`-ban is), és a teszt-függvény → `TC-ID`/`TS-NN` "
+                        "leképezés nélkül a tesztet nem lehet a terv alapján megírni és lefuttatni")
+
+
+# ── TI1/TI2/TX1 — teszt-azonosítók: a plan és a tasks közös névtere ──────────
+# Miért kell: a `tasks.md` eddig CSAK a `[P-…]` terv-szekciókra hivatkozott, a
+# tesztesetekre semmi — így egy „futtasd a unit teszteket" sorból nem derült ki,
+# MELYIK plan-teszteset futott le, és egy bukásnál nem volt per-teszt bizonyíték.
+# A plan két azonosító-családot ad (`TS-NN` forgatókönyv, `TC-NN` teszteset), a
+# task pedig a `— test [TC-01]` jelöléssel hivatkozik rájuk. A `TX1` azt köti ki,
+# hogy egy futtató `[CHECK]` pontosan EGY azonosítót futtasson: a pipa így
+# azonosítóhoz kötött állítás lesz, nem gyűjtőnyugta.
+
+TC_ID_RE = re.compile(r"\bTC-(\d+)\b")
+TC_LOOSE_RE = re.compile(r"\bTC-([A-Za-z][A-Za-z0-9]*)-(\d+)\b")
+TASK_TEST_REF_RE = re.compile(r"[—-]\s*test\s*\[([^\]]+)\]", re.IGNORECASE)
+TEST_ID_RE = re.compile(r"\b(T[SC]-\d+)\b")
+TEST_SECTION_KEYS = ("unit_tests", "integration_tests", "e2e_tests")
+
+
+def plan_test_ids(plan_text):
+    """A plan teszt-azonosítói: `TS-NN` (forgatókönyvek) + `TC-NN` (teszt-táblák)."""
+    ts = [b["id"] for b in parse_ts_blocks(plan_text)]
+    tc_nums = []
+    for key in TEST_SECTION_KEYS:
+        body = section_body(plan_text, sec(key))
+        tc_nums += [int(n) for n in TC_ID_RE.findall(body)]
+    return ts, sorted(set(tc_nums))
+
+
+def check_test_ids(plan_text, f):
+    """TI1 — a `TC-NN` azonosítók szigorú alakúak, egyediek és hézagmentesek."""
+    loose = set()
+    for key in TEST_SECTION_KEYS:
+        body = section_body(plan_text, sec(key))
+        for m in TC_LOOSE_RE.finditer(body):
+            loose.add(m.group(0))
+    for bad in sorted(loose):
+        f.add("TI1", "03", f"a(z) `{bad}` teszt-azonosító nem a kötelező `TC-NN` alakot viseli "
+              "(TI1) — a ciklusban EGY folytonos `TC-01`, `TC-02`, … számsor él, modul-tagolás "
+              "nélkül: a `tasks.md` és a `07` naplója erre hivatkozik")
+    _, tc = plan_test_ids(plan_text)
+    if tc:
+        missing = [n for n in range(1, max(tc) + 1) if n not in tc]
+        if missing:
+            f.add("TI1", "03", "hézag a `TC-NN` sorszámozásban: hiányzik "
+                  + ", ".join(f"TC-{n:02d}" for n in missing) + " (TI1)")
+
+
+def check_task_test_refs(plan_text, tasks_text, f):
+    """TI2/TX1 — a task teszt-hivatkozásai léteznek, és egy `[CHECK]` egy tesztet futtat."""
+    ts_ids, tc_nums = plan_test_ids(plan_text)
+    if not ts_ids and not tc_nums:
+        return
+    known = set(ts_ids) | {f"TC-{n:02d}" for n in tc_nums} | {f"TC-{n}" for n in tc_nums}
+    for lineno, tid, line in task_lines(tasks_text):
+        m = TASK_TEST_REF_RE.search(line)
+        if not m:
+            continue
+        refs = TEST_ID_RE.findall(m.group(1))
+        if not refs:
+            f.add("TI2", "04", f"{tid}: a `test [...]` hivatkozás nem tartalmaz érvényes "
+                  f"azonosítót (`{m.group(1)[:40]}`) — a forma: `test [TC-01]` vagy `test [TS-03]`")
+            continue
+        for r in refs:
+            norm = r.upper()
+            alt = f"{norm[:3]}{int(norm[3:]):02d}" if norm[3:].isdigit() else norm
+            if norm not in known and alt not in known:
+                f.add("TI2", "04", f"{tid} a nem létező `{r}` teszt-azonosítóra hivatkozik (TI2) — "
+                      "a plan `Teszt-forgatókönyvek` szekciójában és a teszt-tábláiban ilyen "
+                      "azonosító nincs. Elgépelés, vagy a plan-t kell kiegészíteni")
+        if "[CHECK]" in line and len(set(refs)) > 1:
+            f.add("TX1", "04", f"{tid} egyetlen `[CHECK]`-ben {len(set(refs))} tesztet futtat "
+                  f"({', '.join(sorted(set(refs)))}) — TX1: minden futtatandó teszt KÜLÖN "
+                  "checkbox. Így egy bukásnál nem derül ki, melyik teszt bukott, és a pipa nem "
+                  "azonosítóhoz kötött állítás. Bontsd külön sorokra, teszt-szűrős paranccsal "
+                  "(`-t \"<név>\"`, `-k <minta>`)")
+
+
+# ── GA1 — kapu-bélyeg a lezárt planben (javaslat) ────────────────────────────
+# Miért kell: a `Task írásra kész` státuszt a 03 SAJÁT MAGÁNAK írja be. Egy éles
+# ciklusban a plan ezzel a státusszal állt, miközben hét blokkoló megállapítás
+# volt benne — a kaput nem futtatta le senki. A bélyeg nem véd a hamisítás
+# ellen (a valódi védelem a 04 belépő kapuja, EG1), de láthatóvá teszi a
+# kihagyást az embernek is.
+
+
+def check_gate_stamp(plan_text, f):
+    """GA1 — lezárt plan → van-e nyoma a mechanikus kapu futásának."""
+    head = "\n".join(plan_text.splitlines()[:20])
+    status_m = re.search(r"\*\*" + re.escape(fld("f_status")) + r":\*\*\s*(.+)", head)
+    if not status_m or st("ready_for_tasks").lower() not in status_m.group(1).lower():
+        return
+    if re.search(r"\*\*" + re.escape(fld("f_gate")) + r"[^*:]*:?\*\*", head):
+        return
+    f.suggest("GA1", "03", f"a `plan.md` `{st('ready_for_tasks')}` státuszon áll, de a fejlécében "
+              f"nincs `**{fld('f_gate')}:**` bélyeg (GA1) — a státuszt a 03 saját magának írja be, "
+              "a kapu tényleges lefutását ez a sor mutatja. A lezáráskor futtatott "
+              "`analyze-gate-check --plan-only` összefoglaló sorát kell ide írni")
+
+
+# ── TT1 — teszt-lefedettség: `TS-NN` / kategória → task ──────────────────────
+# Miért kell: a lefedettségi lánc eddig `DoD-NN → [P-…] → task` volt — a tesztek
+# NEM voltak benne. Egy éles ciklusban a plan nyolc tesztesetet írt le, a tasks
+# lista pedig egyetlen `[RED]` taskba mosta össze őket („tesztfájl megírása 8
+# tesztesettel"), a `[CHECK]`-ek meg a teljes suite-ot futtatták. Formailag
+# minden lefedett volt, gyakorlatilag egyetlen forgatókönyvet sem lehetett
+# visszakeresni. A `Teszt-lefedettség` tábla a hiányzó láncszem.
+
+TT1_EXEMPT_WORDS = (
+    "kézi", "kezi", "manuál", "manual", "nem automatizál", "nem automatizal",
+    "07", "validate", "run table", "gépi tábla", "gepi tabla", "not automat",
+)
+
+
+def _tt1_expected(plan_text):
+    """Amit a tasks.md `Teszt-lefedettség` táblájában el kell számolni."""
+    ts_ids, tc_nums = plan_test_ids(plan_text)
+    ts = ts_ids + [f"TC-{n:02d}" for n in tc_nums]
+    cats = []
+    for row in table_rows(plan_text, sec("machine_run_table")):
+        cat = (row[0] if row else "").strip().strip("`*")
+        if cat and cat.lower() not in ("kategória", "kategoria", "category"):
+            cats.append(cat)
+    return ts, cats
+
+
+def check_test_task_coverage(plan_text, tasks_text, f):
+    """TT1 — minden `TS-NN` és minden futtatási kategória kap gazdát a tasks.md-ben."""
+    ts_ids, cats = _tt1_expected(plan_text)
+    if not ts_ids and not cats:
+        return  # a plan oldalán a TS1/TP4 már megállapította a hiányt
+    body = section_body(tasks_text, sec("test_coverage"))
+    if not body.strip():
+        f.add("TT1", "04", f"a `tasks.md`-ból hiányzik a kötelező `{sec('test_coverage')}` "
+              f"szekció (TT1) — a plan {len(ts_ids)} `TS-NN` forgatókönyvéhez és "
+              f"{len(cats)} futtatási kategóriájához meg kell nevezni, melyik task hozza létre "
+              "a teszt-artefaktumot és melyik futtatja (vagy indokolni, miért nincs ilyen). "
+              "A `Plan-lefedettség` tábla ezt NEM fedi le: az a `[P-…]` szekciókat számolja el, "
+              "a teszteseteket nem")
+        return
+    rows = table_rows(tasks_text, sec("test_coverage"))
+    first_cells = [(row[0] if row else "") for row in rows]
+    joined = "\n".join(first_cells).lower()
+    for tid in ts_ids:
+        if tid.lower() not in joined:
+            f.add("TT1", "04", f"a `{sec('test_coverage')}` táblából hiányzik a `{tid}` "
+                  "forgatókönyv sora (TT1) — melyik task írja meg a teszt-artefaktumát, és "
+                  "melyik futtatja? Ha egyik sem (kézi ellenőrzés, vagy a 07 futtatja a gépi "
+                  "táblából), az is sor, indoklással")
+    for cat in cats:
+        if cat.lower() not in joined:
+            f.add("TT1", "04", f"a `{sec('test_coverage')}` táblából hiányzik a gépi futtatási "
+                  f"tábla `{cat}` kategóriájának sora (TT1)")
+    known_tasks = {tid for _, tid, _ in task_lines(tasks_text)}
+    task_ref_re = re.compile(r"\b(T(?:REG)?\d+)\b")
+    for row in rows:
+        if len(row) < 3:
+            continue
+        name = row[0].strip()
+        creator, runner = row[1].strip(), row[2].strip()
+        for ref in set(task_ref_re.findall(creator + " " + runner)):
+            if known_tasks and ref not in known_tasks:
+                f.add("TT1", "04", f"a `{sec('test_coverage')}` tábla `{name[:40]}` sora a nem "
+                      f"létező `{ref}` taskra hivatkozik (TT1) — a táblát a tasks lista LEZÁRÁSAKOR "
+                      "kell kitölteni, a tényleges task-azonosítókkal")
+        note = row[3].strip() if len(row) > 3 else ""
+        if is_empty_cell(creator) and is_empty_cell(runner):
+            if not note or not any(w in note.lower() for w in TT1_EXEMPT_WORDS):
+                f.add("TT1", "04", f"a `{sec('test_coverage')}` tábla `{name[:40]}` sorához sem "
+                      "létrehozó, sem futtató task nem tartozik, és a megjegyzés nem mondja meg, "
+                      "miért (TT1) — pl. „kézi lépés, a T018 `[OPS]` taskja\" vagy "
+                      "„`validate`-fázisú: a 07 futtatja a gépi táblából\"")
+
+
+# ── T6 — két `[CHECK]` ugyanabba a fájlba ír ─────────────────────────────────
+# Miért kell: négy csoport `[CHECK]`-je `npm test > …/implement/unit/tmp.log`
+# alakban futott — mindegyik FELÜLÍRTA az előzőt, tehát öt futásból egyetlen log
+# maradt bizonyítéknak. A `>` néma adatvesztés: a parancs zöld, a bizonyíték
+# eltűnik.
+
+REDIRECT_RE = re.compile(r"(?<!>)>(?!>)\s*([^\s`|;&]+)")
+
+
+def check_check_output_collisions(tasks_text, f):
+    """T6 — két teszt-futtató task nem irányíthat `>`-tal ugyanabba a fájlba."""
+    targets = {}
+    for lineno, tid, line in task_lines(tasks_text):
+        if "[CHECK]" not in line and "[OPS]" not in line:
+            continue
+        for m in REDIRECT_RE.finditer(line):
+            path = m.group(1).strip("`\"'")
+            if not path or path.startswith("/dev/"):
+                continue
+            targets.setdefault(path, []).append(tid)
+    for path, ids in targets.items():
+        if len(ids) > 1:
+            f.add("T6", "04", f"{', '.join(ids)} ugyanabba a fájlba ír `>`-tal (`{path}`) — "
+                  "a későbbi futás FELÜLÍRJA a korábbit, tehát a fázis végén egyetlen log marad "
+                  "bizonyítéknak. Adj kategóriánként külön fájlt (`…/unit/<modul>.log`), vagy "
+                  "használj `>>`-t, ha tényleg egy gyűjtőfájlt akarsz")
+
+
+# ── TS8 — `.http` alak a REST-forgatókönyvekhez ──────────────────────────────
+# Miért kell: a lépés-tábla `Hívás` cellája a GÉPNEK szól (egysoros, futtatható
+# `curl`), egy embernek viszont a fejlécekkel és a body-val együtt kell látnia a
+# kérést, kattintható alakban. A `bs-manual-test-plan` ezt már megköveteli
+# (MG9/MT11) — de ha a plan nem hordozza, a kézi tesztterv nem összeszerel,
+# hanem kitalál. Ugyanaz a hívás, két közönségnek.
+
+CURL_RE = re.compile(r"(?<![\w-])curl(?![\w-])")
+HTTP_FENCE_RE = re.compile(r"^\s*```+\s*http\s*$", re.IGNORECASE)
+
+
+def check_ts_http_blocks(plan_text, f):
+    """TS8 — ahol `curl` van a forgatókönyvben, ott ```http blokk is (és fordítva)."""
+    for b in parse_ts_blocks(plan_text):
+        body = "\n".join(b["lines"])
+        has_curl = CURL_RE.search(body) is not None
+        has_http = any(HTTP_FENCE_RE.match(line) for line in b["lines"])
+        if has_curl and not has_http:
+            f.add("TS8", "03", f"{b['id']}: van `curl` hívás, de nincs ```http blokk (TS8) — "
+                  "a REST-lépéseket a VSCode REST Client / IntelliJ `.http` alakjában is le kell "
+                  "írni (ugyanazok az értékek, a lépés számára hivatkozva), különben a hívás "
+                  "fejlécei és body-ja csak egysoros parancsba préselve léteznek, és a kézi "
+                  "tesztterv (`bs-manual-test-plan`) nem összeszerel, hanem kitalál")
+        if has_http and not has_curl:
+            f.add("TS8", "03", f"{b['id']}: van ```http blokk, de a lépés-tábla `Hívás` "
+                  "celláiban nincs futtatható `curl` (TS8) — a `.http` alak az embernek szól, "
+                  "a táblacella a gépnek: a kettő együtt jár")
+
+
+# ── PH1 — melyik FÁZIS futtatja a kategóriát ─────────────────────────────────
+# Miért kell: a gépi tábla eddig csak a kör TÍPUSÁT mondta meg (gyors/nehéz),
+# azt nem, hogy melyik FÁZIS futtatja. A `Fázis` oszlop ezt adja meg
+# (`implement` / `validate` / `mindkettő`; az üres cella mindkettő — a hallgatás
+# soha nem jelent kihagyást). A veszélyes eset az `implement`-only jelölés: a
+# `dod-check.py` a VALIDÁLÁSI kör bizonyítékaiból joinol, tehát ami csak a
+# 06-ban futott, arról a DoD-nak nincs bizonyítéka.
+
+PH1_IMPLEMENT_WORDS = {"implement", "implementáció", "implementacio", "06"}
+PH1_VALIDATE_WORDS = {"validate", "validálás", "validalas", "07"}
+PH1_BOTH_WORDS = {"", "—", "-", "n/a", "na", "mindkettő", "mindketto", "both", "mind", "all"}
+
+
+def _phase_set(value):
+    raw = (value or "").strip().lower().strip("`*")
+    if raw in PH1_BOTH_WORDS:
+        return {"implement", "validate"}, True
+    out = set()
+    for part in re.split(r"[,;/+ ]+", raw):
+        if not part:
+            continue
+        if part in PH1_IMPLEMENT_WORDS:
+            out.add("implement")
+        elif part in PH1_VALIDATE_WORDS:
+            out.add("validate")
+        elif part in PH1_BOTH_WORDS:
+            out |= {"implement", "validate"}
+        else:
+            return set(), False
+    return (out or {"implement", "validate"}), True
+
+
+def check_run_table_phase(plan_text, f):
+    """PH1 — a `Fázis` oszlop értékei érvényesek, és marad mit futtatni a 07-ben."""
+    rows = table_rows(plan_text, sec("machine_run_table"))
+    if not rows:
+        return
+    validate_rows = []
+    for row in rows:
+        cat = row[0] if row else "(névtelen)"
+        cell = row[8] if len(row) > 8 else ""
+        phases, ok = _phase_set(cell)
+        if not ok:
+            f.add("PH1", "03", f"a gépi futtatási tábla `{cat}` sorának `{fld('f_phase')}` "
+                  f"értéke ismeretlen (`{cell[:30]}`) — a három megengedett érték: "
+                  f"`{st('phase_implement')}`, `{st('phase_validate')}`, `{st('phase_both')}` "
+                  "(az üres cella mindkettőt jelenti)")
+            continue
+        if "validate" in phases:
+            validate_rows.append(cat)
+        elif (row[1] if len(row) > 1 else "").lower().startswith("neh"):
+            f.suggest("PH1", "03", f"a `{cat}` kategória `nehéz` típusú, mégis csak a "
+                      f"`{st('phase_implement')}` fázisban fut — a nehéz teszt (E2E/regresszió) "
+                      "bizonyítéka jellemzően a validálási körbe kell")
+    if not validate_rows:
+        f.add("PH1", "03", f"a gépi futtatási tábla egyetlen kategóriája sem fut a "
+              f"`{st('phase_validate')}` fázisban (PH1) — a `07` így nem futtat egyetlen tesztet "
+              f"sem, és a `dod-check.py` a validálási kör bizonyítékaiból joinol: minden "
+              f"`DoD-NN` bizonyíték nélkül maradna. Legalább egy kategória legyen "
+              f"`{st('phase_validate')}` vagy `{st('phase_both')}`")
 
 
 # ── EV1–EV5 — teszt-cél környezet (EV) ────────────────────────────────────────
@@ -1597,6 +2141,106 @@ def emit_slices(cycle, texts):
     return written
 
 
+# ── RC1–RC3 — a riport LEZÁRÁSAKOR (--report-only) ────────────────────────────
+# Miért kell: az AR1 szabály prózában tiltja, hogy a hurok végén az
+# `analyze-report.md` a részletes „Javítandó tételek" pipálólista helyett egy
+# tömör összefoglalóvá zsugorodjon („ne írd újra nulláról"). Egy éles ciklusban
+# ez mégis megtörtént: az `analyze-task.md` teli volt konkrét, ember által
+# rögtön javítható tételekkel, a végleges riport viszont csak 4 bekezdésnyi
+# próza volt — a diagnózis elveszett. A tiltás magában nem elég, mert épp az a
+# modell ellenőrzi saját magát, akinek érdeke a tömör lezárás. Ez a réteg ezt
+# teszi gépiessé: az `analyze-task.md` minden tétele szó szerinti azonosítóval
+# visszaköszön-e a riportban, a megmaradt tételek viselik-e mind a négy
+# kötelező mezőt, és `PASS` mellett egyik sem maradt-e `[ ]` állapotban.
+
+ITEM_LINE_RE = re.compile(r"^\s*-\s*\[([ xX])\]\s+\*\*([A-Z]{1,4}-\d+)\*\*")
+STATUS_HEADER_RE = re.compile(r"\*\*" + re.escape(fld("f_status")) + r":?\*\*\s*([A-Z_]+)")
+FIELD_LINE_RE_TMPL = r"\*\*{label}:?\*\*:?\s*(.*)"
+ITEM_REQUIRED_FIELDS = ("f_contradiction", "f_why_blocks", "f_how_correct", "f_state")
+# A generikus PLACEHOLDER_ANGLE_RE csak SZÓKÖZ nélküli `<szo>` alakra illik (T5-höz
+# elég); egy kitöltetlen mező tartalma viszont gyakran több szavas sablon-szöveg
+# (`<ide jön a leírás>`), ezért itt a teljes érték `<…>`-be zártságát nézzük.
+RC_PLACEHOLDER_RE = re.compile(r"^<.*>$")
+
+
+def parse_checklist_items(text):
+    """Pipálható tételek (`- [ ] **AF-01** ...`) a szöveg TELJES egészéből —
+    a jelölt (`[x]`), az azonosító és a bullet utáni, a következő tételig vagy
+    címsorig tartó törzs. A `### Suggestions` sima felsorolása (ID nélkül) nem
+    illeszkedik, tehát természetesen kimarad."""
+    items, cur = [], None
+    for line in text.splitlines():
+        m = ITEM_LINE_RE.match(line)
+        if m:
+            if cur is not None:
+                items.append(cur)
+            cur = {"id": m.group(2), "checked": m.group(1).lower() == "x", "body": [line]}
+            continue
+        if line.startswith("#"):
+            if cur is not None:
+                items.append(cur)
+                cur = None
+            continue
+        if cur is not None:
+            cur["body"].append(line)
+    if cur is not None:
+        items.append(cur)
+    for it in items:
+        it["body"] = "\n".join(it["body"])
+    return items
+
+
+def _field_value(body, field_key):
+    label = fld(field_key)
+    m = re.search(FIELD_LINE_RE_TMPL.format(label=re.escape(label)), body)
+    return m.group(1).strip() if m else None
+
+
+def check_report_closure(report_text, task_text, f):
+    """RC1–RC3 — lásd a fenti fejléc-blokkot. `task_text` üres string, ha az
+    `analyze-task.md` nem létezik (első futásra tiszta PASS, triázs sem volt)."""
+    report_items = {it["id"]: it for it in parse_checklist_items(report_text)}
+    task_items = parse_checklist_items(task_text) if task_text else []
+
+    # RC1 — az analyze-task.md MINDEN tétele (nyitott és elvetett is) megvan-e
+    # szó szerint a riportban. Ez fogja meg az „összefoglalóvá írt riport" hibát.
+    for it in task_items:
+        if it["id"] not in report_items:
+            f.add("RC1", "05",
+                  f"az `analyze-task.md` `{it['id']}` tétele hiányzik az `analyze-report.md` "
+                  f"„{sec('items_to_fix')}\" listájából — a riportot valószínűleg összefoglalóvá "
+                  "írták át a hurok lezárásakor, a részletes, ember által olvasható diagnózis helyett "
+                  "(AR1: „ne írd újra nulláról\"). Állítsd vissza a tételt a hozzá tartozó három "
+                  "kötelező mezővel")
+
+    # RC2 — a riportban MEGMARADT tételek mind a négy kötelező mezőt viselik-e,
+    # kitöltve (nem üres, nem placeholder).
+    for it in report_items.values():
+        for key in ITEM_REQUIRED_FIELDS:
+            val = _field_value(it["body"], key)
+            if not val or RC_PLACEHOLDER_RE.match(val.strip()):
+                f.add("RC2", "05",
+                      f"analyze-report.md `{it['id']}` tétele: hiányzik vagy placeholder maradt a "
+                      f"kötelező `**{fld(key)}:**` mező — enélkül a tétel nem ember által azonnal "
+                      "érthető, javítható diagnózis, csak egy sortöredék")
+
+    # RC3 — PASS mellett egyik tétel sem maradhat nyitva ([ ]). A konkrét
+    # végállapot-SZÓ (`megoldva` / `elvetve` / `resolved` / `dismissed`) nyelvenként
+    # más — azt a `**Állapot:**` mező kitöltöttségét már az RC2 megköveteli,
+    # ide csak a checkbox-jelölés számít, hogy ne kelljen újabb, a
+    # `lang-parity-check`-kel ütköző szó-szótárt bevezetni.
+    status_m = STATUS_HEADER_RE.search(report_text)
+    status = status_m.group(1) if status_m else None
+    if status == "PASS":
+        for it in report_items.values():
+            if not it["checked"]:
+                state_val = _field_value(it["body"], "f_state") or "—"
+                f.add("RC3", "05",
+                      f"analyze-report.md `{it['id']}` tétele `PASS` mellett `[ ]` (nyitva) maradt "
+                      f"(Állapot: `{state_val}`) — PASS csak akkor adható, ha minden tétel `[x]`-re "
+                      "lezárt (AR1)")
+
+
 def main():
     _force_utf8_output()
     parser = argparse.ArgumentParser(description="Analyze mechanikus kapu (05-analyze)")
@@ -1622,12 +2266,39 @@ def main():
         help="a 05-analyze-hoz: a három szemantikai analyzer-kör bemenetének kimetszése a "
              "<ciklus>/analyze/slices/ mappába (SH1). `--plan-only` mellett nem fut.",
     )
+    parser.add_argument(
+        "--report-only",
+        action="store_true",
+        help="a hurok LEZÁRÁSAKOR (PASS/FAIL): kizárólag azt ellenőrzi, hogy az "
+             "<ciklus>/analyze/analyze-report.md megtartotta-e az <ciklus>/analyze/analyze-task.md "
+             "MINDEN tételét, a négy kötelező mezővel (RC1-RC3) — a spec/plan/tasks checkek nem futnak.",
+    )
     args = parser.parse_args()
 
     cycle = Path(args.cycle_dir)
     if not cycle.is_dir():
         print(f"HIBA: {cycle} nem létező könyvtár", file=sys.stderr)
         return 2
+
+    # `--report-only`: a hurok lezárásának őre (RC1-RC3) — lásd a `check_report_closure`
+    # fejléc-kommentjét. Önálló, minimál ág, mint a `--paths-only`: nem igényli a
+    # spec/plan/tasks hármast, csak az analyze/ almappa két riportfájlját.
+    if args.report_only:
+        report_path = cycle / "analyze" / "analyze-report.md"
+        task_path = cycle / "analyze" / "analyze-task.md"
+        if not report_path.is_file():
+            print(f"HIBA: {report_path} nem található", file=sys.stderr)
+            return 2
+        f = Findings()
+        check_report_closure(read(report_path), read(task_path) if task_path.is_file() else "", f)
+        print(f"REPORT-GATE: {len(f)} Must Fix")
+        if f.items:
+            print("\n## Must Fix")
+            for code, phase, message in f.items:
+                print(f"[{code}] (célfázis: {phase}) {message}")
+            return 1
+        print("Nincs blokkoló mechanikus megállapítás — a riport megtartotta a teljes tétel-listát.")
+        return 0
 
     spec_path, plan_path, tasks_path = cycle / "spec.md", cycle / "plan.md", cycle / "tasks.md"
 
@@ -1695,6 +2366,17 @@ def main():
     )
     check_test_section_volume(spec_text, plan_text, f)
     check_test_scenarios(spec_text, plan_text, f)
+    check_spec_coverage_scenarios(plan_text, f)
+    check_test_artifact_datasheet(plan_text, f)
+    check_ts_http_blocks(plan_text, f)
+    check_run_table_phase(plan_text, f)
+    check_gate_stamp(plan_text, f)
+    check_test_ids(plan_text, f)
+    if not args.plan_only:
+        check_test_task_coverage(plan_text, tasks_text, f)
+        check_check_output_collisions(tasks_text, f)
+        check_task_test_refs(plan_text, tasks_text, f)
+    check_planned_change_purpose(plan_text, f)
     check_target_environment(plan_text, f)
     check_judgment_candidates(plan_text, tasks_text, f)
 

@@ -9,10 +9,12 @@
 -->
 
 <!-- ANCHOR:task-formatum -->
-- [ ] T001 [RED]   <tesztfájl létrehozása / teszt megírása> — `path/to/test.ts` — plan [P-CONFIG]
+- [ ] T001 [RED]   <tesztfájl létrehozása / teszt megírása> — `path/to/test.ts` — plan [P-CONFIG] — test [TC-01, TC-02]
 - [ ] T002 [GREEN] <implementáció> — `path/to/file.ts` — plan [P-CONFIG] (betöltő modul)
 - [ ] T003 [OPS]   <nem TDD lépés: build / push / deploy / kézi konfiguráció> — parancs vagy `path/to/file` — plan [P-DEPLOY]
-- [ ] T004 [CHECK] Futtasd a teszteket / typecheck-et — plan [P-CONFIG]
+- [ ] T004 [CHECK] Futtasd: `npx tsx --test path/to/test.ts -t "<TC-01 teszt-függvény neve>"` — plan [P-CONFIG] — test [TC-01]
+- [ ] T005 [CHECK] Futtasd: `npx tsx --test path/to/test.ts -t "<TC-02 teszt-függvény neve>"` — plan [P-CONFIG] — test [TC-02]
+- [ ] T006 [CHECK] Futtasd: `npm run typecheck` — plan [P-CONFIG]
 
 <!-- ANCHOR:tasks-struktura -->
 # Cycle NN: <cím> — Tasks
@@ -30,14 +32,16 @@ _Az implementáló agent ezeket olvassa be a végrehajtás előtt._
 
 ## <Logikai csoport 1 — a plan végrehajtási sorrendje alapján> — plan [P-CONFIG], [P-REDIS]
 
-- [ ] T001 [RED]   ... — plan [P-CONFIG] (unit teszt)
+- [ ] T001 [RED]   ... — plan [P-CONFIG] (unit teszt) — test [TC-01, TC-02]
 - [ ] T002 [GREEN] ... — plan [P-CONFIG] (betöltő modul)
-- [ ] T003 [CHECK] Futtasd: `npm test -- path/to/test.ts` — plan [P-CONFIG]
+- [ ] T003 [CHECK] Futtasd: `npm test -- path/to/test.ts -t "<TC-01 neve>"` — plan [P-CONFIG] — test [TC-01]
+- [ ] T004 [CHECK] Futtasd: `npm test -- path/to/test.ts -t "<TC-02 neve>"` — plan [P-CONFIG] — test [TC-02]
 
 ## <Logikai csoport 2> — plan [P-ROUTING]
 
-- [ ] T004 ... — plan [P-ROUTING]
-- [ ] T005 [CHECK] Futtasd: `npm run typecheck` — plan [P-ROUTING]
+- [ ] T005 [RED] ... — plan [P-ROUTING] — test [TS-01]
+- [ ] T006 [CHECK] Futtasd: `pytest test/integration/cycle_NN_test.py -k ts01` — plan [P-ROUTING] — test [TS-01]
+- [ ] T007 [CHECK] Futtasd: `npm run typecheck` — plan [P-ROUTING]
 
 ## Plan-lefedettség (fordított tábla)
 
@@ -45,9 +49,22 @@ _Minden `[P-…]` ID-t viselő plan-szekció szerepel itt, a hozzá tartozó tas
 
 | Plan szekció (ID + cím) | Taskok | Csoport |
 |---|---|---|
-| `[P-CONFIG]` Konfigurációs rendszer | T001, T002, T003 | 1 |
-| `[P-ROUTING]` Dinamikus routing | T004, T005 | 2 |
+| `[P-CONFIG]` Konfigurációs rendszer | T001, T002, T003, T004 | 1 |
+| `[P-ROUTING]` Dinamikus routing | T005, T006, T007 | 2 |
 | `[P-DOCS-ONLY]` … | — (nincs task: <indok>) | — |
+
+## Teszt-lefedettség
+
+_A plan minden `TS-NN` forgatókönyve és a gépi futtatási tábla minden kategóriája szerepel itt._
+
+| Plan-teszt (`TS-NN` / `TC-NN` / kategória) | Létrehozó task | Futtató task | Megjegyzés |
+|---|---|---|---|
+| `TC-01` keyNamespace default | T001 | T003 | unit |
+| `TC-02` hiányzó `expiresAt` → hiba | T001 | T004 | unit |
+| `TS-01` Hideg indítású konkurencia | T005 | T006 | pytest, `implement` + `validate` |
+| unit (gépi tábla) | — | T003, T004 | a 07 a táblából is futtatja |
+| e2e (gépi tábla) | T005 | — | `validate`-fázisú: a 07 futtatja a táblából |
+| `TS-07` Kézi SPI-ellenőrzés | — | — | nem automatizálható: kézi `[OPS]` lépés a T018-ban |
 
 <!-- ANCHOR:desztruktiv-csoport-sablon -->
 ## Destruktív / osztott környezetet érintő taskok — jóváhagyás és rollback

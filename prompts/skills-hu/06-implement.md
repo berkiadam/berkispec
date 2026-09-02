@@ -13,6 +13,9 @@ prev: bs-analyze
 next: bs-validate
 subagents:
   - "agents/researcher.md"
+scripts:
+  - "scripts/test-substance-check.py — vacuous teszt-törzs kapu (TB1)"
+  - "scripts/report-gate-check.py — riport-fázis kapu (TR6)"
 shared:
   - "shared/parallel-cycles.md"
 ---
@@ -149,13 +152,25 @@ Döntési fa a folytatáshoz — **ebben a sorrendben**:
 7. Ne refaktorálj érintetlen kódot. Ne adj hozzá nem kért feature-t.
 
 8. **`[CHECK]` task végrehajtása:**
+   - **🔴 A parancsot SZÓ SZERINT, ÖNMAGÁBAN futtasd (CK1).** A `[CHECK]` task parancsát **pontosan úgy** add ki, ahogy a task írja — a teszt-szűrővel (`::<függvény>`, `-t "<név>"`, `-k <minta>`) együtt. **Tilos** több `[CHECK]` parancsát egy futásba vonni, a szűrőt elhagyni („futtatom az egész fájlt, az is lefedi"), vagy egy bővebb futás eredményét több taskra rávezetni. Egy `[CHECK]` = egy futás = **egy** naplósor **egy** task-azonosítóval.
+     **Miért:** a szűrő az egyetlen dolog, ami a taskot a `plan.md` tesztesetéhez (`TC-NN`/`TS-NN`) köti — enélkül a pipa nem azonosítóhoz kötött állítás (`TX1`). És ami ennél sokkal fontosabb: ha a teszt neve az implementáció közben **megváltozott**, a szűrt parancs **azonnal hibát ad**, az összevont futás viszont zölden átmegy. Egy éles ciklusban nyolc `[CHECK]` task helyett egyetlen, szűrő nélküli futás került a naplóba, három szelektor pedig már nem létező függvénynévre hivatkozott — a `tasks.md` és a kód szétcsúszása így teljesen láthatatlan maradt.
+     **Ha a parancs hibát ad, mert a szelektor nem talál semmit** (`no tests ran`, `ERROR: not found`), az **nem** futtatási hiba, amit összevonással kell megkerülni: vagy a tesztet nevezték át (akkor a `tasks.md` parancsát kell javítani, és a javítást jelezni), vagy a teszt nem készült el (akkor a `[RED]`/`[GREEN]` task nincs elvégezve).
    - Futtasd le a megadott parancsot.
    - Ha hibát jelez, javítsd a csoporton belüli előző taskokat, majd futtasd újra.
-   - Csak zöld `[CHECK]` után jelölhető kész (`- [x]`) a csoport — a `[RED]`/`[GREEN]` taskokat is csak ekkor zárd le.
+   - Csak zöld `[CHECK]` után jelölhető kész (`- [x]`) a csoport — a `[RED]`/`[GREEN]` taskokat is csak ekkor zárd le. **Ez a `[GREEN]` feltétele; a `[RED]`-é a 8/b pont bukás-bizonyítéka — a kettő nem helyettesíti egymást** (egy `[RED]` task nem lesz kész attól, hogy a csoportzáró `[CHECK]` végül zöld).
    - **🔴 Naplózd a `check-log.md`-be (TR5) — minden próbát, a bukottakat is.** A parancs kimenete a chatben él, a chat pedig `/clear` után nincs; enélkül a fázisból csak egy pipa marad, ami állítja a zöldet, de nem bizonyítja. Lásd a *`[CHECK]` futásnapló* szekciót.
    - **3 próba szabály:** Ha a `[CHECK]` háromszor egymás után hibával tért vissza, és a csoporton belüli javítási kísérletek sem vezettek eredményre — **állj meg**. Írd le, mit próbáltál, és jelezd a felhasználónak: *"[Tkkk] háromszor sikertelen volt. [Rövid összefoglalás a hibáról és a próbált megoldásokról.] Hogyan tovább?"*
    - **Portütközés:** Ha service indítása vagy teszt futtatása portütközéssel (address already in use) meghiúsul, ne állj meg. Keresd meg a következő szabad portot (`ss -tlnp | grep :<port>` vagy `lsof -i :<port>`), frissítsd átmenetileg az érintett konfigurációban (`docker-compose`, env fájl), és futtasd újra. Jelezd a felhasználónak melyik portot használtad helyette.
      > **⚠ ÁTMENETI MÓDOSÍTÁS — NE COMMITOLD:** a portütközés miatti config-/port-változtatás ideiglenes. A task commitja előtt ÁLLÍTSD VISSZA, vagy zárd ki a `git add`-ból (ne kerüljön a ciklus diffjébe). Csak a task tényleges kódváltozása commitolható.
+
+8/b. **🔴 `[RED]` task lezárása: a tesztnek BUKNIA kell (RED1).** Egy `[RED]` task nem a tesztfájl létrejöttével készül el, hanem azzal, hogy a megírt teszt **vörös** — ez a TDD-ciklus első fele, és **ez az egyetlen bizonyíték arra, hogy a teszt tényleg ellenőriz valamit**. Ezért a `[RED]` task pipálása előtt:
+   1. futtasd le a **célzott** tesztet (a plan `TA1` adatlapjának `<field:f_test_run>` parancsát, az egy fájlra/esetre szűkítve — ne a teljes suite-ot);
+   2. a futásnak **nem-nulla** kilépő kóddal, `failed > 0` eredménnyel kell zárnia;
+   3. naplózd a `check-log.md`-be **a `[RED]` task azonosítójával** és `✗` eredménnyel (a napló amúgy is minden próbát rögzít).
+
+   **Ha a teszt ELSŐ futásra zöld, a task NEM kész** — a teszt vagy nem azt ellenőrzi, amit a plan előír, vagy üres váz (`assert True`, `pass`, asszertáció nélküli törzs). Ilyenkor a tesztet kell megírni, nem a taskot lezárni. Egy zöld `[RED]` a leggyakoribb néma teszt-csalás: a suite `X passed`-et jelent, a `DoD` bizonyítékot kap, és a validálás `PASS`-ra zár anélkül, hogy bármit ellenőriztünk volna.
+
+   **Kivétel — `RED-EXEMPT`:** ha a `[RED]` task **meglévő** tesztet frissít (jellemzően a `TREGn` regressziós taskok), és a teszt a változás után is joggal zöld, akkor a `check-log.md` `## <sec:notes>` szekciójába írj egy sort: `RED-EXEMPT: <task> — <miért nem tud bukni>`. Indoklás nélkül a task nem zárható.
 
 9. **`⟂ Tkkk` jelölés:** az adott task és a hivatkozott task egymástól független — ha egyszerre elvégezhetők, hívd meg mindkét szerkesztést párhuzamosan.
    - **Példa:** ha T012 tartalmazza `⟂ T013`, akkor T012 és T013 egyszerre szerkeszthetők.
@@ -228,12 +243,13 @@ Egy törlés, átnevezés vagy szignatúra-változás óhatatlanul átgyűrűzik
 
 **Oszlopok:**
 - **Idő** — konkrét string (`YYYY-MM-DD HH:MM`). Shell-behelyettesítés platformfüggő: bash/zsh → `$(date '+%Y-%m-%d %H:%M')`, PowerShell → `(Get-Date -Format 'yyyy-MM-dd HH:mm')`. Ha nem tudod megállapítani, `—` is elfogadható; a többi oszlop a lényeg.
+- **Task** — **pontosan egy** task-azonosító (`T001`, `T030a`, `TREG1`, `TLAST1`). Intervallum (`T030a-T037`), felsorolás (`T031, T032`) és „több task egy sorban" **tilos** (CK1): a napló így nem bizonyíték, hanem összefoglaló, és a `07` kapuja nem tudja taskonként eldönteni, mi futott le.
 - **Próba** — hányadik kísérlet a 3-próba szabályból (8. pont): `1/3`, `2/3`, `3/3`. Ez teszi utólag láthatóvá, hogy egy csoport nehezen ment át.
 - **<field:f_mode>** — `normál` \| `validate-loop` (a 07 önjavító hurka — teszt- és review-javítás egyaránt). A fix-módban futtatott `[CHECK]`-eket **ugyanígy naplózod**, a megfelelő markerrel — így a javító körök is nyomot hagynak.
 - **Parancs** — a ténylegesen kiadott parancs **szó szerint**, nem a task szövegében szereplő idealizált változat.
-- **Eredmény** — `✓`/`✗` + a futtató darabszámai (`X passed / Y failed / Z skipped`), bukásnál a bukott teszt(ek) neve rövid hibaüzenettel. **Ha a parancs nem teszt** (build, lint, typecheck), a darabszám helyett a lényegi kimenet egy sora (pl. `0 errors`).
+- **Eredmény** — `✓`/`✗` + a futtató darabszámai (`X passed / Y failed / Z skipped`), bukásnál a bukott teszt(ek) neve rövid hibaüzenettel. **A `[RED]` taskoknál a `✗` nem hiba, hanem a kötelező bizonyíték (RED1)** — a 8/b pont szerint a `[RED]` task pont ettől a sortól lesz lezárható. **Ha a parancs nem teszt** (build, lint, typecheck), a darabszám helyett a lényegi kimenet egy sora (pl. `0 errors`).
 
-**<sec:notes> szekció** — ide kerül minden olyan körülmény, ami a futást befolyásolta, de nem fér a táblába: átmeneti port-csere (és hogy visszaállt-e — 8. pont portütközés-szabálya), kézzel indított/leállított konténer, kihagyott ellenőrzés és annak indoka.
+**<sec:notes> szekció** — ide kerül minden olyan körülmény, ami a futást befolyásolta, de nem fér a táblába: átmeneti port-csere (és hogy visszaállt-e — 8. pont portütközés-szabálya), kézzel indított/leállított konténer, kihagyott ellenőrzés és annak indoka. **Itt élnek a felmentő sorok is:** `RED-EXEMPT: <task> — <indok>` (a `[RED]` nem tud bukni, 8/b pont) és `CK-DEVIATION: <task> — <indok>` (a keret nem tud eset-szintűre szűrni, 8. pont). Mindkét prefix **nyelvfüggetlen literál** — a `07` kapuja szó szerint ezekre illeszt.
 
 ---
 
@@ -264,6 +280,37 @@ A README.md az implementáció része — nem utólagos dokumentáció. Akkor ke
 
 ---
 
+
+## Implement-fázisú tesztek (PH1) — a fázis végén, egyszer
+
+A `plan.md` gépi futtatási táblájának `<field:f_phase>` oszlopa megmondja, mely kategóriákat kell **ebben** a fázisban futtatni (`<status:phase_implement>` vagy `<status:phase_both>`; **a jelöletlen sor is ide tartozik** — a hallgatás nem jelent kihagyást). Ez nem a taskonkénti `[CHECK]` helyett van: a `[CHECK]` a csoport zöldjét igazolja, ez pedig a **fázis záró állapotát**, gépi darabszámokkal és bizonyítékkal. Miután minden task `[x]`, de a státuszváltás ELŐTT, **egyszer**:
+
+```bash
+python3 <platform-scripts-mappa>/run-tests.py \
+  specs/cycle-NN-<cycle-name>/plan.md \
+  --round-dir specs/cycle-NN-<cycle-name>/test-report/implement \
+  --phase <status:phase_implement>
+```
+
+- **`exit 0`** → a kimenet kategóriánként hozza a kiadott parancsot és a `X passed / Y failed / Z skipped` darabszámokat; a bizonyíték a fázis-mappába kerül, és a záró committal megy be.
+- **`exit 1`** → van bukott kategória: ez **ugyanaz a 3-próba szabály**, mint a `[CHECK]`-nél — javítsd a bukást, futtasd újra, és a naplózás a `check-log.md`-be megy. Háromszori bukás után állj meg és kérdezz.
+- **`exit 2`** → a plan-ben nincs gépi tábla (régi ciklus): ez nem a te hibád és nem megállás — jelezd egy sorban a fázis záró üzenetében, hogy a `03` táblája hiányzik.
+- **`MEGJEGYZÉS (PH1)` sor „nincs mit futtatni"** → a tábla minden sora `<status:phase_validate>`-only. Menj tovább.
+
+> **Ez nem új megállási pont (IM1).** A futtatás a fázis lezárásának része, ugyanabban a körben — a `[CHECK]`-ekkel ellentétben taskonként **nem** fut.
+
+## Teszt-tartalom kapu (TB1) — a fázis lezárása előtt
+
+Minden task `[x]`, de a státuszváltás **előtt** futtasd le a teszt-tartalom kaput. A plan `TA1` adatlapjaiban felsorolt tesztfájlokat vizsgálja: van-e köztük **üres váz** (`assert True`, `pass`, asszertáció nélküli törzs).
+
+```bash
+python3 <platform-scripts-mappa>/test-substance-check.py specs/cycle-NN-<cycle-name>
+```
+
+- **`exit 0`** → mehet a *Riport-fázis* és a státuszváltás;
+- **`exit 1`** → **a fázis nem zárható.** A felsorolt teszt-függvényeket **meg kell írni**: ez nem „a teszt majd a 07-ben megíródik" — a `[RED]` task **terméke** a teszt, és üres váz esetén a task nincs elvégezve (RED1). A javítás után futtasd újra a task `[CHECK]`-jét (szó szerint, szűrővel — CK1), naplózz, és csak utána zárj.
+
+> **Miért gépi kapu ez, és nem checklist-sor:** egy üres váz azonnal zöld, tehát a `[CHECK]` számlálója, a `DoD` bizonyítéka és a validálás `PASS`-a **mind teljesíthető** anélkül, hogy bármit ellenőriztünk volna. Az implementálónak érdeke a pipa (`7/j`) — ezért nem az ő ítéletére van bízva.
 
 ## Riport-fázis (TR6) — `test-report/implement/`
 
@@ -299,7 +346,7 @@ python3 <platform-scripts-mappa>/report-gate-check.py \
           specs/cycle-NN-<cycle-name>/test-report/implement/ \
     && git commit -m "cycle-NN: 06-implement - kész, validálásra kész"
   ```
-  **Ellenőrzés a státuszváltás előtt:** lefutott a *Riport-fázis (TR6)* szekció (a `--phases` lekérdezés, és ha az `implement` riport-fázis, a kapu `exit 0`-val); a `check-log.md` létezik, és minden csoportzáró `[CHECK]`-hez tartozik benne legalább egy sor. Ha egy csoport `[x]`, de a naplóban nincs hozzá bejegyzés, a bizonyíték hiányzik — pótold a naplósort a tényleges futtatás alapján (ne emlékezetből: ha nem tudod, futtasd újra a `[CHECK]`-et).
+  **Ellenőrzés a státuszváltás előtt:** lefutott a *Teszt-tartalom kapu (TB1)* szekció (`exit 0`) és a *Riport-fázis (TR6)* szekció (a `--phases` lekérdezés, és ha az `implement` riport-fázis, a kapu `exit 0`-val); a `check-log.md` létezik, és minden csoportzáró `[CHECK]`-hez tartozik benne legalább egy sor. Ha egy csoport `[x]`, de a naplóban nincs hozzá bejegyzés, a bizonyíték hiányzik — pótold a naplósort a tényleges futtatás alapján (ne emlékezetből: ha nem tudod, futtasd újra a `[CHECK]`-et).
 
 Ha a státusz `<status:ready_for_validate>`, állj meg. Jelezd a felhasználónak a következő lépést és a fázis indító parancsát, például:
 <!-- INCLUDE:lang/06-implement.md#zaro-uzenet -->

@@ -102,7 +102,7 @@ The **project-specific** paths of level 3 are read by the doc-sync from the **`#
 |---|---|---|
 | `docs-generated/README.md` | The **index/manifest** of the folder (a one-line description per file, DS21) | the actual file list of the `docs-generated/` folder |
 | `docs-generated/system-overview.md` | An as-built operational overview (capabilities/flows, sequences, state model, [conditional] endpoint inventory) | every user/business flow and state of the system |
-| `docs-generated/architecture.md` | "How it is built/runs" — components, build, deployment, ops | the structure and the operation of the system |
+| `docs-generated/architecture.md` | "How it is built/runs" — components, build, deployment, ops, **technical contracts** (config fields, log/event schema, error-code table — verbatim, DS23) **and environment coordinates** (URL/port/test user, DS25) | the structure and the operation of the system |
 | `docs-generated/CHANGELOG.md` | A detailed, incremental change log per cycle (DS15) | the behavior/document change of every closed cycle |
 | `docs-generated/design-drift.md` | The deviations of the realized system from the HLD/LLD intent (DS20) | the design ↔ as-built deviations + "<sec:closed_deviations>" |
 | _(project-specific extra documents)_ | found by the folder walk; the header scope decides whether it is affected | declared by the own header of the file |
@@ -547,7 +547,9 @@ Run `ds22-gate-check.py` on the `docs-generated/` folder. The installer copies i
 python3 <platform-scripts-mappa>/ds22-gate-check.py docs-generated/ \
   --rename <old-name>=<new-name> \
   --marker cycle-NN \
-  --changed-file <the name of the file actually modified, repeatable>
+  --changed-file <the name of the file actually modified, repeatable> \
+  --spec-file specs/cycle-NN-<cycle-name>/spec.md \
+  --plan-file specs/cycle-NN-<cycle-name>/plan.md
 ```
 
 - **`--rename`**: the old→new name pairs come from the **DECLARED** renames of the cycle (the roadmap/`spec.md`; e.g. the name of cycle-16 is literally `rename-init-cache-to-init-hash` → `init-cache=init-hash`) — **NOT from guessing at the diff** (DS24b). If a rename is not declared, there is **no automatic inference** — you do not give a `--rename` for it. The script automatically skips the historical sections (`CHANGELOG.md` in its entirety, the "Closed deviations" section of `design-drift.md`).
@@ -558,6 +560,12 @@ The script fully covers 3 of the 4 original checks (a hard PASS/FAIL):
 1. A rename leftover (based on the `--rename` above).
 3. Folder-index set equality (DS21) — the actual file list of `docs-generated/` **==** the entries of `README.md`.
 4. The coverage-marker bump (DS17) — based on the `--changed-file` above.
+
+**5/6. Technical-contract and environment preservation (DS23/DS25).** The same failure pattern as KX3 in the spec→plan handoff, just in the spec/plan → `docs-generated` direction: the `doc-sync-planner`'s "surgical patch" principle (do not rewrite, only the changing section) drifts into summarizing when nothing forces verbatim transfer — a worked-out config table, log/event JSON schema, or error-code table in the spec quietly becomes a **silent loss**, because the bootstrap/reconciliation writes a one-sentence summary in its place instead. The plan's `Environment coordinates` (KO1) table — URLs, ports, test users — gets lost the same way, even though it needs a designated home somewhere in `docs-generated/`, or the docs alone are not enough to run/reach the system locally. With `--spec-file`/`--plan-file`, the script:
+- **DS23** — breaks the spec.md's worked-out technical-contract blocks (YAML/JSON config, log/event schema, error-code table) into anchors (the same technique as `V1` in `analyze-gate-check.py`), and checks whether they landed **anywhere** in `docs-generated/` — not necessarily one single file, because the right target (`architecture.md` or a component-specific doc, e.g. `redis-usage.md`) is a decision you make in the plan.
+- **DS25** — looks up every non-secret value of the plan's `Environment coordinates` table (URL, port, path, dev test user — allowed per TC5) in `docs-generated/`; the script **skips** password/secret/token-like rows (those must point to a pointer, not the raw value).
+
+**On failure the remedy is the same as for every Layer 1 check:** the missing contract/coordinate becomes a plan item in `doc-sync-plan.md` (typically into `architecture.md`, for a technical contract), the main agent inserts it, then the gate reruns.
 
 **Point 2** (did every diagram from the source come over — DS7) is only helped by the script with an informative block count; the actual inventory → target pairing (does every source diagram have a pair in the output, a binary/`.drawio` → a link + a PNG) **has to be decided by you** — this is the only point of Layer 1 that requires a real (though simple) reconciliation judgement, not a pure set operation. (The numbering deliberately follows the original 1–4 list above, point 2 is left out of the script.)
 

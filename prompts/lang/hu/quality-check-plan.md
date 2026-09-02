@@ -12,6 +12,11 @@
 [ ] 1. A `Spec-lefedettség` tábla kitöltve: a spec `Teszt specifikáció` MINDEN esete
        és MINDEN `DoD-NN` pontja legalább egy plan-tesztesetre képződik le (vagy
        indoklással szerepel). Nincs kihagyott sor.
+[ ] 1/b. WY1 — CÉL MINDEN BEJEGYZÉSHEZ: a `Tervezett módosítások` MINDEN `[P-…]`
+       szekciója visel `**<field:f_purpose>:**` sort, amely a változás UTÁNI
+       viselkedést és a megszüntetett bajt mondja ki, és megnevezi a spec-forrást
+       (`DoD-NN` vagy követelmény). Nincs olyan bejegyzés, ahol a cél a módosítás
+       megismétlése vagy üres általánosság.
 [ ] 2. A `specs/test-conventions.md` minden érintett receptjét (RXX/IXX) FIZIKAILAG
        bemásoltam (parancsok, URL-ek, payloadok, credential-pointerek) — nem csak
        hivatkozom rájuk. A plan a test-conventions.md nélkül is végrehajtható.
@@ -19,6 +24,34 @@
        teljes végpont · fejlécek (az Authorization TÍPUSÁVAL) · konkrét request body ·
        elvárt HTTP státusz · kulcs válasz-mezők. Browser E2E-nél: interakció +
        hálózati hívás + látható eredmény.
+[ ] 3/b. TS7 — SPEC-TESZTESET → `TS-NN`: a spec MINDEN tesztesete önálló `TS-NN`
+       blokká konvertálódott a `Teszt-forgatókönyvek` szekcióban, és a
+       `Spec-lefedettség` tábla minden sora megnevez legalább egy `TS-NN`-t
+       (vagy a nem tesztelhető eset indoklását). A spec teszt-szekciójának
+       címsor-szerkezete NEM került át párhuzamos, saját nevű szekcióként.
+[ ] 3/c. TA1 — TESZT-ARTEFAKTUM ADATLAP: minden `#### <tesztfájl path>` fejléc alatt
+       ott a `<field:f_what_it_checks>` (mit ellenőriz a fájl — állításként, a
+       `DoD-NN`-nel), a `Futtatás` (keret + az egy fájlra szűkített, szó szerint
+       futtatható parancs), a `Fixture-ök és tesztadat` (útvonallal és
+       tartalommal — az új fájlok a `Tervezett módosítások`-ban is) és a
+       `Teszt-esetek` (teszt-függvény neve → `TC-ID` / `TS-NN`) sor.
+[ ] 3/d. TD7 — MINDEN TESZTESET MEGMONDJA, MIT ELLENŐRIZ: a `TS-NN` blokkok
+       `<field:f_what_we_test>` sora, a unit-táblák `<field:f_what_it_checks>`
+       oszlopa és minden számozott integrációs/E2E flow a viselkedést ÁLLÍTÁSKÉNT
+       mondja ki, a `DoD-NN`-nel — a cím megismétlése („konkurencia-teszt") nem
+       cél.
+[ ] 3/d/b. TI1 — TESZT-AZONOSÍTÓK: a forgatókönyvek `TS-01`-től, a teszt-tábla
+       esetei `TC-01`-től futnak, ciklus-szinten folytonosan, hézag nélkül; nincs
+       `TC-<modul>-01` alakú, fájlonként újrakezdett számozás. A `tasks.md` és a
+       07 naplója ezekre hivatkozik.
+[ ] 3/e. TS8 — `.http` ALAK: minden REST-lépést tartalmazó `TS-NN` blokkban van
+       `.http` kódblokk is, a `curl`-lel azonos értékekkel, teljes fejlécekkel és
+       body-val (a kézi tesztterv ebből szerel össze).
+[ ] 3/f. PH1 — FUTTATÁSI FÁZIS: a gépi futtatási tábla `<field:f_phase>` oszlopa
+       minden sorban érvényes érték (`<status:phase_implement>` /
+       `<status:phase_validate>` / `<status:phase_both>`; az üres cella
+       mindkettő), és legalább egy kategória fut a `<status:phase_validate>`
+       fázisban. `DoD-NN`-t bizonyító teszt nincs `<status:phase_implement>`-only.
 [ ] 4. Minden hibaághoz szerepel a HTTP státusz, az errorCode (ahol a spec
        hibamátrixa definiálja) és a response body mintája.
 [ ] 5. Nincs a teszt-szekcióban hivatkozás a lépések HELYÉN: „a cycle-XX mintájára",

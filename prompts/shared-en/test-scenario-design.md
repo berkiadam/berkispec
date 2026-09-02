@@ -1,7 +1,7 @@
 <!-- Source note: this section is included (build-time INCLUDE) by both the
      02-write-spec.md and the 03-write-plan.md skill (and by their matching
      fix-mode-* shared files). Edit it in one place. -->
-## Designing test scenarios — dimensions and observation points (TD1–TD6)
+## Designing test scenarios — dimensions and observation points (TD1–TD7)
 
 The surrounding rules (KX2, KX3, TS1–TS6) **preserve** whatever detail the input carries — but none of them **creates** a scenario. If the input is a single sentence ("token renewal must not be duplicated when several instances run"), the hard floor of TS3 is satisfied by one step and one backticked value: a formally complete test that proves nothing about the behaviour. This block is the missing step: it turns test design into **questions to be answered**, so that it does not have to be inferred.
 
@@ -23,6 +23,20 @@ Walk through the six dimensions below and write down, for each, which of its val
 - **The product must be written out.** One line before the scenario list should state where the count comes from: e.g. *"2 scopes (global, session) × 2 expiry bands (within-margin, hard expired) = 4 scenarios"*. This is the only checkable trace that the list is not ad hoc.
 - **Merging is allowed only with a reason.** If two combinations exercise the same code path they may share one scenario — but **write down in one line why**. An unjustified merge is a coverage gap.
 - **🔴 A single scenario is suspicious.** If the cycle's behaviour has two or more dimensions but the list has one item, the inventory **did not run** — go back to step 1.
+
+### 1/b. Every test case states WHAT it verifies and WHY (TD7)
+
+Steps do not explain themselves just by being concrete. A "5 parallel requests, all `200`" step list does not reveal on its own **which behaviour** it runs to prove, and because of that the later phases cannot decide whether a failure is a real defect or a bad test — and the fixer then takes the easiest path that turns the step green, not the one that restores the behaviour. Therefore **every test case — scenario, unit case, integration flow, test file — states BEFORE the steps:**
+
+| What has to be stated | Its measure |
+|---|---|
+| **what it verifies** | the behaviour as a claim about which, after the run, it can be decided whether it is true (not a summary of the steps, not the name of the test repeated) |
+| **why it matters** | which acceptance criterion (`DoD-NN`) or risk it proves — what would silently break without it |
+| **what the evidence is** | which observation (from the TD2 quartet) decides the question |
+
+- **A title is not a purpose.** "Test case 3: concurrency" — that is a topic, not a claim. The claim is: *"out of five simultaneous requests exactly one renews the token, the other four are served from the existing one, and none of them blocks for longer than 2 s."*
+- **Scope (per TD0):** in the spec phase a behaviour-level sentence referring to a `DoD-NN`; in the plan phase the same, but with the concrete values referenced.
+- **If you cannot say in one sentence what it verifies, the test case is not designed** — either it merges several cases (split it along the TD1 product), or there is no acceptance criterion behind it (then the question goes into the phase's question file).
 
 ### 2. The observation quartet — this decides WHAT goes into a scenario (TD2)
 
@@ -79,3 +93,4 @@ The block below is **not** your cycle's content: copy its **density** and its **
 - Acceptance criteria that commit to isolation have a **negative control** step.
 - Every "exactly once" / "is not duplicated" / "produces no" expectation names the **source of the count**.
 - Every "does not block" / "no added latency" expectation carries a **measured value and a threshold**.
+- **Every test case states what it verifies and why** (TD7) — as a claim, with a `DoD-NN` reference; repeating the title is not enough.

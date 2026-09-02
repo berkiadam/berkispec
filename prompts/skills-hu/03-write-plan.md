@@ -353,6 +353,7 @@ _Sorszámot használhatsz a cím olvashatóságáért (`### 3.1 [P-CONFIG] …`)
 # Cycle NN: <cím> — Plan
 
 **<field:f_status>:** \`<status:draft>\` | \`<status:open_questions>\` | \`<status:ready_for_tasks>\`
+**<field:f_gate>:** _<a mechanikus kapu eredménye a lezáráskor — pl. `analyze-gate-check --plan-only — PASS, 0 Must Fix (2026-09-01)`>_
 
 ## <sec:goal_and_approach>
 
@@ -418,6 +419,7 @@ _VPN, proxy, `oc login` / kubeconfig, namespace, registry-belépés: mi kell, mi
 ## <sec:planned_changes>
 
 _Fájlonként, függvény/osztály szinten: mi változik és miért. Nem kód, hanem szándék. Minden bejegyzés tartalmazza:_
+- _a **<field:f_purpose>** sort: mit akarunk elérni és miért (WY1 — lásd alább, kötelező)_
 - _az érintett fájl path-ját_
 - _az érintett vagy létrehozandó függvény/osztály nevét_
 - _az interfész változást, ha van (új paraméter, új return type, új export)_
@@ -425,6 +427,26 @@ _Fájlonként, függvény/osztály szinten: mi változik és miért. Nem kód, h
 - _meglévő fájl esetén az érintett kódrészlet helye (pl. `src/file.ts:14–25`) navigációs célként, ha a forrásfájlt beolvastad_
 
 > **Útvonal-formátum (RP1) — itt a leggyakoribb elrontása.** A kód- és fájl-hivatkozás **a repó gyökeréhez képest relatív**: `src/token-store.ts`, `apps/web/src/index.ts:42`. **Nem** a `plan.md` mappájához képest (`../../src/...`), **nem** abszolút (`/home/...`, `C:\...`), és **nem** `file://` link. Indok: a parancsok a repó gyökerében futnak, és a `05-analyze` kapuja is oda oldja fel a horgonyokat — egy `../../` alakú hivatkozás ott feloldhatatlan. A **dokumentum-linkek** (pl. `[spec.md](./spec.md)`) viszont a fájl saját könyvtárához képest relatívak, hogy kattinthatók legyenek. A részletes szabály a fázis minőségellenőrzésében van.
+
+> **🔴 Minden `[P-…]` bejegyzés kötelezően megmondja a CÉLT (WY1).** A „mit írunk át" önmagában nem mondja meg, **mit akarunk elérni** — az implementáló, a `reviewer` és a 07 hurok fixere viszont pontosan ebből dönti el, hogy egy eltérő megoldás is jó-e, és mikor van kész a változtatás. Ezért minden `### [P-…]` szekció az érintett fájlok mellett **kötelezően** ezt a sort viseli:
+>
+> ```md
+> **<field:f_purpose>:** <a viselkedés, ami a változás UTÁN igaz lesz> — mert <a jelenlegi hiányosság vagy hiba, amit megszüntet>. (<sec:definition_of_done>: DoD-03)
+> ```
+>
+> - **A cél a spec-ből következik, nem a te ötleted (a SC1 tükre):** a mondat végén megnevezett `DoD-NN` (vagy spec-követelmény) ugyanaz, ami ehhez a `[P-…]`-hoz a `<sec:reverse_coverage>` táblában áll. Ha nem tudod megnevezni a forrást, a bejegyzésnek nincs helye a plan-ben: vagy `plan-questions.md` kérdés, vagy vissza a 02-be.
+> - **Ami NEM cél:** a módosítás megismétlése más szavakkal („bevezetjük a `getS2SToken()` metódust"), a fájlnév („frissítjük a configot"), üres általánosság („javítjuk a minőséget", „refaktorálunk"). A cél a **viselkedést** mondja ki, amit a rendszer utána produkál, és a **bajt**, amit megszüntet.
+> - **Egy bekezdés, nem egy szó.** Ha a bejegyzés több fájlt és több lépést fog össze, a cél is összefoglalja, mi lesz belőlük együtt.
+
+**Kalibrációs minta egy bejegyzésre** (a sűrűséget másold, ne a témát):
+
+```md
+### [P-30-02] S2S gépi token tárolása a Redis session store-ban
+- **Érintett fájlok:** `src/services/session-store-service.ts`, `src/types/session.ts:41-58`
+- **<field:f_purpose>:** a `tmp-s2s` gépi token a több pod által közösen olvasott Redis kulcsra kerül (`{namespace}_tmp:tokens:s2s`), így három párhuzamosan futó példány közül **egy** kér új tokent a Keycloaktól, nem mind a három — mert ma minden példány a saját memóriájában tartja, és minden hidegindulás annyi `client_credentials` hívást termel, ahány pod fut. (<sec:definition_of_done>: DoD-01, DoD-04)
+- **Módosítási részletek:**
+  1. …
+```
 
 _Ha ez a szintű részletesség nem érhető el a spec alapján, olvasd be az érintett forrásfájl releváns részét._
 
@@ -479,6 +501,12 @@ _**Beemelt visszatérő elvárások (TC1) — kötelező, ha létezik `specs/tes
 > **A mérce (önteszt):** *„Egy ember, aki nem vett részt a tervezésben, kizárólag ezt a szekciót olvasva végig tudja csinálni a tesztet, és el tudja dönteni, hogy sikerült-e."* Ha bármit ki kellene találnia — melyik URL, melyik user, mi a helyes válasz —, a forgatókönyv hiányos.
 >
 > **A spec tesztesetei nem összevonhatók (KX3).** Ha a spec `<sec:test_specification>` szekciója hat esetet ír le, itt hat forgatókönyv áll — bővíteni és pontosítani szabad, összevonni és elhagyni nem.
+>
+> **🔴 A spec teszt-szekciójának SZERKEZETÉT ne másold — konvertáld (TS7).** A leggyakoribb bukás nem az, hogy a teszt kimarad, hanem hogy a fázis a spec **saját címsor-szerkezetét** hozza át (`Teszteset 0`, `Teszteset 1`, „REST szekvencia", „Verifikáció" felsorolással), és emellett a `### <sec:plan_test_scenarios>` szekció **létre sem jön**. Az eredmény olvasható prózának tűnik, de: a mechanikus kapu nem látja (nincs `TS-NN`), a `test-runner` nem futtatja, a `bs-manual-test-plan` nem szerel össze belőle semmit, és a lépésenkénti elvárt eredmény ellenőrizhetetlen marad. Ezért:
+>
+> - a spec **minden** tesztesete **egy önálló `TS-NN` blokká** konvertálódik, a fenti négy sorral és a négyoszlopos lépés-táblával;
+> - a spec teszteseteinek **nem nyithatsz párhuzamos, saját nevű szekciót** (`Részletes tesztesetek`, `Szekvencia-leírások`, `Teszteset N`) — ami nincs `TS-NN` blokkban, az a keret számára nem létezik;
+> - a megfeleltetést a `<sec:spec_coverage>` tábla rögzíti: **minden sor `Plan teszteset(ek)` cellája megnevez legalább egy `TS-NN`-t** (a `TC-…` azonosító mellett). A kapu ezt méri, mindkét irányban.
 
 Forgatókönyvenként egy blokk, pontosan ebben a formában:
 
@@ -494,23 +522,46 @@ Forgatókönyvenként egy blokk, pontosan ebben a formában:
 **<field:f_cleanup>:** <mit kell utána leállítani vagy visszaállítani>
 
 **Kitöltési szabályok:**
+- **`<field:f_what_we_test>` — állítás, nem téma (TD7).** Ez a sor mondja meg, **mit ellenőriz** a forgatókönyv és **miért**: a viselkedés egy eldönthető állításként (*„öt egyidejű kérésből pontosan egy újítja meg a tokent, a többi a meglévővel szolgál ki"*), plusz az elfogadási feltétel vagy kockázat, amit igazol. **A fejléc megismétlése nem elég** („konkurencia-teszt", „az `/init-hash` tesztelése") — abból a 06/07 fázisban nem derül ki, hogy egy bukás valódi hiba-e vagy rossz teszt. A kapu ezt méri (TS2).
 - **`DoD-NN` a fejlécben — kötelező és kétirányú (TS5).** Minden forgatókönyv megnevezi, mely DoD-pontokat igazolja, és **minden `DoD-NN`-hez tartoznia kell legalább egy forgatókönyvnek**. A kapu mindkét irányt méri.
 - **Hívás oszlop — szó szerint futtatható.** REST-nél teljes `curl`: ige, teljes URL porttal, fejlécek, konkrét request body. Nem REST teszt is ide tartozik ugyanebben a formában: UI-lépés (mire kattintunk, mit írunk be), CLI-parancs, DB-lekérdezés. **Hivatkozás nem hívás** — „lásd a `<sec:e2e_infrastructure>` szekciót" nem futtatható.
 - **Elvárt eredmény oszlop — konkrét és ellenőrizhető.** Státuszkód **és** a válasz azonosítható része (mezőnév, érték, payload-részlet, UI-elem szövege). A „sikeresen lefut" / „hibát ad" / „a várt eredményt adja" **tilos**: nem eldönthető. A kapu kemény padlója (TS3): legalább egy backtickes érték vagy szám.
 - **Teszt-userek, jelszavak, URL-ek, portok, azonosítók: literálisan.** A `<sec:environment_coords>` (KO1) értékeit **ide be kell írni**, nem hivatkozni rájuk — placeholder tilos (TS4), a hiányzó adat `plan-questions.md` kérdés. Credential-t a titok-szabály (TC5) szerint: dev-hatókörű teszt-user igen, klaszter/registry/IAM credential soha.
 - **Az adatfolyam legyen követhető.** Ha egy lépés kimenetét a következő használja, írd ki, **melyik mezőt melyik változóba** (`a válasz `response.initHash` mezője → `$INIT_HASH``).
 - **Számozás:** `TS-01`-től, hézagmentesen és egyediül (TS6). Javításnál a meglévő azonosítókat **ne számozd újra** — az újak a lista végére kerülnek.
+- **🔴 REST-hívásnál a `.http` blokk is kötelező (TS8).** A lépés-tábla `Hívás` cellája a **gépnek** szól (egysoros, futtatható `curl`/parancs) — egy embernek viszont a fejlécekkel és a body-val együtt kell látnia a kérést, kattintható alakban. Ezért minden olyan `TS-NN` blokk végén, amelynek van REST-lépése, áll egy ```http infostringes kódblokk (VSCode REST Client / IntelliJ `.http` alak) **ugyanazokkal az értékekkel**, a lépés számára hivatkozva:
+
+```http
+@tmp = https://tmp.dev.example.com
+@legacy = https://legacy.dev.example.com
+
+### 3. lépés — munkamenet nyitása (a válasz `sid` mezője → a 4. lépés `{{sid}}` változója)
+POST {{legacy}}/api/v13/login/login
+Content-Type: application/json
+
+{"email": "teszt.user@example.com", "password": "Pass1234", "clientId": "INTERNETBANK", "sessionId": "session-1"}
+
+### 4. lépés — cache inicializálás
+POST {{tmp}}/init-hash
+Authorization: Bearer {{jwe}}
+Content-Type: application/json
+X-Correlation-Id: 11111111-1111-1111-1111-111111111111
+
+{"productType": "LOAN"}
+```
+
+  A blokk **nem helyettesíti** a lépés-táblát (a kapu TS3-a a tábla celláit méri), és fordítva sem: a kettő ugyanaz a hívás két közönségnek. Ha eltérnek, az egyik hibás — javítsd. Ez a forma megy tovább változtatás nélkül a `bs-manual-test-plan` `TG-NN` csoportjaiba (MT11), és a kapu mindkét irányban méri (TS8): `curl` `.http` nélkül és `.http` `curl` nélkül is megállapítás.
 - **A bootstrapping nem ide tartozik:** a stack indítása, a token-szerzés és a deploy a `<sec:e2e_infrastructure>` szekcióban él (TP3); itt az `<field:f_prerequisite>` sor **hivatkozik** rá.
 
 ### <sec:machine_run_table> (run-tests.py) — **kötelező (TP4)**
 
 > **🔴 Miért kötelező:** a fenti próza az embernek szól, ez a tábla a **`run-tests.py`** szkriptnek. Ha megvan, a 07-validate a teszteket **szkripttel** futtatja, és a nyers teszt-log soha nem kerül LLM-kontextusba — ez a fázis legnagyobb token-tétele. Ha hiányzik, a 07 a drágább `test-runner` subagentre esik vissza. A tábla nem helyettesíti a prózát: **ugyanazok a parancsok**, gépi alakban.
 
-| Kategória | Típus | Előfeltétel | Parancs | Eredményfájl | Formátum | Takarítás | <field:f_environment> |
-|---|---|---|---|---|---|---|---|
-| unit | gyors | — | `<szó szerinti parancs, gépi riporterrel>` | `junit.xml` | junit | — | lokális |
-| integrációs | gyors | — | `<parancs>` | `<fájl>` | junit | — | lokális |
-| e2e | nehéz | `<a cél elérhetőségi probe-ja; stack indítása>` | `<parancs a cél-hosttal>` | `<fájl>` | junit | `<lebontás>` | `<a cél-környezet neve>` |
+| Kategória | Típus | Előfeltétel | Parancs | Eredményfájl | Formátum | Takarítás | <field:f_environment> | <field:f_phase> |
+|---|---|---|---|---|---|---|---|---|
+| unit | gyors | — | `<szó szerinti parancs, gépi riporterrel>` | `junit.xml` | junit | — | lokális | <status:phase_both> |
+| integrációs | gyors | — | `<parancs>` | `<fájl>` | junit | — | lokális | <status:phase_both> |
+| e2e | nehéz | `<a cél elérhetőségi probe-ja; stack indítása>` | `<parancs a cél-hosttal>` | `<fájl>` | junit | `<lebontás>` | `<a cél-környezet neve>` | <status:phase_validate> |
 
 **Kitöltési szabályok:**
 - **Típus:** `gyors` (unit/integrációs/typecheck — a VD10 könnyű körben is fut) vagy `nehéz` (E2E/regresszió — csak teljes körben).
@@ -526,6 +577,10 @@ Forgatókönyvenként egy blokk, pontosan ebben a formában:
   - a **`Parancs` cellának literálisan tartalmaznia kell a cél-hostot** (env-változóval vagy kapcsolóval, pl. `PLAYWRIGHT_BASE_URL=https://app.dev.example npx playwright test`) — **a célpont nem rejtőzhet konfigfájlban** (EV3). Egy `test:playwright:dev-e2e` nevű script configjában simán állhat `localhost`: **a parancs neve nem bizonyíték, a cím az**;
   - az **`Előfeltétel` cellába kötelező egy elérhetőségi probe** ugyanarra a hostra (`curl -fsS https://app.dev.example/health`) — a `run-tests.py` az előfeltételt futtatja, és bukásakor a kategória FAIL, tehát **egy le sem futó deploy nem tud zöldre pipálódni** (EV4);
   - `localhost` / `127.0.0.1` a parancsban vagy az előfeltételben **tilos** (EV5) — a `run-tests.py` ilyenkor `exit 4`-gyel megáll, futtatás nélkül.
+- **<field:f_phase> — melyik FÁZIS futtatja (PH1).** Három érték: `<status:phase_implement>` (csak a 06 fázis dev-hurka futtatja), `<status:phase_validate>` (csak a 07-validate), `<status:phase_both>` (mindkettő). **Az üres cella `<status:phase_both>`-t jelent** — a hallgatás soha nem jelent kihagyást, tehát a jelöletlen kategória mindenhol lefut. A `run-tests.py` a `--phase` kapcsolóval szűr: a `06` `--phase <status:phase_implement>`-tel, a `07` `--phase <status:phase_validate>`-tel hívja.
+  - **Mikor `<status:phase_implement>`:** olcsó, gyors dev-hurok ellenőrzés, amit a validálásban egy bővebb kategória úgyis lefed (pl. külön `lint` vagy `typecheck` sor a teljes unit-készlet mellett).
+  - **Mikor `<status:phase_validate>`:** drága vagy telepített környezetet igénylő kategória (E2E, regresszió, dev-deployra futó teszt), amit a 06 dev-hurkában nem érdemes vagy nem lehet futtatni.
+  - **🔴 `DoD-NN`-t bizonyító teszt sosem lehet `<status:phase_implement>`-only.** A `07` a `dod-check.py`-jal a **validálási kör** bizonyítékaiból joinol: ami csak a 06-ban futott, arról a DoD-nak nincs bizonyítéka, és a pont `?`-lel marad. Ha egy kategória a DoD-hoz kell, `<status:phase_validate>` vagy `<status:phase_both>` a helyes érték.
 - **Üres cella:** `—`.
 - Ha egy kategória **szándékosan nem létezik** ebben a projektben, ne vedd fel a táblába, és a prózában írd le, miért.
 
@@ -597,13 +652,28 @@ _**Származtatás a regiszterből (TC1):** ha létezik `specs/test-conventions.m
 
 _A tesztelési megközelítés összefoglalása: mit mockolunk, mit futtatunk valódi konténerben, milyen szinteken tesztelünk — mielőtt felsorolod a konkrét eseteket._
 
+### 🔴 Teszt-azonosítók — a plan és a tasks közös névtere (TI1)
+
+A `tasks.md` **erre a két azonosítóra hivatkozik**, és a `07` bizonyíték-joinja is ezekkel dolgozik. Ezért a ciklusban **pontosan két teszt-azonosító család** él, mindkettő ciklus-szinten egyedi és hézagmentes:
+
+| Azonosító | Mit jelöl | Hol keletkezik |
+|---|---|---|
+| `TS-NN` | végrehajtható **forgatókönyv** (integrációs / E2E / kézi), lépés-táblával | `<sec:plan_test_scenarios>` |
+| `TC-NN` | egyetlen **teszteset** a teszt-táblákban (jellemzően unit) | `<sec:unit_tests>` / `<sec:integration_tests>` / `<sec:e2e_tests>` |
+
+- **`TC-01`-től folytonosan, a CIKLUS egészére** — nem fájlonként újrakezdve, és **nem** `TC-<modul>-01` alakban. Egy azonosító egy tesztesetet jelöl, akárhány tesztfájl van.
+- **Az azonosító soha nem változik** a ciklus során (a `tasks.md` és a `07` naplója hivatkozik rá). Utólagos beszúrás a következő szabad számot kapja; törölt szám nem használható újra.
+- **Minden `TC-NN` és `TS-NN` gazdát kap a `tasks.md`-ben** (`TT1`): egy taskot, amely megírja, és egy `[CHECK]`-et, amely lefuttatja. Ezért a **granularitás számít**: egy `TC-NN` akkora legyen, amit egy teszt-futtató parancs **külön is le tud futtatni** (`-t "<név>"`, `-k <minta>`), különben a futtató checkbox nem tud rá szűrni.
+
 ### <sec:spec_coverage> (kötelező tábla)
 
 _A spec `<sec:test_specification>` szekciójának minden esete és a `<sec:definition_of_done>` minden pontja **legalább egy** plan-tesztesetre képződik le. A tábla nélkül a plan nem zárható le._
 
 | Spec forrás | Plan teszteset(ek) | Szint |
 |---|---|---|
-| _spec teszt-eset megnevezése / `test-conventions` tétel ID / `DoD-NN`_ | `TC-XX-01`, `TC-XX-E-01` | unit / integrációs / E2E |
+| _spec teszt-eset megnevezése / `test-conventions` tétel ID / `DoD-NN`_ | `TS-03`, `TC-01`, `TC-02` | unit / integrációs / E2E |
+
+_**A `Plan teszteset(ek)` cella kötelezően megnevez legalább egy `TS-NN` forgatókönyvet (TS7)** — a `TC-…` azonosító önmagában nem elég: az csak egy tábla-sor, a `TS-NN` a végrehajtható forgatókönyv. Kivétel csak az az eset, amely ebben a ciklusban nem tesztelhető: ott a cella az indoklást hordozza (pl. „nem automatizálható — kézi `[CHECK]` a `<sec:execution_order>` 7. lépésében"), és a kapu ezt megjegyzésként engedi át._
 
 _**A `Szint` oszlop nem szabad választás:** a viselkedés természete dönti el. **Ha a DoD/spec felhasználói felületen megfigyelhető viselkedést ír le** (gomb, megjelenő elem, képernyő-állapot), akkor **browser E2E kötelező** — az API-szintű E2E nem helyettesíti. Ha a projektben nincs browser E2E eszköz, az `plan-questions.md` kérdés, nem néma leminősítés._
 
@@ -634,15 +704,44 @@ _Ha egy spec-beli eset ebben a ciklusban **nem** tesztelhető, az sor marad, a �
 | Integrációs | implementáció UTÁN | service stack up | ciklus lezárás |
 | E2E | implementáció UTÁN | teljes stack up | ciklus lezárás |
 
+### Teszt-artefaktum adatlap (TA1) — minden tesztfájl fejlécében kötelező
+
+> **🔴 Miért kötelező:** egy tesztfájl megtervezése **nem ér véget a tesztesetek felsorolásával**. Ha nincs kimondva, melyik **kerettel** készül, milyen **paranccsal futtatható önmagában**, milyen **fixture / mock / tesztadat** kell hozzá, és melyik **teszt-függvény** melyik esetet fedi, azt az implementáló kitalálja — a `[CHECK]` task pedig más állományt fog futtatni, mint amit terveztél, vagy a teszt egyedül nem is futtatható. A `<sec:unit_tests>`, `<sec:integration_tests>` és `<sec:e2e_tests>` minden `#### <tesztfájl path>` fejléce alatt, a tesztesetek ELŐTT ez az adatlap áll:
+
+```md
+#### `test/unit/token-store.test.ts` (új)
+
+**<field:f_what_it_checks>:** a megosztott tárolóból olvasó token-elérés viselkedése: üres tárolónál nincs találgatott érték, párhuzamos olvasóknál pedig pontosan egy megújítás fut (DoD-01, DoD-04).
+**<field:f_test_run>:** `node:test` + `tsx` — `npx tsx --test test/unit/token-store.test.ts`
+**<field:f_test_fixtures>:** `test/fixtures/s2s-token.json` (új fájl — a `<sec:planned_changes>` `[P-30-09]` bejegyzésében): egy lejárt és egy érvényes `S2STokenEntry`; a Redist az `ioredis-mock` helyettesíti (meglévő függőség)
+**<field:f_test_cases>:** `returns null on empty store` → `TC-01` · `refreshes once for 5 parallel readers` → `TC-02`, a `TS-01` 5. lépése
+**<field:f_prerequisite>:** nincs külső előfeltétel; env: `REDIS_KEY_NAMESPACE=dsp`
+```
+
+**Kitöltési szabályok:**
+- **<field:f_what_it_checks> — a tesztfájl célja, állításként (TD7).** Mit ellenőriz ez az állomány **együtt**, és melyik `DoD-NN`-t szolgálja. Nem a fájlnév kifejtése („a token-store tesztjei"), hanem a viselkedés, amiért létezik.
+- **<field:f_test_run> — a keret ÉS az erre az egy fájlra szűkített, szó szerint futtatható parancs.** Ugyanez a parancs kerül a `[CHECK]` taskba és a `<sec:verification_strategy>`-be. A `<sec:machine_run_table>` kategória-szintű parancsa ennél bővebb lehet (a teljes suite), de nem mondhat ellent neki: a **futtatott állomány** ugyanaz.
+- **Minden fixture, mock, seed és tesztadat, ami még nem létezik, egyben ÚJ FÁJL** — tehát útvonallal szerepelnie kell a `<sec:planned_changes>`-ban is, különben senki nem hozza létre. A tartalmát itt kell megadni (vagy a generáló parancsot). Ha nincs ilyen, a cella `—`.
+- **A teszt-függvények nevei nem opcionálisak.** Ez a leképezés köti a tervet a `TC-…` esetekhez és a `TS-NN` forgatókönyvekhez: ebből derül ki, hogy egy forgatókönyv melyik lépését melyik automata teszt fedi le, és mi marad kézi ellenőrzésnek. Új tesztnél a **függvénynév maga a specifikáció** — abból kell látszania, mit állít.
+- **Bővítésnél (`(bővítés)`) ugyanez:** melyik meglévő teszt-függvény módosul és miért, milyen új függvények jönnek be, és változik-e a futtató parancs.
+- **A setup/teardown, a szükséges env-változók és a külső előfeltételek** (konténer, mock szerver, hálózat, seed) az `<field:f_prerequisite>` sorba kerülnek, szó szerinti paranccsal. A `<sec:e2e_infrastructure>` bootstrapping-lépéseire hivatkozni csak akkor lehet, ha ott a parancs szó szerint le van írva.
+
 ### <sec:unit_tests>
 
 _Izolált tesztek: függőségektől elszigetelt üzleti logika, függvények, osztályok. Minden külső komponenst (adatbázis, hálózat, külső service) mockolni kell — rendkívül gyors, determinisztikus. Kötelező happy path ÉS negatív tesztek (hibás bemenet, hiányzó paraméter, jogosultsági hiba, timeout) minden komponenshez. Komponensenként egy alfejezet. Táblázatos formátum: TC-ID, Scenario (mi a helyzet), Input (mi érkezik), Elvárt kimenet (HTTP státusz + errorCode ahol a spec hibamátrixa definiálja + kulcs response mezők)._
 
 #### `<tesztfájl path>` (új / bővítés)
 
-| TC-ID | Scenario | Input | Elvárt kimenet |
-|---|---|---|---|
-| TC-XX-01 | ... | ... | ... |
+**<field:f_what_it_checks>:** _<mit ellenőriz ez a tesztfájl, állításként + a `DoD-NN`>_
+**<field:f_test_run>:** _<keret + az erre a fájlra szűkített, szó szerint futtatható parancs>_
+**<field:f_test_fixtures>:** _<fixture / mock / tesztadat útvonallal és tartalommal, vagy `—`>_
+**<field:f_test_cases>:** _<teszt-függvény neve → `TC-NN` / `TS-NN` leképezés>_
+
+| TC-ID | <field:f_what_it_checks> | Scenario | Input | Elvárt kimenet |
+|---|---|---|---|---|
+| TC-01 | _<a viselkedés állításként + a `DoD-NN`>_ | ... | ... | ... |
+
+_**A `<field:f_what_it_checks>` oszlop kötelező (TD7):** minden unit-eset kimondja, **mit ellenőriz** — a viselkedés eldönthető állításként, nem a bemenet megismétlése. „Hibás input" nem cél; a cél: *„hiányzó `expiresAt` mezőnél a betöltés `ConfigError`-t dob, nem `0`-ra esik vissza (DoD-02)"*._
 
 > **🔴 A SPEC TESZTESETEIT ÁT KELL HOZNI (TP1) — nem a `tasks.md` és nem az implementáló dolga.** A spec `<sec:test_specification>` szekciójában és a `<sec:definition_of_done>`-ban leírt esetek **nem** „túl részletesek a plan-hez": pontosan ide tartoznak, mert a `test-runner` **kizárólag a `plan.md`-t olvassa** — a spec-et nem, a `test-conventions.md`-t nem, a `tasks.md`-t nem. Ami itt nem szerepel, azt **senki nem fogja lefuttatni**.
 >
@@ -669,6 +768,10 @@ _Modulok közötti kapcsolatok, adatbázis-műveletek, belső service-hívások.
 
 #### `<script path>` (új / bővítés)
 
+**<field:f_what_it_checks>:** _<mit ellenőriz ez a tesztfájl, állításként + a `DoD-NN`>_
+**<field:f_test_run>:** _<keret + az erre a fájlra szűkített, szó szerint futtatható parancs>_
+**<field:f_test_fixtures>:** _<fixture / mock / tesztadat útvonallal és tartalommal, vagy `—`>_
+**<field:f_test_cases>:** _<teszt-függvény neve → `TC-NN` / `TS-NN` leképezés>_
 **<field:f_prerequisite>:** _<mi kell a lépések előtt: felhúzott stack, seed, bejelentkezés — a konkrét paranccsal>_
 
 **Kész példa a KÖTELEZŐ részletességre** (ilyen sűrűségű legyen minden lépés, ne egysoros):
@@ -691,12 +794,18 @@ _Modulok közötti kapcsolatok, adatbázis-műveletek, belső service-hívások.
 
 _Ha egy lépés csak akkor értelmezhető, ha egy korábbi már lefutott, azt írd a lépéshez (`előfeltétel: 2. lépés`)._
 
+_**Minden flow a céllal kezdődik (TD7):** ha egy fájlban több számozott teszteset/flow áll, mindegyik előtt ott a `**<field:f_what_it_checks>:**` sor — mit bizonyít ez a lépés-sor, és melyik `DoD-NN`-t. A lépések önmagukban nem magyarázzák meg, miért futnak._
+
 ### <sec:e2e_tests>
 
 _A teljes rendszer a külső kliens vagy felhasználó szemszögéből. Browser E2E frontend tesztek (a `conventions.md` által megadott eszközzel) vagy teljes API hívásláncok valós vagy realisztikusan mockolt infrastruktúrán._
 
 #### `<script path>` (új / bővítés)
 
+**<field:f_what_it_checks>:** _<mit ellenőriz ez a tesztfájl, állításként + a `DoD-NN`>_
+**<field:f_test_run>:** _<keret + az erre a fájlra szűkített, szó szerint futtatható parancs>_
+**<field:f_test_fixtures>:** _<fixture / mock / tesztadat útvonallal és tartalommal, vagy `—`>_
+**<field:f_test_cases>:** _<teszt-függvény neve → `TC-NN` / `TS-NN` leképezés>_
 **<field:f_prerequisite>:** _<felhúzott stack a konkrét indító paranccsal, seed-adatok, teszt-user>_
 
 Browser E2E-nél minden lépéshez: **a felhasználói interakció** (mit kattint/tölt ki, milyen szelektorral azonosítható elemen) **és** a hozzá tartozó **hálózati hívás** (ige, végpont, elvárt státusz), plusz a **látható eredmény** (mi jelenik meg a felületen). Példa-sűrűség:
@@ -899,6 +1008,18 @@ python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-nam
 - **`2`** → használati hiba → jelezd, ne találgass.
 
 > **Miért itt (M):** ezek a hibák eddig a `05-analyze` első körében derültek ki, két fázissal később — ott egy fixer-subagent és egy analyzer-kör kellett hozzájuk. Itt egy szkriptfutás és egy célzott javítás.
+
+**🔴 A kapu eredménye BIZONYÍTÉK, nem emlék (GS2).** A `0` után két helyre kerül a nyoma, és mindkettő kötelező:
+
+1. a `plan.md` fejlécébe, a státusz mellé, egy sorban:
+
+   ```md
+   **<field:f_gate>:** analyze-gate-check --plan-only — PASS, 0 Must Fix (ÉÉÉÉ-HH-NN)
+   ```
+
+2. a **fázis-záró válaszodba**, szó szerint a kapu összefoglaló sora (`ANALYZE-GATE: …`).
+
+**A bélyeget csak tényleges, `0`-t adó futás után írd be** — a következő fázis (`04`) belépő kapuja is lefuttatja a kaput (EG1), tehát egy valótlan bélyeg ott azonnal kiderül, és a `04` visszairányít ide.
 
 
 Ha a felhasználó megerősíti:

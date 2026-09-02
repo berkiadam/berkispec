@@ -9,10 +9,12 @@
 -->
 
 <!-- ANCHOR:task-formatum -->
-- [ ] T001 [RED]   <create the test file / write the test> — `path/to/test.ts` — plan [P-CONFIG]
+- [ ] T001 [RED]   <create the test file / write the test> — `path/to/test.ts` — plan [P-CONFIG] — test [TC-01, TC-02]
 - [ ] T002 [GREEN] <implementation> — `path/to/file.ts` — plan [P-CONFIG] (loader module)
 - [ ] T003 [OPS]   <non-TDD step: build / push / deploy / manual configuration> — command or `path/to/file` — plan [P-DEPLOY]
-- [ ] T004 [CHECK] Run the tests / the typecheck — plan [P-CONFIG]
+- [ ] T004 [CHECK] Run: `npx tsx --test path/to/test.ts -t "<the test function name of TC-01>"` — plan [P-CONFIG] — test [TC-01]
+- [ ] T005 [CHECK] Run: `npx tsx --test path/to/test.ts -t "<the test function name of TC-02>"` — plan [P-CONFIG] — test [TC-02]
+- [ ] T006 [CHECK] Run: `npm run typecheck` — plan [P-CONFIG]
 
 <!-- ANCHOR:tasks-struktura -->
 # Cycle NN: <title> — Tasks
@@ -30,14 +32,16 @@ _The implementing agent reads these before execution._
 
 ## <Logical group 1 — based on the execution order of the plan> — plan [P-CONFIG], [P-REDIS]
 
-- [ ] T001 [RED]   ... — plan [P-CONFIG] (unit test)
+- [ ] T001 [RED]   ... — plan [P-CONFIG] (unit test) — test [TC-01, TC-02]
 - [ ] T002 [GREEN] ... — plan [P-CONFIG] (loader module)
-- [ ] T003 [CHECK] Run: `npm test -- path/to/test.ts` — plan [P-CONFIG]
+- [ ] T003 [CHECK] Run: `npm test -- path/to/test.ts -t "<the name of TC-01>"` — plan [P-CONFIG] — test [TC-01]
+- [ ] T004 [CHECK] Run: `npm test -- path/to/test.ts -t "<the name of TC-02>"` — plan [P-CONFIG] — test [TC-02]
 
 ## <Logical group 2> — plan [P-ROUTING]
 
-- [ ] T004 ... — plan [P-ROUTING]
-- [ ] T005 [CHECK] Run: `npm run typecheck` — plan [P-ROUTING]
+- [ ] T005 [RED] ... — plan [P-ROUTING] — test [TS-01]
+- [ ] T006 [CHECK] Run: `pytest test/integration/cycle_NN_test.py -k ts01` — plan [P-ROUTING] — test [TS-01]
+- [ ] T007 [CHECK] Run: `npm run typecheck` — plan [P-ROUTING]
 
 ## Plan coverage (reverse table)
 
@@ -45,9 +49,22 @@ _Every plan section bearing a `[P-…]` ID appears here, with the tasks belongin
 
 | Plan section (ID + title) | Tasks | Group |
 |---|---|---|
-| `[P-CONFIG]` Configuration system | T001, T002, T003 | 1 |
-| `[P-ROUTING]` Dynamic routing | T004, T005 | 2 |
+| `[P-CONFIG]` Configuration system | T001, T002, T003, T004 | 1 |
+| `[P-ROUTING]` Dynamic routing | T005, T006, T007 | 2 |
 | `[P-DOCS-ONLY]` … | — (no task: <justification>) | — |
+
+## Test coverage
+
+_Every `TS-NN` scenario of the plan and every category of the machine-readable run table appears here._
+
+| Plan test (`TS-NN` / `TC-NN` / category) | Creating task | Running task | Note |
+|---|---|---|---|
+| `TC-01` keyNamespace default | T001 | T003 | unit |
+| `TC-02` missing `expiresAt` → error | T001 | T004 | unit |
+| `TS-01` Cold-start concurrency | T005 | T006 | pytest, `implement` + `validate` |
+| unit (run table) | — | T003, T004 | 07 also runs it from the table |
+| e2e (run table) | T005 | — | `validate`-phase: 07 runs it from the table |
+| `TS-07` Manual SPI check | — | — | cannot be automated: a manual `[OPS]` step in T018 |
 
 <!-- ANCHOR:desztruktiv-csoport-sablon -->
 ## Destructive tasks / tasks touching a shared environment — approval and rollback

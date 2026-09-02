@@ -39,6 +39,20 @@ This is **phase 4 (0–9)** of the process: 0-init · 1-cycles · 2-spec · 3-pl
 
 1. **`conventions.md` existence check:** read `conventions.md` in the root of the project. If it does not exist, STOP — they should return to phase `00`. _(The phase runs on the feature branch of the cycle; the closing commit goes there — in a No-VCS project the commit is skipped.)_
 2. Read the status of `plan.md`. **If the status is not `<status:ready_for_tasks>`, do not start writing a tasks list.** Tell the user that the plan is not closed yet, and that they should return to the `03` plan phase.
+2/b. **🔴 The status field is SELF-DECLARED — run the gate (EG1).** The `<status:ready_for_tasks>` status was written in by `03` for itself; whether the plan is really done comes out of the mechanical gate. **This is the first script call of the phase**, even before reading the plan in substance:
+
+    <!-- INCLUDE:shared/python-cmd.md -->
+
+    ```bash
+    python3 <platform-scripts-mappa>/analyze-gate-check.py --plan-only specs/cycle-NN-<cycle-name>
+    ```
+
+    - **`0`** → the plan is mechanically in order, continue with point 3.
+    - **`1`** → **STOP, do not start writing a tasks list.** List the `## <status:must_fix>` items for the user (together with the `célfázis` marking), and direct them back to phase `03` — or to the self-correcting loop of `05-analyze` if several phases are affected. **You do not fix the plan:** a plan gap is remedied by `03` (or by the `plan-fixer`), otherwise the tasks list cements an incomplete plan. A typical item that surfaces here: there is no `<sec:plan_test_scenarios>` section (TS1), no `<sec:machine_run_table>` (TP4), no `<sec:spec_coverage>` (S1) — from those the tests simply **cannot be broken down into tasks**.
+    - **`2`** → a usage error (a missing file) → report it, do not guess.
+
+    > **Why the receiving phase checks it (EG1):** the closing phase has no interest in failing its own gate — the receiving one does, because it is the one that will write a bad list from an incomplete input. In a real cycle the plan stood with a `<status:ready_for_tasks>` status while it contained seven blocking findings; `04` believed the status, and the breakdown of the tests stayed silent.
+
 3. **The open questions are closed:** the `<status:ready_for_tasks>` status implies it, but check it explicitly — there is no open `[ ]` question in either `spec-questions.md` or `plan-questions.md`. If there is, the plan is not really closed: report it, and they should return to phase `03` (or `02`).
 
 ---
@@ -185,6 +199,28 @@ Give a detail in the description of the task **only if** the plan does not conta
 **The plan reference of the group header (B) is mandatory:** at the end of every `## <group>` title, the plan IDs covered by the group are present. This is what makes it followable at a glance for a human which chapter of the plan is realized where — the tasks are grouped by **execution order**, not by the structure of the plan, so one plan section **may scatter into several groups** (e.g. the test writing of `[P-CONFIG]` into group 1, its implementation into group 3).
 
 **The `<sec:plan_coverage>` table (C) is mandatory, and it is produced when the list is CLOSED** — when every task is already there. It is not separate work: you go through the `[P-…]` sections of the plan, and collect the task identifiers referencing each of them. **Every ID has to appear**: if there is no task belonging to a plan section, the row still gets in, with `—` and a **one-sentence justification** (e.g. "only a verification strategy, 07 runs it"). An empty row without a justification = a coverage gap.
+
+**🔴 The test reference in the task line (TI2).** The plan gives two families of test identifiers (`TS-NN` scenario, `TC-NN` test case), and `tasks.md` **refers to these** — following the pattern of `— plan [P-…]`, at the end of the line:
+
+```md
+- [ ] T003 [CHECK] Run: `npm test -- test/unit/app-config.test.ts -t "keyNamespace default"` — plan [P-30-01] — test [TC-01]
+```
+
+- **Mandatory** on every test-writing `[RED]` task (it may list several: `test [TC-01, TC-02]`) and on every test-running `[CHECK]` task.
+- **Not required** on a `[CHECK]` that does not run a test (typecheck, build, lint) — there is nothing to refer to there.
+- **An invented or mistyped identifier is forbidden:** the gate compares them with the `TS-NN` / `TC-NN` list of the plan, and measures the other direction too (every plan test gets an owner).
+
+**🔴 Every test to be run is a SEPARATE checkbox (TX1).** A test-running `[CHECK]` runs **exactly one** test identifier — you do not collect them into a single "run the unit tests" line. So the command contains the test filter as well (`-t "<name>"`, `-k <pattern>`, `--grep`), built on the base command of `<field:f_test_run>`.
+
+> **Why:** if five test cases run behind a single checkbox, the list **does not say which one ran** and which was left out; at a failure there is no per-test evidence, and the DoD join of `07` does not know which `DoD-NN` the green proved. The price of the separate line is one extra run each, the gain is that the tick becomes a claim **bound to an identifier**.
+>
+> The **group-closing** `[CHECK]` does not disappear because of this: **after** the separate lines of the group's tests, a summarizing typecheck/build check may come, without a test reference.
+
+**🔴 The `<sec:test_coverage>` table (D) is mandatory (TT1), and it is also produced at the closing.****🔴 The `<sec:test_coverage>` table (D) is mandatory (TT1), and it is also produced at the closing.** Four columns: the plan test (a `TS-NN` scenario, a `TC-NN` test case **or** one category of the `<sec:machine_run_table>`), the **creating** task (which writes the test artifact), the **running** task (which runs it), and a note. **Every `TS-NN`, every `TC-NN` and every table category has a row.** If one of the columns is `—`, a justification is mandatory there: *"a manual step, the `[OPS]` task of T018"*, *"`validate`-phase: 07 runs it from the machine-readable table"*. A `—` without a justification is a coverage gap.
+
+> **Why it is needed (TT1):** the coverage chain used to be `DoD-NN → [P-…] → task` — **the tests were not in it**. A formally flawless plan with eight `TS-NN` scenarios could pass with a tasks list that creates and runs none of them: the tasks referred to the `[P-…]` sections, and nothing to the scenarios. This table is the missing link, and the mechanical gate measures test coverage on it.
+
+**🔴 The command of a `[CHECK]` comes from the test artifact data sheet of the plan (T6).** Do not run the whole suite if the `<field:f_test_run>` line of the plan gives a command narrowed to one file — copy that **character for character**. And the **output file is unique per task**: two `[CHECK]`s must not redirect with `>` into the same log/report file, because the second overwrites the first, and at the end of the phase one piece of evidence remains out of five runs. If you want a common collector file, `>>` is the correct form, but the clean solution is a separate file per category (`…/implement/unit/app-config.log`).
 
 The groups mirror the stages of the execution order of the plan. Every group can be done and verified on its own. Every group has at least one `[CHECK]` task at its end.
 

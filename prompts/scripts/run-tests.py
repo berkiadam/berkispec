@@ -25,6 +25,11 @@ A parancsok forrása a `plan.md` `## Tesztelési stratégia` szekciójában lév
 
   · **Típus:** `gyors` (unit/integration/typecheck — könnyű körben is fut) vagy
     `nehéz` (E2E/regresszió — csak teljes körben, VD10).
+  · **Fázis (PH1, opcionális 9. oszlop):** `implement` / `validate` / `mindkettő`.
+    Megmondja, MELYIK FÁZIS futtatja a kategóriát: a 06 `--phase implement`-tel,
+    a 07 `--phase validate`-tel hívja a szkriptet. **Az üres cella = mindkettő** —
+    a hallgatás soha nem jelent kihagyást. Régi, 7-8 oszlopos tábla változatlanul
+    fut, minden sora mindkét fázisban.
   · **Előfeltétel / Takarítás:** `;`-vel több parancs is megadható. A takarítás
     akkor is lefut, ha a futtatás elszállt.
   · **Eredményfájl:** a repóhoz képest relatív; a szkript a kör-mappába másolja.
@@ -99,7 +104,7 @@ def parse_matrix(plan_text):
         cells = [strip_cell(c) for c in mm.group(1).split("|")]
         if not cells or cells[0].lower() in ("kategória", "kategoria"):
             continue
-        while len(cells) < 8:
+        while len(cells) < 9:
             cells.append("")
         rows.append({
             "kategoria": cells[0],
@@ -110,8 +115,37 @@ def parse_matrix(plan_text):
             "formatum": (cells[5] or "junit").lower(),
             "takaritas": cells[6],
             "kornyezet": cells[7],
+            "fazis": cells[8].strip().lower().strip("`*"),
         })
     return [r for r in rows if r["kategoria"] and r["parancs"] not in EMPTY]
+
+
+PHASE_ALIASES = {
+    "implement": "implement", "implementáció": "implement", "implementacio": "implement",
+    "06": "implement",
+    "validate": "validate", "validálás": "validate", "validalas": "validate", "07": "validate",
+}
+PHASE_BOTH_WORDS = {"", "—", "-", "n/a", "na", "mindkettő", "mindketto", "both", "mind", "all",
+                    "implement+validate", "implement, validate", "implement/validate"}
+
+
+def row_phases(row):
+    """A sor FÁZIS cellája → a fázisok halmaza, amelyekben a kategória fut.
+
+    Jelöletlen sor MINDEN fázisban fut (PH1): a hallgatás soha nem jelenthet
+    kihagyást — egy véletlenül üresen hagyott cella nem tüntethet el tesztet a
+    validálásból. Több érték `,` / `/` / `+` jellel is felsorolható."""
+    raw = (row.get("fazis") or "").strip().lower()
+    if raw in PHASE_BOTH_WORDS:
+        return {"implement", "validate"}
+    out = set()
+    for part in re.split(r"[,;/+ ]+", raw):
+        if not part:
+            continue
+        mapped = PHASE_ALIASES.get(part)
+        if mapped:
+            out.add(mapped)
+    return out or {"implement", "validate"}
 
 
 def is_empty(value):
@@ -159,6 +193,135 @@ def check_environment_mismatch(rows):
             if m:
                 bad.append((row["kategoria"], row["kornyezet"], field, m.group(0)))
     return bad
+
+
+# ── EV6 (F3) — FORGALMI bizonyíték nem-lokális kategóriánál ─────────────────
+# Az EV1–EV5 a CÉLPONTOT védi a futtatás ELŐTT (host a parancsban, elérhetőségi
+# probe, localhost-tilalom). A lánc viszont egy lépéssel korábban is elszakad:
+# ott nem az volt a kérdés, HOL futott a teszt, hanem hogy FUTOTT-E EGYÁLTALÁN
+# forgalom. Egy éles ciklusban a dev E2E tesztek egyetlen dev kérést sem
+# indítottak (a teszt-törzsek `assert True` vázak voltak), a kör mappájában mégis
+# 50 REST-napló állt — mind korábbi körből örökölt, mind `127.0.0.1`-es.
+# Ezért a futtatás UTÁN megnézzük: a körben KELETKEZETT bizonyítékok közt van-e
+# olyan, amely a CÉL-HOSTot tartalmazza.
+HOST_RE = re.compile(r"https?://([A-Za-z0-9._-]+(?::\d+)?)")
+AUDIT_TEXT_SUFFIXES = {".log", ".txt", ".json", ".jsonl", ".ndjson", ".har", ".http", ".md",
+                       ".xml", ".yaml", ".yml", ".csv"}
+
+
+def _load_report_gate_module():
+    """A `report-gate-check.py` betöltése modulként (a kötőjeles név miatt importlib).
+
+    A TR3 tábla parse-olója ott él; **szándékosan nem írjuk meg másodszor** —
+    egy harmadik táblaalak-értelmezés a két kapu csendes szétcsúszását adná.
+    """
+    import importlib.util
+    path = Path(__file__).resolve().parent / "report-gate-check.py"
+    if not path.exists():
+        return None
+    spec = importlib.util.spec_from_file_location("_report_gate_check", path)
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        return None
+    return module
+
+
+def audit_artifacts(conventions_path):
+    """A TR3 táblában deklarált artefaktum-útvonalak (kör-mappán belüli relatív alakok).
+
+    Visszatérés: (útvonalak listája, hiba-ok). Ha a `conventions.md` nincs meg vagy
+    nincs benne TR3 tábla, `(None, ok)` — az EV6 ilyenkor KIMARAD (nem bukat).
+    """
+    if not conventions_path or not Path(conventions_path).exists():
+        return None, f"nincs {conventions_path or 'conventions.md'}"
+    module = _load_report_gate_module()
+    if module is None:
+        return None, "a report-gate-check.py nem betölthető (a TR3 parse-oló ott él)"
+    section = module.extract_section(Path(conventions_path).read_text(encoding="utf-8"))
+    if not section:
+        return None, "a conventions.md-ben nincs teszt-riportolási (TR3) szekció"
+    rows = module.parse_rows(section)
+    paths = [r[3] for r in rows if r[3].lower() not in module.EMPTY_VALUES]
+    if not paths:
+        return None, "a TR3 tábla nem deklarál artefaktumot"
+    return paths, None
+
+
+def target_hosts(row):
+    """A kategória cél-hostjai a `Parancs` és az `Előfeltétel` cellából (EV3 mintája)."""
+    hosts = set()
+    for field in ("parancs", "elofeltetel"):
+        for host in HOST_RE.findall(row.get(field) or ""):
+            if not LOCAL_HOST_RE.search(host):
+                hosts.add(host.split(":")[0])
+    return sorted(hosts)
+
+
+def check_traffic_evidence(rows, round_dir, audit_paths, since):
+    """EV6 — a körben keletkezett bizonyíték tartalmazza-e a cél-hostot.
+
+    [(kategória, host, indoklás, erős-e)] a gyanús kategóriákra.
+
+    A cél-host **hiánya önmagában gyenge jel**: sok projekt artefaktuma (Allure
+    JSON, JUnit XML, Playwright trace) egyáltalán nem rögzít hostot — egy lezárt,
+    rendben lévő ciklus is „hiányzó forgalomnak" tűnne, és egy kapu, ami a jó
+    ciklust is bukatja, használhatatlan. Ezért:
+
+      · a cél-host megvan a körben keletkezett audit-fájlban  → rendben;
+      · nincs meg, DE a körben keletkezett bizonyíték **lokális** hostot
+        tartalmaz (`localhost`, `127.0.0.1`) → **erős** jel: a forgalom máshová
+        ment, mint a deklarált környezet → FAIL (ez a `cycle-30` szignatúrája:
+        `rest-logs` tele `127.0.0.1:3028`-cal, dev kategóriánál);
+      · nincs meg, és host egyáltalán nem szerepel → **javaslat** (BD5 óvatossági
+        ág szellemében): az artefaktum nem rögzít hostot, ezt nem bukatjuk meg.
+
+    `audit_paths` `None` (a TR3 tábla nem deklarál audit-artefaktumot) → minden
+    találat javaslat.
+    """
+    problems = []
+    for row in rows:
+        if env_is_local(row.get("kornyezet")):
+            continue
+        hosts = target_hosts(row)
+        if not hosts:
+            continue                     # nincs miből host-ot kinyerni — nem találgatunk
+        candidates = []
+        for rel in (audit_paths or []):
+            target = round_dir / rel
+            if target.is_dir():
+                candidates += [p for p in target.rglob("*") if p.is_file()]
+            elif target.is_file():
+                candidates.append(target)
+        fresh = [p for p in candidates
+                 if since is None or p.stat().st_mtime >= since]
+        hit, local_hit = None, None
+        for path in fresh:
+            if path.suffix.lower() not in AUDIT_TEXT_SUFFIXES:
+                continue
+            try:
+                text = path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            if any(h in text for h in hosts):
+                hit = path
+                break
+            if local_hit is None and LOCAL_HOST_RE.search(text):
+                local_hit = path
+        if hit is None:
+            if local_hit is not None:
+                detail = (f"{len(fresh)} friss audit-fájl a körben; a cél-host egyikben sem "
+                          f"szerepel, viszont a(z) `{local_hit.name}` LOKÁLIS címet tartalmaz "
+                          "— a forgalom máshová ment")
+                strong = True
+            else:
+                detail = (f"{len(fresh)} friss audit-fájl a körben, egyikben sem szerepel a "
+                          "cél-host (és lokális cím sem — lehet, hogy ez az artefaktum nem "
+                          "rögzít hostot)")
+                strong = False
+            problems.append((row["kategoria"], ", ".join(hosts), detail, strong))
+    return problems
 
 
 def check_placeholder_collision(rows, round_dir, phase_dir):
@@ -236,6 +399,31 @@ def parse_junit(path):
     return passed, failed, skipped, failed_names
 
 
+def junit_zero_time(path):
+    """(minden eset 0.000 s alatt futott?, esetek száma) egy JUnit XML-ből — TB3.
+
+    KÜLÖN segédfüggvény, nem a `parse_junit()` visszatérési értékének bővítése:
+    a `results.json` szerkezetét és a meglévő fogyasztókat (`dod-check.py`,
+    `round-log.py`) nem törjük el egy heurisztika kedvéért.
+    """
+    try:
+        root = ET.parse(path).getroot()
+    except Exception:
+        return None, 0
+    cases = list(root.iter("testcase"))
+    if not cases:
+        return None, 0
+    def zero(case):
+        raw = case.get("time")
+        if raw in (None, ""):
+            return True
+        try:
+            return float(raw) == 0.0
+        except ValueError:
+            return False
+    return all(zero(c) for c in cases), len(cases)
+
+
 TEXT_PATTERNS = [
     (r"(\d+)\s+passed", "passed"),
     (r"(\d+)\s+failed", "failed"),
@@ -285,13 +473,26 @@ def main():
                              "`test-report/validate/round-NN` vagy `validate/round-NN`")
     parser.add_argument("--type", default="all", choices=["gyors", "nehez", "all"],
                         help="mely típusú kategóriák fussanak (VD10 kör-típus)")
+    parser.add_argument("--phase", default="all", choices=["implement", "validate", "all"],
+                        help="mely FÁZIS kategóriái fussanak (PH1) — a tábla `Fázis` oszlopa "
+                             "alapján. A jelöletlen (üres) sor MINDEN fázisban fut, tehát a "
+                             "hallgatás sosem jelent kihagyást. A 06 `--phase implement`-tel, "
+                             "a 07 `--phase validate`-tel hívja")
     parser.add_argument("--only", action="append", default=[],
                         help="csak ezek a kategóriák fussanak (könnyű körben a bukott item)")
     parser.add_argument("--repo", default=".", help="a parancsok futtatási könyvtára")
+    parser.add_argument("--conventions", default="conventions.md",
+                        help="a projekt conventions.md-je — az EV6 forgalmi bizonyíték "
+                             "checkhez (a TR3 tábla audit-artefaktumai). Ha nem létezik, "
+                             "az EV6 kimarad egy `·` sorral (nem bukat)")
     parser.add_argument("--timeout", type=int, default=3600)
     parser.add_argument("--json", default=None, help="gépi eredmény ide (alap: <round-dir>/results.json)")
     parser.add_argument("--dry-run", action="store_true", help="csak a futtatandó parancsokat listázza")
     args = parser.parse_args()
+    # A kör KEZDETE — a report-gate-check.py frissesség-padlója (TR7) ebből dolgozik:
+    # a results.json a futás VÉGÉN íródik, tehát a saját mtime-ja padlóként
+    # minden, a körben keletkezett artefaktumot elavultnak minősítene.
+    started_at = time.time()
 
     plan = Path(args.plan_file)
     if not plan.exists():
@@ -303,6 +504,14 @@ def main():
               "Ez a 03 fázis hiánya — essen vissza a hívó a `test-runner` subagentre, "
               "és jelezze a plan kiegészítésének igényét.", file=sys.stderr)
         return 2
+
+    matrix_all = matrix
+    if args.phase != "all":
+        matrix = [r for r in matrix if args.phase in row_phases(r)]
+        if not matrix:
+            print(f"MEGJEGYZÉS (PH1): a tábla egyetlen kategóriája sem fut a `{args.phase}` "
+                  f"fázisban ({len(matrix_all)} sorból) — nincs mit futtatni.")
+            return 0
 
     selected = matrix
     if args.only:
@@ -318,7 +527,8 @@ def main():
         selected = [r for r in matrix
                     if r["tipus"].startswith(want[:4]) or r["tipus"].startswith("nehe" if want == "nehéz" else "gyor")]
     if not selected:
-        print(f"HIBA: a táblában nincs `{args.type}` típusú kategória.", file=sys.stderr)
+        print(f"HIBA: a táblában nincs `{args.type}` típusú kategória "
+              f"(fázis-szűrő: {args.phase}).", file=sys.stderr)
         return 2
 
     round_dir, phase_dir = normalize_round_dir(args.round_dir, plan.parent)
@@ -364,10 +574,12 @@ def main():
 
     results = []
     any_fail = False
+    tb3_notes = []          # TB3 — futásidő-heurisztika, SOHA nem FAIL (BD12)
     for row in selected:
         cat = row["kategoria"]
         cmd = subst(row["parancs"], round_dir, phase_dir)
-        entry = {"kategoria": cat, "tipus": row["tipus"], "parancs": cmd,
+        entry = {"kategoria": cat, "tipus": row["tipus"], "fazis": sorted(row_phases(row)),
+                 "parancs": cmd,
                  "kornyezet": (row.get("kornyezet") or "").strip() or "—",
                  "passed": 0, "failed": 0, "skipped": 0, "failed_items": [],
                  "eredmeny": None, "status": "FAIL"}
@@ -408,6 +620,13 @@ def main():
                 entry["eredmeny"] = str(dest)
                 if row["formatum"].startswith("junit"):
                     parsed = parse_junit(dest)
+                    all_zero, n_cases = junit_zero_time(dest)
+                    if all_zero and n_cases:
+                        tb3_notes.append(
+                            f"[TB3] javaslat: a `{cat}` kategória minden tesztje 0.000 s alatt "
+                            f"futott le ({n_cases} eset) — ha a kategória hálózati hívást, "
+                            "konkurenciát vagy I/O-t tesztel, ez üres vázra utalhat. "
+                            "Nem blokkol; a TB1/TB2 kapu a mérvadó.")
         if parsed is None:
             parsed = parse_text(output)
 
@@ -443,9 +662,29 @@ def main():
 
         results.append(entry)
 
+    # ── EV6 — forgalmi bizonyíték a futtatás UTÁN ──
+    audit_paths, audit_skip = audit_artifacts(args.conventions)
+    traffic = check_traffic_evidence(selected, round_dir, audit_paths, started_at)
+    suggestions = list(tb3_notes)
+    for kategoria, host, detail, strong in traffic:
+        msg = (f"[EV6] a `{kategoria}` kategória nem-lokális környezetre szól, de a körben "
+               f"keletkezett bizonyítékok egyike sem tartalmazza a `{host}` címet — "
+               f"a teszt vagy nem futott, vagy nem oda futott ({detail})")
+        if audit_paths is None or not strong:
+            reason = audit_skip if audit_paths is None else "nincs ellenbizonyíték (lokális cím)"
+            suggestions.append(msg + f" · a check csak JAVASLAT: {reason}")
+        else:
+            suggestions.append("[EV6-FAIL] " + msg)
+            for entry in results:
+                if entry["kategoria"] == kategoria:
+                    entry["status"] = "FAIL"
+                    entry.setdefault("failed_items", []).append(f"EV6: nincs forgalmi bizonyíték ({host})")
+                    any_fail = True
+
     out_json = Path(args.json) if args.json else round_dir / "results.json"
     with open(out_json, "w", encoding="utf-8", newline="\n") as fh:
-        json.dump({"results": results}, fh, ensure_ascii=False, indent=2)
+        json.dump({"started_at": started_at, "results": results,
+                   "suggestions": suggestions}, fh, ensure_ascii=False, indent=2)
 
     print(f"Teszt-futtatás — kör-mappa: {round_dir}")
     for e in results:
@@ -457,6 +696,8 @@ def main():
             print(f"      megjegyzés: {e['megjegyzes']}")
         for name in e["failed_items"][:15]:
             print(f"      ✗ {name}")
+    for msg in suggestions:
+        print(f"  {'✗' if msg.startswith('[EV6-FAIL]') else '·'} {msg}")
     print(f"  results.json: {out_json}")
     print("VERDICT: " + ("FAIL" if any_fail else "PASS"))
     return 1 if any_fail else 0

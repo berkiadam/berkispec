@@ -39,6 +39,20 @@ Ez a folyamat **4. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` fázishoz. _(A fázis a ciklus feature branch-én fut; a záró commit oda kerül — No-VCS projektben a commit kimarad.)_
 2. Olvasd be a `plan.md` státuszát. **Ha a státusz nem `<status:ready_for_tasks>`, ne kezdj tasks listát írni.** Jelezd a felhasználónak, hogy a plan még nem zárult le, és térjenek vissza a `03` plan fázishoz.
+2/b. **🔴 A státusz-mező ÖNBEVALLÁS — futtasd le a kaput (EG1).** A `<status:ready_for_tasks>` státuszt a `03` írta be magának; hogy a plan tényleg kész-e, az a mechanikus kapuból derül ki. **Ez a fázis első szkript-hívása**, még a plan érdemi beolvasása előtt:
+
+    <!-- INCLUDE:shared/python-cmd.md -->
+
+    ```bash
+    python3 <platform-scripts-mappa>/analyze-gate-check.py --plan-only specs/cycle-NN-<cycle-name>
+    ```
+
+    - **`0`** → a plan gépiesen rendben van, folytasd a 3. ponttal.
+    - **`1`** → **STOP, ne kezdj tasks listát írni.** Sorold fel a felhasználónak a `## <status:must_fix>` tételeket (a `célfázis` jelöléssel együtt), és irányítsd vissza a `03` fázishoz — vagy az `05-analyze` önjavító hurkához, ha több fázist érint. **Te nem javítod a plant:** a plan-hiányt a `03` (vagy a `plan-fixer`) orvosolja, különben a tasks lista egy hiányos tervet betonoz be. Tipikus tétel, ami itt derül ki: nincs `<sec:plan_test_scenarios>` szekció (TS1), nincs `<sec:machine_run_table>` (TP4), nincs `<sec:spec_coverage>` (S1) — ezekből a tesztek egyszerűen **nem bonthatók le taskra**.
+    - **`2`** → használati hiba (hiányzó fájl) → jelezd, ne találgass.
+
+    > **Miért a fogadó fázis ellenőrzi (EG1):** a lezáró fázisnak nincs érdeke megbukni a saját kapuján — a fogadónak viszont van, mert a hiányos bemenetből ő fog rossz listát írni. Egy éles ciklusban a plan `<status:ready_for_tasks>` státusszal állt, miközben hét blokkoló megállapítás volt benne; a `04` a státuszt elhitte, és a tesztek lebontása néma maradt.
+
 3. **Nyitott kérdések lezártsága:** a `<status:ready_for_tasks>` státusz implikálja, de explicit ellenőrizd — a `spec-questions.md` és `plan-questions.md` egyikében sincs `[ ]` nyitott kérdés. Ha van, a plan nem zárult le valójában: jelezd, és térjenek vissza a `03` (vagy `02`) fázishoz.
 
 ---
@@ -185,6 +199,28 @@ Részletet **csak akkor** adj a task leírásába, ha a plan nem tartalmazza:
 **A csoport-fejléc plan-hivatkozása (B) kötelező:** minden `## <csoport>` cím végén ott vannak a csoport által lefedett plan-ID-k. Ez teszi emberi szemmel egy pillantás alatt követhetővé, hogy melyik terv-fejezet hol valósul meg — a taskok ugyanis **végrehajtási sorrend** szerint csoportosulnak, nem a plan tagolása szerint, így egy plan-szekció **több csoportba is szóródhat** (pl. `[P-CONFIG]` teszt-írása az 1., implementációja a 3. csoportban).
 
 **A `<sec:plan_coverage>` tábla (C) kötelező, és a lista LEZÁRÁSAKOR készül** — akkor, amikor már minden task megvan. Nem külön munka: végigmész a plan `[P-…]` szekcióin, és mindegyikhez kigyűjtöd a rá hivatkozó task-azonosítókat. **Minden ID-nak szerepelnie kell**: ha egy plan-szekcióhoz nem tartozik task, a sor akkor is bekerül, `—` és **egy mondatos indok** (pl. „csak ellenőrzési stratégia, a 07 futtatja"). Indok nélküli üres sor = lefedettségi rés.
+
+**🔴 Teszt-hivatkozás a task sorában (TI2).** A plan két teszt-azonosító családot ad (`TS-NN` forgatókönyv, `TC-NN` teszteset), és a `tasks.md` **ezekre hivatkozik** — a `— plan [P-…]` mintájára, a sor végén:
+
+```md
+- [ ] T003 [CHECK] Futtasd: `npm test -- test/unit/app-config.test.ts -t "keyNamespace default"` — plan [P-30-01] — test [TC-01]
+```
+
+- **Kötelező** minden teszt-író `[RED]` taskon (felsorolhat többet: `test [TC-01, TC-02]`) és minden teszt-futtató `[CHECK]` taskon.
+- **Nem kötelező** azon a `[CHECK]`-en, amely nem tesztet futtat (typecheck, build, lint) — ott nincs mire hivatkozni.
+- **Kitalált vagy elgépelt azonosító tilos:** a kapu összeveti a plan `TS-NN` / `TC-NN` listájával, és a másik irányt is méri (minden plan-teszt kap gazdát).
+
+**🔴 Minden futtatandó teszt KÜLÖN checkbox (TX1).** Egy teszt-futtató `[CHECK]` **pontosan egy** teszt-azonosítót futtat — nem gyűjtöd össze őket egyetlen „futtasd a unit teszteket" sorba. A parancs ezért a teszt-szűrőt is tartalmazza (`-t "<név>"`, `-k <minta>`, `--grep`), a `<field:f_test_run>` alapparancsára építve.
+
+> **Miért:** ha öt teszteset egyetlen checkbox mögött fut, a lista **nem mondja meg, melyik futott le** és melyik maradt ki; egy bukásnál nincs per-teszt bizonyíték, a `07` DoD-joinja pedig nem tudja, melyik `DoD-NN`-t igazolta a zöld. A külön sor ára egy-egy plusz futtatás, a haszna, hogy a pipa **azonosítóhoz kötött** állítás lesz.
+>
+> A **csoportzáró** `[CHECK]` ettől nem szűnik meg: a csoport tesztjeinek külön sorai **után** jöhet egy összegző typecheck/build ellenőrzés, teszt-hivatkozás nélkül.
+
+**🔴 A `<sec:test_coverage>` tábla (D) kötelező (TT1), és szintén a lezáráskor készül.****🔴 A `<sec:test_coverage>` tábla (D) kötelező (TT1), és szintén a lezáráskor készül.** Négy oszlop: a plan-teszt (`TS-NN` forgatókönyv, `TC-NN` teszteset **vagy** a `<sec:machine_run_table>` egy kategóriája), a **létrehozó** task (amelyik a teszt-artefaktumot megírja), a **futtató** task (amelyik lefuttatja), és egy megjegyzés. **Minden `TS-NN`-nek, minden `TC-NN`-nek és minden tábla-kategóriának van sora.** Ha valamelyik oszlop `—`, ott kötelező az indok: *„kézi lépés, a T018 `[OPS]` taskja"*, *„`validate`-fázisú: a 07 futtatja a gépi táblából"*. Indok nélküli `—` lefedettségi rés.
+
+> **Miért kell (TT1):** a lefedettségi lánc eddig `DoD-NN → [P-…] → task` volt — **a tesztek nem voltak benne**. Egy formailag hibátlan plan nyolc `TS-NN` forgatókönyvvel is átmehetett úgy, hogy a tasks lista egyiket sem hozza létre és nem futtatja: a taskok a `[P-…]` szekciókra hivatkoztak, a forgatókönyvekre semmi. Ez a tábla a hiányzó láncszem, és a mechanikus kapu ezen méri a teszt-lefedettséget.
+
+**🔴 A `[CHECK]` parancsa a plan teszt-artefaktum adatlapjából jön (T6).** Ne a teljes suite-ot futtasd, ha a plan `<field:f_test_run>` sora egy fájlra szűkített parancsot ad — azt másold **karakterre egyezően**. És a **kimeneti fájl taskonként egyedi**: két `[CHECK]` nem irányíthat `>`-tal ugyanabba a log-/riportfájlba, mert a második felülírja az elsőt, és a fázis végén egyetlen bizonyíték marad öt futásból. Ha egy közös gyűjtőfájlt akarsz, `>>` a helyes, de a tiszta megoldás a kategóriánkénti külön fájl (`…/implement/unit/app-config.log`).
 
 A csoportok a plan végrehajtási sorrendjének szakaszait tükrözik. Minden csoport önállóan elvégezhető és ellenőrizhető. Minden csoportnak van legalább egy `[CHECK]` taskja a végén.
 

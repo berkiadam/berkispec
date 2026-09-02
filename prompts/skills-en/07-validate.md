@@ -21,11 +21,13 @@ scripts:
   - "scripts/run-tests.py — running the tests from the machine-readable table of the plan, with machine counts (TR1/TR2)"
   - "scripts/sonar-gate.py — the Sonar Quality Gate from the API (with the QG1 distinction)"
   - "scripts/dod-check.py — the DoD ↔ evidence join (DI1)"
-  - "scripts/validate-gate-check.py — the status/task/DoD/IP1/review/round-block collective gate"
+  - "scripts/test-substance-check.py — the vacuous test-body (TB1) and selector-existence (TB2) gate"
+  - "scripts/validate-gate-check.py — the status/task/DoD/IP1/review/round-block/CK1 collective gate"
   - "scripts/contract-guard.py — the VD3a contract integrity gate"
   - "scripts/report-gate-check.py — the TR3 report gate"
   - "scripts/failure-counter.py — the run log and the stopping limits (VD4)"
 shared:
+  - "shared/review-checklist.md"
   - "shared/input-from-prev.md"
   - "shared/phase-commit.md"
 ---
@@ -68,6 +70,18 @@ The input of the prompt is the folder of the cycle (e.g. `specs/cycle-NN-<cycle-
      - **the status of `plan.md` / `spec.md` is not acceptable** (acceptable: `plan.md` → `<status:ready_for_tasks>` or `<status:done>`; `spec.md` → `<status:ready_for_plan>` or `<status:done>`) → if either is reset to `<status:draft>`, tell the user: a decision was made in an earlier phase that requires a sync.
    - `<status:done>` is **normal** for both of them if we came back here after `08-doc-sync` (or the doc-sync re-run before `09-merge`).
    - The `·` lines of the script are INFO (the marker of an interrupted loop, open `input-from-prev` items) — process these, but they do not stop you.
+
+4. **Selector gate (TB2) — at the START of the round.** An orphaned `[CHECK]` selector (`06` renamed a test function, the task's command still carries the old name) should surface at the **start** of the round, not at the end:
+
+   ```bash
+   python3 <platform-scripts-mappa>/test-substance-check.py \
+     specs/cycle-NN-<cycle-name> --selectors-only
+   ```
+
+   - **`exit 0`** → carry on;
+   - **`exit 1`** → `tasks.md` and the code have **drifted apart**: the `[CHECK]` commands listed would fail on execution, with no judgment involved. Fix the `tasks.md` command to the actual test name (this is not a substantive change, it does not violate `VD3`), **or** — if the test was never written at all — back to `06`: the `[RED]`/`[GREEN]` task is not done.
+
+   `--selectors-only` deliberately runs **only** `TB2`: the `TB1` vacuous check makes sense at closing time (the A/2 + B block), when the tests are already written.
 
 ---
 
@@ -272,7 +286,7 @@ This way, even after an interrupted run, it is visible how far it got (see "Hand
 python3 <platform-scripts-mappa>/run-tests.py \
   specs/cycle-NN-<cycle-name>/plan.md \
   --round-dir specs/cycle-NN-<cycle-name>/test-report/validate/round-NN \
-  --type gyors
+  --type gyors --phase <status:phase_validate>
 ```
 
 - **`exit 0/1`** → the output contains, per category, the **command issued** and the `X passed / Y failed / Z skipped` counts, and on a failure the **exact names** of the failed tests — these go verbatim into the `--failed-item` values of `failure-counter.py`. The machine result stays in the `results.json` of the round folder.
@@ -281,6 +295,12 @@ python3 <platform-scripts-mappa>/run-tests.py \
 - **The output also prints the ENVIRONMENT per category** (`@ dev`, `@ local`), and it goes into `results.json` too. **Carry this into the step table of the round**: it must be visible afterwards from the report where the test was green — a green JUnit XML on its own does not reveal which host it addressed.
 - **`exit 3`** → the table has a **placeholder error**: the substitution produces a double path prefix (`test-report/test-report/…` or `test-report/specs/…`, TR5/c). **Do not run anything, and do NOT fall back to the `test-runner`** — the script prints which row and which field is wrong. This is a gap of `03`, not a code bug: fix the machine table of `plan.md` to the correct placeholder (`{round}` = the full path, `{phase}` = the phase folder — see 0/a), and re-run. If the fix is not unambiguous, escalate to `03` according to VD5.
 - To confirm a single failed category in a light round: `--only <category>`.
+
+> **🔴 `EV6` — traffic evidence AFTER the run.** `EV1–EV5` protect the **target** **before** the run (host in the command, a reachability probe, the `localhost` ban). `EV6` protects the **traffic** **after** the run: *a green test does not prove that any request was even issued.* In a real cycle the E2E tests meant for the dev environment issued **not a single dev request** (the test bodies were empty shells), yet the round's `rest-logs` folder looked full — with 50 log files that were all `127.0.0.1` entries inherited from an earlier round.
+>
+> So, for every category with a non-local `<field:f_environment>`, the script checks whether any of the **audit artifacts** declared in the `## <sec:cv_test_reporting>` (TR3) table of `conventions.md` **(a)** came into being during the round and **(b)** contains the target host. On failure the category is a `FAIL` (it goes into `results.json` too) — and the fix is **not** copying a log in, but making the test actually address the target environment (`VD3`).
+>
+> **Cautious branch:** if the TR3 table declares **no** audit artifact, `EV6` is only a **suggestion** (a `·` line, under the `suggestions` key of `results.json`) — not every project takes on a REST audit log, and we do not fail a project for something it never signed up for. The default for `--conventions` is the `conventions.md` at the repo root; if it does not exist, the check is skipped.
 
 #### 1/b. The fallback: the `test-runner` subagent
 
@@ -365,7 +385,13 @@ Based on the report of the subagent:
    > **🔴 If you go down the fallback branch (the review is produced in the main agent), marking the origin of the report is MANDATORY.** The fallback runs on a different model and in a narrower context than the `reviewer` subagent, therefore it is systematically a weaker finding set — whoever reads the report later must see this:
    > - one line into the header of `code-review.md`: **Produced by:** the main agent (fallback) — the reviewer subagent could not be run: <reason>;
    > - in the step table of the round the name of the step should be `code review (2/b, RV1) — fallback: the main agent`, **never** `reviewer subagent`;
-   > - write into the `## <sec:closing_summary>` section that making up for the subagent review is recommended.
+   > - write into the `## <sec:closing_summary>` section that making up for the subagent review is recommended;
+   > - and a **second mandatory line** in the header: **Criteria list:** `RV-FB1` — all <N> points walked through (or the omitted point named, with a justification). Without this, the rigor of the fallback is once again self-declaration (`7/j`).
+
+   > **🔴 In fallback mode you must walk through THE SAME list, point by point (RV-FB1).** The fallback is not "a quick diff summary": the `reviewer` subagent's criteria list is **verbatim** below, and in a fallback **you** are the reviewer. Go through **every** point, and name in `code-review.md` where it is met and where it is not — especially at the **Test coverage** point: in a real cycle it was precisely the fallback branch that ran, and precisely this point that was skipped, which is why it never came to light that the "written" tests were empty shells (`assert True`). Marking the fallback (above) records the **origin**; it does not license lower rigor.
+
+<!-- INCLUDE:shared/review-checklist.md -->
+
 3. **Evaluate the report:**
    - **`<field:f_status>` = `<status:in_progress>` in the header** → the reviewer **did not finish** the report (an interrupted run — RV-INC). The review gate **cannot be closed with it**: neither to green, nor to FAIL. The findings already written out, however, are **real, only incomplete** — do not discard them and do not overwrite them; handle the step according to the error branch of point 2, and carry the partial findings over into the input of the next review. `validate-gate-check.py` fails this mechanically as well.
    - **There is no unclosed `- [ ]` in the `<sec:critical_fixes>` section** (and the header is `<status:done>`) → the review gate is ✓. If Sonar is green as well, the static layer is green → step 3 (the heavy tests) may go.
@@ -389,7 +415,7 @@ Run it only if **steps 1 and 2 were both green** — the heavy tests are only wo
 python3 <platform-scripts-mappa>/run-tests.py \
   specs/cycle-NN-<cycle-name>/plan.md \
   --round-dir specs/cycle-NN-<cycle-name>/test-report/validate/round-NN \
-  --type nehez
+  --type nehez --phase <status:phase_validate>
 ```
 
 The `<field:f_prerequisite>` and `Cleanup` columns of the table contain bringing the stack up and tearing it down — the cleanup runs even if the run blew up. In case of `exit 2` (there is no machine table), call the `test-runner` subagent, now to run the heavy tests (E2E + regression) — based on the tasks marked `TREG` in `tasks.md` and the `<sec:regression_impact>` table of `plan.md`. **Hand over the same round folder as in step 1** (TR5) — one folder belongs to one round, and the artifacts of the fast and the heavy tests go next to each other. It is the responsibility of the subagent to start the necessary backend services/containers, to resolve port conflicts and to clean up the temporary resources (see the contract of the agent).
@@ -423,7 +449,7 @@ python3 <platform-scripts-mappa>/dod-check.py \
 
 #### A/2 + B. The other gates in a single call (`validate-gate-check.py`)
 
-Open tasks, open DoD ticks, the unclosed items of `validate-input-from-prev.md` (IP1), an open `<status:must_fix>` (RV1), and the match of the round block ↔ the `round-NN/` folder (the VD9 guard, TR5) — all of them are regex questions, with a single call:
+Open tasks, open DoD ticks, the unclosed items of `validate-input-from-prev.md` (IP1), an open `<status:must_fix>` (RV1), the match of the round block ↔ the `round-NN/` folder (the VD9 guard, TR5), the verbatim, per-task execution of the `[CHECK]` commands (CK1), and the failure evidence of the `[RED]` tasks in `check-log.md` (RED1) — all of them are regex questions, with a single call:
 
 ```bash
 python3 <platform-scripts-mappa>/validate-gate-check.py \
@@ -435,6 +461,19 @@ python3 <platform-scripts-mappa>/validate-gate-check.py \
 - **`exit 2`** → a non-existent cycle folder (a mistyped path).
 
 The `--require-review` is needed for the run **before the PASS**: there the absence of `code-review.md` is a failure. In earlier rounds (when the review did not even start) leave it out.
+
+**Test-substance gate (TB1) — a standalone command, in the same stage:**
+
+```bash
+python3 <platform-scripts-mappa>/test-substance-check.py specs/cycle-NN-<cycle-name>
+```
+
+- **`exit 0`** → there is no empty shell in the test files listed in the plan's `TA1` data sheets;
+- **`exit 1`** → the round is a **FAIL**, and the failure type is a **test error** → the `implement-fixer` starts with the `## <sec:validation_fixes>` section. **The `VD3` guard applies here too:** fixing a vacuous test means **writing** the test — not switching the check off, not removing the file from the plan's data sheets, and not "adding" an assertion that is trivially true.
+
+> **🔴 A `CK1` failure is not a fault of the log (VD3).** If the gate reports that a log row's `Task` cell carries a range, or that the logged command does not contain the task's test selector, **rewriting the log after the fact is not a fix** — the `[CHECK]`s must be **re-run one by one**, verbatim, as `tasks.md` writes them, and the new runs logged. A merged run also hides the case where the `tasks.md` selector references a test function that no longer exists. If the framework genuinely cannot filter down to a single case, that is a `CK-DEVIATION: <task> — <reason>` line in the `## <sec:notes>` section of `check-log.md` — **not without a justification**.
+
+> **🔴 A green `[RED]` cannot be fixed by rewriting the log (RED1/VD3).** If the gate reports that a `[RED]` task has no failing (`✗`) run, the missing evidence is **not** supplied by a log row written in after the fact: the test has to be written so that it **actually fails** without the implementation (an `assert True` shell physically cannot be red — which is why this is the strongest, judgment-free signal). In that case the `[RED]` task is **not done** → back to `06` with the `## <sec:validation_fixes>` section. The only exception is a `RED-EXEMPT: <task> — <reason>` line (a regression task updating an existing test that is rightly green) — this falls under the `VD3` anti-test-fraud guard.
 
 > **What is left to you (IP1):** if an `input-from-prev` item **caused an error** during the validation (e.g. a test failed because of a missing prerequisite), that is a FAIL — to be fixed according to the usual loop, not to be settled by dropping it. The script only sees whether it is open; whether you *took it into account* or *dropped it* is written in by you.
 

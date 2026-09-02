@@ -13,6 +13,9 @@ prev: bs-analyze
 next: bs-validate
 subagents:
   - "agents/researcher.md"
+scripts:
+  - "scripts/test-substance-check.py — the vacuous test-body gate (TB1)"
+  - "scripts/report-gate-check.py — the report-phase gate (TR6)"
 shared:
   - "shared/parallel-cycles.md"
 ---
@@ -149,13 +152,25 @@ Decision tree for resuming — **in this order**:
 7. Do not refactor untouched code. Do not add unrequested features.
 
 8. **Executing a `[CHECK]` task:**
+   - **🔴 Run the command VERBATIM, ON ITS OWN (CK1).** Issue the `[CHECK]` task's command **exactly** as the task writes it — together with the test selector (`::<function>`, `-t "<name>"`, `-k <pattern>`). It is **forbidden** to merge several `[CHECK]` commands into one run, to drop the selector ("I'll run the whole file, that covers it too"), or to carry the result of a broader run over to several tasks. One `[CHECK]` = one run = **one** log row with **one** task identifier.
+     **Why:** the selector is the only thing that ties the task to the `plan.md` test case (`TC-NN`/`TS-NN`) — without it the checkbox is not a claim bound to an identifier (`TX1`). And, far more importantly: if the test's name **changed** during implementation, the filtered command **fails immediately**, whereas the merged run passes green. In a real cycle, instead of eight `[CHECK]` tasks a single run without a selector was logged, and three selectors referenced function names that no longer existed — so the drift between `tasks.md` and the code stayed completely invisible.
+     **If the command errors out because the selector matches nothing** (`no tests ran`, `ERROR: not found`), that is **not** an execution failure to be worked around by merging runs: either the test was renamed (then the `tasks.md` command must be fixed, and the fix reported), or the test was never written (then the `[RED]`/`[GREEN]` task is not done).
    - Run the specified command.
    - If it reports an error, fix the preceding tasks within the group, then re-run it.
-   - The group may only be marked done (`- [x]`) after a green `[CHECK]` — close out `[RED]`/`[GREEN]` tasks only at that point too.
+   - The group may only be marked done (`- [x]`) after a green `[CHECK]` — close out `[RED]`/`[GREEN]` tasks only at that point too. **This is the condition for `[GREEN]`; the condition for `[RED]` is the failure evidence in item 8/b — the two do not substitute for each other** (a `[RED]` task does not become done just because the group-closing `[CHECK]` eventually went green).
    - **🔴 Log it in `check-log.md` (TR5) — every attempt, including the failed ones.** The command's output lives in the chat, and the chat is gone after `/clear`; without this, all that remains from the phase is a checkbox that claims green, without proving it. See the *`[CHECK]` run log* section.
    - **3-attempt rule:** If `[CHECK]` has failed three times in a row, and fix attempts within the group have not resolved it — **stop**. Describe what you tried, and tell the user: *"[Tkkk] failed three times. [Short summary of the error and the solutions attempted.] How should we proceed?"*
    - **Port conflict:** If starting a service or running a test fails due to a port conflict (address already in use), do not stop. Find the next free port (`ss -tlnp | grep :<port>` or `lsof -i :<port>`), temporarily update the affected configuration (`docker-compose`, env file), and re-run. Tell the user which port you used instead.
      > **⚠ TEMPORARY CHANGE — DO NOT COMMIT:** the config/port change made for the port conflict is temporary. Before committing the task, RESTORE it, or exclude it from `git add` (it must not end up in the cycle's diff). Only the task's actual code change may be committed.
+
+8/b. **🔴 Closing out a `[RED]` task: the test MUST fail (RED1).** A `[RED]` task is not done when the test file comes into existence, but when the test that was written is **red** — this is the first half of the TDD cycle, and **it is the only evidence that the test actually checks something**. So, before ticking the `[RED]` task:
+   1. run the **targeted** test (the `<field:f_test_run>` command from the plan's `TA1` data sheet, narrowed to the one file/case — not the whole suite);
+   2. the run must end with a **non-zero** exit code and a `failed > 0` result;
+   3. log it in `check-log.md` **with the `[RED]` task's identifier** and a `✗` result (the log records every attempt anyway).
+
+   **If the test is green on its FIRST run, the task is NOT done** — either the test does not check what the plan prescribes, or it is an empty shell (`assert True`, `pass`, a body without assertions). In that case the test is what has to be written, not the task closed out. A green `[RED]` is the most common silent test fraud: the suite reports `X passed`, the `DoD` gets its evidence, and the validation closes on `PASS` without anything having been checked.
+
+   **Exception — `RED-EXEMPT`:** if the `[RED]` task updates an **existing** test (typically the `TREGn` regression tasks) and the test is rightly green after the change too, then write a line into the `## <sec:notes>` section of `check-log.md`: `RED-EXEMPT: <task> — <why it cannot fail>`. Without a justification the task cannot be closed.
 
 9. **`⟂ Tkkk` marking:** the given task and the referenced task are independent of each other — if they can be done at the same time, invoke both edits in parallel.
    - **Example:** if T012 contains `⟂ T013`, then T012 and T013 can be edited at the same time.
@@ -228,12 +243,13 @@ A deletion, a rename or a signature change inevitably ripples out to files the t
 
 **Columns:**
 - **Time** — a concrete string (`YYYY-MM-DD HH:MM`). Shell substitution is platform-dependent: bash/zsh → `$(date '+%Y-%m-%d %H:%M')`, PowerShell → `(Get-Date -Format 'yyyy-MM-dd HH:mm')`. If you cannot determine it, `—` is acceptable too; the other columns are what matters.
+- **Task** — **exactly one** task identifier (`T001`, `T030a`, `TREG1`, `TLAST1`). A range (`T030a-T037`), a list (`T031, T032`) and "several tasks in one row" are **forbidden** (CK1): that way the log is a summary rather than evidence, and `07`'s gate cannot decide per task what was actually run.
 - **Attempt** — which attempt out of the 3-attempt rule (item 8): `1/3`, `2/3`, `3/3`. This is what makes it visible in hindsight that a group was hard to get through.
 - **<field:f_mode>** — `normal` \| `validate-loop` (07's self-healing loop — both test fixes and review fixes). `[CHECK]` runs executed in fix mode are **logged the same way**, with the appropriate marker — so the fix rounds leave a trace too.
 - **Command** — the command that was actually issued, **verbatim**, not the idealized version from the task text.
-- **Result** — `✓`/`✗` + the runner's counts (`X passed / Y failed / Z skipped`), and on failure, the name(s) of the failed test(s) with a short error message. **If the command is not a test** (build, lint, typecheck), put one line of the essential output in place of the count (e.g. `0 errors`).
+- **Result** — `✓`/`✗` + the runner's counts (`X passed / Y failed / Z skipped`), and on failure, the name(s) of the failed test(s) with a short error message. **For `[RED]` tasks the `✗` is not a failure but the mandatory evidence (RED1)** — per item 8/b, it is precisely this row that makes the `[RED]` task closable. **If the command is not a test** (build, lint, typecheck), put one line of the essential output in place of the count (e.g. `0 errors`).
 
-**<sec:notes> section** — this is where any circumstance that affected the run but does not fit the table goes: a temporary port swap (and whether it was reverted — the port-conflict rule in item 8), a manually started/stopped container, a skipped check and its reason.
+**<sec:notes> section** — this is where any circumstance that affected the run but does not fit the table goes: a temporary port swap (and whether it was reverted — the port-conflict rule in item 8), a manually started/stopped container, a skipped check and its reason. **The exemption lines live here too:** `RED-EXEMPT: <task> — <reason>` (the `[RED]` cannot fail, item 8/b) and `CK-DEVIATION: <task> — <reason>` (the framework cannot filter down to a single case, item 8). Both prefixes are **language-independent literals** — `07`'s gate matches on them verbatim.
 
 ---
 
@@ -264,6 +280,37 @@ The README.md is part of the implementation — not after-the-fact documentation
 
 ---
 
+
+## Implement-phase tests (PH1) — once, at the end of the phase
+
+The `<field:f_phase>` column of the machine-readable run table of `plan.md` says which categories have to run in **this** phase (`<status:phase_implement>` or `<status:phase_both>`; **an unmarked row belongs here too** — silence does not mean skipping). This does not replace the per-task `[CHECK]`: the `[CHECK]` proves the green of a group, this proves the **closing state of the phase**, with machine counts and evidence. After every task is `[x]`, but BEFORE the status change, **once**:
+
+```bash
+python3 <platform-scripts-mappa>/run-tests.py \
+  specs/cycle-NN-<cycle-name>/plan.md \
+  --round-dir specs/cycle-NN-<cycle-name>/test-report/implement \
+  --phase <status:phase_implement>
+```
+
+- **`exit 0`** → the output brings, per category, the command issued and the `X passed / Y failed / Z skipped` counts; the evidence goes into the phase folder and enters with the closing commit.
+- **`exit 1`** → there is a failing category: this is **the same 3-attempt rule** as with a `[CHECK]` — fix the failure, run it again, and log it into `check-log.md`. After three failures stop and ask.
+- **`exit 2`** → there is no machine-readable table in the plan (an old cycle): this is not your fault and not a stop — note in one line in the closing message of the phase that the table of `03` is missing.
+- **A `MEGJEGYZÉS (PH1)` line saying there is nothing to run** → every row of the table is `<status:phase_validate>`-only. Move on.
+
+> **This is not a new stopping point (IM1).** The run is part of closing the phase, in the same turn — unlike the `[CHECK]`s it does **not** run per task.
+
+## Test-substance gate (TB1) — before closing the phase
+
+Once every task is `[x]`, but **before** the status change, run the test-substance gate. It examines the test files listed in the plan's `TA1` data sheets: is any of them an **empty shell** (`assert True`, `pass`, a body without assertions)?
+
+```bash
+python3 <platform-scripts-mappa>/test-substance-check.py specs/cycle-NN-<cycle-name>
+```
+
+- **`exit 0`** → the *Report phase* and the status change can proceed;
+- **`exit 1`** → **the phase cannot be closed.** The test functions listed must **be written**: this is not "the test will be written in 07" — the test is the **product** of the `[RED]` task, and with an empty shell the task is not done (RED1). After fixing it, re-run the task's `[CHECK]` (verbatim, with the selector — CK1), log it, and only then close.
+
+> **Why this is a machine gate and not a checklist line:** an empty shell is green immediately, so the `[CHECK]` counter, the `DoD` evidence and the validation `PASS` are **all satisfiable** without anything having been checked. The implementer has an interest in the checkbox (`7/j`) — which is why this is not left to their judgment.
 
 ## Report phase (TR6) — `test-report/implement/`
 
@@ -299,7 +346,7 @@ python3 <platform-scripts-mappa>/report-gate-check.py \
           specs/cycle-NN-<cycle-name>/test-report/implement/ \
     && git commit -m "cycle-NN: 06-implement - done, ready for validation"
   ```
-  **Check before the status change:** the *Report phase (TR6)* section has run (the `--phases` query, and if `implement` is a report phase, the gate with `exit 0`); `check-log.md` exists, and every group-closing `[CHECK]` has at least one line for it in the log. If a group is `[x]` but the log has no entry for it, the evidence is missing — add the missing log line based on the actual run (not from memory: if you do not know, re-run the `[CHECK]`).
+  **Check before the status change:** the *Test-substance gate (TB1)* section has run (`exit 0`) and the *Report phase (TR6)* section has run (the `--phases` query, and if `implement` is a report phase, the gate with `exit 0`); `check-log.md` exists, and every group-closing `[CHECK]` has at least one line for it in the log. If a group is `[x]` but the log has no entry for it, the evidence is missing — add the missing log line based on the actual run (not from memory: if you do not know, re-run the `[CHECK]`).
 
 If the status is `<status:ready_for_validate>`, stop. Inform the user of the next step and the phase's launch command, for example:
 <!-- INCLUDE:lang/06-implement.md#zaro-uzenet -->

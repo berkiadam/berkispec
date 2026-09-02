@@ -21,11 +21,13 @@ scripts:
   - "scripts/run-tests.py — tesztfuttatás a plan gépi táblájából, gépi darabszámokkal (TR1/TR2)"
   - "scripts/sonar-gate.py — Sonar Quality Gate az API-ból (QG1 megkülönböztetéssel)"
   - "scripts/dod-check.py — DoD ↔ bizonyíték join (DI1)"
-  - "scripts/validate-gate-check.py — státusz/task/DoD/IP1/review/kör-blokk gyűjtőkapu"
+  - "scripts/test-substance-check.py — vacuous teszt-törzs (TB1) és szelektor-létezés (TB2)"
+  - "scripts/validate-gate-check.py — státusz/task/DoD/IP1/review/kör-blokk/CK1 gyűjtőkapu"
   - "scripts/contract-guard.py — VD3a szerződés-integritás kapu"
   - "scripts/report-gate-check.py — TR3 riport-kapu"
   - "scripts/failure-counter.py — futás-napló és leállási korlátok (VD4)"
 shared:
+  - "shared/review-checklist.md"
   - "shared/input-from-prev.md"
   - "shared/phase-commit.md"
 ---
@@ -68,6 +70,18 @@ A prompt bemenete a ciklus mappája (pl. `specs/cycle-NN-<cycle-name>`). A valid
      - **`plan.md` / `spec.md` státusza nem elfogadható** (elfogadható: `plan.md` → `<status:ready_for_tasks>` vagy `<status:done>`; `spec.md` → `<status:ready_for_plan>` vagy `<status:done>`) → ha valamelyik `<status:draft>`-ra van visszaállítva, jelezd a felhasználónak: valamelyik korábbi fázisban döntés született, amely szinkront igényel.
    - A `<status:done>` mindkettőnél **normális**, ha a `08-doc-sync` (vagy a `09-merge` előtti doc-sync újrafuttatás) után tértünk vissza ide.
    - A szkript `·` sorai INFO-k (megszakadt hurok markere, nyitott `input-from-prev` tételek) — ezeket dolgozd fel, de nem állítanak meg.
+
+4. **Szelektor-kapu (TB2) — a kör ELEJÉN.** Egy elorphanodott `[CHECK]` szelektor (a `06` átnevezett egy teszt-függvényt, a task parancsa a régi nevet őrzi) a kör **elején** derüljön ki, ne a végén:
+
+   ```bash
+   python3 <platform-scripts-mappa>/test-substance-check.py \
+     specs/cycle-NN-<cycle-name> --selectors-only
+   ```
+
+   - **`exit 0`** → mehet tovább;
+   - **`exit 1`** → a `tasks.md` és a kód **szétcsúszott**: a felsorolt `[CHECK]` parancsok futtatáskor hibával állnának le, tartalmi ítélet nélkül. Javítsd a `tasks.md` parancsát a tényleges teszt-névre (ez nem tartalmi változtatás, nem sérti a `VD3`-at), **vagy** — ha a teszt egyáltalán nem készült el — vissza a `06`-ra: a `[RED]`/`[GREEN]` task nincs elvégezve.
+
+   A `--selectors-only` szándékosan **csak** a `TB2`-t futtatja: a `TB1` vacuous-vizsgálat a lezárásnál értelmes (A/2 + B blokk), amikor a tesztek már készek.
 
 ---
 
@@ -270,7 +284,7 @@ python3 <platform-scripts-mappa>/round-log.py step \
 python3 <platform-scripts-mappa>/run-tests.py \
   specs/cycle-NN-<cycle-name>/plan.md \
   --round-dir specs/cycle-NN-<cycle-name>/test-report/validate/round-NN \
-  --type gyors
+  --type gyors --phase <status:phase_validate>
 ```
 
 - **`exit 0/1`** → a kimenet kategóriánként tartalmazza a **kiadott parancsot** és a `X passed / Y failed / Z skipped` darabszámokat, bukásnál a bukott tesztek **pontos nevét** — ezek mennek szó szerint a `failure-counter.py --failed-item` értékeibe. A gépi eredmény a kör-mappa `results.json`-jában marad.
@@ -279,6 +293,12 @@ python3 <platform-scripts-mappa>/run-tests.py \
 - **A kimenet kategóriánként kiírja a KÖRNYEZETET is** (`@ dev`, `@ lokális`), és a `results.json`-ba is bekerül. **Ezt vidd be a kör lépés-táblájába**: a riportból utólag látszania kell, hol volt zöld a teszt — egy zöld JUnit XML önmagában nem árulja el, melyik hostot szólította meg.
 - **`exit 3`** → a tábla **helyőrző-hibás**: a behelyettesítés dupla útvonal-prefixet ad (`test-report/test-report/…` vagy `test-report/specs/…`, TR5/c). **Ne futtass semmit, és NE ess vissza a `test-runner`-re** — a szkript kiírja, melyik sor és melyik mező hibás. Ez a `03` hiánya, nem kód-bug: javítsd a `plan.md` gépi tábláját a helyes helyőrzőre (`{round}` = teljes útvonal, `{phase}` = fázis-mappa — lásd 0/a), és futtasd újra. Ha a javítás nem egyértelmű, a VD5 szerint eszkalálj a `03`-ra.
 - Könnyű körben egyetlen bukott kategória visszaigazolásához: `--only <kategória>`.
+
+> **🔴 `EV6` — forgalmi bizonyíték a futtatás UTÁN.** Az `EV1–EV5` a **célpontot** védi a futtatás **előtt** (host a parancsban, elérhetőségi probe, `localhost`-tilalom). Az `EV6` a **forgalmat** védi a futtatás **után**: *egy zöld teszt nem bizonyítja, hogy egyáltalán elindult kérés.* Egy éles ciklusban a dev környezetre szánt E2E tesztek **egyetlen dev kérést sem** indítottak (a teszt-törzsek üres vázak voltak), a kör `rest-logs` mappája mégis telinek látszott — 50 naplófájllal, amelyek mind korábbi körből örökölt, `127.0.0.1`-es bejegyzések voltak.
+>
+> Ezért minden nem-lokális `<field:f_environment>`-ű kategóriára a szkript megnézi, hogy a `conventions.md` `## <sec:cv_test_reporting>` (TR3) táblájában deklarált **audit-artefaktumok** közt van-e olyan, amely **(a)** a kör alatt keletkezett és **(b)** tartalmazza a cél-hostot. Bukásnál a kategória `FAIL` (a `results.json`-ba is bekerül) — a javítás **nem** a napló bemásolása, hanem hogy a teszt tényleg megszólítsa a cél-környezetet (`VD3`).
+>
+> **Óvatossági ág:** ha a TR3 tábla **nem deklarál** audit-artefaktumot, az `EV6` csak **javaslat** (`·` sor, a `results.json` `suggestions` kulcsában) — nem minden projekt vállal REST-audit naplót, és egy ilyen projektet nem bukatunk meg olyanért, amit nem is vállalt. A `--conventions` alapértéke a repó gyökerében lévő `conventions.md`; ha nem létezik, a check kimarad.
 
 #### 1/b. Fallback: `test-runner` subagent
 
@@ -363,7 +383,13 @@ A subagent jelentése alapján:
    > **🔴 Ha a fallback ágra mész (a review a fő ágensben készül), a jelentés eredetét KÖTELEZŐ jelölni.** A fallback más modellen és szűkebb kontextusban fut, mint a `reviewer` subagent, ezért rendszeresen gyengébb lelet — aki később a riportot olvassa, ezt lássa:
    > - a `code-review.md` fejlécébe egy sor: **Készítette:** fő ágens (fallback) — a reviewer subagent nem volt futtatható: <ok>;
    > - a kör lépés-táblájában a lépés neve `kódreview (2/b, RV1) — fallback: fő ágens` legyen, **soha ne** `reviewer subagent`;
-   > - az `## <sec:closing_summary>` szekcióba írd be, hogy a subagent-review pótlása ajánlott.
+   > - az `## <sec:closing_summary>` szekcióba írd be, hogy a subagent-review pótlása ajánlott;
+   > - és egy **második kötelező sor** a fejlécbe: **Szempontlista:** `RV-FB1` — mind a <N> pont végigjárva (vagy a kihagyott pont megnevezése, indoklással). Enélkül a fallback szigora ismét önbevallás (`7/j`).
+
+   > **🔴 Fallback módban UGYANEZT a listát kell végigjárnod, tételesen (RV-FB1).** A fallback nem „egy gyors diff-összegzés": a `reviewer` subagent szempontlistája alább **szó szerint** ott van, és fallback esetén **te** vagy a reviewer. Menj végig **minden** ponton, és a `code-review.md`-ben nevezd meg, hol teljesül vagy hol nem — különösen a **Teszt lefedettség** ponton: egy éles ciklusban épp a fallback ág futott, és épp ez a pont maradt ki, ezért nem derült ki, hogy a „megírt" tesztek üres vázak (`assert True`). A fallback jelölése (fentebb) az **eredetet** rögzíti, nem a szigor csökkentését engedi meg.
+
+<!-- INCLUDE:shared/review-checklist.md -->
+
 3. **Értékeld a jelentést:**
    - **A fejlécben `<field:f_status>` = `<status:in_progress>`** → a reviewer **nem fejezte be** a jelentést (megszakadt futás — RV-INC). A review-kapu **nem zárható le vele**: sem zöldre, sem FAIL-re. A már kiírt findingok viszont **valósak, csak hiányosak** — ne dobd el és ne írd felül őket; kezeld a lépést a 2. pont hiba-ága szerint, és a részleges findingokat vidd tovább a következő review bemenetébe. A `validate-gate-check.py` ezt gépileg is elbukja.
    - **Nincs lezáratlan `- [ ]` a `<sec:critical_fixes>` szekcióban** (és a fejléc `<status:done>`) → a review-kapu ✓. Ha a Sonar is zöld, a statikus réteg zöld → mehet a 3. lépés (nehéz tesztek).
@@ -387,7 +413,7 @@ Csak akkor futtasd, ha az **1. és a 2. lépés is zöld volt** — a nehéz tes
 python3 <platform-scripts-mappa>/run-tests.py \
   specs/cycle-NN-<cycle-name>/plan.md \
   --round-dir specs/cycle-NN-<cycle-name>/test-report/validate/round-NN \
-  --type nehez
+  --type nehez --phase <status:phase_validate>
 ```
 
 A tábla `<field:f_prerequisite>` és `Takarítás` oszlopa tartalmazza a stack indítását és lebontását — a takarítás akkor is lefut, ha a futtatás elszállt. `exit 2` (nincs gépi tábla) esetén hívd a `test-runner` subagentet, most a nehéz tesztek (E2E + regresszió) lefuttatására — a `tasks.md` `TREG` jelölésű taskjai és a `plan.md` `<sec:regression_impact>` táblázata alapján. **Ugyanazt a kör-mappát add át, mint az 1. lépésben** (TR5) — egy körhöz egy mappa tartozik, a gyors és a nehéz tesztek artefaktumai egymás mellé kerülnek. A subagent felelőssége a szükséges backend szolgáltatások/konténerek elindítása, a portütközés-elhárítás és az ideiglenes erőforrások takarítása (lásd az agent kontraktusát).
@@ -421,7 +447,7 @@ python3 <platform-scripts-mappa>/dod-check.py \
 
 #### A/2 + B. A többi kapu egyetlen hívásban (`validate-gate-check.py`)
 
-Nyitott taskok, nyitott DoD-pipák, `validate-input-from-prev.md` lezáratlan tételei (IP1), nyitott `<status:must_fix>` (RV1), és a kör-blokk ↔ `round-NN/` mappa egyezése (VD9-guard, TR5) — mind regex-kérdés, egyetlen hívással:
+Nyitott taskok, nyitott DoD-pipák, `validate-input-from-prev.md` lezáratlan tételei (IP1), nyitott `<status:must_fix>` (RV1), a kör-blokk ↔ `round-NN/` mappa egyezése (VD9-guard, TR5), a `[CHECK]` parancsok szó szerinti, taskonkénti futása (CK1), és a `[RED]` taskok bukás-bizonyítéka a `check-log.md`-ben (RED1) — mind regex-kérdés, egyetlen hívással:
 
 ```bash
 python3 <platform-scripts-mappa>/validate-gate-check.py \
@@ -433,6 +459,19 @@ python3 <platform-scripts-mappa>/validate-gate-check.py \
 - **`exit 2`** → nem létező ciklusmappa (elgépelt útvonal).
 
 A `--require-review` a **PASS előtti** futtatáshoz kell: ott a `code-review.md` hiánya bukás. Korábbi körökben (amikor a review el sem indult) hagyd el.
+
+**Teszt-tartalom kapu (TB1) — önálló parancs, ugyanebben a szakaszban:**
+
+```bash
+python3 <platform-scripts-mappa>/test-substance-check.py specs/cycle-NN-<cycle-name>
+```
+
+- **`exit 0`** → a plan `TA1` adatlapjaiban felsorolt tesztfájlokban nincs üres váz;
+- **`exit 1`** → a kör **FAIL**, és a bukás típusa **teszt-hiba** → az `implement-fixer` indul a `## <sec:validation_fixes>` szekcióval. **A `VD3` garde ide is szól:** a vacuous teszt javítása a teszt **megírása** — nem a check kikapcsolása, nem a fájl kivétele a plan adatlapjaiból, és nem az asszertáció „odaírása" úgy, hogy triviálisan igaz legyen.
+
+> **🔴 A `CK1` bukása nem a napló hibája (VD3).** Ha a kapu azt írja, hogy egy naplósor `Task` cellája intervallumot hordoz, vagy hogy a naplózott parancs nem tartalmazza a task teszt-szűrőjét, **a napló utólagos átírása nem javítás** — a `[CHECK]`-eket **újra kell futtatni egyenként**, szó szerint, ahogy a `tasks.md` írja, és az új futásokat naplózni. Egy összevont futás azt is elrejti, hogy a `tasks.md` szelektora már nem létező teszt-függvényre hivatkozik. Ha a keret tényleg nem tud eset-szintűre szűrni, az a `check-log.md` `## <sec:notes>` szekciójában egy `CK-DEVIATION: <task> — <indok>` sor — **indoklás nélkül nem**.
+
+> **🔴 Egy zöld `[RED]` nem javítható a napló átírásával (RED1/VD3).** Ha a kapu azt írja, hogy egy `[RED]` taskhoz nincs bukott (`✗`) futás, a hiányzó bizonyítékot **nem** utólag beírt naplósor pótolja: a tesztet kell megírni úgy, hogy implementáció nélkül **tényleg bukjon** (egy `assert True` váz fizikailag nem tud vörös lenni — ezért ez a legerősebb, ítélet-mentes jel). A `[RED]` task ilyenkor **nincs elvégezve** → vissza a `06`-ra a `## <sec:validation_fixes>` szekcióval. Kivétel csak a `RED-EXEMPT: <task> — <indok>` sor (meglévő tesztet frissítő, joggal zöld regressziós task) — ez a `VD3` anti-teszt-csalás garde alá tartozik.
 
 > **Ami marad neked (IP1):** ha egy `input-from-prev` tétel a validálás során **hibát okozott** (pl. hiányzó előfeltétel miatt bukott el egy teszt), az FAIL — a szokásos hurok szerint javítandó, nem elvetéssel elintézendő. A szkript csak azt látja, hogy nyitva van-e; azt, hogy *figyelembe vetted* vagy *elvetetted*, te írod bele.
 

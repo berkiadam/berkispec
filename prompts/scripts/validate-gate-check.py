@@ -16,6 +16,11 @@ Két szakasz:
 
   --stage close   (alapértelmezett — a kör lezárása / PASS előtt)
     · tasks.md: nincs nyitott `- [ ]` (a javító-szekciókat külön jelzi)
+    · check-log.md: a `[CHECK]` parancsok szó szerint, taskonként futottak (CK1) —
+      egy naplósor = egy task-azonosító, és a naplózott parancs hordozza a task
+      teszt-szűrőjét (`CK-DEVIATION:` sorral felmenthető)
+    · check-log.md: minden `[RED]` taskhoz van bukott (`✗`) futás (RED1) —
+      `RED-EXEMPT:` sorral felmenthető
     · spec.md: minden DoD-pontnak van `DoD-NN` azonosítója, egyediek,
       és nincs köztük nyitott `- [ ]` (DI1)
     · validate-input-from-prev.md: nincs nyitott `[ ]` tétel (IP1)
@@ -113,6 +118,204 @@ def check_tasks(cycle, rep, stage):
         rep.bad(f"tasks.md: {open_fix} nyitott javító-task ({' / '.join(FIX_SECTIONS)})")
     if "[validate-loop]" in (status or ""):
         rep.info("`[validate-loop]` marker még fent van (PASS-nál le kell venni)")
+
+
+TASK_ID_RE = re.compile(r"\bT[A-Z]*\d+[a-z]?\b")
+TASK_LINE_RE = re.compile(r"^\s*- \[[ xX]\]\s+(T[A-Z]*\d+[a-z]?)\s+\[(RED|GREEN|CHECK|OPS)\]")
+
+
+def parse_task_markers(text):
+    """[(task-azonosító, marker, parancs)] a tasks.md sorai alapján.
+
+    A parancs a sor ELSŐ backtickes szakasza (a sablon szerint:
+    `- [ ] T004 [CHECK] Futtasd: \\`<parancs>\\` — plan [P-…] — test [TC-01]`).
+    """
+    out = []
+    for line in text.splitlines():
+        m = TASK_LINE_RE.match(line)
+        if not m:
+            continue
+        cmd = re.search(r"`([^`]+)`", line)
+        out.append((m.group(1), m.group(2), cmd.group(1).strip() if cmd else ""))
+    return out
+
+
+def _log_table_rows(text):
+    """A check-log.md tábla adatsorai: [(sorszám, task-cella, parancs-cella, eredmény-cella)].
+
+    A fejléc `Task` cellájából olvassuk ki a task-oszlop indexét (ez a szó mindkét
+    nyelvi fán ugyanaz); ha nincs fejléc, a sablon szerinti 2. cella. A parancs- és
+    eredmény-cellát TARTALOM alapján ismerjük fel (backtick, ill. ✓/✗), hogy a
+    nyelvfüggő fejlécnevekre ne kelljen támaszkodni.
+    """
+    rows, task_idx = [], None
+    for lineno, line in enumerate(text.splitlines(), start=1):
+        if not line.strip().startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 4:
+            continue
+        lowered = [c.lower() for c in cells]
+        if "task" in lowered and not any(TASK_ID_RE.search(c) for c in cells):
+            task_idx = lowered.index("task")
+            continue
+        if all(set(c) <= {"-", ":", " "} for c in cells):
+            continue
+        idx = task_idx if task_idx is not None and task_idx < len(cells) else 1
+        cmd = next((c for c in cells[idx + 1:] if "`" in c), "")
+        result = next((c for c in cells[idx + 1:] if "✓" in c or "✗" in c), "")
+        rows.append((lineno, cells[idx], cmd, result))
+    return rows
+
+
+def _selector(cmd):
+    """A parancs TESZT-SZŰRŐ része, vagy None. Csak literál mintát ítélünk (CK1/TB2)."""
+    m = re.search(r"::[\w:.\[\]-]+", cmd)
+    if m:
+        return m.group(0)
+    m = re.search(r"(?:-t|--test-name-pattern|--testNamePattern)\s+(\"[^\"]+\"|'[^']+'|\S+)", cmd)
+    if m:
+        return m.group(1).strip("\"'")
+    m = re.search(r"-k\s+(\"[^\"]+\"|'[^']+'|\S+)", cmd)
+    if m:
+        pattern = m.group(1).strip("\"'")
+        if re.search(r"\b(and|or|not)\b", pattern):
+            return None          # logikai kifejezés — nem ítélünk (BD10)
+        return pattern
+    return None
+
+
+def _norm(text):
+    return re.sub(r"\s+", " ", text.replace("`", "").replace('"', "").replace("'", "")).strip().lower()
+
+
+def _exemptions(text, prefix):
+    """{task: indok} a napló jegyzet-szekciójának `<PREFIX>: <task> — <indok>` sorai alapján."""
+    out = {}
+    for m in re.finditer(prefix + r":\s*\**\s*(T[A-Z]*\d+[a-z]?)\s*\**\s*[—–-]+\s*(\S.*)", text):
+        out[m.group(1)] = m.group(2).strip()
+    return out
+
+
+def _check_log(cycle):
+    return cycle / "test-report" / "implement" / "check-log.md"
+
+
+def check_command_integrity(cycle, rep, stage):
+    """CK1 — a [CHECK] taskok parancsai szó szerint, egyenként futottak-e.
+
+    1. a check-log.md minden sorának `Task` cellája PONTOSAN egy azonosító
+       (intervallum/felsorolás → rep.bad);
+    2. minden `[CHECK]` taskhoz van legalább egy naplósor a saját azonosítójával;
+    3. a naplósor `Parancs` cellája tartalmazza a task parancsának TESZT-SZŰRŐ
+       részét (`::<fn>`, `-t "<név>"`, `-k <minta>`), ha a task parancsában van
+       ilyen — különben összevont/szűrő nélküli futás.
+
+    Miért kell: egy éles ciklusban nyolc `[CHECK]` task helyett egyetlen, szűrő
+    nélküli futás került a naplóba, a `Task` cellájában intervallummal — így sem a
+    `tasks.md` és a kód szétcsúszása, sem a `[RED]` taskok zöldsége nem derült ki.
+    Eltérés-ág: a jegyzet-szekció `CK-DEVIATION: <task> — <indok>` sora felmenti.
+    """
+    if stage != "close":
+        return
+    tasks_text = read(cycle / "tasks.md")
+    log_path = _check_log(cycle)
+    log_text = read(log_path)
+    if log_text is None:
+        rep.info("check-log.md: nincs (a CK1 join kimarad — régi ciklusban nem feltétlenül van napló)")
+        return
+    if tasks_text is None:
+        return                      # a check_tasks már jelezte
+    rows = _log_table_rows(log_text)
+    if not rows:
+        rep.info("check-log.md: nincs értelmezhető tábla-sor (a CK1 join kimarad)")
+        return
+
+    row_map, sloppy = {}, []
+    for lineno, task_cell, cmd_cell, _result in rows:
+        ids = TASK_ID_RE.findall(task_cell)
+        if len(ids) != 1:
+            sloppy.append(f"{lineno}. sor: `{task_cell}`")
+            continue
+        row_map.setdefault(ids[0], []).append(cmd_cell)
+    if sloppy:
+        rep.bad(f"check-log.md: {len(sloppy)} sor `Task` cellája nem PONTOSAN egy azonosító "
+                f"(intervallum/felsorolás tilos — CK1): " + " · ".join(sloppy[:5]))
+    else:
+        rep.ok(f"check-log.md: mind a {len(rows)} sor egyetlen task-azonosítóhoz tartozik (CK1)")
+
+    exempt = _exemptions(log_text, "CK-DEVIATION")
+    checks = [(tid, cmd) for tid, marker, cmd in parse_task_markers(tasks_text) if marker == "CHECK"]
+    if not checks:
+        rep.info("tasks.md: nincs `[CHECK]` task (a CK1 join kimarad)")
+        return
+    missing, unfiltered = [], []
+    for tid, cmd in checks:
+        if tid in exempt:
+            continue
+        logged = row_map.get(tid)
+        if not logged:
+            missing.append(tid)
+            continue
+        sel = _selector(cmd)
+        if sel and not any(_norm(sel) in _norm(c) for c in logged):
+            unfiltered.append(f"{tid} (`{sel}`)")
+    if missing:
+        rep.bad(f"check-log.md: {len(missing)} `[CHECK]` taskhoz nincs saját naplósor (CK1): "
+                + ", ".join(missing[:10])
+                + " — futtasd egyenként, vagy indokolj `CK-DEVIATION:` sorral")
+    if unfiltered:
+        rep.bad(f"check-log.md: {len(unfiltered)} `[CHECK]` naplósora nem tartalmazza a task "
+                f"parancsának teszt-szűrőjét (összevont/szűrő nélküli futás — CK1): "
+                + ", ".join(unfiltered[:10]))
+    if not missing and not unfiltered:
+        rep.ok(f"minden `[CHECK]` task ({len(checks)}) szó szerint, egyenként futott (CK1)")
+    if exempt:
+        rep.info(f"CK-DEVIATION felmentés: {', '.join(sorted(exempt))}")
+
+
+def check_red_proof(cycle, rep, stage):
+    """RED1 — minden [RED] taskhoz van bukott futás a check-log.md-ben.
+
+    Egy `assert True` stub fizikailag nem tud vörös lenni: ez az egyetlen
+    NEM ítélet-igényes jel arra, hogy a teszt ellenőriz valamit. A join a
+    `tasks.md` `[RED]` markereit veti össze a napló `✗` sorainak
+    task-azonosítóival; a `RED-EXEMPT: <task> — <indok>` sorok felmentenek
+    (meglévő tesztet frissítő, joggal zöld regressziós task).
+
+    A `Task` cella szigorú, egy-azonosítós parse-olása a CK1 dolga
+    (`check_command_integrity`) — e nélkül ez a join egyetlen összevont
+    futással megetethető lenne.
+    """
+    if stage != "close":
+        return
+    tasks_text = read(cycle / "tasks.md")
+    log_text = read(_check_log(cycle))
+    if log_text is None:
+        rep.info("check-log.md: nincs (a RED1 join kimarad)")
+        return
+    if tasks_text is None:
+        return
+    reds = [tid for tid, marker, _cmd in parse_task_markers(tasks_text) if marker == "RED"]
+    if not reds:
+        rep.info("tasks.md: nincs `[RED]` task (a RED1 join kimarad)")
+        return
+    failing = set()
+    for _lineno, task_cell, _cmd, result in _log_table_rows(log_text):
+        ids = TASK_ID_RE.findall(task_cell)
+        if len(ids) == 1 and "✗" in result:
+            failing.add(ids[0])
+    exempt = _exemptions(log_text, "RED-EXEMPT")
+    missing = [t for t in reds if t not in failing and t not in exempt]
+    if missing:
+        rep.bad(f"check-log.md: {len(missing)} `[RED]` taskhoz nincs bukott (`✗`) futás (RED1): "
+                + ", ".join(missing[:10])
+                + " — a tesztnek BUKNIA kell, mielőtt a task lezárul; ha nem tud bukni, "
+                  "`RED-EXEMPT: <task> — <indok>` sor a napló jegyzet-szekciójában")
+    else:
+        rep.ok(f"minden `[RED]` task ({len(reds)}) bukás-bizonyítékkal zárult (RED1)")
+    if exempt:
+        rep.info(f"RED-EXEMPT felmentés: {', '.join(sorted(exempt))}")
 
 
 def check_dod(cycle, rep, stage):
@@ -278,6 +481,8 @@ def main():
     if args.stage == "start":
         check_start_statuses(cycle, rep)
     check_tasks(cycle, rep, args.stage)
+    check_command_integrity(cycle, rep, args.stage)
+    check_red_proof(cycle, rep, args.stage)
     check_dod(cycle, rep, args.stage)
     check_input_from_prev(cycle, rep, args.stage)
     check_review(cycle, rep, args.stage, args.require_review)

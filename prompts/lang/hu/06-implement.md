@@ -15,12 +15,14 @@ _(Append-only. A 06-implement írja, taskonként. A 07/09 nem ír bele.)_
 
 | Idő | Task | Próba | Mód | Parancs | Eredmény |
 |---|---|---|---|---|---|
+| 2026-08-07 09:58 | T003 | 1/3 | normál | `npx tsx --test test/unit/token-store.test.ts` | ✗ 0 passed / 1 failed — `refreshes once for 5 parallel readers` (RED1: a teszt megvan, az implementáció még nincs) |
 | 2026-08-07 10:12 | T004 | 1/3 | normál | `npm test -- token-store` | ✗ 12 passed / 1 failed — `initHash returns stable hash` |
 | 2026-08-07 10:19 | T004 | 2/3 | normál | `npm test -- token-store` | ✓ 13 passed / 0 failed / 0 skipped |
 | 2026-08-07 11:40 | T041 | 1/3 | validate-loop | `npm test -- auth` | ✓ 27 passed / 0 failed / 0 skipped |
 
 ## Megjegyzések
 - **T004** — átmeneti port-csere a `[CHECK]` futtatásához: 5432 → 5433 (`docker-compose.yml`); a commit előtt visszaállítva.
+- **RED-EXEMPT: TREG1** — a `test/e2e/auth-login.spec.ts` meglévő tesztje a middleware-változás után is joggal zöld; a task csak a szelektort frissíti.
 
 <!-- ANCHOR:check-log-pelda-sor -->
 ## <Task azonosító> — <rövid cím>

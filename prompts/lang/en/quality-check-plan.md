@@ -12,6 +12,11 @@
 [ ] 1. The `Spec coverage` table is filled in: EVERY case of the spec
        `Test specification` and EVERY `DoD-NN` item maps to at least one plan
        test case (or appears with a justification). No row is left out.
+[ ] 1/b. WY1 — A PURPOSE FOR EVERY ENTRY: EVERY `[P-…]` section of the
+       `Planned changes` carries a `**<field:f_purpose>:**` line that states
+       the behaviour true AFTER the change and the trouble it eliminates, and
+       names the spec source (`DoD-NN` or requirement). There is no entry where
+       the purpose merely repeats the change or is an empty generality.
 [ ] 2. I PHYSICALLY copied in every affected recipe (RXX/IXX) of
        `specs/test-conventions.md` (commands, URLs, payloads, credential pointers)
        — I do not merely reference them. The plan is executable without
@@ -20,6 +25,36 @@
        full endpoint · headers (with the TYPE of the Authorization) · concrete
        request body · expected HTTP status · key response fields. For browser E2E:
        interaction + network call + visible result.
+[ ] 3/b. TS7 — SPEC TEST CASE → `TS-NN`: EVERY test case of the spec has been
+       converted into a standalone `TS-NN` block in the `Test scenarios` section,
+       and every row of the `Spec coverage` table names at least one `TS-NN`
+       (or the justification of a case that cannot be tested). The heading
+       structure of the test section of the spec has NOT been carried over as a
+       parallel, self-named section.
+[ ] 3/c. TA1 — TEST ARTIFACT DATA SHEET: under every `#### <test file path>`
+       heading there stands the `<field:f_what_it_checks>` (what the file
+       verifies — as a claim, with the `DoD-NN`), the `How to run` (framework +
+       the command narrowed to this one file, runnable verbatim), the
+       `Fixtures and test data` (with path and content — new files also in the
+       `Planned changes`) and the `Test cases` (test function name →
+       `TC-ID` / `TS-NN`) line.
+[ ] 3/d. TD7 — EVERY TEST CASE SAYS WHAT IT VERIFIES: the
+       `<field:f_what_we_test>` line of the `TS-NN` blocks, the
+       `<field:f_what_it_checks>` column of the unit tables and every numbered
+       integration/E2E flow states the behaviour as a CLAIM, with the `DoD-NN` —
+       repeating the title ("concurrency test") is not a purpose.
+[ ] 3/d/b. TI1 — TEST IDENTIFIERS: the scenarios run from `TS-01`, the cases of
+       the test table from `TC-01`, continuously across the cycle, without gaps;
+       there is no `TC-<module>-01` style numbering restarted per file. `tasks.md`
+       and the log of 07 refer to these.
+[ ] 3/e. TS8 — `.http` FORM: every `TS-NN` block containing a REST step also has
+       a `.http` code block, with the same values as the `curl`, with full
+       headers and body (the manual test plan assembles from this).
+[ ] 3/f. PH1 — RUN PHASE: the `<field:f_phase>` column of the machine-readable
+       run table has a valid value in every row (`<status:phase_implement>` /
+       `<status:phase_validate>` / `<status:phase_both>`; an empty cell means
+       both), and at least one category runs in the `<status:phase_validate>`
+       phase. No test proving a `DoD-NN` is `<status:phase_implement>`-only.
 [ ] 4. Every error branch states the HTTP status, the errorCode (where the error
        matrix of the spec defines it) and a sample of the response body.
 [ ] 5. The test section contains no reference IN PLACE OF the steps: "following the

@@ -92,8 +92,10 @@ Kilépő kód: 0 = minden deklarált artefaktum megvan (vagy a kapu kihagyva)
                 vagy hiányzó `## Teszt-riportolás` szekció)
 """
 import argparse
+import json
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from lang_keys import fld, sec
@@ -224,8 +226,56 @@ def _layout_reason(name):
     return "nem ismert fázis-mappa"
 
 
-def check_artifact(report_dir, rel):
-    """(ok, üzenet) — létezik-e és nem üres-e az artefaktum."""
+# Tolerancia a kör kezdetének BECSLÉSÉHEZ (csak `started_at` nélküli, régi köröknél).
+# A padló ilyenkor közelítés, ezért egy nappal visszább tesszük: egy kör órák alatt
+# lefut, az örökölt artefaktum viszont jellemzően hetekkel/hónapokkal régebbi —
+# a hamis pozitív (egy valódi, friss fájl „elavultnak" minősítése) drágább, mint
+# egy kihagyott eset, mert a fejlesztő kikapcsolja a kaput.
+STALE_TOLERANCE_S = 24 * 3600
+
+
+def round_reference_time(report_dir):
+    """(referencia-idő, honnan) — mikor kezdődött a vizsgált kör (TR7).
+
+    Sorrend:
+      1. a kör-mappa `results.json`-jának `started_at` mezője — a `run-tests.py`
+         a futás ELEJÉN vett időbélyeg (ez a pontos padló);
+      2. `started_at` nélkül (régi kör): `min(results.json mtime, kör-mappa mtime)`
+         mínusz egy napos tolerancia — a `results.json` a futás VÉGÉN íródik, tehát
+         a saját mtime-ja padlóként a körben keletkezett fájlokat is elavultnak
+         minősítené;
+      3. ha egyik sem megállapítható → `(None, None)`: a frissesség-check
+         **kimarad** (BD6 — nem találgat és nem bukat).
+    """
+    results = report_dir / "results.json"
+    try:
+        if results.is_file():
+            try:
+                data = json.loads(results.read_text(encoding="utf-8"))
+                started = data.get("started_at")
+                if isinstance(started, (int, float)) and started > 0:
+                    return float(started), "results.json `started_at`"
+            except (ValueError, OSError):
+                pass
+            candidates = [results.stat().st_mtime]
+            if report_dir.is_dir():
+                candidates.append(report_dir.stat().st_mtime)
+            return min(candidates) - STALE_TOLERANCE_S, "becslés a results.json/kör-mappa mtime-jából (±1 nap)"
+        if report_dir.is_dir():
+            return report_dir.stat().st_mtime - STALE_TOLERANCE_S, "becslés a kör-mappa mtime-jából (±1 nap)"
+    except OSError:
+        pass
+    return None, None
+
+
+def check_artifact(report_dir, rel, since=None):
+    """(ok, üzenet) — létezik-e, nem üres-e, és a KÖRBEN keletkezett-e az artefaktum.
+
+    A `since` (TR7) az artefaktum-frissesség padlója: egy előző körből ottmaradt
+    fájl a puszta „létezik és nem üres" próbának **megfelel**, tehát a riport
+    telinek látszik anélkül, hogy bármi történt volna. Egy éles ciklusban 50
+    örökölt REST-napló adott hamis teltséget. `since=None` → a padló kimarad.
+    """
     target = report_dir / rel
     if not target.exists():
         return False, f"HIÁNYZIK: {target}"
@@ -233,10 +283,18 @@ def check_artifact(report_dir, rel):
         files = [p for p in target.rglob("*") if p.is_file() and p.stat().st_size > 0]
         if not files:
             return False, f"ÜRES MAPPA: {target}"
+        if since is not None:
+            fresh = [p for p in files if p.stat().st_mtime >= since]
+            if not fresh:
+                return False, (f"CSAK ÖRÖKÖLT FÁJLOK: {target}/ ({len(files)} fájl, "
+                               "mind a kör kezdete ELŐTT keletkezett — TR7)")
+            files = fresh
         total = sum(p.stat().st_size for p in files)
         return True, f"ok: {target}/ ({len(files)} fájl, {total // 1024} KB)"
     if target.stat().st_size == 0:
         return False, f"ÜRES FÁJL: {target}"
+    if since is not None and target.stat().st_mtime < since:
+        return False, f"ELAVULT: {target} (a kör kezdete előtt keletkezett — TR7)"
     return True, f"ok: {target} ({target.stat().st_size // 1024} KB)"
 
 
@@ -351,6 +409,12 @@ def main():
 
     report_dir = cycle / args.report_subdir
     print(f"Riport-kapu (TR3) — {report_dir}")
+    since, since_from = round_reference_time(report_dir)
+    if since is None:
+        print("  · frissesség-check (TR7) kimarad: a kör kezdete nem megállapítható")
+    else:
+        print(f"  · frissesség-padló (TR7): {since_from} — "
+              f"{datetime.fromtimestamp(since).strftime('%Y-%m-%d %H:%M')}")
     failures = []
     checked = 0
     for kategoria, eszkoz, _parancs, artefakt in rows:
@@ -358,7 +422,7 @@ def main():
             print(f"  - {kategoria} ({eszkoz}): nincs deklarált artefaktum — kihagyva")
             continue
         checked += 1
-        ok, msg = check_artifact(report_dir, artefakt)
+        ok, msg = check_artifact(report_dir, artefakt, since=since)
         print(f"  - {kategoria} ({eszkoz}): {msg}")
         if not ok:
             failures.append((kategoria, eszkoz, artefakt))

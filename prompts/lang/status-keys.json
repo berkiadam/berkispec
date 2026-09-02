@@ -32,6 +32,7 @@
       "machine_run_table": "Gépi futtatási tábla",
       "spec_coverage": "Spec-lefedettség",
       "plan_coverage": "Plan-lefedettség",
+      "test_coverage": "Teszt-lefedettség",
       "reverse_coverage": "Fordított lefedettség",
       "unit_tests": "Unit tesztek",
       "integration_tests": "Integrációs tesztek",
@@ -45,6 +46,7 @@
       "covered_machine": "Lefedve (gépi)",
       "inventory": "Leltár",
       "loop_log": "Hurok-napló",
+      "items_to_fix": "Javítandó tételek",
       "critical_fixes": "Kritikus javítandók (Must Fix)",
       "suggested_improvements": "Javasolt fejlesztések (Suggestions)",
       "round": "Kör",
@@ -152,7 +154,18 @@
       "f_what_we_test": "Mit tesztelünk",
       "f_shutdown": "Leállítás",
       "f_cleanup": "Takarítás",
-      "f_test_results_so_far": "A ciklus eddigi teszteredményei"
+      "f_test_results_so_far": "A ciklus eddigi teszteredményei",
+      "f_purpose": "Cél és indoklás",
+      "f_test_run": "Futtatás",
+      "f_test_fixtures": "Fixture-ök és tesztadat",
+      "f_test_cases": "Teszt-esetek",
+      "f_phase": "Fázis",
+      "f_gate": "Kapu",
+      "f_contradiction": "Az ellentmondás",
+      "f_why_blocks": "Miért blokkol",
+      "f_how_correct": "Hogyan lenne helyes",
+      "f_state": "Állapot",
+      "f_what_to_do": "Mit kell tenni"
     },
     "status": {
       "draft": "Piszkozat",
@@ -187,7 +200,10 @@
       "round_type_full": "TELJES",
       "round_type_light": "KÖNNYŰ",
       "mtp_planned": "Tervezett",
-      "mtp_as_built": "As-built"
+      "mtp_as_built": "As-built",
+      "phase_implement": "implement",
+      "phase_validate": "validate",
+      "phase_both": "mindkettő"
     }
   },
   "en": {
@@ -223,6 +239,7 @@
       "machine_run_table": "Machine-readable run table",
       "spec_coverage": "Spec coverage",
       "plan_coverage": "Plan coverage",
+      "test_coverage": "Test coverage",
       "reverse_coverage": "Reverse coverage",
       "unit_tests": "Unit tests",
       "integration_tests": "Integration tests",
@@ -236,6 +253,7 @@
       "covered_machine": "Covered (machine)",
       "inventory": "Inventory",
       "loop_log": "Loop log",
+      "items_to_fix": "Items to fix",
       "critical_fixes": "Critical fixes (Must Fix)",
       "suggested_improvements": "Suggested improvements (Suggestions)",
       "round": "Round",
@@ -343,7 +361,18 @@
       "f_what_we_test": "What we test",
       "f_shutdown": "Shutdown",
       "f_cleanup": "Cleanup",
-      "f_test_results_so_far": "Test results of the cycle so far"
+      "f_test_results_so_far": "Test results of the cycle so far",
+      "f_purpose": "Purpose and rationale",
+      "f_test_run": "How to run",
+      "f_test_fixtures": "Fixtures and test data",
+      "f_test_cases": "Test cases",
+      "f_phase": "Phase",
+      "f_gate": "Gate",
+      "f_contradiction": "The contradiction",
+      "f_why_blocks": "Why it blocks",
+      "f_how_correct": "How it would be correct",
+      "f_state": "State",
+      "f_what_to_do": "What has to be done"
     },
     "status": {
       "draft": "Draft",
@@ -378,7 +407,10 @@
       "round_type_full": "FULL",
       "round_type_light": "LIGHT",
       "mtp_planned": "Planned",
-      "mtp_as_built": "As-built"
+      "mtp_as_built": "As-built",
+      "phase_implement": "implement",
+      "phase_validate": "validate",
+      "phase_both": "both"
     }
   }
 }

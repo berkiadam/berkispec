@@ -1,11 +1,11 @@
 <!-- Forrás-jegyzet: ezt a szekciót a 02-write-spec.md ÉS a 03-write-plan.md skill
      (és a hozzájuk tartozó fix-mode-* shared fájlok) is beemelik (build-time
      INCLUDE). Egy helyen szerkeszd. -->
-## Teszt-forgatókönyv tervezése — dimenziók és megfigyelési pontok (TD1–TD6)
+## Teszt-forgatókönyv tervezése — dimenziók és megfigyelési pontok (TD1–TD7)
 
 A környező szabályok (KX2, KX3, TS1–TS6) **megőrzik** a részletet, amit a bemenet tartalmaz — de egyik sem **hoz létre** forgatókönyvet. Ha a bemenet egy mondat („a token megújítása többpéldányos futásnál ne duplikálódjon"), a TS3 kemény padlója egyetlen lépéssel és egyetlen backtickes értékkel is teljesül: formailag kész teszt, ami a viselkedésből semmit nem igazol. Ez a blokk a hiányzó lépés: **kitöltendő kérdésekké** alakítja a teszt-tervezést, hogy ne következtetni kelljen rá.
 
-**Hatókör — melyik fázisban meddig (TD0):** a `<sec:test_specification>` (spec) szekcióban az 1. és 2. lépés **viselkedés-szinten** fut: a dimenziók és a megfigyelési pontok megnevezése kötelező, a koordináta viszont szimbolikus marad, parancs pedig **TILOS** — az a `plan.md` dolga. A `<sec:plan_test_scenarios>` (plan) szekcióban ugyanez a hat szabály fut, de literál értékekkel és szó szerint futtatható hívásokkal.
+**Hatókör — melyik fázisban meddig (TD0):** a `<sec:test_specification>` (spec) szekcióban az 1. és 2. lépés **viselkedés-szinten** fut: a dimenziók és a megfigyelési pontok megnevezése kötelező, a koordináta viszont szimbolikus marad, parancs pedig **TILOS** — az a `plan.md` dolga. A `<sec:plan_test_scenarios>` (plan) szekcióban ugyanez a hét szabály fut, de literál értékekkel és szó szerint futtatható hívásokkal.
 
 ### 1. Dimenzió-leltár — ez dönti el, HÁNY forgatókönyv kell (TD1)
 
@@ -23,6 +23,20 @@ Menj végig az alábbi hat dimenzión, és mindegyikhez írd ki, milyen értéke
 - **A szorzatot ki kell írni.** A forgatókönyv-lista előtt egy sorban jelenjen meg, miből származik a darabszám: pl. *„2 hatókör (globális, munkamenet) × 2 lejárati sáv (ráhagyásos, keményen lejárt) = 4 forgatókönyv"*. Ez az egyetlen ellenőrizhető nyoma annak, hogy a lista nem ötletszerű.
 - **Összevonni csak indokkal szabad.** Ha két kombináció ugyanazt a kódutat járja, egy forgatókönyvbe vonhatók — de **írd le egy sorban, miért**. Indoklás nélküli összevonás lefedettségi rés.
 - **🔴 Egyetlen forgatókönyv gyanús.** Ha a ciklus viselkedésének kettő vagy több dimenziója van, de a lista egy elemű, a leltár **nem futott le** — menj vissza az 1. lépésre.
+
+### 1/b. Minden teszteset kimondja, MIT ellenőriz és MIÉRT (TD7)
+
+A lépések attól még nem magyarázzák meg magukat, hogy konkrétak. Egy „5 párhuzamos kérés, mind `200`" lépéssor önmagában nem árulja el, hogy **melyik viselkedés** bizonyítására fut, és emiatt a következő fázisokban eldönthetetlen, hogy egy bukás valódi hiba-e vagy a teszt rossz — a javító pedig azt a legkönnyebb utat választja, ami zöldre viszi a lépést, nem azt, ami a viselkedést helyreállítja. Ezért **minden teszteset — forgatókönyv, unit-eset, integrációs flow, tesztfájl — a lépések ELŐTT kimondja:**
+
+| Amit ki kell mondani | Mércéje |
+|---|---|
+| **mit ellenőriz** | a viselkedés egy állításként, amiről a futás után eldönthető, hogy igaz-e (nem a lépések összefoglalása, nem a teszt neve megismételve) |
+| **miért fontos** | melyik elfogadási feltételt (`DoD-NN`) vagy kockázatot igazolja — mi romlana el észrevétlenül nélküle |
+| **mi a bizonyíték** | melyik megfigyelés (a TD2 négyeséből) dönti el a kérdést |
+
+- **A cím nem cél.** „Teszteset 3: konkurencia" — ez téma, nem állítás. Az állítás: *„öt egyidejű kérés közül pontosan egy újítja meg a tokent, a másik négy a meglévővel szolgál ki, és egyikük sem blokkolódik 2 s-nál tovább."*
+- **Hatókör (TD0 szerint):** a spec-fázisban a `DoD-NN`-re hivatkozó, viselkedés-szintű mondat; a plan-fázisban ugyanez, de a hivatkozott konkrét értékekkel.
+- **Ha nem tudod egy mondatban megmondani, mit ellenőriz, a teszteset nincs megtervezve** — vagy több esetet mos össze (bontsd szét a TD1 szorzata szerint), vagy nincs mögötte elfogadási feltétel (akkor a kérdés a fázis kérdés-fájljába megy).
 
 ### 2. Megfigyelési négyes — ez dönti el, MI legyen egy forgatókönyvben (TD2)
 
@@ -79,3 +93,4 @@ Az alábbi blokk **nem** a te ciklusod tartalma: a **sűrűségét** és a **meg
 - Az izolációt vállaló elfogadási feltételekhez van **negatív kontroll** lépés.
 - Minden „pontosan egyszer" / „nem duplikálódik" / „nem termel" elváráshoz meg van nevezve a **számlálás forrása**.
 - Minden „nem blokkol" / „nincs késleltetés" elváráshoz tartozik **mért érték és küszöb**.
+- **Minden teszteset kimondja, mit ellenőriz és miért** (TD7) — állításként, `DoD-NN` hivatkozással; a cím megismétlése nem elég.

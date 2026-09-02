@@ -353,6 +353,7 @@ _You may use an ordinal for the readability of the title (`### 3.1 [P-CONFIG] �
 # Cycle NN: <title> — Plan
 
 **<field:f_status>:** \`<status:draft>\` | \`<status:open_questions>\` | \`<status:ready_for_tasks>\`
+**<field:f_gate>:** _<the result of the mechanical gate at the closing — e.g. `analyze-gate-check --plan-only — PASS, 0 Must Fix (2026-09-01)`>_
 
 ## <sec:goal_and_approach>
 
@@ -418,6 +419,7 @@ _A VPN, a proxy, `oc login` / a kubeconfig, a namespace, a registry login: what 
 ## <sec:planned_changes>
 
 _Per file, at the function/class level: what changes and why. Not code, but intent. Every entry contains:_
+- _the **<field:f_purpose>** line: what we want to achieve and why (WY1 — see below, mandatory)_
 - _the path of the affected file_
 - _the name of the affected or to-be-created function/class_
 - _the interface change, if there is one (a new parameter, a new return type, a new export)_
@@ -425,6 +427,26 @@ _Per file, at the function/class level: what changes and why. Not code, but inte
 - _for an existing file, the location of the affected code fragment (e.g. `src/file.ts:14–25`) as a navigation target, if you read the source file_
 
 > **The path format (RP1) — this is where it is most frequently got wrong.** A code and file reference is **relative to the root of the repo**: `src/token-store.ts`, `apps/web/src/index.ts:42`. **Not** relative to the folder of `plan.md` (`../../src/...`), **not** absolute (`/home/...`, `C:\...`), and **not** a `file://` link. The reason: the commands run in the root of the repo, and the gate of `05-analyze` also resolves the anchors there — a reference of the `../../` form cannot be resolved there. The **document links** (e.g. `[spec.md](./spec.md)`), however, are relative to the own directory of the file, so that they are clickable. The detailed rule is in the quality check of the phase.
+
+> **🔴 Every `[P-…]` entry states its PURPOSE — mandatory (WY1).** "What we rewrite" on its own does not say **what we want to achieve** — while the implementer, the `reviewer` and the fixer of the 07 loop decide exactly from this whether a different solution is also acceptable, and when the change is done. Therefore every `### [P-…]` section carries this line next to the affected files:
+>
+> ```md
+> **<field:f_purpose>:** <the behaviour that will be true AFTER the change> — because <the current gap or defect it eliminates>. (<sec:definition_of_done>: DoD-03)
+> ```
+>
+> - **The purpose follows from the spec, it is not your idea (the mirror of SC1):** the `DoD-NN` (or spec requirement) named at the end of the sentence is the same one that stands for this `[P-…]` in the `<sec:reverse_coverage>` table. If you cannot name the source, the entry has no place in the plan: either it is a `plan-questions.md` question, or it goes back to the 02.
+> - **What is NOT a purpose:** repeating the change in other words ("we introduce the `getS2SToken()` method"), the file name ("we update the config"), empty generality ("we improve the quality", "we refactor"). The purpose states the **behaviour** the system produces afterwards, and the **trouble** it eliminates.
+> - **One paragraph, not one word.** If the entry bundles several files and several steps, the purpose summarizes what they add up to together.
+
+**A calibration sample for one entry** (copy the density, not the topic):
+
+```md
+### [P-30-02] Storing the S2S machine token in the Redis session store
+- **Affected files:** `src/services/session-store-service.ts`, `src/types/session.ts:41-58`
+- **<field:f_purpose>:** the `tmp-s2s` machine token moves onto a Redis key read by all pods (`{namespace}_tmp:tokens:s2s`), so that out of three instances running in parallel **one** asks the Keycloak for a new token, not all three — because today every instance keeps it in its own memory, and every cold start produces as many `client_credentials` calls as there are pods running. (<sec:definition_of_done>: DoD-01, DoD-04)
+- **Change details:**
+  1. …
+```
 
 _If this level of detail is not available from the spec, read the relevant part of the affected source file._
 
@@ -479,6 +501,12 @@ _**The recurring expectations lifted over (TC1) — mandatory if `specs/test-con
 > **The yardstick (self-test):** *"A person who did not take part in the design can carry out the test reading only this section, and can decide whether it succeeded."* If they would have to figure out anything — which URL, which user, what the correct answer is — the scenario is incomplete.
 >
 > **The test cases of the spec must not be merged (KX3).** If the `<sec:test_specification>` section of the spec describes six cases, six scenarios stand here — expanding and refining is allowed, merging and dropping is not.
+>
+> **🔴 Do not copy the STRUCTURE of the test section of the spec — convert it (TS7).** The most frequent failure is not that a test is left out, but that the phase brings over the **own heading structure of the spec** (`Test case 0`, `Test case 1`, with a "REST sequence", "Verification" bullet list), and next to it the `### <sec:plan_test_scenarios>` section **is never even created**. The result looks like readable prose, but: the mechanical gate does not see it (there is no `TS-NN`), the `test-runner` does not run it, the `bs-manual-test-plan` assembles nothing from it, and the per-step expected result stays uncheckable. Therefore:
+>
+> - **every** test case of the spec is converted into **one standalone `TS-NN` block**, with the four lines above and the four-column step table;
+> - you **must not open a parallel, self-named section** for the test cases of the spec (`Detailed test cases`, `Sequence descriptions`, `Test case N`) — whatever is not in a `TS-NN` block does not exist for the framework;
+> - the mapping is recorded by the `<sec:spec_coverage>` table: **the `Plan test case(s)` cell of every row names at least one `TS-NN`** (next to the `TC-…` identifier). This is what the gate measures, in both directions.
 
 One block per scenario, in exactly this form:
 
@@ -494,23 +522,46 @@ One block per scenario, in exactly this form:
 **<field:f_cleanup>:** <what has to be stopped or restored afterwards>
 
 **Rules for filling it in:**
+- **`<field:f_what_we_test>` — a claim, not a topic (TD7).** This line says **what** the scenario verifies and **why**: the behaviour as a decidable claim (*"out of five simultaneous requests exactly one renews the token, the rest are served from the existing one"*), plus the acceptance criterion or risk it proves. **Repeating the heading is not enough** ("concurrency test", "testing `/init-hash`") — from that, phases 06/07 cannot tell whether a failure is a real defect or a bad test. The gate measures this (TS2).
 - **`DoD-NN` in the header — mandatory and bidirectional (TS5).** Every scenario names which DoD points it proves, and **every `DoD-NN` must have at least one scenario**. The gate measures both directions.
 - **Call column — literally runnable.** For REST, a full `curl`: verb, full URL with the port, headers, the concrete request body. A non-REST test belongs here in the same form: a UI step (what we click, what we type), a CLI command, a DB query. **A reference is not a call** — "see the `<sec:e2e_infrastructure>` section" is not runnable.
 - **Expected result column — concrete and checkable.** The status code **and** the identifiable part of the response (field name, value, payload fragment, the text of a UI element). "Runs successfully" / "returns an error" / "gives the expected result" is **forbidden**: it cannot be decided. The hard floor of the gate (TS3): at least one backticked value or a number.
 - **Test users, passwords, URLs, ports, identifiers: literally.** The values of `<sec:environment_coords>` (KO1) have to be **written in here**, not referenced — a placeholder is forbidden (TS4), and missing data is a `plan-questions.md` question. Credentials according to the secret rule (TC5): a dev-scope test user yes, a cluster/registry/IAM credential never.
 - **The data flow must be traceable.** If the next step uses the output of a step, write out **which field into which variable** (`the `response.initHash` field of the answer → `$INIT_HASH``).
 - **Numbering:** from `TS-01`, without gaps and uniquely (TS6). When fixing, do **not** renumber the existing identifiers — new ones go to the end of the list.
+- **🔴 For a REST call the `.http` block is mandatory too (TS8).** The `Call` cell of the step table speaks to the **machine** (a one-line, runnable `curl`/command) — a human, however, needs to see the request with its headers and body, in a clickable form. So at the end of every `TS-NN` block that has a REST step there stands a ```http fenced code block (the VSCode REST Client / IntelliJ `.http` form) with **the same values**, referring to the number of the step:
+
+```http
+@tmp = https://tmp.dev.example.com
+@legacy = https://legacy.dev.example.com
+
+### step 3 — opening a session (the `sid` field of the response → the `{{sid}}` variable of step 4)
+POST {{legacy}}/api/v13/login/login
+Content-Type: application/json
+
+{"email": "test.user@example.com", "password": "Pass1234", "clientId": "INTERNETBANK", "sessionId": "session-1"}
+
+### step 4 — cache initialization
+POST {{tmp}}/init-hash
+Authorization: Bearer {{jwe}}
+Content-Type: application/json
+X-Correlation-Id: 11111111-1111-1111-1111-111111111111
+
+{"productType": "LOAN"}
+```
+
+  The block **does not replace** the step table (the TS3 of the gate measures the cells of the table), nor the other way round: the two are the same call for two audiences. If they differ, one of them is wrong — fix it. This form carries over unchanged into the `TG-NN` groups of `bs-manual-test-plan` (MT11), and the gate measures it in both directions (TS8): a `curl` without a `.http` and a `.http` without a `curl` are both findings.
 - **Bootstrapping does not belong here:** starting the stack, obtaining the token and the deploy live in the `<sec:e2e_infrastructure>` section (TP3); here the `<field:f_prerequisite>` line **references** it.
 
 ### <sec:machine_run_table> (run-tests.py) — **mandatory (TP4)**
 
 > **🔴 Why it is mandatory:** the prose above speaks to a human, this table speaks to the **`run-tests.py`** script. If it exists, 07-validate runs the tests **with a script**, and the raw test log never gets into an LLM context — this is the largest token item of this phase. If it is missing, 07 falls back to the more expensive `test-runner` subagent. The table does not substitute for the prose: **the same commands**, in a machine-readable form.
 
-| Category | Type | Prerequisite | Command | Result file | Format | Cleanup | <field:f_environment> |
-|---|---|---|---|---|---|---|---|
-| unit | gyors | — | `<the verbatim command, with a machine reporter>` | `junit.xml` | junit | — | local |
-| integration | gyors | — | `<command>` | `<file>` | junit | — | local |
-| e2e | nehez | `<the reachability probe of the target; starting the stack>` | `<the command with the target host>` | `<file>` | junit | `<tear-down>` | `<the name of the target environment>` |
+| Category | Type | Prerequisite | Command | Result file | Format | Cleanup | <field:f_environment> | <field:f_phase> |
+|---|---|---|---|---|---|---|---|---|
+| unit | gyors | — | `<the verbatim command, with a machine reporter>` | `junit.xml` | junit | — | local | <status:phase_both> |
+| integration | gyors | — | `<command>` | `<file>` | junit | — | local | <status:phase_both> |
+| e2e | nehez | `<the reachability probe of the target; starting the stack>` | `<the command with the target host>` | `<file>` | junit | `<tear-down>` | `<the name of the target environment>` | <status:phase_validate> |
 
 **Rules for filling it in:**
 - **The type:** `gyors` (unit/integration/typecheck — it runs in the VD10 light round as well) or `nehez` (E2E/regression — only in a full round). _(These are the values of the `--type` flag of the script, they are not translated.)_
@@ -526,6 +577,10 @@ One block per scenario, in exactly this form:
   - the **`Command` cell must literally contain the target host** (through an env variable or a switch, e.g. `PLAYWRIGHT_BASE_URL=https://app.dev.example npx playwright test`) — **the target must not hide in a config file** (EV3). A script named `test:playwright:dev-e2e` may perfectly well have `localhost` in its config: **the name of the command is not evidence, the address is**;
   - a **reachability probe to the same host is mandatory in the `Prerequisite` cell** (`curl -fsS https://app.dev.example/health`) — `run-tests.py` runs the prerequisite, and on its failure the category is FAIL, so **a deployment that never even started cannot be ticked green** (EV4);
   - `localhost` / `127.0.0.1` in the command or in the prerequisite is **forbidden** (EV5) — `run-tests.py` then stops with `exit 4`, without running anything.
+- **<field:f_phase> — which PHASE runs it (PH1).** Three values: `<status:phase_implement>` (only the dev loop of phase 06 runs it), `<status:phase_validate>` (only 07-validate), `<status:phase_both>`. **An empty cell means `<status:phase_both>`** — silence never means skipping, so an unmarked category runs everywhere. `run-tests.py` filters with the `--phase` switch: `06` calls it with `--phase <status:phase_implement>`, `07` with `--phase <status:phase_validate>`.
+  - **When `<status:phase_implement>`:** a cheap, fast dev-loop check that a broader category covers anyway during validation (e.g. a separate `lint` or `typecheck` row next to the full unit set).
+  - **When `<status:phase_validate>`:** an expensive category or one requiring a deployed environment (E2E, regression, a test running against the dev deploy) that is not worth running — or cannot be run — in the dev loop of 06.
+  - **🔴 A test proving a `DoD-NN` can never be `<status:phase_implement>`-only.** With `dod-check.py`, `07` joins evidence from the **validation round**: whatever ran only in 06 leaves the DoD without evidence, and the item stays at `?`. If a category is needed for the DoD, the correct value is `<status:phase_validate>` or `<status:phase_both>`.
 - **An empty cell:** `—`.
 - If a category **deliberately does not exist** in this project, do not add it to the table, and describe in the prose why.
 
@@ -597,13 +652,28 @@ _**Derivation from the register (TC1):** if `specs/test-conventions.md` exists, 
 
 _A summary of the testing approach: what we mock, what we run in a real container, at which levels we test — before you list the concrete cases._
 
+### 🔴 Test identifiers — the shared namespace of the plan and the tasks (TI1)
+
+`tasks.md` **references these two identifiers**, and the evidence join of `07` works with them as well. So exactly **two families of test identifiers** live in a cycle, both unique and gapless across the cycle:
+
+| Identifier | What it marks | Where it is created |
+|---|---|---|
+| `TS-NN` | an executable **scenario** (integration / E2E / manual), with a step table | `<sec:plan_test_scenarios>` |
+| `TC-NN` | a single **test case** in the test tables (typically unit) | `<sec:unit_tests>` / `<sec:integration_tests>` / `<sec:e2e_tests>` |
+
+- **From `TC-01` continuously, for the WHOLE CYCLE** — not restarted per file, and **not** in a `TC-<module>-01` form. One identifier marks one test case, however many test files there are.
+- **The identifier never changes** during the cycle (`tasks.md` and the log of `07` refer to it). A later insertion gets the next free number; a deleted number is not reused.
+- **Every `TC-NN` and `TS-NN` gets an owner in `tasks.md`** (`TT1`): a task that writes it and a `[CHECK]` that runs it. So **granularity matters**: a `TC-NN` should be as big as a test run command can execute **on its own** (`-t "<name>"`, `-k <pattern>`), otherwise the running checkbox cannot filter for it.
+
 ### <sec:spec_coverage> (a mandatory table)
 
 _Every case of the `<sec:test_specification>` section of the spec and every item of the `<sec:definition_of_done>` maps to **at least one** plan test case. Without the table the plan cannot be closed._
 
 | Spec source | Plan test case(s) | Level |
 |---|---|---|
-| _the name of the spec test case / a `test-conventions` item ID / `DoD-NN`_ | `TC-XX-01`, `TC-XX-E-01` | unit / integration / E2E |
+| _the name of the spec test case / a `test-conventions` item ID / `DoD-NN`_ | `TS-03`, `TC-01`, `TC-02` | unit / integration / E2E |
+
+_**The `Plan test case(s)` cell mandatorily names at least one `TS-NN` scenario (TS7)** — the `TC-…` identifier on its own is not enough: that is only a table row, while the `TS-NN` is the executable scenario. The only exception is a case that cannot be tested in this cycle: there the cell carries the justification (e.g. "cannot be automated — a manual `[CHECK]` in step 7 of the `<sec:execution_order>`"), and the gate lets that through as a note._
 
 _**The `Level` column is not a free choice:** the nature of the behavior decides it. **If the DoD/spec describes behavior observable on a user interface** (a button, an element appearing, a screen state), then a **browser E2E is mandatory** — an API-level E2E does not substitute for it. If there is no browser E2E tool in the project, that is a `plan-questions.md` question, not a silent downgrade._
 
@@ -634,15 +704,44 @@ _If a case from the spec **cannot** be tested in this cycle, the row stays, with
 | Integration | AFTER the implementation | with the service stack up | closing the cycle |
 | E2E | AFTER the implementation | with the full stack up | closing the cycle |
 
+### The test artifact data sheet (TA1) — mandatory in the header of every test file
+
+> **🔴 Why it is mandatory:** designing a test file **does not end with listing the test cases**. If it is not stated with which **framework** it is written, with what **command it can be run on its own**, what **fixture / mock / test data** it needs, and which **test function** covers which case, the implementer will make it up — and the `[CHECK]` task will run a different artifact than the one you planned, or the test will not be runnable on its own at all. Under every `#### <test file path>` heading of the `<sec:unit_tests>`, `<sec:integration_tests>` and `<sec:e2e_tests>`, BEFORE the test cases, this data sheet stands:
+
+```md
+#### `test/unit/token-store.test.ts` (new)
+
+**<field:f_what_it_checks>:** the behaviour of token access reading from the shared store: with an empty store there is no guessed value, and with parallel readers exactly one renewal runs (DoD-01, DoD-04).
+**<field:f_test_run>:** `node:test` + `tsx` — `npx tsx --test test/unit/token-store.test.ts`
+**<field:f_test_fixtures>:** `test/fixtures/s2s-token.json` (a new file — in the `[P-30-09]` entry of the `<sec:planned_changes>`): one expired and one valid `S2STokenEntry`; the Redis is replaced by `ioredis-mock` (an existing dependency)
+**<field:f_test_cases>:** `returns null on empty store` → `TC-01` · `refreshes once for 5 parallel readers` → `TC-02`, step 5 of `TS-01`
+**<field:f_prerequisite>:** no external prerequisite; env: `REDIS_KEY_NAMESPACE=dsp`
+```
+
+**Filling rules:**
+- **<field:f_what_it_checks> — the purpose of the test file, as a claim (TD7).** What this artifact verifies **together**, and which `DoD-NN` it serves. Not an unfolding of the file name ("the tests of the token store"), but the behaviour it exists for.
+- **<field:f_test_run> — the framework AND the command narrowed to this one file, runnable verbatim.** The same command goes into the `[CHECK]` task and into the `<sec:verification_strategy>`. The category-level command of the `<sec:machine_run_table>` may be broader than this (the whole suite), but it must not contradict it: the **artifact being run** is the same.
+- **Every fixture, mock, seed and test datum that does not exist yet is also a NEW FILE** — so it has to appear with its path in the `<sec:planned_changes>` as well, otherwise nobody will create it. Its content has to be given here (or the command that generates it). If there is none, the cell is `—`.
+- **The names of the test functions are not optional.** This mapping binds the plan to the `TC-…` cases and to the `TS-NN` scenarios: it shows which step of a scenario is covered by which automated test, and what is left for manual checking. For a new test the **function name is itself the specification** — it has to show what it asserts.
+- **The same for an extension (`(an extension)`):** which existing test function changes and why, which new functions arrive, and whether the run command changes.
+- **The setup/teardown, the required env variables and the external prerequisites** (container, mock server, network, seed) go into the `<field:f_prerequisite>` line, with the verbatim command. Referring to the bootstrapping steps of the `<sec:e2e_infrastructure>` is allowed only if the command is written out verbatim there.
+
 ### <sec:unit_tests>
 
 _Isolated tests: business logic, functions, classes isolated from their dependencies. Every external component (database, network, external service) has to be mocked — extremely fast, deterministic. A happy path AND negative tests (a wrong input, a missing parameter, an authorization error, a timeout) are mandatory for every component. One subsection per component. A tabular format: TC-ID, Scenario (what the situation is), Input (what arrives), Expected output (the HTTP status + the errorCode where the error matrix of the spec defines it + the key response fields)._
 
 #### `<test file path>` (new / an extension)
 
-| TC-ID | Scenario | Input | Expected output |
-|---|---|---|---|
-| TC-XX-01 | ... | ... | ... |
+**<field:f_what_it_checks>:** _<what this test file verifies, as a claim + the `DoD-NN`>_
+**<field:f_test_run>:** _<the framework + the command narrowed to this file, runnable verbatim>_
+**<field:f_test_fixtures>:** _<fixture / mock / test data with path and content, or `—`>_
+**<field:f_test_cases>:** _<the name of the test function → `TC-NN` / `TS-NN` mapping>_
+
+| TC-ID | <field:f_what_it_checks> | Scenario | Input | Expected output |
+|---|---|---|---|---|
+| TC-01 | _<the behaviour as a claim + the `DoD-NN`>_ | ... | ... | ... |
+
+_**The `<field:f_what_it_checks>` column is mandatory (TD7):** every unit case states **what it verifies** — the behaviour as a decidable claim, not a repetition of the input. "Bad input" is not a purpose; the purpose is: *"with a missing `expiresAt` field the load throws `ConfigError` instead of falling back to `0` (DoD-02)"*._
 
 > **🔴 THE TEST CASES OF THE SPEC HAVE TO BE BROUGHT OVER (TP1) — it is not the business of `tasks.md` and not of the implementer.** The cases described in the `<sec:test_specification>` section of the spec and in the `<sec:definition_of_done>` are **not** "too detailed for the plan": they belong exactly here, because the `test-runner` reads **exclusively `plan.md`** — not the spec, not `test-conventions.md`, not `tasks.md`. Whatever does not appear here **nobody will run**.
 >
@@ -669,6 +768,10 @@ _Connections between modules, database operations, internal service calls. Mock 
 
 #### `<script path>` (new / an extension)
 
+**<field:f_what_it_checks>:** _<what this test file verifies, as a claim + the `DoD-NN`>_
+**<field:f_test_run>:** _<the framework + the command narrowed to this file, runnable verbatim>_
+**<field:f_test_fixtures>:** _<fixture / mock / test data with path and content, or `—`>_
+**<field:f_test_cases>:** _<the name of the test function → `TC-NN` / `TS-NN` mapping>_
 **<field:f_prerequisite>:** _<what is needed before the steps: a stack brought up, a seed, a login — with the concrete command>_
 
 **A finished example of the MANDATORY level of detail** (every step should be this dense, not a one-liner):
@@ -691,12 +794,18 @@ _Connections between modules, database operations, internal service calls. Mock 
 
 _If a step is only interpretable once an earlier one has run, write that at the step (`prerequisite: step 2`)._
 
+_**Every flow starts with its purpose (TD7):** if a file contains several numbered test cases/flows, the `**<field:f_what_it_checks>:**` line stands before each of them — what this step sequence proves, and which `DoD-NN`. The steps do not explain on their own why they run._
+
 ### <sec:e2e_tests>
 
 _The whole system from the point of view of the external client or user. Browser E2E frontend tests (with the tool given by `conventions.md`) or full API call chains on real or realistically mocked infrastructure._
 
 #### `<script path>` (new / an extension)
 
+**<field:f_what_it_checks>:** _<what this test file verifies, as a claim + the `DoD-NN`>_
+**<field:f_test_run>:** _<the framework + the command narrowed to this file, runnable verbatim>_
+**<field:f_test_fixtures>:** _<fixture / mock / test data with path and content, or `—`>_
+**<field:f_test_cases>:** _<the name of the test function → `TC-NN` / `TS-NN` mapping>_
 **<field:f_prerequisite>:** _<a stack brought up with the concrete start command, seed data, a test user>_
 
 For browser E2E, for every step: **the user interaction** (what they click/fill in, on an element identifiable by which selector) **and** the **network call** belonging to it (verb, endpoint, expected status), plus the **visible result** (what appears on the interface). The example density:
@@ -899,6 +1008,18 @@ python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-nam
 - **`2`** → a usage error → report it, do not guess.
 
 > **Why here (M):** these errors used to come to light in the first round of `05-analyze`, two phases later — there a fixer subagent and an analyzer round were needed for them. Here it is one script run and one targeted fix.
+
+**🔴 The result of the gate is EVIDENCE, not a memory (GS2).** After a `0`, its trace goes into two places, and both are mandatory:
+
+1. into the header of `plan.md`, next to the status, in one line:
+
+   ```md
+   **<field:f_gate>:** analyze-gate-check --plan-only — PASS, 0 Must Fix (YYYY-MM-DD)
+   ```
+
+2. into your **phase-closing answer**, verbatim: the summary line of the gate (`ANALYZE-GATE: …`).
+
+**Write the stamp only after an actual run that returned `0`** — the entry gate of the next phase (`04`) runs the gate as well (EG1), so an untrue stamp comes to light there immediately, and `04` directs back here.
 
 
 If the user confirms:

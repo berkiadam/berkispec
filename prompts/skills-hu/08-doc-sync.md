@@ -102,7 +102,7 @@ A 3. szint **projekt-specifikus** elérési útjait a doc-sync a **`conventions.
 |---|---|---|
 | `docs-generated/README.md` | A mappa **indexe/manifesztje** (egysoros leírás fájlonként, DS21) | a `docs-generated/` mappa tényleges fájllistája |
 | `docs-generated/system-overview.md` | As-built működési áttekintés (képességek/flow-k, szekvenciák, állapotmodell, [feltételes] endpoint-leltár) | a rendszer összes felhasználói/üzleti flow-ja és állapota |
-| `docs-generated/architecture.md` | „Hogyan épül/fut" — komponensek, build, deployment, ops | a rendszer felépítése és üzemeltetése |
+| `docs-generated/architecture.md` | „Hogyan épül/fut" — komponensek, build, deployment, ops, **technikai szerződések** (config-mezők, log/esemény-séma, hibakód-tábla — szó szerint, DS23) **és környezeti koordináták** (URL/port/teszt-user, DS25) | a rendszer felépítése és üzemeltetése |
 | `docs-generated/CHANGELOG.md` | Részletes, inkrementális, ciklusonkénti változásnapló (DS15) | minden lezárt ciklus működés-/doksi-változása |
 | `docs-generated/design-drift.md` | A megvalósult rendszer eltérései a HLD/LLD szándéktól (DS20) | a terv ↔ as-built eltérések + „<sec:closed_deviations>" |
 | _(projekt-specifikus extra doksik)_ | a mappa-bejárás találja meg; a fejléc-scope dönti el az érintettséget | a fájl saját fejléce deklarálja |
@@ -547,7 +547,9 @@ Futtasd a `ds22-gate-check.py`-t a `docs-generated/` mappára. A telepítő a pl
 python3 <platform-scripts-mappa>/ds22-gate-check.py docs-generated/ \
   --rename <régi-név>=<új-név> \
   --marker cycle-NN \
-  --changed-file <a ténylegesen módosított fájl neve, ismételhető>
+  --changed-file <a ténylegesen módosított fájl neve, ismételhető> \
+  --spec-file specs/cycle-NN-<cycle-name>/spec.md \
+  --plan-file specs/cycle-NN-<cycle-name>/plan.md
 ```
 
 - **`--rename`**: a régi→új névpárok a ciklus **DEKLARÁLT** átnevezéseiből jönnek (roadmap/`spec.md`; pl. a cycle-16 neve literálisan `rename-init-cache-to-init-hash` → `init-cache=init-hash`) — **NEM diff-találgatásból** (DS24b). Ha egy átnevezés nincs deklarálva, **nincs auto-következtetés** — nem adsz meg `--rename`-t rá. A szkript automatikusan kihagyja a történeti szekciókat (`CHANGELOG.md` teljes egészében, `design-drift.md` „Lezárt eltérések" szekciója).
@@ -558,6 +560,12 @@ A szkript a 4 originális checkből 3-at teljesen lefed (kemény PASS/FAIL):
 1. Rename-maradvány (a fenti `--rename` alapján).
 3. Mappa-index halmaz-egyezés (DS21) — a `docs-generated/` tényleges fájllistája **==** a `README.md` bejegyzései.
 4. Coverage-marker bump (DS17) — a fenti `--changed-file` alapján.
+
+**5/6. Technikai szerződés- és környezet-mentesség (DS23/DS25).** Ugyanaz a hibaminta, mint a KX3 a spec→plan átadásnál, csak spec/plan → `docs-generated` irányban: a `doc-sync-planner` „sebészi patch" elve (ne írj újra, csak a változó szekciót) tömörítésbe fordul, ha semmi nem kényszeríti ki a szó szerinti átvételt — egy kidolgozott config-tábla, log/esemény-JSON-séma vagy hibakód-tábla a specben simán **néma veszteség** lesz, mert a bootstrap/reconciliation csak egy összefoglaló mondatot ír helyette. Ugyanígy vész el a plan `Környezeti koordináták` (KO1) táblája — URL-ek, portok, teszt-userek —, aminek pedig kijelölt otthona kellene legyen valahol a `docs-generated/`-ben, különben a doksi önmagában nem elég a rendszer lokális futtatásához/eléréséhez. A `--spec-file`/`--plan-file` mellett a szkript:
+- **DS23** — a spec.md kidolgozott technikai szerződés-blokkjait (YAML/JSON config, log/esemény-séma, hibakód-tábla) horgonyokra bontja (ugyanaz a technika, mint a `V1` az `analyze-gate-check.py`-ban), és megnézi, landoltak-e **valahol** a `docs-generated/`-ben — nem kell egyetlen fájlba, mert a helyes cél (`architecture.md` vagy egy komponens-specifikus doksi, pl. `redis-usage.md`) döntés kérdése, azt te hozod meg a tervben.
+- **DS25** — a plan `Környezeti koordináták` táblájának minden nem-titok értékét (URL, port, elérési út, dev teszt-user — TC5 szerint ezek **megengedettek**) megkeresi a `docs-generated/`-ben; jelszó/secret/token jellegű sorokat a szkript **kihagyja** (azoknak pointerre kell hivatkozniuk, nem nyers értékre).
+
+**Bukásnál a teendő ugyanaz, mint minden Réteg 1 checknél:** a hiányzó szerződés/koordináta a `doc-sync-plan.md` egy tervsorává válik (jellemzően az `architecture.md`-be, ha technikai szerződésről van szó), a fő ágens beilleszti, majd a kapu újrafut.
 
 A **2. pontot** (minden forrásbeli ábra átkerült-e — DS7) a szkript csak informatív blokk-számlálással segíti; a tényleges leltár → cél-párosítást (van-e minden forrás-ábrának párja a kimenetben, bináris/`.drawio` → link + PNG) **neked kell eldöntened** — ez a Réteg 1 egyetlen olyan pontja, ami valódi (bár egyszerű) egyeztetési ítéletet igényel, nem tiszta halmaz-művelet. (A számozás szándékosan követi a fenti eredeti 1–4-es listát, a 2. pont kimarad a szkriptből.)
 
