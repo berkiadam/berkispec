@@ -208,6 +208,15 @@ REQUIRED_PLAN_TABLES = [
     (sec("environment_coords"), "03", "a ciklus konkrét koordinátái: URL-ek, portok, indító parancsok, példa REST hívások, teszt-/API-userek jelszóval, paraméterek (KO1)"),
     (sec("machine_run_table"), "03", "a `run-tests.py` gépi futtatási táblája (TP4) — enélkül a 07-validate a drágább `test-runner` subagentre esik vissza, és a nyers teszt-log LLM-kontextusba kerül"),
 ]
+# A 03a-code-plan lezárásakor kötelező plan-táblák. A `spec_coverage` és a
+# `machine_run_table` szándékosan NEM szerepel: azok a 03b-test-plan
+# leszállítandói, és a teljes `--plan-only` mód méri őket. Tételesen kiírva
+# (nem a REQUIRED_PLAN_TABLES indexeivel), hogy a lista átrendezése ne rontsa
+# el némán a kód-oldali kaput.
+REQUIRED_PLAN_CODE_TABLES = [
+    (sec("reverse_coverage"), "03", "a plan-képességek spec-forrásának táblája (SC1)"),
+    (sec("environment_coords"), "03", "a ciklus konkrét koordinátái: URL-ek, portok, indító parancsok, példa REST hívások, teszt-/API-userek jelszóval, paraméterek (KO1)"),
+]
 REQUIRED_TASKS_TABLES = [
     (sec("plan_coverage"), "04", "a plan-szekció → task fordított tábla (PID1)"),
 ]
@@ -1528,18 +1537,27 @@ def check_task_test_refs(plan_text, tasks_text, f):
 # kihagyást az embernek is.
 
 
-def check_gate_stamp(plan_text, f):
-    """GA1 — lezárt plan → van-e nyoma a mechanikus kapu futásának."""
+def check_gate_stamp(plan_text, f, field="f_gate", status_key="ready_for_tasks",
+                     mode="--plan-only"):
+    """GA1 — lezárt plan → van-e nyoma a mechanikus kapu futásának.
+
+    A 03 hasítása óta KÉT bélyeg van (D6): a `03a-code-plan` a
+    `f_gate_code` mezőt írja a `ready_for_test_plan` státusz mellé, a
+    `03b-test-plan` a `f_gate` mezőt a `ready_for_tasks` mellé. A check korán
+    visszatér, ha a plan státusza nem a várt — ezért a `status_key`-t is
+    paraméterezni KELL, különben `--plan-code-only` módban soha nem mérne
+    semmit (a plan ott `ready_for_test_plan` státuszon áll).
+    """
     head = "\n".join(plan_text.splitlines()[:20])
     status_m = re.search(r"\*\*" + re.escape(fld("f_status")) + r":\*\*\s*(.+)", head)
-    if not status_m or st("ready_for_tasks").lower() not in status_m.group(1).lower():
+    if not status_m or st(status_key).lower() not in status_m.group(1).lower():
         return
-    if re.search(r"\*\*" + re.escape(fld("f_gate")) + r"[^*:]*:?\*\*", head):
+    if re.search(r"\*\*" + re.escape(fld(field)) + r"[^*:]*:?\*\*", head):
         return
-    f.suggest("GA1", "03", f"a `plan.md` `{st('ready_for_tasks')}` státuszon áll, de a fejlécében "
-              f"nincs `**{fld('f_gate')}:**` bélyeg (GA1) — a státuszt a 03 saját magának írja be, "
+    f.suggest("GA1", "03", f"a `plan.md` `{st(status_key)}` státuszon áll, de a fejlécében "
+              f"nincs `**{fld(field)}:**` bélyeg (GA1) — a státuszt a 03 saját magának írja be, "
               "a kapu tényleges lefutását ez a sor mutatja. A lezáráskor futtatott "
-              "`analyze-gate-check --plan-only` összefoglaló sorát kell ide írni")
+              f"`analyze-gate-check {mode}` összefoglaló sorát kell ide írni")
 
 
 # ── TT1 — teszt-lefedettség: `TS-NN` / kategória → task ──────────────────────
@@ -1767,8 +1785,14 @@ def _remote_hosts(text):
             if not LOCAL_HOST_RE.search(h)}
 
 
-def check_target_environment(plan_text, f):
-    """EV1–EV5 — a teszt tényleg ott fut-e, ahova a ciklus szól."""
+def check_target_environment(plan_text, f, code_only=False):
+    """EV1–EV5 — a teszt tényleg ott fut-e, ahova a ciklus szól.
+
+    `code_only=True` (03a-code-plan lezárása) esetén CSAK az `EV1` ág fut: a
+    `**<field:f_target_env>:**` mező megléte és kitöltöttsége. Az `EV2`–`EV5`
+    a gépi futtatási táblát méri, az pedig a `03b-test-plan` leszállítandója —
+    ott a teljes `--plan-only` mód méri.
+    """
     coords = section_body(plan_text, sec("environment_coords"))
     target_m = re.search(r"\*\*" + re.escape(fld("f_target_env")) + r":\*\*\s*(.+)", coords or "")
     target = (target_m.group(1).strip() if target_m else "")
@@ -1777,6 +1801,8 @@ def check_target_environment(plan_text, f):
               f"`**{fld('f_target_env')}:**` mező (EV1) — ki kell mondani, MELY környezetre szól "
               "ez a ciklus (pl. `lokális`, `dev`, `lokális + dev`). Enélkül semmi nem köti a "
               "teszt-célpontot a ciklus szándékához: egy zöld futás nem bizonyítja, HOL volt zöld")
+    if code_only:
+        return
     target_is_local_only = _env_is_local(target) if target else False
     known_remote = _remote_hosts(coords)
 
@@ -2251,7 +2277,14 @@ def main():
     parser.add_argument(
         "--plan-only",
         action="store_true",
-        help="a 03-plan fázis lezárásához: csak a spec+plan checkek futnak (a tasks.md még nem létezik)",
+        help="a 03b-test-plan fázis lezárásához (a TELJES plan kapuja): csak a spec+plan "
+             "checkek futnak, a tasks.md még nem létezik",
+    )
+    parser.add_argument(
+        "--plan-code-only",
+        action="store_true",
+        help="a 03a-code-plan fázis lezárásához: csak a kód-terv checkjei futnak "
+             "(a teszt-szekciók még nem léteznek; azokat a 03b lezárásakor a --plan-only méri)",
     )
     parser.add_argument(
         "--paths-only",
@@ -2274,6 +2307,25 @@ def main():
              "MINDEN tételét, a négy kötelező mezővel (RC1-RC3) — a spec/plan/tasks checkek nem futnak.",
     )
     args = parser.parse_args()
+
+    # A `--plan-code-only` a `--plan-only` SZŰKEBB esete: örökli a szemantikáját
+    # (a tasks.md-t üresként kezeli), és azon felül kihagyja a teszt-oldali
+    # checkeket. A két flag együttes megadása NEM hiba.
+    code_only = args.plan_code_only
+    if code_only:
+        args.plan_only = True
+
+    # 11.8 — használati hiba. A `--report-only` és a `--paths-only` ÖNÁLLÓ,
+    # minimál üzemmódok: lentebb korábban térnek vissza, mint ahol a plan-kapuk
+    # egyáltalán lefutnának. Egy `--plan-code-only --report-only` hívás így
+    # CSENDBEN mást csinálna, mint amit a hívó gondol — ezért explicit hiba.
+    if (args.plan_only or code_only) and (args.report_only or args.paths_only):
+        other = "--report-only" if args.report_only else "--paths-only"
+        mode = "--plan-code-only" if code_only else "--plan-only"
+        print(f"HIBA: a(z) {mode} és a(z) {other} nem kombinálható — az utóbbi önálló, "
+              "minimál üzemmód, és a plan-checkek ilyenkor nem futnának le. "
+              "Futtasd őket külön hívásban.", file=sys.stderr)
+        return 2
 
     cycle = Path(args.cycle_dir)
     if not cycle.is_dir():
@@ -2335,15 +2387,21 @@ def main():
             return 2
 
     spec_text, plan_text = read(spec_path), read(plan_path)
-    # `--plan-only` módban a tasks-oldalt üresként kezeljük: így a tasks.md-t
-    # igénylő checkek nem adnak hamis találatot, a spec+plan oldal viszont a
-    # 03 lezárásakor is lefut (shift-left: a hiba ott derül ki, ahol keletkezett).
+    # `--plan-only` módban (a TELJES plan kapuja, a 03b lezárása) a tasks-oldalt
+    # üresként kezeljük: így a tasks.md-t igénylő checkek nem adnak hamis
+    # találatot, a spec+plan oldal viszont a 03 lezárásakor is lefut
+    # (shift-left: a hiba ott derül ki, ahol keletkezett). A `--plan-code-only`
+    # (a 03a lezárása) ezen felül a teszt-oldali checkeket is kihagyja.
     tasks_text = "" if args.plan_only else read(tasks_path)
     f = Findings()
 
     known_ids = check_plan_ids(plan_text, f)
     check_dod(spec_text, f)
-    check_required_tables(plan_text, REQUIRED_PLAN_TABLES, f, "plan.md")
+    check_required_tables(
+        plan_text,
+        REQUIRED_PLAN_CODE_TABLES if code_only else REQUIRED_PLAN_TABLES,
+        f, "plan.md",
+    )
     check_config_lifecycle(plan_text, f)
     check_env_coordinates(plan_text, f)
 
@@ -2356,37 +2414,56 @@ def main():
         check_required_tables(tasks_text, REQUIRED_TASKS_TABLES, f, "tasks.md")
         check_rollback_state(tasks_text, f)
 
-    check_coverage_chain(spec_text, plan_text, tasks_text, known_ids, f, plan_only=args.plan_only)
-    check_spec_artifact_transfer(spec_text, plan_text, f)
+    # `code_only` módban a lefedettségi lánc (C1/S3) NEM fut: egy kizárólag
+    # teszttel igazolt `DoD-NN` a kód-fél lezárásakor még nem lehet lefedve —
+    # a check ott hamis FAIL-t adna. A `03b` lezárásakor a `--plan-only` ezt
+    # teljes egészében méri, tehát nem veszik el.
+    if not code_only:
+        check_coverage_chain(spec_text, plan_text, tasks_text, known_ids, f, plan_only=args.plan_only)
+        check_spec_artifact_transfer(spec_text, plan_text, f)
     check_gate_config_moves(plan_text, tasks_text, Path(args.conventions), f)
     check_path_format(
         [("spec.md", spec_text, "02"), ("plan.md", plan_text, "03")]
         + ([] if args.plan_only else [("tasks.md", tasks_text, "04")]),
         Path(args.repo_root), f,
     )
-    check_test_section_volume(spec_text, plan_text, f)
-    check_test_scenarios(spec_text, plan_text, f)
-    check_spec_coverage_scenarios(plan_text, f)
-    check_test_artifact_datasheet(plan_text, f)
-    check_ts_http_blocks(plan_text, f)
-    check_run_table_phase(plan_text, f)
-    check_gate_stamp(plan_text, f)
-    check_test_ids(plan_text, f)
+    # A teszt-oldali checkek a `03b` lezárásának tárgyai — `code_only` módban
+    # a mért szekciók (teszt-forgatókönyvek, gépi tábla, adatlapok) még nem
+    # léteznek, tehát minden találatuk hamis lenne.
+    if not code_only:
+        check_test_section_volume(spec_text, plan_text, f)
+        check_test_scenarios(spec_text, plan_text, f)
+        check_spec_coverage_scenarios(plan_text, f)
+        check_test_artifact_datasheet(plan_text, f)
+        check_ts_http_blocks(plan_text, f)
+        check_run_table_phase(plan_text, f)
+        check_test_ids(plan_text, f)
+    if code_only:
+        check_gate_stamp(plan_text, f, field="f_gate_code",
+                         status_key="ready_for_test_plan", mode="--plan-code-only")
+    else:
+        check_gate_stamp(plan_text, f)
     if not args.plan_only:
         check_test_task_coverage(plan_text, tasks_text, f)
         check_check_output_collisions(tasks_text, f)
         check_task_test_refs(plan_text, tasks_text, f)
     check_planned_change_purpose(plan_text, f)
-    check_target_environment(plan_text, f)
+    check_target_environment(plan_text, f, code_only=code_only)
     check_judgment_candidates(plan_text, tasks_text, f)
 
     repo_root = Path(args.repo_root)
-    check_executed_artifacts(plan_text, tasks_text, repo_root, f, plan_only=args.plan_only)
+    # A futtatott artefaktumok (teszt-parancsok belépési pontjai) a teszt-félben
+    # keletkeznek — `code_only` módban nincs mit mérni.
+    if not code_only:
+        check_executed_artifacts(plan_text, tasks_text, repo_root, f, plan_only=args.plan_only)
     check_plan_anchors(plan_text, repo_root, f, cycle_dir=cycle)
     check_artifact_voice(
         [("spec.md", spec_text, "02"), ("plan.md", plan_text, "03"), ("tasks.md", tasks_text, "04")], f
     )
 
+    if code_only:
+        print("# mód: --plan-code-only (a teszt-oldali checkek nem futnak — "
+              "azokat a 03b lezárása méri)")
     print(f"ANALYZE-GATE: {len(f)} Must Fix, {len(f.suggestions)} javaslat")
 
     if f.items:
@@ -2439,7 +2516,8 @@ def main():
                 print(f"         nem talált szekció (opcionális vagy S1/S2 által már jelzett): "
                       f"{'; '.join(missing)}")
     elif args.emit_slices and args.plan_only:
-        print("\nA --emit-slices `--plan-only` mellett kimarad (a tasks.md még nem létezik).")
+        mode = "--plan-code-only" if code_only else "--plan-only"
+        print(f"\nA --emit-slices `{mode}` mellett kimarad (a tasks.md még nem létezik).")
 
     if not f.items:
         print("\nNincs blokkoló mechanikus megállapítás.")

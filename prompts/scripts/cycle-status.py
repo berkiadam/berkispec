@@ -10,6 +10,7 @@ from lang_keys import fld, st
 # A státusz-összehasonlítás mindenhol KISBETŰS, ezért a kulcsokat is így vesszük.
 _S_DONE = st("done").lower()
 _S_READY_PLAN = st("ready_for_plan").lower()
+_S_READY_TEST_PLAN = st("ready_for_test_plan").lower()
 _S_READY_TASKS = st("ready_for_tasks").lower()
 _S_READY_IMPL = st("ready_for_implement").lower()
 _S_READY_VALIDATE = st("ready_for_validate").lower()
@@ -226,15 +227,29 @@ def analyze_cycle(cycle_path):
         else:
             phases.append(("Specifikáció (spec.md)", "MÉG NEM FUTOTT"))
 
-        # 2. Plan
+        # 2. Plan — a 03 hasítása óta KÉT sor, ugyanabból a státusz-mezőből (D11):
+        # a `03a-write-code-plan` a kód-tervet zárja `ready_for_test_plan`-re, a
+        # `03b-write-test-plan` a teszt-tervet `ready_for_tasks`-ra. Egy `done`
+        # plan mindkettőt KÉSZ-re teszi, tehát az összesített ciklus-státusz
+        # logikája nem sérül.
         plan_status = get_status_from_file(plan_file)
+        _CODE_PLAN_DONE = [_S_READY_TEST_PLAN, _S_READY_TASKS, _S_READY_IMPL,
+                           _S_READY_VALIDATE, _S_DONE]
+        _TEST_PLAN_DONE = [_S_READY_TASKS, _S_READY_IMPL, _S_READY_VALIDATE, _S_DONE]
         if plan_status:
-            if plan_status in [_S_READY_TASKS, _S_READY_IMPL, _S_READY_VALIDATE, _S_DONE]:
-                phases.append(("Tervezés (plan.md)", "KÉSZ"))
+            if plan_status in _CODE_PLAN_DONE:
+                phases.append(("Kód-terv (plan.md)", "KÉSZ"))
             else:
-                phases.append(("Tervezés (plan.md)", "FOLYAMATBAN"))
+                phases.append(("Kód-terv (plan.md)", "FOLYAMATBAN"))
+            if plan_status in _TEST_PLAN_DONE:
+                phases.append(("Teszt-terv (plan.md)", "KÉSZ"))
+            elif plan_status == _S_READY_TEST_PLAN:
+                phases.append(("Teszt-terv (plan.md)", "FOLYAMATBAN"))
+            else:
+                phases.append(("Teszt-terv (plan.md)", "MÉG NEM FUTOTT"))
         else:
-            phases.append(("Tervezés (plan.md)", "MÉG NEM FUTOTT"))
+            phases.append(("Kód-terv (plan.md)", "MÉG NEM FUTOTT"))
+            phases.append(("Teszt-terv (plan.md)", "MÉG NEM FUTOTT"))
 
         # 3. Tasks
         tasks_status = get_status_from_file(tasks_file)

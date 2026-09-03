@@ -154,7 +154,7 @@ A ciklustervezés során rendszeresen elhangzik olyan információ, ami **nem a 
 
 - **`spec-input-from-prev.md`** — a **02-write-spec**-nek: viselkedési részlet, konkrét hibaeset, adatmező, üzleti szabály, elfogadási feltétel, amit az interjú során a felhasználó elmondott, de a roadmap-bejegyzésbe nem fér bele.
   > **🔴 Ezt a fájlt MINDIG létrehozod** — a sablonnal, akkor is, ha nem gyűlt össze egyetlen tétel sem (ilyenkor üres listával). Ez a 4. szabály **egyetlen kivétele**. **Nincs semmilyen előfeltétele:** nem függ attól, hogy volt-e `/bs-brainstorm` session, melyik módban futsz (A/B), és mennyi hangzott el az interjún. Ha nincs mit átadni, az üres lista **maga az információ** — a 02 ebből tudja, hogy a csatorna megvolt, és nem maradt le semmiről. **Ne tölts bele kitalált tételeket**, csak hogy ne legyen üres.
-- **`plan-input-from-prev.md`** — a **03-write-plan**-nek: technikai megkötés, meglévő komponens- vagy infrastruktúra-információ, ismert integrációs korlát, amit a felhasználó itt mondott el.
+- **`plan-input-from-prev.md`** — a **03a-write-code-plan**-nek: technikai megkötés, meglévő komponens- vagy infrastruktúra-információ, ismert integrációs korlát, amit a felhasználó itt mondott el.
 
 **A. módban** (teljes roadmap tervezés) a ciklus mappája még nem feltétlenül létezik — ilyenkor a tételt annak a ciklusnak a mappájába írd, amelyikre vonatkozik, a mappát létrehozva. Ha a tétel **több ciklust** érint, az nem ide tartozik: a `roadmap.md` megfelelő ciklus-bejegyzéseibe menjen.
 
@@ -340,7 +340,7 @@ Ha bármelyikre "nem": javítsd vagy kérdezz rá, mielőtt hozzáfűzöd.
 **Mi ez:** a ciklus mappájában létrehozott `cycle-design-input.md` egy **üres sablon a felhasználónak**. Ide írhatja le a saját szavaival, szabad formában, hogy mit szeretne a ciklusban — elvárásokat, vázlatot, példa payloadot, folyamatleírást, linkeket, korábbi jegyzeteket.
 
 **Kulcsszabályok:**
-- **A fájl a felhasználóé.** Te (01) csak a sablont hozod létre, tartalmat **nem** írsz bele — **egyetlen kivétel a brainstorm-bemenet (BS18):** ha a hívás egy brainstorm sessionre hivatkozik, a sablon nem üresen, hanem a munkafájlból desztillált tartalommal jön létre. A `02-write-spec` (viselkedési tartalom) és a `03-write-plan` (technikai/eljárás-jellegű tartalom) automatikusan beolvassa, de egyik sem írja át.
+- **A fájl a felhasználóé.** Te (01) csak a sablont hozod létre, tartalmat **nem** írsz bele — **egyetlen kivétel a brainstorm-bemenet (BS18):** ha a hívás egy brainstorm sessionre hivatkozik, a sablon nem üresen, hanem a munkafájlból desztillált tartalommal jön létre. A `02-write-spec` (viselkedési tartalom) és a `03a-write-code-plan` (technikai/eljárás-jellegű tartalom) automatikusan beolvassa, de egyik sem írja át.
 - **Kitöltése opcionális.** Ha üresen marad (csak a sablon-szöveg van benne), a 02 egy mondatban jelzi és a roadmap-bejegyzés alapján dolgozik tovább — ez nem hiba, nem megállási ok.
 - **Nem a `spec-input-from-prev.md` helyettesítője.** A `spec-input-from-prev.md`-be **te** írsz (az interjú során elhangzott, de a roadmap-be nem illő tételek, IP1); a `cycle-design-input.md`-be **a felhasználó** ír, a fázis lezárása után, saját tempójában.
 

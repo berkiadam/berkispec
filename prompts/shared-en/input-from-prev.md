@@ -3,7 +3,7 @@
   This is NOT a standalone skill/agent, but a shared text block that the installer
   (install-helper.py) embeds INLINE at build time into the installed version of the
   referencing skill (in place of the `<!-- INCLUDE:shared/input-from-prev.md -->` marker).
-  Referenced by: 01-add-cycles, 02-write-spec, 03-write-plan, 04-write-tasks,
+  Referenced by: 01-add-cycles, 02-write-spec, 03a-write-code-plan, 03b-write-test-plan, 04-write-tasks,
   07-validate. The quick-flow does NOT (it is three-phase and runs in one context).
   The skill writes its own, phase-specific part AROUND the marker (what it reads,
   which files it may write) — this block contains only the shared rules.

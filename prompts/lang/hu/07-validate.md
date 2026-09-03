@@ -118,7 +118,10 @@ _(ezt a szekciót a failure-counter.py írja — kézzel nem szerkeszted)_
 > **[VALIDATE · <Failed Item> · próba N/3]**
 > *"A validáció során a(z) [Failed Item] tervezési hibának bizonyult: a kód csak a teszt vagy a Definition of done megváltoztatásával lenne zöld, amit a hurok nem tehet meg (anti-„teszt-csalás"). Ezért nem a 06-implementbe léptem vissza, hanem a tervezési fázishoz eszkalálok. A(z) [plan.md / spec.md] státuszát visszaállítottam, hogy a tervezési döntést rendezni lehessen. Folytasd a tervezés felülvizsgálatával:*
 > ```
-> /bs-write-plan (DoD-hiba esetén: /bs-write-spec) input: @specs/cycle-NN-<cycle-name>/plan.md (vagy spec.md)
+> /bs-write-test-plan | /bs-write-code-plan (DoD-hiba esetén: /bs-write-spec) input: @specs/cycle-NN-<cycle-name>/plan.md (vagy spec.md)
+> # teszt-forgatókönyv, futtatási tábla, tesztfájl → /bs-write-test-plan
+> # koordináta, tervezett módosítás, konfiguráció → /bs-write-code-plan
+> # DoD → /bs-write-spec
 > ```
 > *A folyamat a tervezés rendezése után a 05→06→07 úton tér vissza ide."*
 > **A válasz végén: kattintható link a `validation-report.md`-re.**

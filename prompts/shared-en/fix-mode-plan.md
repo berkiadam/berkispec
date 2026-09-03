@@ -1,10 +1,11 @@
-<!-- Source note: the Fix mode section of the 03-write-plan skill, extracted so that the
+<!-- Source note: the Fix mode section of the 03 plan phase (03a-write-code-plan +
+     03b-write-test-plan), extracted so that the
      plan-fixer subagent prompt can inline it at build time (BD14/b). Edit it in one place. -->
 ## Fix mode (analyze-loop entry point)
 
 > **When it is active:** this section is started by the self-healing loop of `05-analyze` through the `agents/plan-fixer.md` wrapper — **not** by normal plan writing. The input is a concrete `<status:must_fix>` list, not a full re-run.
 
-> **Reading the skill is not needed (D13):** every rule needed for the fix mode is in this prompt — including the "Quality check" section of the phase. **In fix mode do not read the whole phase skill** (`03-write-plan.md`): it is unnecessary, and it tempts you to re-run the whole phase, whereas the task is a narrow, targeted correction.
+> **Reading the skill is not needed (D13):** every rule needed for the fix mode is in this prompt — including the "Quality check" section of the phase. **In fix mode do not read the whole phase skill** (`03a-write-code-plan.md` / `03b-write-test-plan.md`): it is unnecessary, and it tempts you to re-run the whole phase, whereas the task is a narrow, targeted correction.
 
 The fix mode is a **narrowed entry point:** you correct the given `<status:must_fix>` findings in a targeted way, you **do not rewrite the whole plan**. In fix mode you **ignore** the `*-input-from-prev.md` files **completely** (you neither read nor write them) — IP1/6. (Otherwise a cheaper LLM tends to start the phase from scratch — that is forbidden.) The quality gates of the normal flow (the "Quality check" section of the phase + the Constitution Check) still apply to the corrected parts — **only to the corrected parts**, not to the whole document.
 

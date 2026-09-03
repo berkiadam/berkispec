@@ -21,5 +21,5 @@
 <!-- ANCHOR:zaro-uzenet -->
 > *"The spec is done. We can continue with step 3 (plan). Before starting the new phase, be sure to run a `/clear` command to empty the context, then use this command:
 > ```
-> /bs-write-plan input: @specs/cycle-NN-<cycle-name>/spec.md, cycle: cycle-NN-<cycle-name>
+> /bs-write-code-plan input: @specs/cycle-NN-<cycle-name>/spec.md, cycle: cycle-NN-<cycle-name>
 > ```"*

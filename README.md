@@ -109,7 +109,7 @@ The user has **two routes**; the weight of the task decides which one fits:
 
 **Default flow:** the character of the project is clarified in the `00-init-project` phase (product development vs. configuration/scripting), and based on that a **default flow** is written into the **Default flow** field of the `## Development methodology` section of `conventions.md`. That is the starting point — it can be overridden per task.
 
-The two routes are **interchangeable**: if during the simplified flow it turns out that the task outgrows it (more code to write, several components, complex design), the skill stops the work and **redirects to the full process** (`01-add-cycles`). And the other way round: `01-add-cycles` and `03-write-plan` will flag it if the task is too simple for a full cycle, and suggest the simplified flow.
+The two routes are **interchangeable**: if during the simplified flow it turns out that the task outgrows it (more code to write, several components, complex design), the skill stops the work and **redirects to the full process** (`01-add-cycles`). And the other way round: `01-add-cycles` and `03a-write-code-plan` will flag it if the task is too simple for a full cycle, and suggest the simplified flow.
 
 ### 1.1 Before either route (optional): `/bs-brainstorm`
 
@@ -251,7 +251,8 @@ After installation you can reach the skills in the platform's chat interface by 
 * **`/bs-init-project`**: the very first initialisation of the project (creates the `conventions.md` file).
 * **`/bs-add-cycles`**: adding a new development cycle to the roadmap (`roadmap.md`).
 * **`/bs-write-spec`**: capturing the requirements, producing the specification of a new cycle (`spec.md` + `spec-questions.md`).
-* **`/bs-write-plan`**: working out the detailed technical implementation plan (`plan.md` + `plan-questions.md`).
+* **`/bs-write-code-plan`**: the **code side** of the technical implementation plan (the code sections of `plan.md` + `plan-questions.md`) — coordinates, planned changes, configuration, schema.
+* **`/bs-write-test-plan`**: the **test half** of the same `plan.md` — `TS-NN` scenarios, the machine-readable run table, environment preparation, test-file data sheets.
 * **`/bs-write-tasks`**: breaking the technical plan down into measurable tasks (`tasks.md` + `tasks-questions.md`).
 * **`/bs-analyze`**: cross-phase consistency check and automatic correction (spec/plan/tasks agreement).
 * **`/bs-implement`**: actual code development based on the task list, recording the progress in `tasks.md`.
@@ -794,7 +795,7 @@ Two phases orchestrate a self-healing loop: **05-analyze** (the consistency of t
 
 **The path convention in a single place (RP1).** The "use a relative path" rule used to live in **three places with differing content**, and it contradicted itself: the quality gate of 03/04 asked for a form relative to the **file's own directory** (`../../src/app.ts`), while the plan's structure examples used one relative to the **repo root** (`src/file.ts:14`), whereas the anchor check of the mechanical gate (`A2`) resolves to the repo root — meaning a plan that followed the gate's rule would have failed in its own gate. The resolution lives in a single shared block (`prompts/shared-hu/path-format.md`, included by the quality gate of 02/03/04): a **code and file reference** (affected component, planned change, `path:line` anchor, argument of a command) → relative to **the repo root**, because the commands run there and the gate resolves there too; a **document link** → relative to **the file's own directory**, so that it is clickable; an absolute, machine-specific (`/home/…`, `C:\Users\…`) or `file://` form is not valid in either case. The `R1` check of the gate flags this mechanically, and it **resolves the old, file-relative anchors and gives a suggestion** (`A2c`) — it does not throw a running cycle back over it.
 
-**Shift-left: the gate also runs at the closing of 03 and 04 (M).** The same script runs at the closing of `03-plan` in `--plan-only` mode (`tasks.md` does not exist yet: `[P-…]` format, mandatory tables, `S3`, `C1`, `C3` TP1, `C4` KF1, `C6` KO1, anchors, artifact voice, `DoD-NN` identifiers), and at the closing of `04-tasks` in full mode. Any `Must Fix` → **no status change**: the phase itself fixes it, in a fresh context. This reduces the iteration count of `05`, and fixes the defect where it arose — not two phases later, at the price of a fixer subagent and an analyzer round.
+**Shift-left: the gate also runs at the closing of THREE phases (M).** The same script runs at the closing of `03a-code-plan` in **`--plan-code-only`** mode (the code-side checks only: `[P-…]` format, the two code-side mandatory tables, `C4` KF1, `C6` KO1, `EV1`, `WY1`, `GC1`, anchors, path format, artifact voice, `DoD-NN` identifiers — the test side does not exist yet), at the closing of `03b-test-plan` in **`--plan-only`** mode (the **full** plan: the above + `S1`, `S3`, `C1`, `C3` TP1, `TS1–TS8`, `TA1`, `TI1`, `PH1`, `TS7`), and at the closing of `04-tasks` in full mode. The entry gate of `04` (EG1) stays `--plan-only`, and the entry gate of `03b` runs `--plan-code-only` the same way (D5). Any `Must Fix` → **no status change**: the phase itself fixes it, in a fresh context. This reduces the iteration count of `05`, and fixes the defect where it arose — not two phases later, at the price of a fixer subagent and an analyzer round.
 
 **The "did anything change at all?" sentinel (N).** If after a fixer the `git diff` on the cycle folder is empty **and** no new `Knn` question was born either, the next analyzer round would certainly return the same list — so in that case the loop **stops and asks**, without an analyzer run. This is the failure mode (the fixer cannot decide the fix, but also forgets to record the question) that, without a sentinel, burns through all three iterations on the same `Must Fix` list.
 
@@ -826,19 +827,23 @@ Run the command: `/bs-add-cycles input: New cycle — OIDC login for the mobile 
 Run the command: `/bs-write-spec input: @specs/roadmap.md`
    → spec-questions.md questions one by one → answers → "the spec is ready, go" → spec.md (Ready for planning)
 
-# ④  03 — Writing the plan
-Run the command: `/bs-write-plan input: @specs/cycle-02-oidc-login/spec.md`
-   → mandatory first question: E2E test strategy → answers → "approved" → plan.md (Ready for tasks)
+# ④  03a — Writing the code plan
+Run the command: `/bs-write-code-plan input: @specs/cycle-02-oidc-login/spec.md`
+   → mandatory first question: E2E test strategy → answers → "approved" → plan.md (Ready for test planning)
 
-# ⑤  04 — Writing the tasks
+# ⑤  /clear, then 03b — Writing the test plan (into the same plan.md)
+Run the command: `/bs-write-test-plan input: @specs/cycle-02-oidc-login/plan.md`
+   → the phase ITSELF runs the gate of the code plan (D5) → TS-NN scenarios → "approved" → plan.md (Ready for tasks)
+
+# ⑥  04 — Writing the tasks
 Run the command: `/bs-write-tasks input: @specs/cycle-02-oidc-login/plan.md`
    → "go" → tasks.md (Ready for implementation)
 
-# ⑥  05 — Analyze
+# ⑦  05 — Analyze
 Run the command: `/bs-analyze input: @specs/cycle-02-oidc-login`
    → cross-phase check; from the items found, YOU choose (triage) what it should fix → self-healing loop on analyze-task.md → analyze-report.md (PASS)
 
-# ⑦  06 — Implementation
+# ⑧  06 — Implementation
 Run the command: `/bs-implement input: @specs/cycle-02-oidc-login/tasks.md`
    → code + progress in tasks.md → tasks.md (Ready for validation)
 
@@ -846,16 +851,16 @@ Run the command: `/bs-implement input: @specs/cycle-02-oidc-login/tasks.md`
 # Run the command: `/bs-manual-test-plan input: @specs/cycle-02-oidc-login`
 #    → manual-test-plan.md (in Planned or As-built mode) — not a phase, it changes no status
 
-# ⑧  07 — Validation
+# ⑨  07 — Validation
 Run the command: `/bs-validate input: @specs/cycle-02-oidc-login`
    → fast tests → Sonar + code review (reviewer subagent) → heavy tests + DoD;
      on FAIL a self-healing loop → PASS → status of spec/plan/tasks: Done
 
-# ⑨  08 — Doc-sync
+# ⑩  08 — Doc-sync
 Run the command: `/bs-doc-sync input: @specs/cycle-02-oidc-login`
    → updating docs-generated/ + the objective gate → consistent documentation
 
-# ⑩  09 — Merge
+# ⑪  09 — Merge
 Run the command: `/bs-merge input: @specs/cycle-02-oidc-login`
    → checking the gates (status + clean review + doc-sync) → merge (with manual confirmation)
 ```
@@ -986,7 +991,8 @@ Walking through a small task. There is **a single starting prompt** here; after 
 | `/bs-init-project` | Project init | Project description | `conventions.md` |
 | `/bs-add-cycles` | Managing cycles | HLD/LLD or a description | `specs/roadmap.md` (`Done`) |
 | `/bs-write-spec` | Spec | Roadmap + the name of the cycle | `spec.md` (`Ready for planning`) |
-| `/bs-write-plan` | Plan | `spec.md` | `plan.md` (`Ready for tasks`) — **self-contained and truncation-free** (KX3: the elaborated artifacts of the spec verbatim); before the closing, the **Closing gate (TP2)** + the **mechanical gate** (`analyze-gate-check.py --plan-only`, M) |
+| `/bs-write-code-plan` | Plan — the code half (03a) | `spec.md` | the code sections of `plan.md` (`Ready for test planning`): `Goal`, `Affected components`, `Environment coordinates` (KO1), `Planned changes` (with a purpose, WY1), `New dependencies`, `Configuration`, `Schema artifacts`, `Reverse coverage` (SC1), `Risks`. **Self-contained and truncation-free** (KX3); before the closing, the **Closing gate (TP2-code)** + the **mechanical gate** (`analyze-gate-check.py --plan-code-only`, M) |
+| `/bs-write-test-plan` | Plan — the test half (03b) | the code half of `plan.md` + the test section and `DoD` of the spec | the test sections of the same `plan.md` (`Ready for tasks`): `Testing strategy`, `Test scenarios` (`TS-NN`, TS1–TS8), `Machine-readable run table` (TP4/PH1), `E2E infrastructure` (TP3), `Regression impact`, `Test specification` (TI1/TA1/`Spec coverage`), `Execution order`, `Verification strategy`. **Entry gate (D5):** it runs `--plan-code-only` itself; before the closing, the **Closing gate (TP2-test)** + the **mechanical gate** (`analyze-gate-check.py --plan-only`, M) |
 | `/bs-write-tasks` | Tasks | `plan.md` | `tasks.md` (`Ready for implementation`) — before the closing, the **mechanical gate** (`analyze-gate-check.py`, M): on a `Must Fix` there is no status change |
 | `/bs-analyze` | Analyze | the cycle folder | `analyze/analyze-report.md` (PASS/FAIL) + `analyze/analyze-task.md` (the fix list approved in the triage) — the mechanical gate + **four parallel diagnostician rounds** (`analyzer` × 3 scopes for categories 1–5, `analyzer-exec` for category 6); the two coverage tables are **generated** by the gate. On FAIL, an orchestrated self-healing loop (fixer subagents, `max X=3`, **one** analyzer round per iteration) |
 | `/bs-implement` | Implementation | `tasks.md` | code + `tasks.md` (`Ready for validation`) + `test-report/implement/check-log.md` (the append-only log of the `[CHECK]` runs), and if the project has declared `implement` a report phase (TR6), the full report set of `test-report/implement/` too — it processes the task list **in a single run** (IM1): a task commit is not the end of the phase |
@@ -1012,7 +1018,7 @@ The **frontmatter** of the phase skills (`00–09`) records the prerequisites, t
 | `agents/test-runner.md` | 07 | Running unit/integration/Sonar/E2E/regression tests, resolving port collisions, cleaning up temporary resources — **it gives a factual summary, it does not decide** PASS/FAIL. `default` tier (deliberately **not** the cheapest — the reliable, consistent summarisation of test/Sonar output that differs per project is critical because of the 3-attempt counter) | a structured PASS/FAIL report per category |
 | `agents/doc-sync-planner.md` | 08 | The **read-only** diagnosis of the `docs-generated/` folder + the cycle diff; a tickable per-file plan + the DS22 gate inventory. **It writes the replacement text too** (a surgical patch: target section + the current snippet + the new text) — so the main agent does not have to re-read/re-compose the docs, it only applies | the `doc-sync-plan.md` plan proposal + replacement texts + `doc-sync-questions.md` questions |
 | `agents/spec-fixer.md` | 05 | The 02 fix-mode entry point of the self-healing loop (a thin wrapper → the Fix mode of `/bs-write-spec`). `default` tier — the `analyzer` already gives it a precise, pre-identified defect list, it does not have to discover the problem. **Before returning it runs the mechanical gate itself** (GS1) | a corrected `spec.md` + new `spec-questions.md` `Knn`s |
-| `agents/plan-fixer.md` | 05 | The 03 fix-mode entry point of the self-healing loop (a thin wrapper → the Fix mode of `/bs-write-plan`). `default` tier (same rationale) | a corrected `plan.md` + new `plan-questions.md` `Knn`s |
+| `agents/plan-fixer.md` | 05 | The 03 fix-mode entry point of the self-healing loop (a thin wrapper → the Fix mode of `/bs-write-code-plan` and `/bs-write-test-plan`). **It may correct both halves** in the same `plan.md`, which is why it includes both quality gates. `default` tier (same rationale) | a corrected `plan.md` + new `plan-questions.md` `Knn`s |
 | `agents/tasks-fixer.md` | 05 | The 04 fix-mode entry point of the self-healing loop (a thin wrapper → the Fix mode of `/bs-write-tasks`). `default` tier (same rationale) | a corrected `tasks.md` + new `tasks-questions.md` `Knn`s |
 | `agents/implement-fixer.md` | 07 | The 06 fix-mode entry point of the validate loop (a thin wrapper → the Fix mode of `/bs-implement`). `default` tier — the anti-"test cheating" guard of 06 explicitly reckons with a cheaper LLM running it | corrected code + closed `## Validation fixes` tasks (+ a possible escalation signal) |
 | `agents/review-fixer.md` | 09 | The 06 fix-mode entry point of the review loop (a thin wrapper → the Fix mode of `/bs-implement`, with a `## Review fixes` input) | corrected code + closed `## Review fixes` tasks (+ a possible escalation signal) |
@@ -1032,7 +1038,7 @@ prerequisites:
 output:
   - "specs/cycle-NN-<name>/spec.md status: Ready for planning"
 prev: 01-add-cycles
-next: 03-write-plan
+next: 03a-write-code-plan
 subagents: []        # specialists invoked via the Task tool (files under agents/)
 shared: []           # optional: shared blocks under shared/ that the installer inlines at build time (e.g. 00/01 include shared/git-preflight.md)
 ---
@@ -1057,8 +1063,8 @@ tools: ["Read", "Bash", "Grep"]
 
 The frontmatter is otherwise **tool-independent** (its own schema, not tied to a concrete agent tool); the installer translates it into the native format of the target platform (Claude/Cursor `.md`, Codex `.toml`, Copilot `.agent.md`, Antigravity `agent.json`).
 
-**The `subagents:` field of `05-analyze`** lists, besides the two read-only diagnostician definitions (`analyzer` — with three scopes, started in parallel — and `analyzer-exec`), the three fixer wrappers too: `agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`. **The `subagents:` field of `07-validate`** contains `agents/test-runner.md` (the mechanical execution of tests/Sonar/E2E, `default` tier), `agents/reviewer.md` (read-only code diagnosis as step 2 of the round) and the two fixer wrappers — `agents/implement-fixer.md` (test/Sonar/DoD) and `agents/review-fixer.md` (Must Fix findings). **The `subagents:` field of `08-doc-sync`** contains the `agents/doc-sync-planner.md` read-only planning diagnostician (the author of the per-file `doc-sync-plan.md`; the actual writing of the docs belongs to the main agent — there is no fixer wrapper, because this is not a self-healing loop). **Phase `09-merge` has no `subagents:` field** — the review moved into 07, and the merge phase only checks gates and merges. **The `subagents:` field of `00-init-project`, `01-add-cycles`, `02-write-spec` and `06-implement`** contains `agents/researcher.md` for ad-hoc codebase research (Mode B) — the same agent that `03-write-plan` uses for the systematic identification of source files (Mode A). Preserving the skill/agent separation matters: **the behaviour of the fix mode lives in a single place**, and the wrapper agent is only an entry point — there is no logic duplication. This has **two implementations**:
-- **02/03/04 (the analyze loop, D13):** the fix mode and the phase's quality gate live in the `prompts/shared-hu/{fix-mode,quality-check}-*.md` files, and are **included at build time into the skill AND into the fixer wrapper**. The fixer thus **does not read a phase skill** — its prompt is self-contained (the `plan-fixer` is ~200 lines instead of reading the 908-line `03-write-plan.md`).
+**The `subagents:` field of `05-analyze`** lists, besides the two read-only diagnostician definitions (`analyzer` — with three scopes, started in parallel — and `analyzer-exec`), the three fixer wrappers too: `agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`. **The `subagents:` field of `07-validate`** contains `agents/test-runner.md` (the mechanical execution of tests/Sonar/E2E, `default` tier), `agents/reviewer.md` (read-only code diagnosis as step 2 of the round) and the two fixer wrappers — `agents/implement-fixer.md` (test/Sonar/DoD) and `agents/review-fixer.md` (Must Fix findings). **The `subagents:` field of `08-doc-sync`** contains the `agents/doc-sync-planner.md` read-only planning diagnostician (the author of the per-file `doc-sync-plan.md`; the actual writing of the docs belongs to the main agent — there is no fixer wrapper, because this is not a self-healing loop). **Phase `09-merge` has no `subagents:` field** — the review moved into 07, and the merge phase only checks gates and merges. **The `subagents:` field of `00-init-project`, `01-add-cycles`, `02-write-spec` and `06-implement`** contains `agents/researcher.md` for ad-hoc codebase research (Mode B) — the same agent that `03a-write-code-plan` uses for the systematic identification of source files (Mode A). Preserving the skill/agent separation matters: **the behaviour of the fix mode lives in a single place**, and the wrapper agent is only an entry point — there is no logic duplication. This has **two implementations**:
+- **02/03/04 (the analyze loop, D13):** the fix mode and the phase's quality gate live in the `prompts/shared-hu/{fix-mode,quality-check}-*.md` files, and are **included at build time into the skill AND into the fixer wrapper**. The fixer thus **does not read a phase skill** — its prompt is self-contained (the `plan-fixer` is ~80 lines instead of reading the 584-line `03a-write-code-plan.md` + the 683-line `03b-write-test-plan.md`). **Since the split, the quality gate of `03` lives in TWO shared files** (`quality-check-plan-code.md` + `quality-check-plan-test.md`): `03a` includes the first, `03b` the second, and the `plan-fixer` **both** — because the fixer may correct both halves of `plan.md`.
 - **06 (the self-healing loop of 07):** the `implement-fixer` and the `review-fixer` still delegate **by reading the "Fix mode" section of `06-implement.md`** (with a `## Validation fixes` or a `## Review fixes` input section respectively, on identical mechanics). Here the extraction has not happened yet — the 06 skill is considerably shorter (294 lines), but the 07 loop calls the fixer once per round, so the same saving is available if the section is moved into `shared/` the same way.
 
 ---
@@ -1161,7 +1167,7 @@ Every cycle gets its own folder: `specs/cycle-NN-<cycle-name>/`
 | `plan-questions.md` | 03 | The open questions of the design stage. The plan is only `Ready for tasks` if there is no `- [ ]` here. |
 | `tasks.md` | 04 | A checkboxed task list (with `[RED]`/`[GREEN]`/`[CHECK]`/`[OPS]` markers — a marker is mandatory on every task) + the prerequisite documents. For a destructive `[OPS]` operation affecting a shared environment, the approver and the rollback task are mandatory. **The plan link (PID1):** every task references the plan's stable `[P-…]` section identifier (not a serial number), a single primary source, with a sub-scope marker in the case of several tasks; the group headers list the plan IDs covered, and at the end of the file the reverse `Plan coverage` table (plan section → tasks) **and the `Test coverage` table** (TT1: every `TS-NN` scenario and every run-table category → creating task + running task, or a justification) are mandatory. **Entry gate (EG1):** the first step of the phase is actually running `analyze-gate-check.py --plan-only` — the status field of the plan is self-declared, and on a failing gate there is no tasks list. The command of a `[CHECK]` is the one-file command of the plan's test data sheet, and two `[CHECK]`s must not write with `>` into the same log file (T6). **The test link (TI2/TX1):** every test-writing and test-running task refers to the plan's test case at the end of the line in the form `— test [TC-01]` / `— test [TS-03]`, and **every test to be run is a separate checkbox** — one `[CHECK]` runs exactly one identifier, with a test-filtering command. |
 | `tasks-questions.md` | 04 | The open questions of the tasks stage (used mostly by the 05 fix mode). `tasks.md` is only `Ready for implementation` if there is no `- [ ]` here. |
-| `cycle-design-input.md` | created by: 01 · **filled in by: the user** · consumed by: **02, 03** | The cycle design input (CD1): a free-form cycle specification written by the user in their own words (expectations, an outline, examples). 01 creates it as an empty template in the cycle folder and draws attention to it; **filling it in is optional**. If there is content in it, `bs-write-spec` processes its **behavioural** part (next to the entry in `roadmap.md`, as a primary input), and `bs-write-plan` reads it automatically and lifts its **technical/procedural** part — self-containedly — into `plan.md`. Neither phase rewrites the file. |
+| `cycle-design-input.md` | created by: 01 · **filled in by: the user** · consumed by: **02, 03** | The cycle design input (CD1): a free-form cycle specification written by the user in their own words (expectations, an outline, examples). 01 creates it as an empty template in the cycle folder and draws attention to it; **filling it in is optional**. If there is content in it, `bs-write-spec` processes its **behavioural** part (next to the entry in `roadmap.md`, as a primary input), and `bs-write-code-plan` reads it automatically and lifts its **technical/procedural** part — self-containedly — into `plan.md`. Neither phase rewrites the file. |
 | `spec-input-from-prev.md` | written by: 01 · consumed by: **02** | The handover between phases (IP1): behavioural details that came up in 01 but do not fit into the roadmap. Only if there is information to hand over. |
 | `plan-input-from-prev.md` | written by: 01, 02 · consumed by: **03** | Technical/implementation details taken out of the spec or surfaced during the research. |
 | `tasks-input-from-prev.md` | written by: 02, 03 · consumed by: **04** | Preparatory steps and ordering constraints for the task breakdown. |
@@ -1192,9 +1198,9 @@ Every cycle gets its own folder: `specs/cycle-NN-<cycle-name>/`
 
 All of them in the cycle's folder (`specs/cycle-NN-<name>/`). **One phase may write into several files** in the same run, if the information has to be spread out (e.g. a technical detail arising in 02 into `plan-input`, and the testing prerequisite following from it into `validate-input`). **06-implement** deliberately does not get its own: it reads `plan.md` and `tasks.md` anyway, so an implementation detail belongs there.
 
-**Its biggest "feeder" is the coordinate filtering of 02 (KX).** What most often bleeds into the spec is **environment coordinates and procedure descriptions** (dev hosts, `localhost` ports, image names, deploy commands, complete deployment runbooks in the `Test specification` section), because they look like useful information. That is why `02-write-spec` runs a **mandatory filtering routine** — both when writing a new spec **and** when re-running on an existing one — that recognises these and **moves** them (it does not delete them) into `plan-input-from-prev.md`, leaving a symbolic reference in the spec (`{PUBLIC_BASE_URL}`). The delimitation in a single rule: **the endpoint path is a contract (spec), while the host / base URL / port / namespace / image / command is a coordinate (plan)**. `03-write-plan` runs the mirror image of this: if the spec stayed too technical, it **lifts the data into the plan** and tells the user (it does not rewrite `spec.md`) — because `plan.md` has to be **self-contained**: the `test-runner` reads only that, so whatever is not there will never run.
+**Its biggest "feeder" is the coordinate filtering of 02 (KX).** What most often bleeds into the spec is **environment coordinates and procedure descriptions** (dev hosts, `localhost` ports, image names, deploy commands, complete deployment runbooks in the `Test specification` section), because they look like useful information. That is why `02-write-spec` runs a **mandatory filtering routine** — both when writing a new spec **and** when re-running on an existing one — that recognises these and **moves** them (it does not delete them) into `plan-input-from-prev.md`, leaving a symbolic reference in the spec (`{PUBLIC_BASE_URL}`). The delimitation in a single rule: **the endpoint path is a contract (spec), while the host / base URL / port / namespace / image / command is a coordinate (plan)**. `03a-write-code-plan` runs the mirror image of this: if the spec stayed too technical, it **lifts the data into the plan** and tells the user (it does not rewrite `spec.md`) — because `plan.md` has to be **self-contained**: the `test-runner` reads only that, so whatever is not there will never run.
 
-**On the consuming side, a reference is not enough (dereferencing).** A handed-over item is often phrased at a high level of abstraction (*"build the image and push it to the registry by running `build.sh`"*). `03-write-plan` **must not reproduce the abstraction level of the input**: if an item **references** a script, a procedure, an existing test or an external API, it has to **resolve the reference from the source** — the actual commands of the script, the registry host, the full JSON payload with every mandatory field — and write the concrete detail into `plan.md`, with the source indicated. For a large or scattered source it calls the `researcher` subagent, **asking for literal values**; the researcher received a narrow exception to its "never raw file content" rule for this (short, verbatim snippets: a command, a URL, a payload, a signature — but not a whole file, and a pointer instead of a secret). This is critical because `04`, `06` and the `test-runner` **no longer see the spec or the source**: whatever did not make it into `plan.md` does not exist for them.
+**On the consuming side, a reference is not enough (dereferencing).** A handed-over item is often phrased at a high level of abstraction (*"build the image and push it to the registry by running `build.sh`"*). `03a-write-code-plan` **must not reproduce the abstraction level of the input**: if an item **references** a script, a procedure, an existing test or an external API, it has to **resolve the reference from the source** — the actual commands of the script, the registry host, the full JSON payload with every mandatory field — and write the concrete detail into `plan.md`, with the source indicated. For a large or scattered source it calls the `researcher` subagent, **asking for literal values**; the researcher received a narrow exception to its "never raw file content" rule for this (short, verbatim snippets: a command, a URL, a payload, a signature — but not a whole file, and a pointer instead of a secret). This is critical because `04`, `06` and the `test-runner` **no longer see the spec or the source**: whatever did not make it into `plan.md` does not exist for them.
 
 **Item format** — a checkbox list, modelled on the question files, with the source indicated:
 
@@ -1237,7 +1243,7 @@ Every generated doc gets a **header block** (DS17): `> **Covered:** up to cycle-
 
 ### 11.1 specs/test-conventions.md — recurring test expectations and recipes (TC1–TC11)
 
-**File:** `specs/test-conventions.md` (next to `specs/roadmap.md` — **not** in `docs-generated/`). **Its owner:** `08-doc-sync`. **Its consumers:** `02-write-spec` and `03-write-plan` (`quick-flow` only reads it).
+**File:** `specs/test-conventions.md` (next to `specs/roadmap.md` — **not** in `docs-generated/`). **Its owner:** `08-doc-sync`. **Its consumers:** `02-write-spec`, `03a-write-code-plan` and `03b-write-test-plan` (`quick-flow` only reads it).
 
 **What problem it solves:** as a project progresses, it emerges **what has to be tested in every cycle and in what order** — and which recipe belongs to what (e.g. "build the Keycloak dev image, push it to the registry, restart the pod, then check the token exchange with `curl`"). Up to now this knowledge arose in **cycle-local** artifacts (`plan-questions.md`) and was lost at the end of every cycle, so the next cycle **asked the same thing again**. This file is the durable distillate of that dialogue.
 
@@ -1364,7 +1370,9 @@ In the spec (02), plan (03) and tasks (04) phases the agent keeps its open quest
 |---------|----------|
 | `Draft` | When the phase is started |
 | `Open questions` | There is at least one `[ ]` question |
-| `Ready for planning` / `Ready for tasks` / `Ready for implementation` | Everything `[x]` + the quality check passed + the user confirmed |
+| `Ready for planning` / **`Ready for test planning`** / `Ready for tasks` / `Ready for implementation` | Everything `[x]` + the quality check passed + the user confirmed |
+
+> **The status chain of `plan.md` has two steps (03a → 03b):** `Ready for planning` (the spec) → **`Ready for test planning`** (`03a` closes the code plan) → `Ready for tasks` (`03b` closes the test plan). `Ready for test planning` is **not** the end of the phase from the cycle's point of view: starting `04` with it is an error, and its entry gate (EG1) catches it.
 
 **Loop markers (LC1).** When a self-healing loop reopens a document for correction, the status takes the phase-appropriate not-done value with a **suffix marker** (e.g. `Draft [analyze-loop]`, `Ready for implementation [validate-loop]`). The meaning of the marker is uniform: **fix mode is active** → the fixer steps the status automatically (without user confirmation; the user only steps in at the questions and at the final PASS), and the marker is at the same time the anchor for resuming after an interruption. At the closing (PASS / a clean review) it comes off; on abandonment (`max X` / 3 attempts / `max 5` / escalation) it stays on the document to signal the stuck state.
 
@@ -1377,7 +1385,7 @@ In the spec (02), plan (03) and tasks (04) phases the agent keeps its open quest
 
 ## 13. A uniform `Done` status lifecycle
 
-Every document gets its own phase-specific closing status when it is created (`spec.md` → `Ready for planning`, `plan.md` → `Ready for tasks`, `tasks.md` → `Ready for implementation`), and then **moves to `Done` as soon as the validate (07) closes the cycle with a PASS**. This way the 08-doc-sync and 09-merge phases expect `spec.md`/`plan.md`/`tasks.md` uniformly in the `Done` status.
+Every document gets its own phase-specific closing status when it is created (`spec.md` → `Ready for planning`, `plan.md` → `Ready for test planning`, then `Ready for tasks`, `tasks.md` → `Ready for implementation`), and then **moves to `Done` as soon as the validate (07) closes the cycle with a PASS**. This way the 08-doc-sync and 09-merge phases expect `spec.md`/`plan.md`/`tasks.md` uniformly in the `Done` status.
 
 ---
 

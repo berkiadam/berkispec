@@ -1,6 +1,6 @@
 ---
 name: plan-fixer
-description: "The 03-plan Fix-mode entry point of the 05-analyze self-healing loop (a thin wrapper around the Fix mode of 03-write-plan). The 05-analyze skill calls it."
+description: "The 03-plan Fix-mode entry point of the 05-analyze self-healing loop (a thin wrapper around the Fix mode of 03a-write-code-plan / 03b-write-test-plan — it may correct both halves of plan.md). The 05-analyze skill calls it."
 role: "Plan Fix-mode executor wrapper (the 03-phase fixer of the analyze loop)"
 called_by: ["skills/05-analyze.md"]
 inputs:
@@ -14,7 +14,10 @@ outputs:
 tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob"]
 shared:
   - "shared/fix-mode-plan.md"
-  - "shared/quality-check-plan.md"
+  - "shared/quality-check-plan-code.md"
+  - "shared/quality-check-plan-test.md"
+  - "shared/dereferencing.md"
+  - "shared/spec-artifact-transfer.md"
   - "shared/python-cmd.md"
 ---
 
@@ -25,7 +28,7 @@ You are the executor of the **Fix mode** of the plan phase (03), started by the 
 
 ## What to do
 
-1. **Follow the "Fix mode" section inlined below** (the two entry forms — a direct correction or a downstream reconciliation; the auto-fixable vs. has-to-be-asked boundary; the automatic status with the `[analyze-loop]` marker; the return summary). The quality gates of the phase also appear below — apply them to the corrected parts. **Do not read the phase skill** (`/bs-03-write-plan`) (D13): every rule needed is here, and reading the whole skill tempts you to re-run the whole phase.
+1. **Follow the "Fix mode" section inlined below** (the two entry forms — a direct correction or a downstream reconciliation; the auto-fixable vs. has-to-be-asked boundary; the automatic status with the `[analyze-loop]` marker; the return summary). The quality gates of the phase also appear below — apply them to the corrected parts. **Do not read the phase skills** (`/bs-write-code-plan`, `/bs-write-test-plan`) (D13): every rule needed is here, and reading the whole skill tempts you to re-run the whole phase.
 2. **Input:** the `<status:must_fix>` list filtered for the plan (a direct correction), **or** the summary of the changed upstream spec (a reconciliation) + the current state of `plan.md` and `plan-questions.md`.
 3. **Reconciliation = a targeted alignment, not a full rewrite.** Preserve the closed decisions of `plan-questions.md`.
 4. **Do not ask the user directly** — whatever needs a real decision, add it as a new `Qnn` to `plan-questions.md`, and return its identifier.
@@ -58,8 +61,18 @@ You are the executor of the **Fix mode** of the plan phase (03), started by the 
 
 ## The quality check of the phase — in fix mode ONLY for the corrected parts
 
-_This is the quality gate of phase 03. In fix mode you do not audit the whole document with it, but the sections you modified._
+_This is the quality gate of phase 03 — **the gate of the code plan and of the test plan together, because the fixer may correct both halves** in the same `plan.md` (D7). In fix mode you do not audit the whole document with it, but the sections you modified._
 
-<!-- INCLUDE:shared/quality-check-plan.md -->
+<!-- INCLUDE:shared/quality-check-plan-code.md -->
+
+<!-- INCLUDE:shared/quality-check-plan-test.md -->
+
+---
+
+<!-- INCLUDE:shared/dereferencing.md -->
+
+---
+
+<!-- INCLUDE:shared/spec-artifact-transfer.md -->
 
 <!-- INCLUDE:shared/test-scenario-design.md -->

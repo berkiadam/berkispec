@@ -5,7 +5,8 @@ role: "Kódbázis- és dokumentáció-kutató specialista ágens (kontextus-őr)
 called_by:
   - "skills/00-init-project.md"
   - "skills/02-write-spec.md"
-  - "skills/03-write-plan.md"
+  - "skills/03a-write-code-plan.md"
+  - "skills/03b-write-test-plan.md"
   - "skills/06-implement.md"
   - "skills/brainstorm.md"
 inputs:
@@ -24,7 +25,7 @@ Te egy kódbázis- és dokumentáció-kutató specialista ágens vagy. A feladat
 
 Kétféle módban hívhatnak:
 
-## Mód A — Rendszerezett plan-feltárás (`03-write-plan.md`)
+## Mód A — Rendszerezett plan-feltárás (`03a-write-code-plan.md`)
 
 ### Bemenet
 
@@ -96,7 +97,7 @@ Tömör, szabad formátumú válasz, de kötelezően:
 
 ## Kivétel: literál-kivonat kérés (a hívó explicit kéri)
 
-A fenti szabály célja a kontextus védelme a **nagy, nyers fájltartalomtól** — nem az, hogy a hívó pontatlan információt kapjon. Ezért **ha a hívó explicit literál értékeket kér** (jellemzően a `03-write-plan`, amikor egy scriptre/tesztre/API-ra hivatkozó bemenetet old fel), akkor:
+A fenti szabály célja a kontextus védelme a **nagy, nyers fájltartalomtól** — nem az, hogy a hívó pontatlan információt kapjon. Ezért **ha a hívó explicit literál értékeket kér** (jellemzően a `03a-write-code-plan` és a `03b-write-test-plan` — mindkettő kérhet literál értéket, amikor egy scriptre/tesztre/API-ra hivatkozó bemenetet old fel), akkor:
 
 - **add vissza SZÓ SZERINT** a kért apró, de precizitás-kritikus elemeket: futtatandó **parancsokat**, **URL-eket** és portokat, teljes **JSON payloadot** minden kötelező mezővel, függvény-/interfész-**szignatúrákat**, env-változó neveket és értékeket, fejléceket;
 - **ne parafrazeáld és ne rövidítsd** ezeket („nagyjából ilyen payload", „a szokásos fejlécekkel") — egy pontatlan érték rosszabb, mint a semmi, mert hibás bizalmat kelt;

@@ -78,7 +78,7 @@ A projektben kétféle flow közül lehet választani **feladatonként**:
 
 **Alapértelmezett flow:** _<teljes | egyszerűsített>_ — _(a projekt jellege alapján kitöltve a 00 fázisban; pl. túlnyomóan konfiguráció/scriptelés/üzemeltetés → egyszerűsített; termékfejlesztés több komponenssel → teljes)_
 
-A default csak a **kiindulópont**, feladatonként felülbírálható. Ha egy adott feladat nem illik a default flow-ba, az ágens jelzi és a másikat javasolja (lásd a `01-add-cycles` és `03-write-plan` flow-méret ellenőrzését, illetve a `/bs-quick-flow` túlnövés-jelzését). A flow-váltás döntése mindig a felhasználóé.
+A default csak a **kiindulópont**, feladatonként felülbírálható. Ha egy adott feladat nem illik a default flow-ba, az ágens jelzi és a másikat javasolja (lásd a `01-add-cycles` és `03a-write-code-plan` flow-méret ellenőrzését, illetve a `/bs-quick-flow` túlnövés-jelzését). A flow-váltás döntése mindig a felhasználóé.
 
 ## Git és branching konvenciók
 

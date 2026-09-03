@@ -58,7 +58,7 @@
 > **Filling it in is not mandatory** — left empty, the flow works unchanged.
 > If you do write here, however, two phases read it automatically:
 > - `bs-write-spec` (02) — the **behavioral** content, as the starting point of `spec.md` (alongside the entry in `roadmap.md`);
-> - `bs-write-plan` (03) — the **technical/procedural** content (commands, hosts, components, constraints) for `plan.md`.
+> - `bs-write-code-plan` (03a) — the **technical/procedural** content (commands, hosts, components, constraints) for `plan.md`.
 >
 > The format is not constrained: running text, a list, a table, a code snippet — anything works.
 > No phase overwrites this file.

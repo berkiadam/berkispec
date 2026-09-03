@@ -8,7 +8,7 @@ output:
   - "specs/cycle-NN-<name>/tasks.md status: <status:ready_for_implement>"
   - "specs/cycle-NN-<name>/tasks-questions.md (if a question comes up)"
   - "specs/cycle-NN-<name>/validate-input-from-prev.md (only if there is information to hand over, IP1)"
-prev: bs-write-plan
+prev: bs-write-test-plan
 next: bs-analyze
 subagents: []
 scripts:
@@ -38,7 +38,7 @@ This is **phase 4 (0–9)** of the process: 0-init · 1-cycles · 2-spec · 3-pl
 0. **Identifying the cycle:** if the user gave a cycle/file, use that; otherwise offer the most recent `specs/cycle-*` folder for confirmation — <!-- INCLUDE:lang/common.md#ciklus-beazonositas --> — and wait for the answer before moving on.
 
 1. **`conventions.md` existence check:** read `conventions.md` in the root of the project. If it does not exist, STOP — they should return to phase `00`. _(The phase runs on the feature branch of the cycle; the closing commit goes there — in a No-VCS project the commit is skipped.)_
-2. Read the status of `plan.md`. **If the status is not `<status:ready_for_tasks>`, do not start writing a tasks list.** Tell the user that the plan is not closed yet, and that they should return to the `03` plan phase.
+2. Read the status of `plan.md`. **If the status is not `<status:ready_for_tasks>`, do not start writing a tasks list.** Tell the user that the plan is not closed yet, and that they should return to the `03` plan phase. *(If the status is `<status:ready_for_test_plan>`, the **test plan** is missing — back to `/bs-write-test-plan`, not to `/bs-write-code-plan`.)*
 2/b. **🔴 The status field is SELF-DECLARED — run the gate (EG1).** The `<status:ready_for_tasks>` status was written in by `03` for itself; whether the plan is really done comes out of the mechanical gate. **This is the first script call of the phase**, even before reading the plan in substance:
 
     <!-- INCLUDE:shared/python-cmd.md -->

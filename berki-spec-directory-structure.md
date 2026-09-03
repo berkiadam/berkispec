@@ -36,7 +36,8 @@ A **skill is a recipe**: a static methodology that the **main agent** runs. The 
 | `00-init-project.md` | Project initialisation: it interviews the user about the conventions (tech stack, ports, test tooling, report table, merge strategy, Sonar) and writes `conventions.md`. Runs once per project, on its own `feature/init-project` branch. |
 | `01-add-cycles.md` | Cycle management: it creates/maintains `specs/roadmap.md`, allocates the next cycle number (by scanning branches, BQ2), creates the cycle folder and the cycle branch. This is where the parallel-worktree offer (PW3) lives. |
 | `02-write-spec.md` | Writes `spec.md`: business behaviour, requirements, test specification, Definition of Done with `DoD-NN` identifiers. It filters environment coordinates out of the spec (KX) and hands them on instead of deleting them. |
-| `03-write-plan.md` | Writes `plan.md`: the self-contained technical execution plan — environment coordinates (KO1), the machine-readable run table (TP4), the `TS-NN` test scenarios (TS1–TS8, with the `.http` form), the test artifact data sheets (TA1), the purpose of every planned change (WY1) and the target environment (EV1). The longest skill in the framework. |
+| `03a-write-code-plan.md` | Writes the **code half** of `plan.md`: the self-contained technical execution plan — environment coordinates (KO1), the target environment (EV1), the planned changes with a purpose (WY1), the configuration lifecycle (KF1), the schema artifacts and the reverse coverage (SC1). It closes with `analyze-gate-check.py --plan-code-only` and the `Ready for test planning` status. |
+| `03b-write-test-plan.md` | Writes the **test half** of the same `plan.md`: the `TS-NN` test scenarios (TS1–TS8, with the `.http` form), the machine-readable run table (TP4/PH1), the E2E infrastructure (TP3), the regression impact and the test specification (TI1, the `TA1` data sheets, spec coverage TS7). Its entry gate runs `--plan-code-only` itself (D5); it closes with the full `--plan-only` gate. The longest skill in the framework. |
 | `04-write-tasks.md` | Writes `tasks.md`: the checkboxed task list with `[RED]`/`[GREEN]`/`[CHECK]`/`[OPS]` markers, and the plan links (`[P-…]`, PID1). |
 | `05-analyze.md` | Cross-phase consistency check and the self-healing loop that follows it. A read-only orchestrator: it runs the mechanical gate, starts four parallel diagnostician rounds, conducts the triage, and drives the fixer subagents. |
 | `06-implement.md` | Implementation: it works through the task list **in a single run** (IM1), ticks the tasks, writes `check-log.md`, and commits per task. Its **Fix mode** section is the delegation target of `implement-fixer`/`review-fixer`. |
@@ -77,13 +78,17 @@ These are **not** skills or agents: they are blocks that a skill (or an agent pr
 | `git-preflight.md` | The no-VCS gate, the working-tree check, the fresh/clean `main` requirement and resume detection. | `00`, `01` |
 | `parallel-cycles.md` | Parallel cycles: the 01–05 design window in a worktree (PW1–PW5) and the gate before 06. | `01`, `06` |
 | `input-from-prev.md` | The handover mechanism between phases (IP1) and the item format. | `01`, `02`, `03`, `04`, `07` |
+| `plan-self-contained.md` | The most important rule of phase 03: `plan.md` is self-contained — the consumer table and the self-test. | `03a`, `03b` |
+| `dereferencing.md` | The abstraction level of the input is not the abstraction level of the plan — a reference has to be resolved from the source. | `03a`, `03b`, `plan-fixer` |
+| `spec-artifact-transfer.md` | KX3: an elaborated spec artifact is lifted over verbatim, without truncation. | `03a`, `03b`, `plan-fixer` |
+| `plan-section-ids.md` | PID1: the stable `[P-…]` section identifiers `tasks.md` refers to, and who issues them (03a/03b). | `03a`, `03b` |
 | `conventions-change.md` | GC1: when and how a cycle may modify `conventions.md`, and which gate reads which section. | `03` + its quality gate |
 | `path-format.md` | RP1: a code reference is relative to the repo root, a document link to the file's own directory. | the quality gate of `02`/`03`/`04` |
 | `artifact-voice.md` | AV1: skill text must not bleed into `spec.md`/`plan.md`/`tasks.md`. | `02`, `03`, `04` |
 | `phase-commit.md` | PC1: the phase-closing commit procedure and the phase boundary (PE1). | `02`, `03`, `04`, `05`, `07` |
 | `test-scenario-design.md` | TD0–TD7: the **generating** recipe for test scenarios — the dimension inventory, the observation quartet, countability, the negative control, a calibration sample and a self-check. | `03` + `plan-fixer` |
 | `review-checklist.md` | The review criteria of the code review (including the decidable `TB1` question about an empty test body) and the `<status:must_fix>` vs `<status:suggestion>` dividing line. | the `reviewer` agent **and** the reviewer-fallback block of `07` (RV-FB1) |
-| `quality-check-{spec,plan,tasks}.md` | The quality gate of phase 02/03/04, run before the closing. | the skill **and** its fixer agent (D13) |
+| `quality-check-{spec,tasks}.md` · `quality-check-plan-{code,test}.md` | The quality gate of phase 02/03/04, run before the closing. The gate of 03 is **split** (D7): `03a` includes `-code`, `03b` includes `-test`, and the `plan-fixer` includes **both**. | the skill **and** its fixer agent (D13) |
 | `fix-mode-{spec,plan,tasks}.md` | The Fix-mode (analyze-loop entry point) section of phase 02/03/04. | the skill **and** its fixer agent (D13) |
 | `questions-tasks.md` | The question-register order of phase 04 (`tasks-questions.md`). | `04` + `tasks-fixer` |
 

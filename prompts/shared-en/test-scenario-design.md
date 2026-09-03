@@ -1,5 +1,5 @@
 <!-- Source note: this section is included (build-time INCLUDE) by both the
-     02-write-spec.md and the 03-write-plan.md skill (and by their matching
+     02-write-spec.md and the 03b-write-test-plan.md skill (and by their matching
      fix-mode-* shared files). Edit it in one place. -->
 ## Designing test scenarios — dimensions and observation points (TD1–TD7)
 

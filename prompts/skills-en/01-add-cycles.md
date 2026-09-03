@@ -155,7 +155,7 @@ During cycle planning, information regularly comes up that **doesn't belong in t
 
 - **`spec-input-from-prev.md`** — for **02-write-spec**: behavioral detail, concrete error case, data field, business rule, acceptance criterion that the user mentioned during the interview but that doesn't fit into the roadmap entry.
   > **🔴 You ALWAYS create this file** — with the template, even if not a single item was collected (with an empty list in that case). This is the **one single exception** to rule 4. **It has no prerequisite whatsoever:** it does not depend on whether there was a `/bs-brainstorm` session, on which mode you are running in (A/B), or on how much was said during the interview. If there is nothing to hand over, the empty list **is itself the information** — this is how 02 knows that the channel was there and that nothing was missed. **Do not fill it with invented items** just so that it is not empty.
-- **`plan-input-from-prev.md`** — for **03-write-plan**: technical constraint, information about an existing component or infrastructure, known integration limit that the user mentioned here.
+- **`plan-input-from-prev.md`** — for **03a-write-code-plan**: technical constraint, information about an existing component or infrastructure, known integration limit that the user mentioned here.
 
 **In mode A** (full roadmap planning) the cycle folder may not exist yet — in that case, write the item into the folder of the cycle it concerns, creating the folder. If the item concerns **multiple cycles**, it doesn't belong here: it should go into the relevant cycle entries in `roadmap.md`.
 
@@ -341,7 +341,7 @@ If any answer is "no": fix it or ask about it before appending.
 **What this is:** the `cycle-design-input.md` created in the cycle's folder is an **empty template for the user**. Here they can describe, in their own words, in free form, what they want in the cycle — expectations, an outline, an example payload, a process description, links, earlier notes.
 
 **Key rules:**
-- **The file belongs to the user.** You (01) only create the template, you do **not** write content into it — **the sole exception is brainstorm input (BS18):** if the call refers to a brainstorm session, the template is created not empty, but with content distilled from the working file. `02-write-spec` (behavioral content) and `03-write-plan` (technical/procedural content) read it automatically, but neither rewrites it.
+- **The file belongs to the user.** You (01) only create the template, you do **not** write content into it — **the sole exception is brainstorm input (BS18):** if the call refers to a brainstorm session, the template is created not empty, but with content distilled from the working file. `02-write-spec` (behavioral content) and `03a-write-code-plan` (technical/procedural content) read it automatically, but neither rewrites it.
 - **Filling it in is optional.** If it stays empty (only the template text is in it), 02 notes this in one sentence and continues working from the roadmap entry — this is not an error, not a stopping reason.
 - **It's not a substitute for `spec-input-from-prev.md`.** **You** write into `spec-input-from-prev.md` (items mentioned during the interview that don't fit into the roadmap, IP1); **the user** writes into `cycle-design-input.md`, after the phase closes, at their own pace.
 

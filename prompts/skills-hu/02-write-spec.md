@@ -9,7 +9,7 @@ output:
   - "specs/cycle-NN-<name>/spec-questions.md"
   - "specs/cycle-NN-<name>/plan-input-from-prev.md és/vagy tasks-input-from-prev.md (csak ha van átadandó infó, IP1)"
 prev: bs-add-cycles
-next: bs-write-plan
+next: bs-write-code-plan
 subagents:
   - "agents/researcher.md"
 scripts:
@@ -140,7 +140,7 @@ A `specs/cycle-NN-<cycle-name>/cycle-design-input.md` a **felhasználó saját, 
 5. **A hiányosság nem hiba.** A design input nem teljes spec — a benne nem érintett területeket a szokásos ambiguitás-vizsgálat és kérdés-flow szerint járd körbe.
 6. **Jelezd a felhasználónak**, hogy feldolgoztad: egy tömör listában, hogy mely tételek hova kerültek (spec szekció / plan-input / out of scope / új `Knn` kérdés).
 
-> **A 03 is beolvassa.** A `cycle-design-input.md`-t a `03-write-plan` szintén automatikusan feldolgozza (a technikai/eljárás-jellegű tartalmát). Ez **nem mentesít** a 3. pont alól: a KX-szel kiszűrt koordinátákat továbbra is helyezd át a `plan-input-from-prev.md`-be, `_(forrás: cycle-design-input.md)_` megjelöléssel — így a 03 egy helyen, lezárandó tételként is látja őket, nem csak a felhasználó nyers szövegében.
+> **A 03a is beolvassa.** A `cycle-design-input.md`-t a `03a-write-code-plan` szintén automatikusan feldolgozza (a technikai/eljárás-jellegű tartalmát). Ez **nem mentesít** a 3. pont alól: a KX-szel kiszűrt koordinátákat továbbra is helyezd át a `plan-input-from-prev.md`-be, `_(forrás: cycle-design-input.md)_` megjelöléssel — így a 03 egy helyen, lezárandó tételként is látja őket, nem csak a felhasználó nyers szövegében.
 
 **Fix-módban** (05-analyze hurok) a `cycle-design-input.md`-t **csak akkor** olvasod be, ha egy konkrét `<status:must_fix>` a design inputtal való ütközésre hivatkozik — egyébként ne, hogy a hurok ne kezdje elölről a fázist.
 

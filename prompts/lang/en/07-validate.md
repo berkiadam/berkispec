@@ -118,7 +118,10 @@ _(this section is written by failure-counter.py — you do not edit it by hand)_
 > **[VALIDATE · <Failed Item> · attempt N/3]**
 > *"During validation, [Failed Item] turned out to be a design error: the code could only be green by changing the test or the Definition of done, which the loop must not do (anti-"test cheating"). Therefore I did not step back into 06-implement, but escalate to the design phase. I reset the status of [plan.md / spec.md] so that the design decision can be settled. Continue by reviewing the design:*
 > ```
-> /bs-write-plan (in case of a DoD error: /bs-write-spec) input: @specs/cycle-NN-<cycle-name>/plan.md (or spec.md)
+> /bs-write-test-plan | /bs-write-code-plan (in case of a DoD error: /bs-write-spec) input: @specs/cycle-NN-<cycle-name>/plan.md (or spec.md)
+> # test scenario, run table, test file → /bs-write-test-plan
+> # coordinate, planned change, configuration → /bs-write-code-plan
+> # DoD → /bs-write-spec
 > ```
 > *After the design is settled, the process returns here along the 05→06→07 path."*
 > **At the end of the answer: a clickable link to `validation-report.md`.**

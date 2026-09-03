@@ -8,7 +8,7 @@ output:
   - "specs/cycle-NN-<name>/tasks.md státusz: <status:ready_for_implement>"
   - "specs/cycle-NN-<name>/tasks-questions.md (ha merül fel kérdés)"
   - "specs/cycle-NN-<name>/validate-input-from-prev.md (csak ha van átadandó infó, IP1)"
-prev: bs-write-plan
+prev: bs-write-test-plan
 next: bs-analyze
 subagents: []
 scripts:
@@ -38,7 +38,7 @@ Ez a folyamat **4. fázisa (0–9)**: 0-init · 1-ciklusok · 2-spec · 3-plan �
 0. **Ciklus-beazonosítás:** ha a felhasználó megadott ciklust/fájlt, azt használd; különben a legfrissebb `specs/cycle-*` mappát ajánld fel megerősítésre — <!-- INCLUDE:lang/common.md#ciklus-beazonositas --> — és várj a válaszra, mielőtt továbblépsz.
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, STOP — térjenek vissza a `00` fázishoz. _(A fázis a ciklus feature branch-én fut; a záró commit oda kerül — No-VCS projektben a commit kimarad.)_
-2. Olvasd be a `plan.md` státuszát. **Ha a státusz nem `<status:ready_for_tasks>`, ne kezdj tasks listát írni.** Jelezd a felhasználónak, hogy a plan még nem zárult le, és térjenek vissza a `03` plan fázishoz.
+2. Olvasd be a `plan.md` státuszát. **Ha a státusz nem `<status:ready_for_tasks>`, ne kezdj tasks listát írni.** Jelezd a felhasználónak, hogy a plan még nem zárult le, és térjenek vissza a `03` plan fázishoz. *(Ha a státusz `<status:ready_for_test_plan>`, a **teszt-terv** hiányzik — vissza a `/bs-write-test-plan`-ra, nem a `/bs-write-code-plan`-ra.)*
 2/b. **🔴 A státusz-mező ÖNBEVALLÁS — futtasd le a kaput (EG1).** A `<status:ready_for_tasks>` státuszt a `03` írta be magának; hogy a plan tényleg kész-e, az a mechanikus kapuból derül ki. **Ez a fázis első szkript-hívása**, még a plan érdemi beolvasása előtt:
 
     <!-- INCLUDE:shared/python-cmd.md -->

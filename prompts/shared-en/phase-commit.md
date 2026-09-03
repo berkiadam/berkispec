@@ -4,7 +4,7 @@
   This is NOT a standalone skill/agent, but a shared text block that the installer
   (install-helper.py) embeds INLINE at build time into the installed version of the
   referencing skill (in place of the `<!-- INCLUDE:shared/phase-commit.md -->` marker).
-  Referenced by: 02-write-spec, 03-write-plan, 04-write-tasks, 05-analyze, 07-validate.
+  Referenced by: 02-write-spec, 03a-write-code-plan, 03b-write-test-plan, 04-write-tasks, 05-analyze, 07-validate.
   The skill declares its own `<PHASE-TAG>` (e.g. `02-spec`) and the closing status
   BEFORE the marker — this block contains only the shared, mandatory procedure.
   It has no frontmatter: its content is copied in verbatim. Edit it here.

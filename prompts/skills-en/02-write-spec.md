@@ -9,7 +9,7 @@ output:
   - "specs/cycle-NN-<name>/spec-questions.md"
   - "specs/cycle-NN-<name>/plan-input-from-prev.md and/or tasks-input-from-prev.md (only if there is information to hand over, IP1)"
 prev: bs-add-cycles
-next: bs-write-plan
+next: bs-write-code-plan
 subagents:
   - "agents/researcher.md"
 scripts:
@@ -140,7 +140,7 @@ Experience shows that what most often creeps into the spec are **environment coo
 5. **Incompleteness is not an error.** The design input is not a complete spec — go around the areas it does not touch according to the usual ambiguity analysis and question flow.
 6. **Tell the user** that you processed it: in a concise list, where each item went (spec section / plan-input / out of scope / a new `Qnn` question).
 
-> **03 reads it too.** `cycle-design-input.md` is also processed automatically by `03-write-plan` (its technical/procedural content). This **does not exempt** you from point 3: still move the coordinates filtered out by KX into `plan-input-from-prev.md`, marked `_(source: cycle-design-input.md)_` — this way 03 sees them in one place, as items to be closed, not only in the raw text of the user.
+> **03a reads it too.** `cycle-design-input.md` is also processed automatically by `03a-write-code-plan` (its technical/procedural content). This **does not exempt** you from point 3: still move the coordinates filtered out by KX into `plan-input-from-prev.md`, marked `_(source: cycle-design-input.md)_` — this way 03 sees them in one place, as items to be closed, not only in the raw text of the user.
 
 **In fix mode** (the 05-analyze loop) you read `cycle-design-input.md` **only if** a concrete `<status:must_fix>` references a conflict with the design input — otherwise do not, so that the loop does not start the phase from scratch.
 

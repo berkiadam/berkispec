@@ -1,10 +1,11 @@
-<!-- Forrás-jegyzet: a 03-write-plan skill Fix-mód szekciója, kiemelve, hogy a
+<!-- Forrás-jegyzet: a 03 plan-fázis Fix-mód szekciója (03a-write-code-plan +
+     03b-write-test-plan), kiemelve, hogy a
      plan-fixer subagent prompt build-time beemelhesse (BD14/b). Egy helyen szerkeszd. -->
 ## Fix-mód (analyze-hurok belépő)
 
 > **Mikor aktív:** ezt a szekciót az `05-analyze` önjavító hurka indítja az `agents/plan-fixer.md` wrapperen keresztül — **nem** a normál plan-írás. A bemenet egy konkrét `<status:must_fix>` lista, nem teljes újrafutás.
 
-> **Skill-beolvasás nem kell (D13):** a fix-módhoz szükséges összes szabály ebben a promptban van — a fázis „Minőségellenőrzés” szekciója is. **Fix-módban ne olvasd be a teljes fázis-skillt** (`03-write-plan.md`): felesleges, és a teljes fázis újrafuttatására csábít, holott a feladat egy szűk, célzott javítás.
+> **Skill-beolvasás nem kell (D13):** a fix-módhoz szükséges összes szabály ebben a promptban van — a fázis „Minőségellenőrzés” szekciója is. **Fix-módban ne olvasd be a teljes fázis-skillt** (`03a-write-code-plan.md` / `03b-write-test-plan.md`): felesleges, és a teljes fázis újrafuttatására csábít, holott a feladat egy szűk, célzott javítás.
 
 A fix-mód egy **szűkített belépő:** a megadott `<status:must_fix>` megállapításokat javítod célzottan, **nem írod újra az egész plant**. A `*-input-from-prev.md` fájlokat fix-módban **teljesen figyelmen kívül hagyod** (sem nem olvasod, sem nem írod) — IP1/6. (Ellenkező esetben egy olcsóbb LLM hajlamos elölről kezdeni a fázist — ez tilos.) A normál flow minőségi kapui (a fázis „Minőségellenőrzés” szekciója + Constitution Check) a javított részekre továbbra is érvényesek — **csak a javított részekre**, nem a teljes dokumentumra.
 

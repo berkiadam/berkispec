@@ -111,7 +111,7 @@ A felhasználónak **két útja** van; a feladat súlya dönti el, melyik a megf
 
 **Alapértelmezett flow:** a projekt jellegét a `00-init-project` fázisban tisztázzuk (termékfejlesztés vs. konfiguráció/scriptelés), és ez alapján egy **default flow** kerül a `conventions.md` `## Fejlesztési módszertan` szekciójának **Alapértelmezett flow** mezőjébe. Ez a kiindulópont — feladatonként felülbírálható.
 
-A két út **átjárható**: ha az egyszerűsített flow közben kiderül, hogy a feladat túlnő rajta (nagyobb kódírás, több komponens, összetett tervezés), a skill megállítja a munkát és **átirányít a teljes folyamatra** (`01-add-cycles`). Fordítva is: a `01-add-cycles` és a `03-write-plan` jelzi, ha a feladat túl egyszerű a teljes ciklushoz, és javasolja az egyszerűsített flow-t.
+A két út **átjárható**: ha az egyszerűsített flow közben kiderül, hogy a feladat túlnő rajta (nagyobb kódírás, több komponens, összetett tervezés), a skill megállítja a munkát és **átirányít a teljes folyamatra** (`01-add-cycles`). Fordítva is: a `01-add-cycles` és a `03a-write-code-plan` jelzi, ha a feladat túl egyszerű a teljes ciklushoz, és javasolja az egyszerűsített flow-t.
 
 ### 1.1 Mindkét út előtt (opcionális): `/bs-brainstorm`
 
@@ -254,7 +254,8 @@ A telepítés után a platform chat felületén a `/` karakter leütésével ér
 * **`/bs-init-project`**: A projekt legelső inicializálása (létrehozza a `conventions.md` fájlt).
 * **`/bs-add-cycles`**: Új fejlesztési ciklus hozzáadása az ütemtervhez (`roadmap.md`).
 * **`/bs-write-spec`**: Követelmények rögzítése, új ciklus specifikációjának elkészítése (`spec.md` + `spec-questions.md`).
-* **`/bs-write-plan`**: Részletes technikai megvalósítási terv kidolgozása (`plan.md` + `plan-questions.md`).
+* **`/bs-write-code-plan`**: A technikai megvalósítási terv **kód-oldala** (`plan.md` kód-szekciói + `plan-questions.md`) — koordináták, tervezett módosítások, konfiguráció, séma.
+* **`/bs-write-test-plan`**: Ugyanannak a `plan.md`-nek a **teszt-fele** — `TS-NN` forgatókönyvek, gépi futtatási tábla, környezet-felkészítés, tesztfájl-adatlapok.
 * **`/bs-write-tasks`**: A technikai terv lebontása mérhető feladatokra (`tasks.md` + `tasks-questions.md`).
 * **`/bs-analyze`**: Kereszt-fázisos konzisztencia-ellenőrzés és automatikus javítás (spec/plan/tasks egyezés).
 * **`/bs-implement`**: Tényleges kódfejlesztés a feladatlista alapján, a haladás rögzítésével a `tasks.md`-ben.
@@ -803,7 +804,7 @@ A `RV-FB1` szerkezeti, nem mérő szabály: a review-szempontlista közös blokk
 
 **Útvonal-konvenció egyetlen helyen (RP1).** A „relatív útvonalat használj" szabály korábban **három helyen, eltérő tartalommal** élt, és önmagával ütközött: a 03/04 minőségi kapuja a **fájl saját könyvtárához** képest relatív alakot kért (`../../src/app.ts`), a plan struktúra-példái viszont **repó-gyökérhez** relatívat (`src/file.ts:14`), miközben a mechanikus kapu horgony-checkje (`A2`) a repó gyökeréhez oldja fel — vagyis a kapu szabályát követő plan a saját kapujában bukott volna meg. A feloldás egyetlen közös blokkban él (`prompts/shared-hu/path-format.md`, a 02/03/04 minőségi kapuja beemeli): **kód- és fájl-hivatkozás** (érintett komponens, tervezett módosítás, `path:sor` horgony, parancs argumentuma) → **a repó gyökeréhez** képest relatív, mert a parancsok ott futnak és a kapu is oda oldja fel; **dokumentum-link** → **a fájl saját könyvtárához** képest relatív, hogy kattintható legyen; abszolút, gép-specifikus (`/home/…`, `C:\Users\…`) és `file://` alak egyik esetben sem érvényes. A kapu `R1` checkje ezt gépiesen jelzi, a régi, fájl-relatív horgonyokat pedig **feloldja és javaslatot ad** (`A2c`) — futó ciklust nem dob vissza miatta.
 
-**Shift-left: a kapu a 03 és 04 lezárásakor is fut (M).** Ugyanaz a szkript a `03-plan` lezárásánál `--plan-only` módban (a `tasks.md` még nem létezik: `[P-…]` formátum, kötelező táblák, `S3`, `C1`, `C3` TP1, `C4` KF1, `C6` KO1, horgonyok, artefaktum-hang, `DoD-NN` azonosítók), a `04-tasks` lezárásánál pedig teljes módban. Bármely `Must Fix` → **nincs státuszváltás**: a saját fázis javítja, friss kontextusban. Ez a `05` iterációszámát csökkenti, és a hibát ott javítja, ahol keletkezett — nem két fázissal később, egy fixer-subagent és egy analyzer-kör árán.
+**Shift-left: a kapu HÁROM fázis lezárásakor is fut (M).** Ugyanaz a szkript a `03a-code-plan` lezárásánál **`--plan-code-only`** módban (csak a kód-oldali checkek: `[P-…]` formátum, a két kód-oldali kötelező tábla, `C4` KF1, `C6` KO1, `EV1`, `WY1`, `GC1`, horgonyok, útvonal-formátum, artefaktum-hang, `DoD-NN` azonosítók — a teszt-oldal még nem létezik), a `03b-test-plan` lezárásánál **`--plan-only`** módban (a **teljes** plan: a fentiek + `S1`, `S3`, `C1`, `C3` TP1, `TS1–TS8`, `TA1`, `TI1`, `PH1`, `TS7`), a `04-tasks` lezárásánál pedig teljes módban. A `04` belépő kapuja (EG1) változatlanul a `--plan-only`, és a `03b` belépő kapuja ugyanígy lefuttatja a `--plan-code-only`-t (D5). Bármely `Must Fix` → **nincs státuszváltás**: a saját fázis javítja, friss kontextusban. Ez a `05` iterációszámát csökkenti, és a hibát ott javítja, ahol keletkezett — nem két fázissal később, egy fixer-subagent és egy analyzer-kör árán.
 
 **„Változott-e egyáltalán?" őrszem (N).** Ha egy fixer után a `git diff` a ciklus mappáján üres **és** új `Knn` kérdés sem született, a következő analyzer-kör bizonyosan ugyanazt a listát adná — ezért a hurok ilyenkor **megáll és kérdez**, analyzer-futás nélkül. Ez az a hibamód (a fixer nem tudja eldönteni a javítást, de a kérdés felvételét is elfelejti), amely őrszem nélkül mindhárom iterációt végigégeti ugyanazon a `Must Fix` listán.
 
@@ -835,19 +836,23 @@ Futtasd a parancsot: `/bs-add-cycles input: Új ciklus — OIDC login a mobil-ba
 Futtasd a parancsot: `/bs-write-spec input: @specs/roadmap.md`
    → spec-questions.md kérdések egyenként → válaszok → "a spec kész, mehet" → spec.md (Tervezésre kész)
 
-# ④  03 — Plan írás
-Futtasd a parancsot: `/bs-write-plan input: @specs/cycle-02-oidc-login/spec.md`
-   → kötelező első kérdés: E2E teszt stratégia → válaszok → "jóváhagyom" → plan.md (Task írásra kész)
+# ④  03a — Kód-terv írás
+Futtasd a parancsot: `/bs-write-code-plan input: @specs/cycle-02-oidc-login/spec.md`
+   → kötelező első kérdés: E2E teszt stratégia → válaszok → "jóváhagyom" → plan.md (Teszt-tervezésre kész)
 
-# ⑤  04 — Tasks írás
+# ⑤  /clear, majd 03b — Teszt-terv írás (ugyanabba a plan.md-be)
+Futtasd a parancsot: `/bs-write-test-plan input: @specs/cycle-02-oidc-login/plan.md`
+   → a fázis MAGA futtatja a kód-terv kapuját (D5) → TS-NN forgatókönyvek → "jóváhagyom" → plan.md (Task írásra kész)
+
+# ⑥  04 — Tasks írás
 Futtasd a parancsot: `/bs-write-tasks input: @specs/cycle-02-oidc-login/plan.md`
    → "mehet" → tasks.md (Implementálásra kész)
 
-# ⑥  05 — Analyze
+# ⑦  05 — Analyze
 Futtasd a parancsot: `/bs-analyze input: @specs/cycle-02-oidc-login`
    → kereszt-fázisos ellenőrzés; a talált tételekből TE választod ki (triázs), mit javítson → önjavító hurok az analyze-task.md-n → analyze-report.md (PASS)
 
-# ⑦  06 — Implementálás
+# ⑧  06 — Implementálás
 Futtasd a parancsot: `/bs-implement input: @specs/cycle-02-oidc-login/tasks.md`
    → kód + tasks.md haladás → tasks.md (Validálásra kész)
 
@@ -855,16 +860,16 @@ Futtasd a parancsot: `/bs-implement input: @specs/cycle-02-oidc-login/tasks.md`
 # Futtasd a parancsot: `/bs-manual-test-plan input: @specs/cycle-02-oidc-login`
 #    → manual-test-plan.md (Tervezett vagy As-built módban) — nem fázis, nem változtat státuszt
 
-# ⑧  07 — Validálás
+# ⑨  07 — Validálás
 Futtasd a parancsot: `/bs-validate input: @specs/cycle-02-oidc-login`
    → gyors tesztek → Sonar + kódreview (reviewer subagent) → nehéz tesztek + DoD;
      FAIL esetén önjavító hurok → PASS → spec/plan/tasks státusz: Kész
 
-# ⑨  08 — Doc-sync
+# ⑩  08 — Doc-sync
 Futtasd a parancsot: `/bs-doc-sync input: @specs/cycle-02-oidc-login`
    → docs-generated/ frissítése + objektív kapu → konzisztens dokumentáció
 
-# ⑩  09 — Merge
+# ⑪  09 — Merge
 Futtasd a parancsot: `/bs-merge input: @specs/cycle-02-oidc-login`
    → kapuk ellenőrzése (státusz + tiszta review + doc-sync) → merge (kézi megerősítéssel)
 ```
@@ -996,7 +1001,8 @@ Egy kis feladat végigvitele. Itt **egyetlen indító prompt** van; utána a flo
 | `/bs-init-project` | Projekt init | Projekt leírás | `conventions.md` |
 | `/bs-add-cycles` | Ciklusok kezelése | HLD/LLD vagy leírás | `specs/roadmap.md` (`Kész`) |
 | `/bs-write-spec` | Spec | Roadmap + ciklus neve | `spec.md` (`Tervezésre kész`) |
-| `/bs-write-plan` | Plan | `spec.md` | `plan.md` (`Task írásra kész`) — **önhordó és csonkítás-mentes** (KX3: a spec kidolgozott artefaktumai szó szerint); a lezárás előtt **Lezárási kapu (TP2)** + **mechanikus kapu** (`analyze-gate-check.py --plan-only`, M) |
+| `/bs-write-code-plan` | Plan — kód-fél (03a) | `spec.md` | `plan.md` kód-szekciói (`Teszt-tervezésre kész`): `Cél`, `Érintett komponensek`, `Környezeti koordináták` (KO1), `Tervezett módosítások` (céllal, WY1), `Új függőségek`, `Konfiguráció`, `Séma-artefaktumok`, `Fordított lefedettség` (SC1), `Kockázatok`. **Önhordó és csonkítás-mentes** (KX3); a lezárás előtt **Lezárási kapu (TP2-code)** + **mechanikus kapu** (`analyze-gate-check.py --plan-code-only`, M) |
+| `/bs-write-test-plan` | Plan — teszt-fél (03b) | `plan.md` kód-fele + a spec teszt-szekciója és `DoD`-ja | ugyanannak a `plan.md`-nek a teszt-szekciói (`Task írásra kész`): `Tesztstratégia`, `Teszt-forgatókönyvek` (`TS-NN`, TS1–TS8), `Gépi futtatási tábla` (TP4/PH1), `E2E infrastruktúra` (TP3), `Regressziós érintettség`, `Teszt specifikáció` (TI1/TA1/`Spec-lefedettség`), `Végrehajtási sorrend`, `Ellenőrzési stratégia`. **Belépő kapu (D5):** maga futtatja a `--plan-code-only`-t; a lezárás előtt **Lezárási kapu (TP2-test)** + **mechanikus kapu** (`analyze-gate-check.py --plan-only`, M) |
 | `/bs-write-tasks` | Tasks | `plan.md` | `tasks.md` (`Implementálásra kész`) — a lezárás előtt **mechanikus kapu** (`analyze-gate-check.py`, M): `Must Fix` esetén nincs státuszváltás |
 | `/bs-analyze` | Analyze | ciklus mappa | `analyze/analyze-report.md` (PASS/FAIL) + `analyze/analyze-task.md` (a triázsban jóváhagyott javítási lista) — mechanikus kapu + **négy párhuzamos diagnoszta-kör** (`analyzer` × 3 hatókör az 1–5. kategóriára, `analyzer-exec` a 6.-ra); a két lefedettségi táblát a kapu **generálja**. FAIL esetén orchestrált önjavító hurok (fixer-subagentek, `max X=3`, iterációnként **egy** analyzer-kör) |
 | `/bs-implement` | Implementálás | `tasks.md` | kód + `tasks.md` (`Validálásra kész`) + `test-report/implement/check-log.md` (a `[CHECK]` futások append-only naplója), és ha a projekt az `implement`-et riport-fázisnak deklarálta (TR6), a `test-report/implement/` teljes riport-készlete is — a task listát **egy futásban** dolgozza fel (IM1): a task-commit nem fázis-vég |
@@ -1022,7 +1028,7 @@ A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a 
 | `agents/test-runner.md` | 07 | Unit/integration/Sonar/E2E/regressziós tesztek lefuttatása, portütközés-elhárítás, ideiglenes erőforrás-takarítás — **tényszerű összegzést ad, nem dönt** PASS/FAIL-ről. `default` tier (szándékosan **nem** a legolcsóbb — a projektenként eltérő teszt-/Sonar-kimenet megbízható, konzisztens összegzése a 3-próba számláló miatt kritikus) | strukturált PASS/FAIL riport kategóriánként |
 | `agents/doc-sync-planner.md` | 08 | A `docs-generated/` mappa + ciklus-diff **read-only** diagnózisa; per-fájl pipálható terv + DS22 kapu-leltár. **A csereszöveget is ő írja meg** (sebészi patch: cél-szekció + jelenlegi részlet + új szöveg) — így a fő ágensnek nem kell újraolvasnia/újrakomponálnia a doksikat, csak alkalmaz | `doc-sync-plan.md` tervjavaslat + csereszövegek + `doc-sync-questions.md` kérdések |
 | `agents/spec-fixer.md` | 05 | Az önjavító hurok 02 fix-mód belépője (vékony wrapper → `/bs-write-spec` Fix-mód). `default` tier — az `analyzer` már pontos, előre azonosított hibalistát ad neki, nem kell felfedeznie a problémát. **Visszatérés előtt maga futtatja a mechanikus kaput** (GS1) | javított `spec.md` + új `spec-questions.md` `Knn`-ek |
-| `agents/plan-fixer.md` | 05 | Az önjavító hurok 03 fix-mód belépője (vékony wrapper → `/bs-write-plan` Fix-mód). `default` tier (ua. indoklás) | javított `plan.md` + új `plan-questions.md` `Knn`-ek |
+| `agents/plan-fixer.md` | 05 | Az önjavító hurok 03 fix-mód belépője (vékony wrapper → a `/bs-write-code-plan` és a `/bs-write-test-plan` Fix-módja). **Mindkét felet javíthatja** ugyanabban a `plan.md`-ben, ezért mindkét minőségi kaput beemeli. `default` tier (ua. indoklás) | javított `plan.md` + új `plan-questions.md` `Knn`-ek |
 | `agents/tasks-fixer.md` | 05 | Az önjavító hurok 04 fix-mód belépője (vékony wrapper → `/bs-write-tasks` Fix-mód). `default` tier (ua. indoklás) | javított `tasks.md` + új `tasks-questions.md` `Knn`-ek |
 | `agents/implement-fixer.md` | 07 | A validate-hurok 06 fix-mód belépője (vékony wrapper → `/bs-implement` Fix-mód). `default` tier — a 06 anti-„teszt-csalás" garde-ja kifejezetten számol azzal, hogy olcsóbb LLM futtatja | javított kód + lezárt `## Validációs javítások` taskok (+ esetleges eszkalációs jelzés) |
 | `agents/review-fixer.md` | 09 | A review-hurok 06 fix-mód belépője (vékony wrapper → `/bs-implement` Fix-mód, `## Review javítások` bemenet) | javított kód + lezárt `## Review javítások` taskok (+ esetleges eszkalációs jelzés) |
@@ -1042,7 +1048,7 @@ prerequisites:
 output:
   - "specs/cycle-NN-<name>/spec.md státusz: Tervezésre kész"
 prev: 01-add-cycles
-next: 03-write-plan
+next: 03a-write-code-plan
 subagents: []        # Task tool-on hívott specialisták (agents/ alatti fájlok)
 shared: []           # opcionális: shared/ alatti közös blokkok, amiket a telepítő build-time inline-ol (pl. a 00/01 shared/git-preflight.md-t)
 ---
@@ -1067,8 +1073,8 @@ tools: ["Read", "Bash", "Grep"]
 
 A frontmatter egyébként **eszközfüggetlen** (saját séma, nem egy konkrét ágens-eszközhöz kötött); a telepítő fordítja a cél-platform natív formátumára (Claude/Cursor `.md`, Codex `.toml`, Copilot `.agent.md`, Antigravity `agent.json`).
 
-**A `05-analyze` `subagents:` mezője** a két read-only diagnoszta-definíció (`analyzer` — három hatókörrel, párhuzamosan indítva —, `analyzer-exec`) mellett a három fixer-wrappert is felsorolja: `agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`. **A `07-validate` `subagents:` mezője** az `agents/test-runner.md`-t (tesztek/Sonar/E2E mechanikus futtatása, `default` tier), az `agents/reviewer.md`-t (read-only kód-diagnózis a kör 2. lépéseként) és a két fixer-wrappert — `agents/implement-fixer.md` (teszt/Sonar/DoD) és `agents/review-fixer.md` (Must Fix findingok) — tartalmazza. **A `08-doc-sync` `subagents:` mezője** az `agents/doc-sync-planner.md` read-only tervkészítő diagnosztát tartalmazza (a per-fájl `doc-sync-plan.md` szerzője; a doksik tényleges írása a fő ágensé — nincs fixer-wrapper, mert ez nem önjavító hurok). **A `09-merge` fázisnak nincs `subagents:` mezője** — a review a 07-be került, a merge-fázis pedig csak kapukat ellenőriz és beolvaszt. **A `00-init-project`, `01-add-cycles`, `02-write-spec` és `06-implement` `subagents:` mezője** az `agents/researcher.md`-t tartalmazza ad-hoc kódbázis-kutatáshoz (Mód B) — ugyanaz az ágens, amit a `03-write-plan` a rendszerezett forrásfájl-azonosításhoz (Mód A) használ. Fontos a skill/agent szétválasztás megőrzése: **a fix-mód viselkedése egyetlen helyen él**, és a wrapper-agent csak belépő — nincs logika-duplikáció. Ennek **két megvalósítása** van:
-- **02/03/04 (analyze-hurok, D13):** a fix-mód és a fázis minőségi kapuja a `prompts/shared-hu/{fix-mode,quality-check}-*.md` fájlokban él, és **build-time beemelődik a skillbe ÉS a fixer-wrapperbe is**. A fixer így **nem olvas fázis-skillt** — a promptja önhordó (a `plan-fixer` ~200 sor a 908 soros `03-write-plan.md` beolvasása helyett).
+**A `05-analyze` `subagents:` mezője** a két read-only diagnoszta-definíció (`analyzer` — három hatókörrel, párhuzamosan indítva —, `analyzer-exec`) mellett a három fixer-wrappert is felsorolja: `agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`. **A `07-validate` `subagents:` mezője** az `agents/test-runner.md`-t (tesztek/Sonar/E2E mechanikus futtatása, `default` tier), az `agents/reviewer.md`-t (read-only kód-diagnózis a kör 2. lépéseként) és a két fixer-wrappert — `agents/implement-fixer.md` (teszt/Sonar/DoD) és `agents/review-fixer.md` (Must Fix findingok) — tartalmazza. **A `08-doc-sync` `subagents:` mezője** az `agents/doc-sync-planner.md` read-only tervkészítő diagnosztát tartalmazza (a per-fájl `doc-sync-plan.md` szerzője; a doksik tényleges írása a fő ágensé — nincs fixer-wrapper, mert ez nem önjavító hurok). **A `09-merge` fázisnak nincs `subagents:` mezője** — a review a 07-be került, a merge-fázis pedig csak kapukat ellenőriz és beolvaszt. **A `00-init-project`, `01-add-cycles`, `02-write-spec` és `06-implement` `subagents:` mezője** az `agents/researcher.md`-t tartalmazza ad-hoc kódbázis-kutatáshoz (Mód B) — ugyanaz az ágens, amit a `03a-write-code-plan` a rendszerezett forrásfájl-azonosításhoz (Mód A) használ. Fontos a skill/agent szétválasztás megőrzése: **a fix-mód viselkedése egyetlen helyen él**, és a wrapper-agent csak belépő — nincs logika-duplikáció. Ennek **két megvalósítása** van:
+- **02/03/04 (analyze-hurok, D13):** a fix-mód és a fázis minőségi kapuja a `prompts/shared-hu/{fix-mode,quality-check}-*.md` fájlokban él, és **build-time beemelődik a skillbe ÉS a fixer-wrapperbe is**. A fixer így **nem olvas fázis-skillt** — a promptja önhordó (a `plan-fixer` ~80 sor a 584 soros `03a-write-code-plan.md` + 683 soros `03b-write-test-plan.md` beolvasása helyett). **A `03` minőségi kapuja a hasítás óta KÉT shared fájlban él** (`quality-check-plan-code.md` + `quality-check-plan-test.md`): a `03a` az elsőt, a `03b` a másodikat emeli be, a `plan-fixer` **mindkettőt** — mert a fixer a `plan.md` mindkét felét javíthatja.
 - **06 (a 07 önjavító hurka):** az `implement-fixer` és a `review-fixer` továbbra is a **`06-implement.md` „Fix-mód" szekciójának beolvasásával** delegál (`## Validációs javítások`, illetve `## Review javítások` bemeneti szekcióval, azonos mechanikával). Itt a kiemelés még nem történt meg — a 06 skill jóval rövidebb (294 sor), de a 07 hurka körönként hívja a fixert, tehát ugyanaz a megtakarítás elérhető, ha a szekció ugyanígy `shared/`-be kerül.
 
 ---
@@ -1171,7 +1177,7 @@ Minden ciklus saját mappát kap: `specs/cycle-NN-<cycle-name>/`
 | `plan-questions.md` | 03 | A tervezési szakasz nyitott kérdései. A plan csak akkor `Task írásra kész`, ha itt nincs `- [ ]`. |
 | `tasks.md` | 04 | Checkboxos task lista (`[RED]`/`[GREEN]`/`[CHECK]`/`[OPS]` jelölésekkel — marker minden taskon kötelező) + prerequisite dokumentumok. Osztott környezetet érintő destruktív `[OPS]` műveletnél kötelező a jóváhagyó és a rollback task. **Plan-kapcsolat (PID1):** minden task a plan stabil `[P-…]` szekció-azonosítójára hivatkozik (nem sorszámra), egy elsődleges forrásra, több task esetén részhatókör-jelöléssel; a csoport-fejlécek felsorolják a lefedett plan-ID-kat, a fájl végén pedig kötelező a `Plan-lefedettség` fordított tábla (plan-szekció → taskok) **és a `Teszt-lefedettség` tábla** (TT1: minden `TS-NN` forgatókönyv és minden gépi tábla-kategória → létrehozó task + futtató task, vagy indok). **Belépő kapu (EG1):** a fázis első lépése az `analyze-gate-check.py --plan-only` tényleges lefuttatása — a plan státusz-mezője önbevallás, bukó kapunál nincs tasks lista. A `[CHECK]` parancsa a plan teszt-adatlapjának egy fájlra szűkített parancsa, és két `[CHECK]` nem írhat `>`-tal ugyanabba a logfájlba (T6). **Teszt-kapcsolat (TI2/TX1):** minden teszt-író és teszt-futtató task a sor végén `— test [TC-01]` / `— test [TS-03]` alakban hivatkozik a plan tesztesetére, és **minden futtatandó teszt külön checkbox** — egy `[CHECK]` pontosan egy azonosítót futtat, teszt-szűrős paranccsal. |
 | `tasks-questions.md` | 04 | A tasks szakasz nyitott kérdései (főleg az 05 fix-mód használja). A `tasks.md` csak akkor `Implementálásra kész`, ha itt nincs `- [ ]`. |
-| `cycle-design-input.md` | létrehozza: 01 · **kitölti: a felhasználó** · fogyasztja: **02, 03** | Ciklus design input (CD1): a felhasználó saját szavaival írt, szabad formájú ciklus-specifikáció (elvárások, vázlat, példák). A 01 üres sablonként hozza létre a ciklus mappájában és felhívja rá a figyelmet; **kitöltése opcionális**. Ha van benne tartalom, a `bs-write-spec` a **viselkedési** részét dolgozza fel (a `roadmap.md` bejegyzése mellett, elsődleges bemenetként), a `bs-write-plan` pedig automatikusan beolvassa és a **technikai/eljárás-jellegű** részét emeli — önhordóan — a `plan.md`-be. Egyik fázis sem írja át a fájlt. |
+| `cycle-design-input.md` | létrehozza: 01 · **kitölti: a felhasználó** · fogyasztja: **02, 03** | Ciklus design input (CD1): a felhasználó saját szavaival írt, szabad formájú ciklus-specifikáció (elvárások, vázlat, példák). A 01 üres sablonként hozza létre a ciklus mappájában és felhívja rá a figyelmet; **kitöltése opcionális**. Ha van benne tartalom, a `bs-write-spec` a **viselkedési** részét dolgozza fel (a `roadmap.md` bejegyzése mellett, elsődleges bemenetként), a `bs-write-code-plan` pedig automatikusan beolvassa és a **technikai/eljárás-jellegű** részét emeli — önhordóan — a `plan.md`-be. Egyik fázis sem írja át a fájlt. |
 | `spec-input-from-prev.md` | írja: 01 · fogyasztja: **02** | Fázisok közötti átadás (IP1): a 01-ben elhangzott, de a roadmap-be nem illő viselkedési részletek. Csak ha van átadandó infó. |
 | `plan-input-from-prev.md` | írja: 01, 02 · fogyasztja: **03** | A spec-ből kivett vagy a kutatás során felszínre került technikai/implementációs részletek. |
 | `tasks-input-from-prev.md` | írja: 02, 03 · fogyasztja: **04** | Előkészítő lépések és sorrend-megkötések a task-bontáshoz. |
@@ -1202,9 +1208,9 @@ Minden ciklus saját mappát kap: `specs/cycle-NN-<cycle-name>/`
 
 Mind a ciklus mappájában (`specs/cycle-NN-<name>/`). **Egy fázis több fájlba is írhat** ugyanabban a futásban, ha az infót szét kell szórni (pl. a 02-ben felmerülő technikai részlet a `plan-input`-ba, a belőle következő tesztelési előfeltétel a `validate-input`-ba). A **06-implement** szándékosan nem kap sajátot: az eleve beolvassa a `plan.md`-t és a `tasks.md`-t, tehát az implementációs részlet oda tartozik.
 
-**A legnagyobb „táplálója" a 02 koordináta-kiszűrése (KX).** A spec-be leggyakrabban **környezeti koordináták és eljárás-leírások** szivárognak be (dev hostok, `localhost` portok, image-nevek, deploy-parancsok, teljes deployment-runbookok a `Teszt specifikáció` szekcióban), mert hasznos infónak tűnnek. A `02-write-spec` ezért egy **kötelező kiszűrő rutint** futtat — új spec írásakor **és** meglévő spec újrafutásakor is —, ami ezeket felismeri és **áthelyezi** (nem törli) a `plan-input-from-prev.md`-be, a spec-ben pedig szimbolikus hivatkozást hagy (`{PUBLIC_BASE_URL}`). Az elhatárolás egyetlen szabályban: **az endpoint-útvonal szerződés (spec), a host / base URL / port / namespace / image / parancs koordináta (plan)**. A `03-write-plan` ennek a tükrét futtatja: ha a spec túl technikai maradt, az adatot **átemeli a planbe** és jelzi a felhasználónak (a `spec.md`-t nem írja át) — mert a `plan.md`-nek **önhordónak** kell lennie: a `test-runner` kizárólag azt olvassa, tehát ami nem ott van, az soha nem fut le.
+**A legnagyobb „táplálója" a 02 koordináta-kiszűrése (KX).** A spec-be leggyakrabban **környezeti koordináták és eljárás-leírások** szivárognak be (dev hostok, `localhost` portok, image-nevek, deploy-parancsok, teljes deployment-runbookok a `Teszt specifikáció` szekcióban), mert hasznos infónak tűnnek. A `02-write-spec` ezért egy **kötelező kiszűrő rutint** futtat — új spec írásakor **és** meglévő spec újrafutásakor is —, ami ezeket felismeri és **áthelyezi** (nem törli) a `plan-input-from-prev.md`-be, a spec-ben pedig szimbolikus hivatkozást hagy (`{PUBLIC_BASE_URL}`). Az elhatárolás egyetlen szabályban: **az endpoint-útvonal szerződés (spec), a host / base URL / port / namespace / image / parancs koordináta (plan)**. A `03a-write-code-plan` ennek a tükrét futtatja: ha a spec túl technikai maradt, az adatot **átemeli a planbe** és jelzi a felhasználónak (a `spec.md`-t nem írja át) — mert a `plan.md`-nek **önhordónak** kell lennie: a `test-runner` kizárólag azt olvassa, tehát ami nem ott van, az soha nem fut le.
 
-**A fogyasztó oldalon a hivatkozás nem elég (dereferencing).** Az átadott tétel gyakran magas absztrakciós szinten fogalmaz (*„képfájl build és push a registrybe a `build.sh` futtatásával"*). A `03-write-plan` **nem reprodukálhatja a bemenet absztrakciós szintjét**: ha egy tétel scriptre, eljárásra, meglévő tesztre vagy külső API-ra **hivatkozik**, a hivatkozást **fel kell oldania a forrásból** — a script tényleges parancsai, a registry-host, a teljes JSON payload minden kötelező mezővel —, és a konkrétumot a `plan.md`-be írnia, forrás-megjelöléssel. Nagy vagy szétszórt forrásnál a `researcher` subagentet hívja, **literál értékeket kérve**; a researcher erre kapott egy szűk kivételt a „soha nem nyers fájltartalom" szabálya alól (rövid, szó szerinti részletek: parancs, URL, payload, szignatúra — de nem teljes fájl, és titok helyett pointer). Ez azért kritikus, mert a `04`, a `06` és a `test-runner` **már nem látja a spec-et és a forrást**: ami nem került a `plan.md`-be, az számukra nem létezik.
+**A fogyasztó oldalon a hivatkozás nem elég (dereferencing).** Az átadott tétel gyakran magas absztrakciós szinten fogalmaz (*„képfájl build és push a registrybe a `build.sh` futtatásával"*). A `03a-write-code-plan` **nem reprodukálhatja a bemenet absztrakciós szintjét**: ha egy tétel scriptre, eljárásra, meglévő tesztre vagy külső API-ra **hivatkozik**, a hivatkozást **fel kell oldania a forrásból** — a script tényleges parancsai, a registry-host, a teljes JSON payload minden kötelező mezővel —, és a konkrétumot a `plan.md`-be írnia, forrás-megjelöléssel. Nagy vagy szétszórt forrásnál a `researcher` subagentet hívja, **literál értékeket kérve**; a researcher erre kapott egy szűk kivételt a „soha nem nyers fájltartalom" szabálya alól (rövid, szó szerinti részletek: parancs, URL, payload, szignatúra — de nem teljes fájl, és titok helyett pointer). Ez azért kritikus, mert a `04`, a `06` és a `test-runner` **már nem látja a spec-et és a forrást**: ami nem került a `plan.md`-be, az számukra nem létezik.
 
 **Tétel-formátum** — checkbox-lista, a kérdés-fájlok mintájára, forrás-megjelöléssel:
 
@@ -1248,7 +1254,7 @@ Minden generált doksi **fejléc-blokkot** kap (DS17): `> **Lefedve:** cycle-NN-
 
 ### 11.1 specs/test-conventions.md — visszatérő teszt-elvárások és receptek (TC1–TC11)
 
-**Fájl:** `specs/test-conventions.md` (a `specs/roadmap.md` mellett — **nem** a `docs-generated/`-ben). **Gazdája:** a `08-doc-sync`. **Fogyasztói:** a `02-write-spec` és a `03-write-plan` (a `quick-flow` csak olvassa).
+**Fájl:** `specs/test-conventions.md` (a `specs/roadmap.md` mellett — **nem** a `docs-generated/`-ben). **Gazdája:** a `08-doc-sync`. **Fogyasztói:** a `02-write-spec`, a `03a-write-code-plan` és a `03b-write-test-plan` (a `quick-flow` csak olvassa).
 
 **Milyen problémát old meg:** ahogy egy projekt előrehalad, kialakul, hogy **minden ciklusban mit és milyen sorrendben kell letesztelni** — és mihez milyen recept tartozik (pl. „a Keycloak dev image-t buildelni, a registry-be pusholni, a podot újraindítani, majd a token-cserét `curl`-lel ellenőrizni"). Ez a tudás eddig **ciklus-lokális** artefaktumokban (`plan-questions.md`) keletkezett és minden ciklus végén elveszett, így a következő ciklus **újra megkérdezte ugyanazt**. Ez a fájl ennek a párbeszédnek a tartós desztillátuma.
 
@@ -1375,7 +1381,9 @@ A spec (02), plan (03) és tasks (04) fázisban az ágens nyitott kérdéseit k�
 |---------|----------|
 | `Piszkozat` | Fázis indításakor |
 | `Nyitott kérdések vannak` | Van legalább egy `[ ]` kérdés |
-| `Tervezésre kész` / `Task írásra kész` / `Implementálásra kész` | Minden `[x]` + minőségellenőrzés átment + felhasználó megerősítette |
+| `Tervezésre kész` / **`Teszt-tervezésre kész`** / `Task írásra kész` / `Implementálásra kész` | Minden `[x]` + minőségellenőrzés átment + felhasználó megerősítette |
+
+> **A `plan.md` státusz-lánca két lépcsős (03a → 03b):** `Tervezésre kész` (spec) → **`Teszt-tervezésre kész`** (a `03a` zárja a kód-tervet) → `Task írásra kész` (a `03b` zárja a teszt-tervet). A `Teszt-tervezésre kész` **nem** fázis-vég a ciklus szempontjából: a `04`-et ezzel indítani hiba, a belépő kapuja (EG1) meg is fogja.
 
 **Loop-markerek (LC1).** Amikor egy önjavító hurok visszanyit egy dokumentumot javításra, a státusz a fázis-megfelelő nem-kész értéket egy **suffix-markerrel** kapja (pl. `Piszkozat [analyze-loop]`, `Implementálásra kész [validate-loop]`). A marker jelentése egységes: **fix-mód aktív** → a fixer a státuszt automatikusan lépteti (felhasználói megerősítés nélkül; a user csak a kérdéseknél és a végső PASS-nál lép be), és a marker egyben a megszakítás-utáni folytatás horgonya. Lezáráskor (PASS / tiszta review) lekerül; feladáskor (`max X` / 3-próba / `max 5` / eszkaláció) a megrekedt állapot jelzésére a dokumentumon marad.
 
@@ -1388,7 +1396,7 @@ A spec (02), plan (03) és tasks (04) fázisban az ágens nyitott kérdéseit k�
 
 ## 13. Egységes `Kész` státusz-lifecycle
 
-Minden dokumentum a saját fázis-specifikus záró-státuszát kapja a keletkezésekor (`spec.md` → `Tervezésre kész`, `plan.md` → `Task írásra kész`, `tasks.md` → `Implementálásra kész`), majd **`Kész`-re lép, amint a validate (07) PASS lezárja a ciklust**. Így a 08-doc-sync és a 09-merge fázis a `spec.md`/`plan.md`/`tasks.md`-t már egységesen `Kész` státuszban várja.
+Minden dokumentum a saját fázis-specifikus záró-státuszát kapja a keletkezésekor (`spec.md` → `Tervezésre kész`, `plan.md` → `Teszt-tervezésre kész`, majd `Task írásra kész`, `tasks.md` → `Implementálásra kész`), majd **`Kész`-re lép, amint a validate (07) PASS lezárja a ciklust**. Így a 08-doc-sync és a 09-merge fázis a `spec.md`/`plan.md`/`tasks.md`-t már egységesen `Kész` státuszban várja.
 
 ---
 

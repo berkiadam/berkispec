@@ -21,5 +21,5 @@
 <!-- ANCHOR:zaro-uzenet -->
 > *"A spec kész. Folytathatjuk a 3. lépéssel (plan). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:
 > ```
-> /bs-write-plan input: @specs/cycle-NN-<cycle-name>/spec.md, ciklus: cycle-NN-<cycle-name>
+> /bs-write-code-plan input: @specs/cycle-NN-<cycle-name>/spec.md, ciklus: cycle-NN-<cycle-name>
 > ```"*

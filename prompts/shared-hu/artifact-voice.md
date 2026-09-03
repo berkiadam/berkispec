@@ -3,7 +3,7 @@
   Ez NEM önálló skill/agent, hanem megosztott szövegblokk, amelyet a telepítő
   (install-helper.py) build-time INLINE beágyaz a hivatkozó skill telepített
   változatába (a `<!-- INCLUDE:shared/artifact-voice.md -->` marker helyére).
-  Hivatkozik rá: 02-write-spec, 03-write-plan, 04-write-tasks.
+  Hivatkozik rá: 02-write-spec, 03a-write-code-plan, 03b-write-test-plan, 04-write-tasks.
   Nincs frontmattere: a tartalma szó szerint bemásolódik. Itt szerkeszd.
 -->
 

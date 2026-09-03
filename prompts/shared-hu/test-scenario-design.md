@@ -1,4 +1,4 @@
-<!-- Forrás-jegyzet: ezt a szekciót a 02-write-spec.md ÉS a 03-write-plan.md skill
+<!-- Forrás-jegyzet: ezt a szekciót a 02-write-spec.md ÉS a 03b-write-test-plan.md skill
      (és a hozzájuk tartozó fix-mode-* shared fájlok) is beemelik (build-time
      INCLUDE). Egy helyen szerkeszd. -->
 ## Teszt-forgatókönyv tervezése — dimenziók és megfigyelési pontok (TD1–TD7)

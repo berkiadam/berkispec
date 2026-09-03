@@ -3,7 +3,7 @@
   This is NOT a standalone skill/agent, but a shared text block that the installer
   (install-helper.py) embeds INLINE at build time into the installed version of the
   referencing skill (in place of the `<!-- INCLUDE:shared/artifact-voice.md -->` marker).
-  Referenced by: 02-write-spec, 03-write-plan, 04-write-tasks.
+  Referenced by: 02-write-spec, 03a-write-code-plan, 03b-write-test-plan, 04-write-tasks.
   It has no frontmatter: its content is copied in verbatim. Edit it here.
 -->
 

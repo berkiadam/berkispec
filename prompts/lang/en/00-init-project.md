@@ -78,7 +78,7 @@ Two flows can be chosen from in the project, **per task**:
 
 **Default flow:** _<full | simplified>_ — _(filled in during phase 00 based on the character of the project; e.g. predominantly configuration/scripting/operations → simplified; product development with several components → full)_
 
-The default is only the **starting point**, it can be overridden per task. If a given task does not fit the default flow, the agent says so and suggests the other one (see the flow-size check of `01-add-cycles` and `03-write-plan`, and the overgrowth signal of `/bs-quick-flow`). The decision to switch flows always belongs to the user.
+The default is only the **starting point**, it can be overridden per task. If a given task does not fit the default flow, the agent says so and suggests the other one (see the flow-size check of `01-add-cycles` and `03a-write-code-plan`, and the overgrowth signal of `/bs-quick-flow`). The decision to switch flows always belongs to the user.
 
 ## Git and branching conventions
 

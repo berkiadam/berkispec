@@ -4,7 +4,7 @@
   Ez NEM önálló skill/agent, hanem megosztott szövegblokk, amelyet a telepítő
   (install-helper.py) build-time INLINE beágyaz a hivatkozó skill telepített
   változatába (a `<!-- INCLUDE:shared/phase-commit.md -->` marker helyére).
-  Hivatkozik rá: 02-write-spec, 03-write-plan, 04-write-tasks, 05-analyze, 07-validate.
+  Hivatkozik rá: 02-write-spec, 03a-write-code-plan, 03b-write-test-plan, 04-write-tasks, 05-analyze, 07-validate.
   A skill a marker ELŐTT deklarálja a saját `<FÁZIS-TAG>`-jét (pl. `02-spec`)
   és a záró státuszt — ez a blokk csak a közös, kötelező eljárást tartalmazza.
   Nincs frontmattere: a tartalma szó szerint bemásolódik. Itt szerkeszd.

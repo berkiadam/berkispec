@@ -369,7 +369,7 @@ Ez a hasítás legkényesebb része. Mindhárom pontot **ki kell írni mindkét 
 
 ## 5. Előkészítés
 
-- [ ] **5.1 — Branch.** A munka a `feature/split-plan-phase` branchen fut, `main`-ről ágazva.
+- [x] **5.1 — Branch.** A munka a `feature/split-plan-phase` branchen fut, `main`-ről ágazva.
   Ha a jelenlegi `feature/test-target-and-report-hardening` branchen van commitálatlan vagy
   be nem olvasztott munka, azt **előbb zárd le** (a felhasználóval egyeztetve) — ez a terv
   ugyanazokat a fájlokat mozgatja.
@@ -377,14 +377,14 @@ Ez a hasítás legkényesebb része. Mindhárom pontot **ki kell írni mindkét 
   git status --short && git branch --show-current
   ```
 
-- [ ] **5.2 — Kiinduló mérés rögzítése.** Írd ki a mai számot, hogy a 16.5 elfogadási kritérium
+- [x] **5.2 — Kiinduló mérés rögzítése.** Írd ki a mai számot, hogy a 16.5 elfogadási kritérium
   mérhető legyen:
   ```bash
   wc -l prompts/skills-hu/03-write-plan.md prompts/skills-en/03-write-plan.md \
         prompts/shared-hu/quality-check-plan.md prompts/lang/hu/quality-check-plan.md
   ```
 
-- [ ] **5.3 — Kapuk zöldek a kezdés előtt** (hogy tudjuk, mit rontottunk el mi):
+- [x] **5.3 — Kapuk zöldek a kezdés előtt** (hogy tudjuk, mit rontottunk el mi):
   ```bash
   python3 prompts/scripts/lang-parity-check.py
   python3 prompts/scripts/sync-gemini-agents.py --check
@@ -396,7 +396,7 @@ Ez a hasítás legkényesebb része. Mindhárom pontot **ki kell írni mindkét 
 
 ## 6. Nyelvi szótár és projekt-nyelvi blokkok
 
-- [ ] **6.1 — Új státusz-kulcs** (D2). `prompts/lang/status-keys.json`, a `hu.status` **és** az
+- [x] **6.1 — Új státusz-kulcs** (D2). `prompts/lang/status-keys.json`, a `hu.status` **és** az
   `en.status` szótárba, a `ready_for_plan` és a `ready_for_tasks` közé:
   - `hu`: `"ready_for_test_plan": "Teszt-tervezésre kész"`
   - `en`: `"ready_for_test_plan": "Ready for test planning"`
@@ -405,12 +405,12 @@ Ez a hasítás legkényesebb része. Mindhárom pontot **ki kell írni mindkét 
   python3 -c "import json;d=json.load(open('prompts/lang/status-keys.json'));print(d['hu']['status']['ready_for_test_plan'], '|', d['en']['status']['ready_for_test_plan'])"
   ```
 
-- [ ] **6.2 — Új mező-kulcs** (D6). Ugyanabban a fájlban, a `hu.fields` és `en.fields` szótárba,
+- [x] **6.2 — Új mező-kulcs** (D6). Ugyanabban a fájlban, a `hu.fields` és `en.fields` szótárba,
   a `f_gate` mellé:
   - `hu`: `"f_gate_code": "Kód-terv kapu"`
   - `en`: `"f_gate_code": "Code-plan gate"`
 
-- [ ] **6.3 — Projekt-nyelvi blokkok hasítása.** A mai `prompts/lang/hu/03-write-plan.md` és
+- [x] **6.3 — Projekt-nyelvi blokkok hasítása.** A mai `prompts/lang/hu/03-write-plan.md` és
   `prompts/lang/en/03-write-plan.md` **három** horgonyt tartalmaz: `plan-questions-struktura`,
   `statusz-megerosites`, `zaro-uzenet`. Hozz létre helyettük **négy** fájlt:
 
@@ -439,7 +439,7 @@ Ez a hasítás legkényesebb része. Mindhárom pontot **ki kell írni mindkét 
   > ```"*
   ```
 
-- [ ] **6.4 — A `02` záró-üzenete átirányítva.** `prompts/lang/{hu,en}/02-write-spec.md`:
+- [x] **6.4 — A `02` záró-üzenete átirányítva.** `prompts/lang/{hu,en}/02-write-spec.md`:
   a `/bs-write-plan input: …` sor → `/bs-write-code-plan input: …`.
   ```bash
   grep -rn "bs-write-plan" prompts/lang/    # 6.3 + 6.4 után NULLA találat legyen
@@ -453,29 +453,29 @@ Négy blokk, **mindkét** nyelvi fán (`shared-hu/` és `shared-en/`). Mindegyik
 `<!-- Forrás-jegyzet: … -->` komment a mai `shared-hu/quality-check-plan.md` mintájára, amely
 megnevezi, **kik emelik be** (egy helyen szerkeszd).
 
-- [ ] **7.1 — `shared-{hu,en}/plan-self-contained.md`.** A mai `03` `### 🔴 A `plan.md` ÖNHORDÓ —
+- [x] **7.1 — `shared-{hu,en}/plan-self-contained.md`.** A mai `03` `### 🔴 A `plan.md` ÖNHORDÓ —
   ez a fázis legfontosabb szabálya` szekciója **szó szerint**, egyetlen változtatással: a
   „Fogyasztó / Mit olvas / Mit NEM lát” tábla kapjon egy negyedik sort:
   `| `03b-write-test-plan` | a `plan.md` **kód-felét** + a spec teszt-szekcióját és `DoD`-ját | a kódbázist forrásfájl-azonosítás céljából |`
   Beemeli: `03a`, `03b`.
 
-- [ ] **7.2 — `shared-{hu,en}/dereferencing.md`.** A mai `## Hivatkozás-feloldás (dereferencing)
+- [x] **7.2 — `shared-{hu,en}/dereferencing.md`.** A mai `## Hivatkozás-feloldás (dereferencing)
   — a bemenet szintje NEM a plan szintje` szekció **szó szerint** (a táblával, a
   token-hatékonyság-listával és a „hurok bezárása” záró blokkal együtt).
   Beemeli: `03a`, `03b`, `plan-fixer`.
 
-- [ ] **7.3 — `shared-{hu,en}/spec-artifact-transfer.md`.** A mai `## Kidolgozott spec-artefaktum
+- [x] **7.3 — `shared-{hu,en}/spec-artifact-transfer.md`.** A mai `## Kidolgozott spec-artefaktum
   átemelése — szó szerint, csonkítás nélkül (KX3)` szekció **szó szerint** (a két táblával, a
   „szabad/tilos” listákkal és a „három félreérthető szabály” záró blokkal).
   Beemeli: `03a`, `03b`, `plan-fixer`.
 
-- [ ] **7.4 — `shared-{hu,en}/plan-section-ids.md`.** A mai `### 🔴 Stabil szekció-azonosítók
+- [x] **7.4 — `shared-{hu,en}/plan-section-ids.md`.** A mai `### 🔴 Stabil szekció-azonosítók
   (PID1) — a tasks.md ezekre hivatkozik` szekció **szó szerint** (a kódblokkal és a hét soros
   szabály-táblával), plusz **egy új sor** a táblába:
   `| **Ki adja ki** | A `<sec:planned_changes>` és a nem-teszt szekciók ID-jait a `03a`, a teszt-szekciókét a `03b`. A `03b` **soha nem nevez át és nem töröl** meglévő ID-t. |`
   Beemeli: `03a`, `03b`.
 
-- [ ] **7.5 — Paritás-ellenőrzés a négy új blokkra.**
+- [x] **7.5 — Paritás-ellenőrzés a négy új blokkra.**
   ```bash
   python3 prompts/scripts/lang-parity-check.py
   ```
@@ -484,7 +484,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
 
 ## 8. A minőségi kapu hasítása (D7)
 
-- [ ] **8.1 — `shared-{hu,en}/quality-check-plan-code.md`.** A mai `quality-check-plan.md`
+- [x] **8.1 — `shared-{hu,en}/quality-check-plan-code.md`.** A mai `quality-check-plan.md`
   `## Minőségellenőrzés — plan lezárása előtt` listájából **ezek a pontok** kerülnek ide
   (a felsorolás sorrendjében, szó szerint):
   - `🔴 ÖNHORDÓSÁG-LELTÁR` (a 10 soros tábla) — a 10. sor (regressziós érintettség) **kimarad**, az a teszt-fél
@@ -528,7 +528,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   A záró blokk (`Ha bármelyikre nem teljesül…`) marad. A `## Lezárási kapu … (TP2)` szekció
   fejléce is ide kerül, a `TP2-code` horgonnyal (8.3).
 
-- [ ] **8.2 — `shared-{hu,en}/quality-check-plan-test.md`.** A maradék pontok:
+- [x] **8.2 — `shared-{hu,en}/quality-check-plan-test.md`.** A maradék pontok:
   - az `ÖNHORDÓSÁG-LELTÁR` **10. sora** (regressziós érintettség) — önálló pontként
   - `🔴 A tesztek a ciklus CÉL-KÖRNYEZETÉN futnak? (EV1–EV5)` — az `<field:f_target_env>` mező
     **létezését** a `03a` kapuja már mérte; itt a futtatási tábla `<field:f_environment>` oszlopa
@@ -561,7 +561,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   Plusz a `## Lezárási kapu … (TP2)` szekció a `TP2-test` horgonnyal (8.3), és a záró
   „Miért kapu ez, és nem checklist-sor” magyarázat (az a teszt-oldalról szól).
 
-- [ ] **8.3 — `lang/{hu,en}/quality-check-plan.md` horgony-hasítás.** A mai
+- [x] **8.3 — `lang/{hu,en}/quality-check-plan.md` horgony-hasítás.** A mai
   `TP2-lezarasi-kapu` horgony helyett **kettő**:
   - `TP2-code`: az `1/b` (WY1), `6` (belépési pont — a kód-oldali fele: a `<sec:planned_changes>`
     új fájljai), `7/b` (KO1), `8/c` (GC1), `8/b` (KX3), `9` (SC1), `10` (horgony-verifikáció),
@@ -574,10 +574,10 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
     `8` (korábbi ciklus receptje) pontok. Szintén `1`-től számozva.
   - A mai fájl vezető HTML-komment fejléce marad; a horgony-lista frissül.
 
-- [ ] **8.4 — A mai `shared-{hu,en}/quality-check-plan.md` törlése**, és minden beemelő hely
+- [x] **8.4 — A mai `shared-{hu,en}/quality-check-plan.md` törlése**, és minden beemelő hely
   átvezetése (8.5).
 
-- [ ] **8.5 — Beemelő helyek.**
+- [x] **8.5 — Beemelő helyek.**
   - `skills-{hu,en}/03a-write-code-plan.md` → `<!-- INCLUDE:shared/quality-check-plan-code.md -->`
   - `skills-{hu,en}/03b-write-test-plan.md` → `<!-- INCLUDE:shared/quality-check-plan-test.md -->`
   - `agents-{hu,en}/plan-fixer.md` → **mindkettő**, egymás után, a mai egyetlen INCLUDE helyén;
@@ -592,7 +592,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
 
 ## 9. `03a-write-code-plan.md` (HU)
 
-- [ ] **9.1 — Fájl létrehozása** `prompts/skills-hu/03a-write-code-plan.md` néven, a mai
+- [x] **9.1 — Fájl létrehozása** `prompts/skills-hu/03a-write-code-plan.md` néven, a mai
   `03-write-plan.md`-ből **másolással és törléssel** (ne írd újra a megmaradó szövegeket —
   a `KX3`/`WY1`/`KO1` szövegek kalibrációs értéke a szó szerinti alakjukban van).
   Frontmatter:
@@ -626,18 +626,18 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   ---
   ```
 
-- [ ] **9.2 — Fázis-önmeghatározás.** A fájl elején a mai „Ez a folyamat **3. fázisa (0–9)**”
+- [x] **9.2 — Fázis-önmeghatározás.** A fájl elején a mai „Ez a folyamat **3. fázisa (0–9)**”
   sor helyére: `0-init · 1-ciklusok · 2-spec · **3a-kód-terv ←** · 3b-teszt-terv · 4-tasks · 5-analyze · 6-implement · 7-validate · 8-doc-sync · 9-merge`.
   Ugyanez a lista kerül a `03b`-be, ott a `3b`-nél a nyíllal.
 
-- [ ] **9.3 — Cheat sheet átírása.** A mai 22 soros táblából maradnak a kód-oldali sorok
+- [x] **9.3 — Cheat sheet átírása.** A mai 22 soros táblából maradnak a kód-oldali sorok
   (Előfeltétel, Nyitott kérdések, Kontextus, Szekció-ID, Scope-kapu, Környezet-koordináták,
   Önhordóság, Kapu-konfiguráció, Útvonalak, Csonkítás-mentesség, Hivatkozás-feloldás,
   Validációs ciklusok, Spec kritika, Lezárás). **Új sor a tábla elejére:**
   `| Hatókör | **Csak a kód-terv** — a teszt-szekciókat a `03b` írja (`/bs-write-test-plan`). Ide `TS-NN`, `TC-NN`, gépi futtatási tábla és tesztfájl-adatlap NEM kerül. |`
   A `Lezárás` sor a `--plan-code-only` kapura és a `<status:ready_for_test_plan>` státuszra hivatkozik.
 
-- [ ] **9.4 — Törlendő szekciók** (a 4.1/4.2 tábla szerint): a sablonból a
+- [x] **9.4 — Törlendő szekciók** (a 4.1/4.2 tábla szerint): a sablonból a
   `<sec:testing_strategy>`-tól a `<sec:e2e_tests>` végéig **és** a `<sec:execution_order>` +
   `<sec:verification_strategy>` blokkok; a prózából a `Validációs ciklusok 2.` és `3.`, a
   `test-scenario-design.md` INCLUDE, a `fix-mode-plan.md` INCLUDE.
@@ -647,29 +647,29 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   `03b-write-test-plan` fázis írja — ide ne kezdd el őket.)_
   ```
 
-- [ ] **9.5 — `<sec:risks_and_decisions>` a sablon végére.** A mai sorrend szerint a
+- [x] **9.5 — `<sec:risks_and_decisions>` a sablon végére.** A mai sorrend szerint a
   `risks_and_decisions` az `execution_order`/`verification_strategy` **után** áll; a kód-terv
   sablonjában viszont ez lesz az utolsó szekció. A `03b` sablonjában az `execution_order` és a
   `verification_strategy` a `<sec:risks_and_decisions>` **elé** szúrandó — mondd ki a `03b`-ben,
   hogy a szekciók fizikai sorrendje a mai `plan.md` sorrendje marad, tehát a `03b` a maga
   szekcióit **a `<sec:risks_and_decisions>` elé** írja.
 
-- [ ] **9.6 — `<field:f_prerequisite>` szekció.** A mai 0–4. pont marad (ciklus-beazonosítás,
+- [x] **9.6 — `<field:f_prerequisite>` szekció.** A mai 0–4. pont marad (ciklus-beazonosítás,
   `conventions.md`, munkafa, spec-státusz, CD1).
 
-- [ ] **9.7 — Nyitott kérdések.** A mai szekció marad, a `K01` E2E-blokkal együtt (D10).
+- [x] **9.7 — Nyitott kérdések.** A mai szekció marad, a `K01` E2E-blokkal együtt (D10).
   Új záró mondat: *a `03b` ugyanezt a fájlt folytatja a következő szabad `Knn` számmal — a
   bejegyzéseket ne számozd újra, és ne töröld.*
 
-- [ ] **9.8 — `Spec kritika`** marad teljes egészében (a négy ellenőrző kérdés + a
+- [x] **9.8 — `Spec kritika`** marad teljes egészében (a négy ellenőrző kérdés + a
   koordináta-visszajelzés/KX-tükör + a „ne találd ki magad” határvonal).
 
-- [ ] **9.9 — `Megállási szabályok`.** A mai lista marad, a `TP2` pont átírva:
+- [x] **9.9 — `Megállási szabályok`.** A mai lista marad, a `TP2` pont átírva:
   *„A lezárási kapu (TP2-code) bármely pontja `[ ]`”* — a példák a kód-oldalra (hiányzó
   koordináta, `[P-…]` cél nélkül, spec-forrás nélküli képesség, kitöltetlen
   `<sec:config_lifecycle>` cella).
 
-- [ ] **9.10 — `Státusz kezelés` + `Mechanikus kapu (M)`.**
+- [x] **9.10 — `Státusz kezelés` + `Mechanikus kapu (M)`.**
   - státuszok: `<status:draft>` → `<status:open_questions>` → `<status:ready_for_test_plan>`;
   - a kapu-hívás: `python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-name> --plan-code-only`;
   - a `0`/`1`/`2` kimenet-kezelés a mai szöveggel;
@@ -680,14 +680,14 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
     szempontjából: a `plan.md` addig nem kész, amíg a `03b` le nem zárta. A `04`-et ilyen
     státusszal indítani hiba (a `04` belépő kapuja meg is fogja).
 
-- [ ] **9.11 — `phase-commit.md` + záró üzenet.** `<FÁZIS-TAG>` = `03a-code-plan`, a záró státusz
+- [x] **9.11 — `phase-commit.md` + záró üzenet.** `<FÁZIS-TAG>` = `03a-code-plan`, a záró státusz
   `<status:ready_for_test_plan>`. A fájl végén:
   `<!-- INCLUDE:lang/03a-write-code-plan.md#zaro-uzenet -->`.
   A mai `PE1` fázishatár-mondat („Ne kezdj task listát — a `tasks.md`-t létre se hozd”) itt
   **átalakul**: *ne kezdd el a teszt-szekciókat, és a `tasks.md`-t létre se hozd* — mindkét
   átnyúlás tilos, és a kontextus-összefoglaló teendő-listája sem felülbírálja.
 
-- [ ] **9.12 — Kötelező boilerplate INCLUDE-ok (MINDKÉT új skillben).** Ezek nincsenek a
+- [x] **9.12 — Kötelező boilerplate INCLUDE-ok (MINDKÉT új skillben).** Ezek nincsenek a
   frontmatter `shared:` listájában (a mai `03` sem sorolja fel őket), de a **törzsben** kötelezők
   — ha kimaradnak, a telepített `SKILL.md`-ből néma módon eltűnik a nyelvi utasítás, a
   kontextus-ellenőrzés és a Windows-os Python-hívás magyarázata:
@@ -714,7 +714,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
 
 ## 10. `03b-write-test-plan.md` (HU)
 
-- [ ] **10.1 — Fájl létrehozása** `prompts/skills-hu/03b-write-test-plan.md`. Frontmatter:
+- [x] **10.1 — Fájl létrehozása** `prompts/skills-hu/03b-write-test-plan.md`. Frontmatter:
   ```yaml
   ---
   phase: 03b
@@ -746,7 +746,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   ---
   ```
 
-- [ ] **10.2 — Cheat sheet.** Új tábla (ne a `03a`-ét másold), soronként:
+- [x] **10.2 — Cheat sheet.** Új tábla (ne a `03a`-ét másold), soronként:
   Előfeltétel (`plan.md` = `<status:ready_for_test_plan>` **és** a kód-kapu `0`-t adott) ·
   Hatókör (**csak a teszt-terv**; a kód-felet nem írod át — a három megengedett bővítés a 4.3-ból) ·
   Bemenet (a `plan.md` kód-fele + a spec teszt-szekciója és `DoD`-ja + `test-conventions` 2./3. szekció) ·
@@ -757,7 +757,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   Spec-lefedettség (TS7: minden sor megnevez egy `TS-NN`-t) · Környezet-felkészítés (TP3) ·
   Regresszió · Önhordóság · Lezárás (`--plan-only` + `<status:ready_for_tasks>`).
 
-- [ ] **10.3 — `<field:f_prerequisite>` szekció (a D5 kapu).** Sorrend:
+- [x] **10.3 — `<field:f_prerequisite>` szekció (a D5 kapu).** Sorrend:
   1. ciklus-beazonosítás (`lang/common.md#ciklus-beazonositas` INCLUDE, a mai alakban);
   2. `conventions.md` létezés-ellenőrzés;
   3. munkafa-ellenőrzés (`git status --short`);
@@ -776,7 +776,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   6. nyitott kérdések: a `plan-questions.md`-ben nincs `[ ]` — ha van, a kód-terv valójában nem
      zárult le.
 
-- [ ] **10.4 — `Feladatod` szekció.** Négy dolgot mond ki:
+- [x] **10.4 — `Feladatod` szekció.** Négy dolgot mond ki:
   (a) **mi a leszállítandó** — a 4.1 tábla teszt-szekciói, felsorolva;
   (b) **mit nem írsz** — a kód-fél (a három megengedett bővítéssel, 4.3);
   (c) **a `TS7` konverzió a fázis lényege** — a spec tesztesetei nem prózaként másolódnak, hanem
@@ -785,15 +785,15 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   (d) **a `TD0–TD7` recept kitöltendő kérdéssor**, nem olvasmány: a dimenzió-leltár szorzata
       dönti el, **hány** forgatókönyv kell.
 
-- [ ] **10.5 — `Folytatás megszakított futás után`.** A mai szekció mintájára, a teszt-szekciókra:
+- [x] **10.5 — `Folytatás megszakított futás után`.** A mai szekció mintájára, a teszt-szekciókra:
   melyik `TS-NN` van meg, melyik `DoD-NN`-hez nincs még forgatókönyv, kitöltött-e a gépi tábla,
   van-e adatlap minden tesztfájlnál. Elég a `plan.md`, a `plan-questions.md` és ez a prompt.
 
-- [ ] **10.6 — `Kontextus betöltési szabályok`** a 4.4 szakasz `03b`-oldala szerint, benne a
+- [x] **10.6 — `Kontextus betöltési szabályok`** a 4.4 szakasz `03b`-oldala szerint, benne a
   `TC1/c` regiszter-határvonal blokk és a `TC1/a` önhordósági blokk (a mai szöveggel), valamint
   a kimondott tilalom: *nem indítasz `researcher`-t forrásfájl-azonosításra*.
 
-- [ ] **10.7 — A sablon.** A `03a` sablonjának **záró** részéhez illeszkedően: a
+- [x] **10.7 — A sablon.** A `03a` sablonjának **záró** részéhez illeszkedően: a
   `<sec:testing_strategy>`-tól a `<sec:verification_strategy>`-ig **minden szekció szó szerint**
   a mai `03`-ból (a `TS-NN` blokk-formával, a `.http` példával, a gépi tábla kitöltési
   szabályaival, a `TP3` bootstrapping-táblával, a négy `[!IMPORTANT]`/`[!CAUTION]` blokkal, a
@@ -802,37 +802,37 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   `<sec:reverse_coverage>`-ig a szekciókat a `03a` írta — a fejlécet és a státusz-mezőt te
   lépteted, a tartalmukat nem szerkeszted.*
 
-- [ ] **10.8 — `Validációs ciklusok`.** A mai `2.` (test_specification után) és `3.`
+- [x] **10.8 — `Validációs ciklusok`.** A mai `2.` (test_specification után) és `3.`
   (execution_order után) kör, `1.` és `2.` sorszámmal, szó szerint.
 
-- [ ] **10.9 — `Spec kritika — a teszt-oldalon`.** Szűkített változat: hiányzó/ellentmondó
+- [x] **10.9 — `Spec kritika — a teszt-oldalon`.** Szűkített változat: hiányzó/ellentmondó
   teszteset, lefedetlen `DoD-NN`, a spec-ben hagyott teszt-koordináta (KX-tükör → beemelés a
   teszt-szekcióba), és a „megfigyelhető viselkedést érintő döntés → kérdés” határvonal.
   Kimondva: a `spec.md`-t **nem írod**, a `<sec:planned_changes>`-t **nem írod át**.
 
-- [ ] **10.10 — `Megállási szabályok`.** A mai listából: implementációs döntési pont (itt:
+- [x] **10.10 — `Megállási szabályok`.** A mai listából: implementációs döntési pont (itt:
   teszt-stratégiai), spec-hiányosság, spec-ellentmondás, komplex konténerizáció, a `TP2-test`
   kapu bármely `[ ]` pontja. **Új eset:** *ha a teszt megtervezéséhez olyan koordináta,
   parancs vagy termelő-kód-változás kell, ami a kód-tervben nincs* → `Knn` kérdés **vagy**
   visszairányítás a `/bs-write-code-plan`-ra; a kód-tervet magad nem írod át.
 
-- [ ] **10.11 — `Státusz kezelés` + `Mechanikus kapu (M)`.** A mai `03`-as szekció **szó szerint**
+- [x] **10.11 — `Státusz kezelés` + `Mechanikus kapu (M)`.** A mai `03`-as szekció **szó szerint**
   (`--plan-only`, `f_gate` bélyeg, a `04` EG1-jére hivatkozó záró mondat), a státusz-lánccal:
   a `<status:ready_for_test_plan>`-ról `<status:ready_for_tasks>`-ra a felhasználó megerősítése után.
   A „Kész lifecycle” megjegyzés (a `07` állítja `<status:done>`-ra) ide kerül.
 
-- [ ] **10.12 — `phase-commit.md` + záró üzenet.** `<FÁZIS-TAG>` = `03b-test-plan`, záró státusz
+- [x] **10.12 — `phase-commit.md` + záró üzenet.** `<FÁZIS-TAG>` = `03b-test-plan`, záró státusz
   `<status:ready_for_tasks>`, a fájl végén
   `<!-- INCLUDE:lang/03b-write-test-plan.md#zaro-uzenet -->`, és a mai `PE1` fázishatár-mondat
   változatlanul (a `tasks.md`-t létre se hozd).
 
-- [ ] **10.13 — A mai `prompts/skills-hu/03-write-plan.md` törlése.**
+- [x] **10.13 — A mai `prompts/skills-hu/03-write-plan.md` törlése.**
 
 ---
 
 ## 11. A determinisztikus kapu (`analyze-gate-check.py`)
 
-- [ ] **11.1 — Új CLI-flag.** `prompts/scripts/analyze-gate-check.py`, az `argparse` blokkba a
+- [x] **11.1 — Új CLI-flag.** `prompts/scripts/analyze-gate-check.py`, az `argparse` blokkba a
   `--plan-only` mellé:
   ```python
   parser.add_argument(
@@ -848,7 +848,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   `code_only = args.plan_code_only` lokális változóval szűrjük a checkeket.
   Ha mindkét flag meg van adva, az **nem hiba** (a `--plan-code-only` a szűkebb).
 
-- [ ] **11.2 — A checkhalmaz.** `code_only` módban **kizárólag** ezek futnak:
+- [x] **11.2 — A checkhalmaz.** `code_only` módban **kizárólag** ezek futnak:
 
   | check | ID | megjegyzés |
   |---|---|---|
@@ -882,7 +882,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   > **Miért marad ki a `check_executed_artifacts`?** A futtatott artefaktumok (teszt-parancsok
   > belépési pontjai) a teszt-félben keletkeznek.
 
-- [ ] **11.3 — `REQUIRED_PLAN_CODE_TABLES` konstans.** A `REQUIRED_PLAN_TABLES` mellé, a
+- [x] **11.3 — `REQUIRED_PLAN_CODE_TABLES` konstans.** A `REQUIRED_PLAN_TABLES` mellé, a
   205. sor környékére:
   ```python
   # A 03a-code-plan lezárásakor kötelező plan-táblák. A `spec_coverage` és a
@@ -894,13 +894,13 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   ugyanazzal a fázis- és magyarázat-szöveggel, hogy a `REQUIRED_PLAN_TABLES` átrendezése ne
   rontsa el némán.
 
-- [ ] **11.4 — `check_target_environment(plan_text, f, code_only=False)`.** A függvény ma az
+- [x] **11.4 — `check_target_environment(plan_text, f, code_only=False)`.** A függvény ma az
   `EV1` mezőt **és** a futtatási tábla `<field:f_environment>` oszlopát méri (EV2–EV5).
   `code_only=True` esetén **csak** az `EV1` ág fut (a `**<field:f_target_env>:**` mező létezése és
   kitöltöttsége); a tábla-oldali ágakból azonnal visszatér. A docstringbe kerüljön be, hogy
   EV2–EV5 a `03b` lezárásának tárgya.
 
-- [ ] **11.5 — `check_gate_stamp(plan_text, f, field="f_gate", status_key="ready_for_tasks")`.**
+- [x] **11.5 — `check_gate_stamp(plan_text, f, field="f_gate", status_key="ready_for_tasks")`.**
   A függvény ma a `**<field:f_gate>:**` bélyeg meglétét méri (`GA1`, **javaslat**, nem Must Fix).
   **Két** paramétert kell felvennie, nem egyet:
   ```python
@@ -921,7 +921,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   > `check_gate_stamp(plan_text, f, field="f_gate_code", status_key="ready_for_test_plan")`.
   > A hibaüzenetben a futtatandó parancs is `--plan-code-only`-ra változik.
 
-- [ ] **11.5/b — A `--plan-only` help-szövege.** A mai súgó: *„a 03-plan fázis lezárásához: csak a
+- [x] **11.5/b — A `--plan-only` help-szövege.** A mai súgó: *„a 03-plan fázis lezárásához: csak a
   spec+plan checkek futnak (a tasks.md még nem létezik)”* → a `03b-test-plan` fázisra átírva
   (és az új flag súgója a `03a`-ra hivatkozik, 11.1). Ugyanígy a `--plan-only` mód alatti
   kód-kommentek (`# `--plan-only` módban a tasks-oldalt üresként kezeljük…`) kapják meg, hogy
@@ -930,20 +930,20 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   grep -n "03-plan" prompts/scripts/*.py
   ```
 
-- [ ] **11.6 — Kimeneti sor.** A `code_only` mód összefoglalója maradjon **ugyanaz a prefix**
+- [x] **11.6 — Kimeneti sor.** A `code_only` mód összefoglalója maradjon **ugyanaz a prefix**
   (`ANALYZE-GATE: N Must Fix, M javaslat`), hogy a `GS2` bélyeg-konvenció (a záró válaszba szó
   szerint bemásolt sor) ne változzon. Az első kiírt sor előtt legyen egy mód-jelző sor:
   `# mód: --plan-code-only (a teszt-oldali checkek nem futnak — azokat a 03b lezárása méri)`.
 
-- [ ] **11.7 — `--emit-slices` viselkedés.** A mai `elif args.emit_slices and args.plan_only`
+- [x] **11.7 — `--emit-slices` viselkedés.** A mai `elif args.emit_slices and args.plan_only`
   ág üzenete `code_only` módban is helyes (a `tasks.md` nem létezik) — ellenőrizd, hogy nem
   hasal el; ha kell, a mód nevét is írja ki.
 
-- [ ] **11.8 — Használati hiba.** `--plan-code-only` + `--report-closure` (vagy `--paths-only`)
+- [x] **11.8 — Használati hiba.** `--plan-code-only` + `--report-closure` (vagy `--paths-only`)
   együtt: a mai ág-sorrend szerint az önálló módok előbb futnak le. Nézd meg, és ha egy
   kombináció csendben félreértelmeződik, adj `exit 2`-t explicit üzenettel.
 
-- [ ] **11.9 — Füstteszt egy meglévő ciklus mappán.** Ha van a gépen berkispec-es projekt,
+- [x] **11.9 — Füstteszt egy meglévő ciklus mappán.** Ha van a gépen berkispec-es projekt,
   futtasd le rajta mindkét módot, és hasonlítsd össze a Must Fix listákat:
   ```bash
   python3 prompts/scripts/analyze-gate-check.py <ciklus-mappa> --plan-only       > /tmp/full.txt
@@ -968,21 +968,21 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
 
 ## 12. Szomszéd fázisok és scriptek átvezetése
 
-- [ ] **12.1 — `04-write-tasks.md` (HU+EN).** Két dolog:
+- [x] **12.1 — `04-write-tasks.md` (HU+EN).** Két dolog:
   - a `prev:` frontmatter → `bs-write-test-plan`;
   - a `2.` pont (státusz-beolvasás) mellé egy zárójeles mondat: *ha a `plan.md`
     `<status:ready_for_test_plan>` állapotban van, a **teszt-terv** hiányzik — vissza a
     `/bs-write-test-plan`-ra.* Az `EG1` kapu-blokk (`2/b`) **változatlan** (D3).
 
-- [ ] **12.2 — `02-write-spec.md` (HU+EN).** `next:` → `bs-write-code-plan`; a törzsben a
+- [x] **12.2 — `02-write-spec.md` (HU+EN).** `next:` → `bs-write-code-plan`; a törzsben a
   „A 03 is beolvassa” mondat → „A `03a-write-code-plan` is beolvassa”.
 
-- [ ] **12.3 — `agents-{hu,en}/researcher.md`.** A `Mód A — Strukturált plan-feltárás
+- [x] **12.3 — `agents-{hu,en}/researcher.md`.** A `Mód A — Strukturált plan-feltárás
   (`03-write-plan.md`)` fejléc és a `called_by`/`skills:` lista → `03a-write-code-plan.md`.
   A „ha a hívó literál értékeket kér (jellemzően `03-write-plan`)” mondat → `03a-write-code-plan`
   **és** `03b-write-test-plan` (mindkettő kérhet literál értéket).
 
-- [ ] **12.4 — `agents-{hu,en}/plan-fixer.md`.** A 8.5-ben leírt INCLUDE-átvezetés, plusz:
+- [x] **12.4 — `agents-{hu,en}/plan-fixer.md`.** A 8.5-ben leírt INCLUDE-átvezetés, plusz:
   - a `1.` teendő „Ne olvasd be a fázis-skillt (`/bs-03-write-plan`)” hivatkozás →
     *(`/bs-write-code-plan`, `/bs-write-test-plan`)*;
   - a `description`/`role` szövegében a `03-write-plan` → `03a/03b` (a tényleges leírót a
@@ -991,7 +991,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
     `plan.md`-ben; a `[P-…]` ID-kra és a `TS-NN`/`TC-NN` azonosítókra vonatkozó
     átnevezés-tilalom változatlanul él.
 
-- [ ] **12.5 — `prompts/scripts/cycle-status.py` (D11).**
+- [x] **12.5 — `prompts/scripts/cycle-status.py` (D11).**
   - új konstans a fájl elején: `_S_READY_TEST_PLAN = st("ready_for_test_plan").lower()`;
   - a mai egyetlen „Tervezés (plan.md)” sor helyett **kettő**:
     - `"Kód-terv (plan.md)"` → `KÉSZ`, ha a státusz ∈ {`ready_for_test_plan`, `ready_for_tasks`,
@@ -1005,16 +1005,16 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   python3 prompts/scripts/cycle-status.py <ciklus-mappa>   # ha van kézre eső projekt
   ```
 
-- [ ] **12.6 — `prompts/lang/{hu,en}/07-validate.md`.** A VD5 eszkalációs blokk
+- [x] **12.6 — `prompts/lang/{hu,en}/07-validate.md`.** A VD5 eszkalációs blokk
   `/bs-write-plan (DoD-hiba esetén: /bs-write-spec)` sora → `/bs-write-code-plan` vagy
   `/bs-write-test-plan` **a hiba jellege szerint**, egy fél soros útmutatással:
   *teszt-forgatókönyv, futtatási tábla, tesztfájl → `/bs-write-test-plan`; koordináta, tervezett
   módosítás, konfiguráció → `/bs-write-code-plan`; `DoD` → `/bs-write-spec`.*
 
-- [ ] **12.7 — `prompts/scripts/report-gate-check.py`.** A `03-write-plan „Kapu-konfiguráció
+- [x] **12.7 — `prompts/scripts/report-gate-check.py`.** A `03-write-plan „Kapu-konfiguráció
   együtt mozog" szabályát` hibaszöveg → `03a-write-code-plan`.
 
-- [ ] **12.8 — Maradék hivatkozások.** Futtasd le **mindhárom** mintát, és vezess át mindent,
+- [x] **12.8 — Maradék hivatkozások.** Futtasd le **mindhárom** mintát, és vezess át mindent,
   ami megmaradt:
   ```bash
   grep -rn "03-write-plan\|bs-write-plan\b" --include=*.md --include=*.py --include=*.json \
@@ -1042,7 +1042,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
 
 ## 13. Leírók és telepítés
 
-- [ ] **13.1 — `descriptions.json` (HU+EN).** `prompts/lang/hu/descriptions.json` és
+- [x] **13.1 — `descriptions.json` (HU+EN).** `prompts/lang/hu/descriptions.json` és
   `prompts/lang/en/descriptions.json`:
   - a `"bs-write-plan"` kulcs **törlése**;
   - **két új kulcs** a helyére (a `bs-write-spec` és a `bs-write-tasks` közé):
@@ -1062,7 +1062,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   > **Kemény kapu:** a telepítő `exit 1`-gyel megáll, ha egy skill `name`-jéhez nincs leíró
   > (`install-helper.py`, 11.4 kapu). Ha a `13.1` kimarad, **semmi nem telepíthető**.
 
-- [ ] **13.2 — Telepítési füstteszt mind az öt platformra.** A skillek `glob("*.md")`-del
+- [x] **13.2 — Telepítési füstteszt mind az öt platformra.** A skillek `glob("*.md")`-del
   kerülnek be, tehát az új fájlok automatikusan telepítődnek — de a leíró-kapu és az
   INCLUDE-feloldás nem. Telepíts egy eldobható célmappába, és ellenőrizd:
   ```bash
@@ -1078,7 +1078,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   hiányzó `status-keys.json` kulcs — javítsd, ne hagyd a telepítettben.
   Ismételd meg **`en` prompt-nyelvvel** is (legalább egy platformra).
 
-- [ ] **13.3 — Gemini agent.json tükrök.** A `plan-fixer` és a `researcher` promptja változott,
+- [x] **13.3 — Gemini agent.json tükrök.** A `plan-fixer` és a `researcher` promptja változott,
   tehát a tükröket regenerálni kell:
   ```bash
   python3 prompts/scripts/sync-gemini-agents.py
@@ -1089,7 +1089,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
 
 ## 14. Dokumentáció
 
-- [ ] **14.1 — `README-HU.md` és `README.md`.** Átvezetendő helyek (mindkét fájlban):
+- [x] **14.1 — `README-HU.md` és `README.md`.** Átvezetendő helyek (mindkét fájlban):
   - a fázis-lista / „Indító prompt (copy-paste)” szekció: a `03` két parancsra bomlik;
   - a `* **/bs-write-plan**: …` felsorolás-pont → két pont;
   - a nagy fázis-tábla `| /bs-write-plan | Plan | spec.md | plan.md (Task írásra kész) …` sora
@@ -1105,11 +1105,11 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   - az `agents/plan-fixer.md` sora: a wrapper mindkét felet javítja;
   - a státusz-lánc felsorolása, ahol szerepel: **új** `Teszt-tervezésre kész` állomás.
 
-- [ ] **14.2 — `berki-spec-directory-structure.md`.** A `03-write-plan.md` sora → két sor.
+- [x] **14.2 — `berki-spec-directory-structure.md`.** A `03-write-plan.md` sora → két sor.
   A „The longest skill in the framework” megjegyzés a `03b`-hez kerül (vagy törlődik, ha a
   16.5 mérés szerint már nem igaz).
 
-- [ ] **14.3 — `prompts/meta-improve-prompts.md`.** Három helyen:
+- [x] **14.3 — `prompts/meta-improve-prompts.md`.** Három helyen:
   - a *„A workflow felépítése”* per-ciklus felsorolásában a `03` → `03a` + `03b`, egy-egy
     mondatos leírással és a köztes státusszal;
   - a *„A prompt fájlok”* táblában a `03-write-plan.md` sor → két sor (a mai sor tartalmának
@@ -1133,29 +1133,29 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
     **ír** és melyik csak **olvas** egy megosztott dokumentumban (itt: a `03b` három, tételesen
     felsorolt bővítést tehet a kód-félbe, semmi mást).*
 
-- [ ] **14.4 — `prompts/lang/{hu,en}/01-add-cycles.md`.** A `bs-write-plan` (03) hivatkozás
+- [x] **14.4 — `prompts/lang/{hu,en}/01-add-cycles.md`.** A `bs-write-plan` (03) hivatkozás
   → `bs-write-code-plan` (03a).
 
 ---
 
 ## 15. Kapuk és commit
 
-- [ ] **15.1 — Nyelvi paritás (default).**
+- [x] **15.1 — Nyelvi paritás (default).**
   ```bash
   python3 prompts/scripts/lang-parity-check.py
   ```
   A féloldalas fájlok WARN-jai megengedettek, **hiba nem**.
 
-- [ ] **15.2 — Nyelvi paritás (strict).**
+- [x] **15.2 — Nyelvi paritás (strict).**
   ```bash
   python3 prompts/scripts/lang-parity-check.py --strict
   ```
   Itt a **teljes fájlhalmaz-paritás** is kötelező: minden új `-hu` fájlnak van `-en` párja
   (4 új shared blokk + 2 quality-check + 2 skill + 2 lang fájl).
 
-- [ ] **15.3 — Gemini tükrök.** `python3 prompts/scripts/sync-gemini-agents.py --check` → 0.
+- [x] **15.3 — Gemini tükrök.** `python3 prompts/scripts/sync-gemini-agents.py --check` → 0.
 
-- [ ] **15.4 — Jelentés-review (emberi).** A paritás-kapu a **szerkezeti** eltérést fogja meg, a
+- [x] **15.4 — Jelentés-review (emberi).** A paritás-kapu a **szerkezeti** eltérést fogja meg, a
   **jelentés**-eltérést nem. Menj végig a nyolc új/módosított fájlpáron, és ellenőrizd, hogy az
   angol szöveg ugyanazt mondja — különös figyelemmel a 8.1/8.2 **új** pontjaira és a `03b`
   belépő kapujának (10.3/5.) indoklására.
@@ -1168,25 +1168,25 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
 
 ## 16. Elfogadási kritériumok
 
-- [ ] **16.1** A `prompts/skills-hu/` és `prompts/skills-en/` mappában **nincs** `03-write-plan.md`,
+- [x] **16.1** A `prompts/skills-hu/` és `prompts/skills-en/` mappában **nincs** `03-write-plan.md`,
   van `03a-write-code-plan.md` és `03b-write-test-plan.md`.
-- [ ] **16.2** A 12.8 két grep-mintája lefutott: a `03-write-plan|bs-write-plan` mintára **nulla**
+- [x] **16.2** A 12.8 két grep-mintája lefutott: a `03-write-plan|bs-write-plan` mintára **nulla**
   találat (az `inprove-list*.md` kivételével), a `03-plan` mintára pedig **csak** a 12.8-ban
   tételesen felsorolt, szándékosan megtartott helyek maradtak (`05` célfázis-jelölés + a kapu
   `f.add/f.suggest` `"03"` argumentumai).
-- [ ] **16.3** `analyze-gate-check.py --plan-code-only` egy valódi (vagy gyártott) ciklus-mappán
+- [x] **16.3** `analyze-gate-check.py --plan-code-only` egy valódi (vagy gyártott) ciklus-mappán
   a `--plan-only` Must Fix listájának **részhalmazát** adja, `exit 0`/`1` értelmesen.
-- [ ] **16.4** A telepítés mind az öt platformra lefut, és a telepített
+- [x] **16.4** A telepítés mind az öt platformra lefut, és a telepített
   `bs-03a-write-code-plan/SKILL.md` + `bs-03b-write-test-plan/SKILL.md` fájlokban **nincs**
   feloldatlan `INCLUDE:` marker és `<sec:` / `<field:` / `<status:` token.
-- [ ] **16.5** Méret: mindkét új skill **600 sor alatt** van (a mai 1042 helyett).
+- [~] **16.5** Méret: mindkét új skill **600 sor alatt** van (a mai 1042 helyett). — **RÉSZBEN:** `03a` 584 sor ✔, `03b` **683 sor** ✘ (indoklás és a következő lépés a 18. szakaszban).
   ```bash
   wc -l prompts/skills-hu/03a-write-code-plan.md prompts/skills-hu/03b-write-test-plan.md
   ```
   Ha valamelyik 600 fölött marad, **állj meg és jelezd** — akkor a vágás nem oldotta meg a
   méret-problémát, és a 3. szakasz döntéseit újra kell nézni (nem a szöveget kell tömöríteni:
   a teszt-szabályok tömörítése a `7/f`/`7/h` szerint adatvesztés).
-- [ ] **16.6** `lang-parity-check.py --strict` és `sync-gemini-agents.py --check` egyaránt 0.
+- [x] **16.6** `lang-parity-check.py --strict` és `sync-gemini-agents.py --check` egyaránt 0.
 - [ ] **16.7 — ÉLES PRÓBA (a legfontosabb).** Egy valódi, kicsi ciklus végigvitele egy éles
   projekten `/bs-write-code-plan` → `/clear` → `/bs-write-test-plan` → `/bs-write-tasks` →
   `/bs-analyze` úton, **gyenge modellen** (a keményítés célközönsége). Amit mérni kell:
@@ -1240,7 +1240,51 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
 > próba eredménye. Ha egy döntés (3. szakasz) tarthatatlannak bizonyult, **írd ide, mi lett
 > helyette és miért** — ez lesz a `meta-improve-prompts.md` `7/k` elv végleges szövegének forrása.
 
-- _(még nincs bejegyzés)_
+- **Branch-döntés (5.1 eltérés).** A munka **nem** új `feature/split-plan-phase` branchen fut,
+  hanem a meglévő `feature/test-target-and-report-hardening`-en, a felhasználó döntése szerint —
+  a B rész (bizonyíték-keményítés) ugyanezen a branchen, be nem olvasztva áll, és a két rész
+  külön committal is elkülöníthető.
+- **Kiinduló mérés (5.2).** `03-write-plan.md` (hu/en): **1042–1042 sor**;
+  `shared-hu/quality-check-plan.md`: 88 sor; `lang/hu/quality-check-plan.md`: 108 sor.
+  Kiinduló kapuk (5.3): `lang-parity-check` 0, `sync-gemini-agents --check` 0 — tiszta indulás.
+- **A hasítás mérlege (16.5 — RÉSZBEN teljesül).** `03a-write-code-plan`: **584 sor**, `03b-write-test-plan`:
+  **683 sor** (a kiinduló `03-write-plan.md` 1042 sor volt, mindkét nyelvi fán). A `03a` a 600-as
+  padló alatt van, a **`03b` fölötte** — a 16.5 kritérium tehát nem teljesül maradéktalanul.
+  **Miért, és miért nem tömörítettünk:** a `03b` 683 sorából ~330 a `plan.md` teszt-felének
+  **sablonja** (a `TS-NN` blokk-forma a `.http` példával, a gépi futtatási tábla kitöltési
+  szabályai, a `TP3` bootstrapping-tábla, a `TA1` adatlap, a unit/integrációs/E2E példa-sűrűség),
+  amit a 10.7 kifejezetten **szó szerint** kért. Ennek tömörítése a `7/f`/`7/h` szerint adatvesztés
+  lenne, tehát a 16.5 zárómondata (*„nem a szöveget kell tömöríteni"*) érvényesült. A valódi nyereség
+  nem is a méret volt (3. szakasz, D1 indoklása): a `03b` **egyetlen** leszállítandója a teszt-terv,
+  és lezárt kód-tervről indul. Ha a méret önmagában is cél, a következő vágás nem a szabályokat,
+  hanem a **sablont** viheti közös blokkba (`shared-*/plan-template-test.md`) — az a `03b` felét
+  jelenti, és az A rész döntéseit nem érinti.
+- **A `<sec:reverse_coverage>` a sablonban `###`-ról `##`-ra emelkedett.** A mai `03`-ban a
+  `<sec:test_specification>` alatt élt (`###`), a 4.1 tábla szerint viszont a `03a` leszállítandója,
+  a teszt-szekciók előtt. A kapu ezt elviseli: a `check_required_tables` puszta szöveg-tartalmazást
+  néz, a `section_body` pedig bármely címsor-szinttel dolgozik (ellenőrizve).
+- **A `03` sablonjának egy záró mondata rossz szekcióban volt.** A `_Ha egy spec-beli eset ebben a
+  ciklusban nem tesztelhető…_` mondat a `reverse_coverage` blokk végén állt, de a `spec_coverage`
+  tábla „Plan teszteset" oszlopáról szól — a hasításkor a `03b`-be került, a `spec_coverage` alá.
+- **Két kapu-bélyeg egy fejlécben.** A `03a` sablonja mindkét mezőt kiírja (`f_gate_code` **és** egy
+  üres `f_gate` sor azzal a megjegyzéssel, hogy azt a `03b` tölti) — így a `03b`-nek nem kell
+  fejléc-sort beszúrnia, csak kitöltenie, és a két bélyeg együtt marad a fázis-lánc nyomaként (D6).
+- **A `GA1` csapdája valós volt (11.5).** A `check_gate_stamp` a státusz-mezőn korán visszatér;
+  `status_key` paraméter nélkül `code_only` módban **csendben** soha nem mért volna semmit. Célzottan
+  ellenőrizve: `<status:ready_for_test_plan>` státuszú planből kivéve a `**Kód-terv kapu:**` sort a
+  javaslat megjelenik, visszatéve eltűnik.
+- **`--plan-code-only` + `--report-only`/`--paths-only` → `exit 2` (11.8).** Az önálló módok
+  korábban térnek vissza, mint ahol a plan-checkek egyáltalán lefutnának, tehát a kombináció
+  **csendben** mást csinált volna, mint amit a hívó gondol. Explicit használati hiba lett belőle.
+- **Éles füstteszt (11.9).** A `cycle-30` planjén a `--plan-only` 8 `TS7` Must Fixet ad, a
+  `--plan-code-only` **0**-t (`exit 0`) — a kód-oldali halmaz tehát valódi részhalmaz, új Must Fix
+  kód nem jelent meg.
+- **A `plan-fixer` a hasítás nyertese.** A wrapper mindkét minőségi kaput beemeli (`-code` + `-test`),
+  plusz a két új közös blokkot (`dereferencing`, `spec-artifact-transfer`), amelyekre eddig is
+  szüksége volt, de a `03` skilljéből nem kapta meg — a promptja így lett először tényleg önhordó.
+- **A `cycle-status.py` két sora ugyanabból a mezőből számol (D11).** Ellenőrizve éles ciklus-mappán:
+  egy `<status:done>` plan mindkét sort `KÉSZ`-re teszi, tehát az összesített ciklus-státusz logikája
+  nem sérült.
 
 ---
 ---
@@ -2087,9 +2131,9 @@ tud vörös lenni**, és **egy nem létező függvénynévre hivatkozó parancs 
   `07`-fallback) jelen van — pontosan az a hatás, amit a 26. szakasz bevezetője kért („a 26.2
   önmagában kevés"). A 26.1 anti-stub blokk a `06` *Végrehajtási szabályok* fejezetébe, az `IM2`
   garde után került, a `RED1`/`TB1` kapukra hivatkozva.
-- **A `7/l` elv a `7/e` UTÁN áll, nem a `7/k` után.** A terv a `7/k` (A rész) mögé tette volna, de
-  az A rész nincs végrehajtva, tehát `7/k` nem létezik — a `7/l` a `7/x` csoport végére került. Az
-  A rész elvégzésekor a `7/k` egyszerűen elé szúrható, sorszám-ütközés nélkül.
+- **A `7/l` elv előbb került be, mint a `7/k`.** A B rész végrehajtásakor az A rész (`7/k`) még nem
+  volt kész, ezért a `7/l` a `7/x` csoport végére került; az A rész elvégzésekor a `7/k` elé lett
+  szúrva, sorszám-ütközés nélkül — a fájlban most a helyes sorrend áll (`… 7/e · 7/k · 7/l`).
 - **31.7 újramérve (regresszió).** A `cycle-30`-on a mai fán: `CK1` bukik (13. naplósor
   `T030a-T037` intervallum + 8 hiányzó naplósor), `RED1` bukik (13 `[RED]` taskhoz nincs `✗`),
   `TB2` bukik (3 elorphanodott szelektor), `TB1` a `--files`-os futtatásban 7 vacuous törzset talál

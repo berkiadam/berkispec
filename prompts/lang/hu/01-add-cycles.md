@@ -58,7 +58,7 @@
 > **Kitöltése nem kötelező** — üresen hagyva a flow változatlanul működik.
 > Ha viszont írsz ide, két fázis is automatikusan beolvassa:
 > - `bs-write-spec` (02) — a **viselkedési** tartalmat, a `spec.md` kiindulópontjaként (a `roadmap.md` bejegyzése mellett);
-> - `bs-write-plan` (03) — a **technikai/eljárás-jellegű** tartalmat (parancsok, hostok, komponensek, korlátok) a `plan.md`-hez.
+> - `bs-write-code-plan` (03a) — a **technikai/eljárás-jellegű** tartalmat (parancsok, hostok, komponensek, korlátok) a `plan.md`-hez.
 >
 > Formátum nincs megkötve: folyó szöveg, felsorolás, táblázat, kódrészlet — bármi jó.
 > Ezt a fájlt egyik fázis sem írja felül.

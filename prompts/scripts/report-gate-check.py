@@ -364,7 +364,7 @@ def main():
             f"  **{_F_PATH_BASE}:** kör-mappa     (mai séma: test-report/validate/round-NN/)\n"
             f"  **{_F_PATH_BASE}:** test-report    (régi, flat séma)\n\n"
             "Ha a ciklus most tér át a mai sémára, a `conventions.md` frissítése a ciklus\n"
-            "része (kell rá task) — lásd a 03-write-plan „Kapu-konfiguráció együtt mozog\" szabályát.",
+            "része (kell rá task) — lásd a 03a-write-code-plan „Kapu-konfiguráció együtt mozog\" szabályát.",
             file=sys.stderr,
         )
         return 2

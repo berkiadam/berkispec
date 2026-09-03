@@ -1,6 +1,6 @@
 ---
 name: plan-fixer
-description: "Az 05-analyze önjavító hurok 03-plan Fix-mód belépője (vékony wrapper a 03-write-plan Fix-módjához). Az 05-analyze skill hívja."
+description: "Az 05-analyze önjavító hurok 03-plan Fix-mód belépője (vékony wrapper a 03a-write-code-plan / 03b-write-test-plan Fix-módjához — a plan.md mindkét felét javíthatja). Az 05-analyze skill hívja."
 role: "Plan Fix-mód végrehajtó wrapper (az analyze-hurok 03-fázis javítója)"
 called_by: ["skills/05-analyze.md"]
 inputs:
@@ -14,7 +14,10 @@ outputs:
 tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob"]
 shared:
   - "shared/fix-mode-plan.md"
-  - "shared/quality-check-plan.md"
+  - "shared/quality-check-plan-code.md"
+  - "shared/quality-check-plan-test.md"
+  - "shared/dereferencing.md"
+  - "shared/spec-artifact-transfer.md"
   - "shared/python-cmd.md"
 ---
 
@@ -25,7 +28,7 @@ Te a plan fázis (03) **Fix-mód** végrehajtója vagy, amelyet az `05-analyze` 
 
 ## Teendő
 
-1. **Kövesd a lent beemelt „Fix-mód" szekciót** (két belépési alak — közvetlen javítás vagy downstream reconciliation; auto-javítható vs kérdezni kell határvonal; auto-státusz `[analyze-loop]` markerrel; visszatérési összefoglaló). A fázis minőségi kapui szintén lent szerepelnek — a javított részekre alkalmazd őket. **Ne olvasd be a fázis-skillt** (`/bs-03-write-plan`) (D13): minden szükséges szabály itt van, a teljes skill beolvasása pedig a teljes fázis újrafuttatására csábít.
+1. **Kövesd a lent beemelt „Fix-mód" szekciót** (két belépési alak — közvetlen javítás vagy downstream reconciliation; auto-javítható vs kérdezni kell határvonal; auto-státusz `[analyze-loop]` markerrel; visszatérési összefoglaló). A fázis minőségi kapui szintén lent szerepelnek — a javított részekre alkalmazd őket. **Ne olvasd be a fázis-skilleket** (`/bs-write-code-plan`, `/bs-write-test-plan`) (D13): minden szükséges szabály itt van, a teljes skill beolvasása pedig a teljes fázis újrafuttatására csábít.
 2. **Bemenet:** a planre szűrt `<status:must_fix>` lista (közvetlen javítás), **vagy** a megváltozott upstream spec összefoglalója (reconciliation) + a `plan.md` és `plan-questions.md` aktuális állapota.
 3. **Reconciliation = célzott összehangolás, nem teljes újraírás.** A lezárt `plan-questions.md` döntéseket őrizd meg.
 4. **Ne kérdezz közvetlenül a felhasználótól** — amihez valódi döntés kell, azt új `Knn`-ként vedd fel a `plan-questions.md`-be, és add vissza az azonosítóját.
@@ -58,8 +61,18 @@ Te a plan fázis (03) **Fix-mód** végrehajtója vagy, amelyet az `05-analyze` 
 
 ## A fázis minőségellenőrzése — fix-módban KIZÁRÓLAG a javított részekre
 
-_Ez a 03 fázis minőségi kapuja. Fix-módban nem a teljes dokumentumot auditálod vele, hanem az általad módosított szakaszokat._
+_Ez a 03 fázis minőségi kapuja — **a kód-terv és a teszt-terv kapuja együtt, mert a fixer mindkét felet javíthatja** ugyanabban a `plan.md`-ben (D7). Fix-módban nem a teljes dokumentumot auditálod vele, hanem az általad módosított szakaszokat._
 
-<!-- INCLUDE:shared/quality-check-plan.md -->
+<!-- INCLUDE:shared/quality-check-plan-code.md -->
+
+<!-- INCLUDE:shared/quality-check-plan-test.md -->
+
+---
+
+<!-- INCLUDE:shared/dereferencing.md -->
+
+---
+
+<!-- INCLUDE:shared/spec-artifact-transfer.md -->
 
 <!-- INCLUDE:shared/test-scenario-design.md -->

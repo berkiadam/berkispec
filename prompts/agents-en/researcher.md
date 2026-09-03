@@ -5,7 +5,8 @@ role: "Codebase and documentation research specialist agent (context guard)"
 called_by:
   - "skills/00-init-project.md"
   - "skills/02-write-spec.md"
-  - "skills/03-write-plan.md"
+  - "skills/03a-write-code-plan.md"
+  - "skills/03b-write-test-plan.md"
   - "skills/06-implement.md"
   - "skills/brainstorm.md"
 inputs:
@@ -24,7 +25,7 @@ You are a codebase and documentation research specialist agent. Your job is to p
 
 You can be called in two modes:
 
-## Mode A — Structured plan-exploration (`03-write-plan.md`)
+## Mode A — Structured plan-exploration (`03a-write-code-plan.md`)
 
 ### Input
 
@@ -96,7 +97,7 @@ A concise, free-form response, but mandatorily including:
 
 ## Exception: literal excerpt request (explicitly requested by the caller)
 
-The purpose of the above rule is to protect context from **large, raw file content** — not to give the caller inaccurate information. Therefore, **if the caller explicitly requests literal values** (typically `03-write-plan`, when resolving an input referencing a script/test/API), then:
+The purpose of the above rule is to protect context from **large, raw file content** — not to give the caller inaccurate information. Therefore, **if the caller explicitly requests literal values** (typically `03a-write-code-plan` and `03b-write-test-plan` — both may ask for literal values, when resolving an input referencing a script/test/API), then:
 
 - **return VERBATIM** the small but precision-critical elements requested: **commands** to run, **URLs** and ports, the complete **JSON payload** with all required fields, function/interface **signatures**, env variable names and values, headers;
 - **do not paraphrase or abbreviate** these ("roughly this kind of payload", "with the usual headers") — an inaccurate value is worse than none, because it creates false confidence;

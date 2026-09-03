@@ -3,7 +3,7 @@
   Ez NEM önálló skill/agent, hanem megosztott szövegblokk, amelyet a telepítő
   (install-helper.py) build-time INLINE beágyaz a hivatkozó skill telepített
   változatába (a `<!-- INCLUDE:shared/input-from-prev.md -->` marker helyére).
-  Hivatkozik rá: 01-add-cycles, 02-write-spec, 03-write-plan, 04-write-tasks,
+  Hivatkozik rá: 01-add-cycles, 02-write-spec, 03a-write-code-plan, 03b-write-test-plan, 04-write-tasks,
   07-validate. A quick-flow NEM (háromfázisú, egy kontextusban fut).
   A skill a marker KÖRÉ írja a saját, fázis-specifikus részét (mit olvas be,
   mely fájlokba írhat) — ez a blokk csak a közös szabályokat tartalmazza.

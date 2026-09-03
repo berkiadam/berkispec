@@ -2,7 +2,8 @@
   "bs-init-project": "berkispec - 00. Használd a projekt legelső indításakor (Phase 00), vagy ha a gyökér 'conventions.md' hiányzik/hiányos. A fejlesztővel közösen rögzíti a globális projektkonvenciókat (tech stack, teszt, fejlesztési flow, git merge stratégia) a 'conventions.md'-ben — ez minden további fázis előfeltétele.",
   "bs-add-cycles": "berkispec - 01. Használd az inicializálás után (Phase 01) fejlesztési ciklusok (roadmap) tervezéséhez, meglévők átütemezéséhez vagy új ciklus hozzáadásához — a feladatok logikai, önállóan tesztelhető egységekre bontása. Bemenet: 'conventions.md', opcionálisan egy brainstorm session ('brainstorm: NN' — a '/bs-brainstorm' munkafájljából desztillálja a 'cycle-design-input.md'-t, BS18). A 'specs/roadmap.md'-t hozza létre vagy frissíti 'Kész' státusszal.",
   "bs-write-spec": "berkispec - 02. Használd egy ciklus indításakor (Phase 02) a roadmap alapján, a funkcionális/üzleti követelmények specifikálásához. A ciklus git branch-én dolgozik (a branch a 01 fázisban jött létre 'main'-ről), és létrehozza a 'spec.md'-t ('Tervezésre kész') + a 'spec-questions.md'-t. Előfeltétel: 'specs/roadmap.md' státusz 'Kész'.",
-  "bs-write-plan": "berkispec - 03. Használd, ha a ciklus spec.md-je 'Tervezésre kész' (Phase 03), a részletes technikai megvalósítási terv kidolgozásához (kódbázis-elemzés, szükség esetén researcher subagent). Létrehozza a 'plan.md'-t ('Task írásra kész') + a 'plan-questions.md'-t.",
+  "bs-write-code-plan": "berkispec - 03a. Használd, ha a ciklus spec.md-je 'Tervezésre kész' (Phase 03a), a technikai megvalósítási terv kód-oldalának kidolgozásához: környezeti koordináták, tervezett módosítások (céllal), konfiguráció, séma-artefaktumok, scope-kapu (kódbázis-elemzés, szükség esetén researcher subagent). A plan.md-t 'Teszt-tervezésre kész' státuszra zárja; a teszt-tervet a /bs-write-test-plan írja.",
+  "bs-write-test-plan": "berkispec - 03b. Használd, ha a ciklus plan.md-je 'Teszt-tervezésre kész' (Phase 03b), a teszt-terv kidolgozásához: TS-NN teszt-forgatókönyvek lépés-táblával és .http alakkal, gépi futtatási tábla, környezet-felkészítés, teszt-artefaktum adatlapok, spec-lefedettség, regresszió. A plan.md-t 'Task írásra kész' státuszra zárja.",
   "bs-write-tasks": "berkispec - 04. Használd, ha a plan.md 'Task írásra kész' (Phase 04), a technikai terv jól strukturált, egyenként végrehajtható és mérhető feladatokra (DoD) bontásához. Létrehozza a 'tasks.md'-t ('Implementálásra kész') + szükség esetén a 'tasks-questions.md'-t.",
   "bs-analyze": "berkispec - 05. Használd az implementáció előtt (Phase 05), ha a tasks.md 'Implementálásra kész'. Kereszt-fázisos konzisztencia-kapu a spec.md/plan.md/tasks.md között: subagentekkel (analyzer, *-fixer) azonosítja és automatikusan javítja az ellentmondásokat. Létrehozza az 'analyze-report.md'-t (PASS/FAIL).",
   "bs-implement": "berkispec - 06. Használd, ha az analyze-report.md 'PASS' (Phase 06), a tényleges kódfejlesztéshez. Végrehajtja a tervezett kódmódosításokat a feladatlista alapján, és közben vezeti a 'tasks.md'-t, amíg az el nem éri a 'Validálásra kész' állapotot.",
@@ -31,7 +32,7 @@
     "role": "Implement Fix-mód végrehajtó wrapper (a validate-hurok 06-fázis javítója)"
   },
   "plan-fixer": {
-    "description": "Az 05-analyze önjavító hurok 03-plan Fix-mód belépője (vékony wrapper a 03-write-plan Fix-módjához). Az 05-analyze skill hívja.",
+    "description": "Az 05-analyze önjavító hurok 03-plan Fix-mód belépője (vékony wrapper a 03a-write-code-plan / 03b-write-test-plan Fix-módjához — a plan.md mindkét felét javíthatja). Az 05-analyze skill hívja.",
     "role": "Plan Fix-mód végrehajtó wrapper (az analyze-hurok 03-fázis javítója)"
   },
   "researcher": {
