@@ -37,7 +37,7 @@ Before you switch to `<status:ready_for_test_plan>` status, ask yourself:
 <!-- INCLUDE:shared/path-format.md -->
 - **Section IDs (PID1):** does every executable plan section bear a unique `[P-…]` ID, are the earlier ones unchanged, and did an inventory section get no ID?
 - **Scope gate (SC1):** is the `<sec:reverse_coverage>` table filled in, does every plan capability have a spec source (or <sec:out_of_scope> / a question)? The first column bears the `[P-…]` identifier of the section, the second the `DoD-NN` — the coverage chain of 05 runs on this (`S3`).
-- **<sec:config_lifecycle> (KF1):** is there a row in the table for every new/modified parameter, filled in **for every run mode** (local, test, container/compose, dev deploy) + the "if it is missing" behavior?
+- **<sec:config_lifecycle> (KF1):** is there a row in the table for every new/modified parameter, filled in **for every run mode** (local, test, container/compose, remote deploy) + the "if it is missing" behavior?
 - **Anchor verification:** is every `file:location` and "this symbol/assertion is there" claim confirmed with Grep/Read?
 - **Value sanity:** are the ports, time units, URL scheme↔port, versions, paths reviewed (a typical typo: `433` instead of `443`)?
 - **Does the gate configuration move along? (GC1)** — If the cycle touches the report structure, the report commands, the Sonar configuration, the test commands, the ports or the merge strategy: does the **affected section of `conventions.md` appear in the `<sec:planned_changes>`, with concrete new content**, and can 04 write a task for it? (Updating `specs/test-conventions.md` is **not** a substitute for this — the TR3 gate reads `conventions.md`.)

@@ -271,7 +271,7 @@ _**A mandatory section — the basis of the self-containedness of `plan.md`.** *
 
 _**Rules:** a placeholder is **forbidden** (`<TODO>`, `<here comes the password>`, `TBD`) — whatever is missing or outdated is a `plan-questions.md` question, not a placeholder. An empty cell is **forbidden**; where something is not applicable to this cycle, a `—` goes. A reference does not substitute for the data ("see the spec", "the usual test user"). The secret rule (TC5): a dev-scoped test user, a mock credential and a local password go here **with a concrete value**; a cluster, registry, VPN, IAM and production credential **never** — instead a pointer (where it is stored, who issues it)._
 
-**<field:f_target_env>:** <the target environment of the cycle: `local`, `dev`, `local + dev`, …>
+**<field:f_target_env>:** <the target environment of the cycle: `local`, `remote`, `local + remote`, …>
 
 _**Mandatory field (EV1).** It has to be stated WHICH environment this cycle is about — because a green test on its own does not prove WHERE it was green. A live cycle deployed to dev, but its tests ran against a local target (a script named `…:dev-e2e` had `baseURL: "http://127.0.0.1:5178"` in its config): everything went green, and so it never came to light that the component deployed to dev did not even start. This field binds the test target to the intent of the cycle, and the gate of `05` measures the `<field:f_environment>` column of the run table and the `TS-NN` calls against it (EV1–EV5)._
 

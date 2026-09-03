@@ -377,7 +377,7 @@ Ezután a **javaslatról** folytatsz párbeszédet a `doc-sync-questions.md`-n k
 
 | Tábla | Mit gyűjt |
 |---|---|
-| **Környezetek és végpontok** | környezet (lokális / dev / …), komponens, URL + port, health endpoint |
+| **Környezetek és végpontok** | környezet (lokális / remote / …), komponens, URL + port, health endpoint |
 | **Teszt-userek, kliensek, titkok** | környezet, név/azonosító (user, `client-id`, service account), titok **vagy pointer**, scope/szerep |
 | **Paraméterek és env-fájlok** | paraméter- és környezeti változó nevek, érték vagy pointer, hol használjuk |
 
@@ -386,7 +386,7 @@ Ezután a **javaslatról** folytatsz párbeszédet a `doc-sync-questions.md`-n k
 1. **Ez az igazságforrás.** Ha egy URL, user vagy paraméter itt szerepel, a receptek (1. szekció) **hivatkoznak rá**, nem másolják. Ha két helyen más érték áll, az hiba — a 0. blokk nyer, a receptet javítsd.
 2. **TC5 titok-szabály itt is él.** Dev-hatókörű teszt-jelszó beírható; **osztott platform credential (klaszter, registry, VPN, IAM, éles token) SOHA** — helyette pointer: `pointer: .env.dev → TMP_S2S_SECRET` vagy `pointer: jelszókezelő / Vault`. A TC8 titok-checkje ezt a blokkot is nézi.
 3. **Csak verifikált érték (TC3).** Ami ebben a ciklusban nem futott le és nem is erősítette meg a felhasználó, az nem kerül be. Bizonytalan koordináta → `doc-sync-questions.md` kérdés.
-4. **Környezetenként külön sor.** A „localhost:8080 vagy a dev host" típusú összemosás használhatatlan — a `Környezet` oszlop kötelező.
+4. **Környezetenként külön sor.** A „localhost:8080 vagy a remote host" típusú összemosás használhatatlan — a `Környezet` oszlop kötelező.
 5. **Elavulás.** Ha egy koordináta a ciklusban bizonyítottan megváltozott (más port, más host, más user), **itt kell frissíteni** — és a rá hivatkozó receptek automatikusan helyesek maradnak. Ez a blokk fő haszna.
 
 A TC8 kapu ellenőrzi, hogy a blokk **létezik, a fájl elején áll, és van benne kitöltött adatsor** — üres vagy placeholderes tábla bukik.

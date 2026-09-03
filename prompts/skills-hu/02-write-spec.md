@@ -81,7 +81,7 @@ A spec a **viselkedést** írja le (mit lát a kliens/felhasználó, milyen beme
 | „A token lejárta után a kérés újraautentikálást igényel." | „Redis-ben `token:<id>` kulcs TTL-lel, refresh lock `SETNX`-szel." |
 | „A válasz tartalmazza a `correlationId`-t." | „A `correlationId`-t a `requestContext` middleware injektálja." |
 | „Két párhuzamos kérés nem indíthat két refresh-t." | „Elosztott lock Redis `SET NX PX`-szel, 5s TTL." |
-| „A folyamatindítás a `POST /rtm/api/runtime/app/{appId}/build/{buildId}/…/start` végponton érhető el." | „A mock a `localhost:5175`-en, a dev backend a `https://login.dev.example.local` hoston fut." |
+| „A folyamatindítás a `POST /rtm/api/runtime/app/{appId}/build/{buildId}/…/start` végponton érhető el." | „A mock a `localhost:5175`-en, a remote backend a `https://login.remote.example.local` hoston fut." |
 | „A PM és a public végpont **külön konfigurálható** (két külön base URL paraméter)." | „`PUBLIC_BASE_URL=http://localhost:5175`" — a konkrét érték, port, host. |
 | „A frissített SPI-val a status endpoint `200`-at és `{\"status\":\"spi-ok\"}`-ot ad." | „`mvn clean package`, image push a registrybe, deployment-csere a `dsp01` namespace-ben." |
 | „A hívás a felhasználó access tokenjével megy; S2S tokennel `403`." | „A teszt-user jelszava a `.env.dev`-ből olvasva; `oc login` szükséges." |
@@ -94,13 +94,13 @@ Ha egy mondat technológiát, fájlnevet, függvényt vagy konkrét adatszerkeze
 
 ### Koordináta-kiszűrés — felismerés és ÁTHELYEZÉS (KX) — kötelező
 
-A tapasztalat szerint a spec-be leggyakrabban **környezeti koordináták és eljárás-leírások** szivárognak be (dev hostok, localhost-portok, image-nevek, deploy-parancsok), mert „hasznos infónak" tűnnek. **Ezeket aktívan ki kell szűrni** — akkor is, ha **te** írtad az előző körben, és akkor is, ha egy korábbi futás hagyta bent (lásd a „Feladatod" szekció újrafutás-ágát).
+A tapasztalat szerint a spec-be leggyakrabban **környezeti koordináták és eljárás-leírások** szivárognak be (remote hostok, localhost-portok, image-nevek, deploy-parancsok), mert „hasznos infónak" tűnnek. **Ezeket aktívan ki kell szűrni** — akkor is, ha **te** írtad az előző körben, és akkor is, ha egy korábbi futás hagyta bent (lásd a „Feladatod" szekció újrafutás-ágát).
 
 **Menj végig a spec teljes szövegén** (minden szekción, a `<sec:test_specification>`-t és a `<sec:objective>`-t is beleértve), és jelöld meg az alábbiakat:
 
 | Kiszűrendő (koordináta / eljárás → **plan**) | Marad (szerződés / viselkedés → **spec**) |
 |---|---|
-| abszolút URL hosttal (`https://valami.dev.…`, `http://localhost:5175`) | endpoint-**útvonal** (`/rtm/.../start`, `/init-hash`) |
+| abszolút URL hosttal (`https://valami.remote.…`, `http://localhost:5175`) | endpoint-**útvonal** (`/rtm/.../start`, `/init-hash`) |
 | `host:port`, portszám, `localhost:NNNN` | HTTP metódus, státuszkód, errorCode |
 | image-név és tag (`…/keycloak:v1`), registry, namespace, pod, deployment név | request/response **payload-mezők**, példa JSON |
 | CLI-parancs végrehajtandó lépésként (`oc`, `kubectl`, `mvn`, `npm`, `docker`/`podman`, `curl`) | fejléc-**nevek** és kötelezőségük |

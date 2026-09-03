@@ -72,14 +72,14 @@ Az alábbi blokk **nem** a te ciklusod tartalma: a **sűrűségét** és a **meg
 
 | # | Lépés | Hívás | Elvárt eredmény |
 |---|---|---|---|
-| 1 | tároló kiürítése | `redis-cli -h redis.dev.example.com -n 0 FLUSHDB` | `OK`, és a `KEYS ns01_tmp:*` üres listát ad |
-| 2 | hívásnapló nullázása | `curl -s -X POST https://mock.dev.example.com/__admin/requests/reset` | `200` |
-| 3 | 5 munkamenet előállítása | `for i in 1 2 3 4 5; do curl -s -X POST https://tmp.dev.example.com/login -H 'Content-Type: application/json' -d '{"username":"testuser@example.com","password":"Pass1234"}' -o sess-$i.json; done` | mind az 5 válasz `200`, és az 5 kinyert `sid` érték páronként **különböző** |
-| 4 | 5 kérés egyidejű beküldése | `printf '%s\n' 1 2 3 4 5 \| xargs -P 5 -I{} curl -s -o out-{}.json -w '%{http_code} %{time_total}\n' -X POST https://tmp.dev.example.com/init-hash -H "Authorization: Bearer $(jq -r .access_token sess-{}.json)"` | mind az 5 sor `200`, és minden `out-N.json` tartalmaz `initHash` mezőt |
-| 5 | megszámolt mellékhatás | `curl -s https://mock.dev.example.com/__admin/requests/count -d '{"method":"POST","url":"/token","bodyPatterns":[{"contains":"grant_type=client_credentials"}]}' \| jq .count` | `1` — pontosan egy megújítási hívás a 5 kérésre |
-| 6 | kiolvasott állapot: kulcsnév és szerkezet | `redis-cli -h redis.dev.example.com --no-raw GET ns01_tmp:tokens:s2s \| jq 'keys'` | a kulcs neve pontosan `ns01_tmp:tokens:s2s` (nem `…:tokens:tokens:s2s`), a JSON mezői: `["accessToken","expiresAt","issuedAt"]` |
-| 7 | kiolvasott állapot: a zár feloldva | `redis-cli -h redis.dev.example.com EXISTS ns01_tmp:tokens:s2s:lock` | `0` — a birtokos példány a művelet végén törölte |
-| 8 | negatív kontroll | a 4. lépéssel **egyidejűleg**: `curl -s -o /dev/null -w '%{http_code} %{time_total}\n' https://tmp.dev.example.com/media/42 -H "Authorization: Bearer $(jq -r .access_token sess-1.json)"` | `200`, és a válaszidő `< 0.5` s — a munkamenet-szintű utat a globális token megújítása nem blokkolta |
+| 1 | tároló kiürítése | `redis-cli -h redis.remote.example.com -n 0 FLUSHDB` | `OK`, és a `KEYS ns01_tmp:*` üres listát ad |
+| 2 | hívásnapló nullázása | `curl -s -X POST https://mock.remote.example.com/__admin/requests/reset` | `200` |
+| 3 | 5 munkamenet előállítása | `for i in 1 2 3 4 5; do curl -s -X POST https://tmp.remote.example.com/login -H 'Content-Type: application/json' -d '{"username":"testuser@example.com","password":"Pass1234"}' -o sess-$i.json; done` | mind az 5 válasz `200`, és az 5 kinyert `sid` érték páronként **különböző** |
+| 4 | 5 kérés egyidejű beküldése | `printf '%s\n' 1 2 3 4 5 \| xargs -P 5 -I{} curl -s -o out-{}.json -w '%{http_code} %{time_total}\n' -X POST https://tmp.remote.example.com/init-hash -H "Authorization: Bearer $(jq -r .access_token sess-{}.json)"` | mind az 5 sor `200`, és minden `out-N.json` tartalmaz `initHash` mezőt |
+| 5 | megszámolt mellékhatás | `curl -s https://mock.remote.example.com/__admin/requests/count -d '{"method":"POST","url":"/token","bodyPatterns":[{"contains":"grant_type=client_credentials"}]}' \| jq .count` | `1` — pontosan egy megújítási hívás a 5 kérésre |
+| 6 | kiolvasott állapot: kulcsnév és szerkezet | `redis-cli -h redis.remote.example.com --no-raw GET ns01_tmp:tokens:s2s \| jq 'keys'` | a kulcs neve pontosan `ns01_tmp:tokens:s2s` (nem `…:tokens:tokens:s2s`), a JSON mezői: `["accessToken","expiresAt","issuedAt"]` |
+| 7 | kiolvasott állapot: a zár feloldva | `redis-cli -h redis.remote.example.com EXISTS ns01_tmp:tokens:s2s:lock` | `0` — a birtokos példány a művelet végén törölte |
+| 8 | negatív kontroll | a 4. lépéssel **egyidejűleg**: `curl -s -o /dev/null -w '%{http_code} %{time_total}\n' https://tmp.remote.example.com/media/42 -H "Authorization: Bearer $(jq -r .access_token sess-1.json)"` | `200`, és a válaszidő `< 0.5` s — a munkamenet-szintű utat a globális token megújítása nem blokkolta |
 | 9 | mért időbeli elvárás | a 4. lépés `%{time_total}` értékei | mindegyik `< 2.0` s — nincs a várakozási időkorláton túli beragadás |
 
 **<field:f_cleanup>:** `rm -f sess-*.json out-*.json`; a példányszám visszaállítása 1-re; a tároló kiürítése.

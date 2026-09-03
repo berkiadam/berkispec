@@ -81,7 +81,7 @@ The spec describes the **behavior** (what the client/user sees, for which input 
 | "After the token expires, the request requires re-authentication." | "A `token:<id>` key in Redis with a TTL, a refresh lock with `SETNX`." |
 | "The response contains the `correlationId`." | "The `correlationId` is injected by the `requestContext` middleware." |
 | "Two parallel requests must not start two refreshes." | "A distributed lock with Redis `SET NX PX`, a 5s TTL." |
-| "Starting the process is available on the `POST /rtm/api/runtime/app/{appId}/build/{buildId}/…/start` endpoint." | "The mock runs on `localhost:5175`, the dev backend on the `https://login.dev.example.local` host." |
+| "Starting the process is available on the `POST /rtm/api/runtime/app/{appId}/build/{buildId}/…/start` endpoint." | "The mock runs on `localhost:5175`, the remote backend on the `https://login.remote.example.local` host." |
 | "The PM and the public endpoint are **configurable separately** (two separate base URL parameters)." | "`PUBLIC_BASE_URL=http://localhost:5175`" — the concrete value, port, host. |
 | "With the updated SPI the status endpoint returns `200` and `{\"status\":\"spi-ok\"}`." | "`mvn clean package`, an image push to the registry, a deployment swap in the `dsp01` namespace." |
 | "The call goes with the access token of the user; with an S2S token `403`." | "The password of the test user is read from `.env.dev`; `oc login` is required." |
@@ -94,13 +94,13 @@ If a sentence names a technology, a file name, a function or a concrete data-str
 
 ### Coordinate filtering — recognition and MOVING (KX) — mandatory
 
-Experience shows that what most often creeps into the spec are **environment coordinates and procedure descriptions** (dev hosts, localhost ports, image names, deploy commands), because they look like "useful information". **These have to be filtered out actively** — even if **you** wrote them in the previous round, and even if an earlier run left them in there (see the re-run branch of the "What you have to do" section).
+Experience shows that what most often creeps into the spec are **environment coordinates and procedure descriptions** (remote hosts, localhost ports, image names, deploy commands), because they look like "useful information". **These have to be filtered out actively** — even if **you** wrote them in the previous round, and even if an earlier run left them in there (see the re-run branch of the "What you have to do" section).
 
 **Go through the whole text of the spec** (every section, including the `<sec:test_specification>` and the `<sec:objective>`), and mark the following:
 
 | To be filtered out (coordinate / procedure → **plan**) | Stays (contract / behavior → **spec**) |
 |---|---|
-| an absolute URL with a host (`https://something.dev.…`, `http://localhost:5175`) | the endpoint **path** (`/rtm/.../start`, `/init-hash`) |
+| an absolute URL with a host (`https://something.remote.…`, `http://localhost:5175`) | the endpoint **path** (`/rtm/.../start`, `/init-hash`) |
 | `host:port`, a port number, `localhost:NNNN` | the HTTP method, the status code, the errorCode |
 | an image name and tag (`…/keycloak:v1`), registry, namespace, pod, deployment name | request/response **payload fields**, an example JSON |
 | a CLI command as a step to be executed (`oc`, `kubectl`, `mvn`, `npm`, `docker`/`podman`, `curl`) | header **names** and whether they are mandatory |

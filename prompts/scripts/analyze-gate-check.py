@@ -1928,7 +1928,7 @@ def check_target_environment(plan_text, f, code_only=False):
     if not target:
         f.add("EV1", "03", f"a `{sec('environment_coords')}` szekcióból hiányzik a "
               f"`**{fld('f_target_env')}:**` mező (EV1) — ki kell mondani, MELY környezetre szól "
-              "ez a ciklus (pl. `lokális`, `dev`, `lokális + dev`). Enélkül semmi nem köti a "
+              "ez a ciklus (pl. `lokális`, `remote`, `lokális + remote`). Enélkül semmi nem köti a "
               "teszt-célpontot a ciklus szándékához: egy zöld futás nem bizonyítja, HOL volt zöld")
     if code_only:
         return
@@ -1944,7 +1944,7 @@ def check_target_environment(plan_text, f, code_only=False):
         if not env.strip():
             f.add("EV2", "03", f"a gépi futtatási tábla `{cat}` sorából hiányzik a "
                   f"`{fld('f_environment')}` oszlop értéke (EV2) — minden kategória mondja meg, "
-                  "hol fut (`lokális` / a cél-környezet neve). A `run-tests.py` ezt naplózza a "
+                  "hol fut (`lokális` / `remote`). A `run-tests.py` ezt naplózza a "
                   "kör bizonyítékába")
             continue
         if _env_is_local(env):
@@ -1957,7 +1957,7 @@ def check_target_environment(plan_text, f, code_only=False):
                   "de a parancsban nincs egyetlen nem-lokális host sem (EV3) — a célpontot a "
                   "PARANCSBAN kell láthatóvá tenni (env-változóval vagy kapcsolóval, pl. "
                   "`PLAYWRIGHT_BASE_URL=https://…`), nem egy konfigfájlba rejtve. Egy "
-                  "`…:dev-e2e` nevű script configjában simán állhat `localhost` — a név nem bizonyíték")
+                  "`…:remote-e2e` nevű script configjában simán állhat `localhost` — a név nem bizonyíték")
         elif known_remote and not (cmd_hosts & known_remote):
             f.suggest("EV3", "03", f"a `{cat}` parancsának hostja ({', '.join(sorted(cmd_hosts))}) "
                       f"nem szerepel a `{sec('environment_coords')}` szekcióban — ellenőrizd, hogy "

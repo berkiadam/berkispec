@@ -377,7 +377,7 @@ After that you continue the dialogue about the **suggestion** through `doc-sync-
 
 | Table | What it collects |
 |---|---|
-| **Environments and endpoints** | the environment (local / dev / …), the component, the URL + port, the health endpoint |
+| **Environments and endpoints** | the environment (local / remote / …), the component, the URL + port, the health endpoint |
 | **Test users, clients, secrets** | the environment, the name/identifier (user, `client-id`, service account), the secret **or a pointer**, the scope/role |
 | **Parameters and env files** | parameter and environment variable names, the value or a pointer, where we use it |
 
@@ -386,7 +386,7 @@ After that you continue the dialogue about the **suggestion** through `doc-sync-
 1. **This is the source of truth.** If a URL, a user or a parameter appears here, the recipes (section 1) **reference it**, they do not copy it. If two places hold different values, that is an error — block 0 wins, correct the recipe.
 2. **The TC5 secret rule holds here too.** A dev-scoped test password may be written in; **a shared platform credential (cluster, registry, VPN, IAM, a production token) NEVER** — instead a pointer: `pointer: .env.dev → TMP_S2S_SECRET` or `pointer: password manager / Vault`. The secret check of TC8 looks at this block as well.
 3. **Only a verified value (TC3).** Whatever did not run in this cycle and was not confirmed by the user either does not get in. An uncertain coordinate → a `doc-sync-questions.md` question.
-4. **A separate row per environment.** Blurring of the "localhost:8080 or the dev host" kind is useless — the `Environment` column is mandatory.
+4. **A separate row per environment.** Blurring of the "localhost:8080 or the remote host" kind is useless — the `Environment` column is mandatory.
 5. **Becoming outdated.** If a coordinate provably changed in the cycle (another port, another host, another user), **it has to be updated here** — and the recipes referencing it stay correct automatically. This is the main benefit of this block.
 
 The TC8 gate checks that the block **exists, stands at the beginning of the file, and contains a filled-in data row** — an empty or placeholder table fails.

@@ -93,14 +93,14 @@ _Minden környezet-, hozzáférés- és paraméter-adat **egy helyen** (TC13). A
 | Környezet | Komponens | URL / port | Health endpoint |
 |---|---|---|---|
 | lokális | <komponens> | `http://localhost:PORT` | `/health` |
-| dev | <komponens> | `https://<host>` | `/health/ready` |
+| remote | <komponens> | `https://<host>` | `/health/ready` |
 
 ### Teszt-userek, kliensek, titkok
 
 | Környezet | Név / azonosító | Titok | Scope / szerep |
 |---|---|---|---|
 | lokális | `<user>` | `<dev-only jelszó>` | `<realm / szerep>` |
-| dev | `<client-id>` | pointer: `.env.dev` → `<VÁLTOZÓ>` | `<scope>` |
+| remote | `<client-id>` | pointer: `.env.remote` → `<VÁLTOZÓ>` | `<scope>` |
 
 ### Paraméterek és env-fájlok
 

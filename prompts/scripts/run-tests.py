@@ -16,9 +16,10 @@ A parancsok forrása a `plan.md` `## Tesztelési stratégia` szekciójában lév
   | Kategória | Típus | Előfeltétel | Parancs | Eredményfájl | Formátum | Takarítás | Környezet |
   |---|---|---|---|---|---|---|---|
   | unit | gyors | — | `npm test -- --run --reporter=junit --outputFile=junit.xml` | `junit.xml` | junit | — | lokális |
-  | e2e  | nehéz | `curl -fsS https://app.dev.example/health` | `npx playwright test --reporter=junit` | `results.xml` | junit | `docker compose ... down -v` | dev |
+  | e2e  | nehéz | `curl -fsS https://app.remote.example/health` | `npx playwright test --reporter=junit` | `results.xml` | junit | `docker compose ... down -v` | remote |
 
-  · **Környezet:** hol fut a kategória (`lokális` vagy a cél-környezet neve). A
+  · **Környezet:** hol fut a kategória (`lokális` vagy `remote` — a
+    szabad szöveg megmarad, de az ajánlott címke a `remote`). A
     szkript naplózza a `results.json`-ba és a kimenetbe — így a bizonyítékból
     utólag is látszik, HOL volt zöld —, és megáll (exit 4), ha egy nem-lokális
     kategória lokális célra mutat. Régi, 7 oszlopos tábla változatlanul fut.

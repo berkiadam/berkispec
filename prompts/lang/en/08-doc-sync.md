@@ -93,14 +93,14 @@ _Every environment, access and parameter datum **in one place** (TC13). The reci
 | Environment | Component | URL / port | Health endpoint |
 |---|---|---|---|
 | local | <component> | `http://localhost:PORT` | `/health` |
-| dev | <component> | `https://<host>` | `/health/ready` |
+| remote | <component> | `https://<host>` | `/health/ready` |
 
 ### Test users, clients, secrets
 
 | Environment | Name / identifier | Secret | Scope / role |
 |---|---|---|---|
 | local | `<user>` | `<dev-only password>` | `<realm / role>` |
-| dev | `<client-id>` | pointer: `.env.dev` → `<VARIABLE>` | `<scope>` |
+| remote | `<client-id>` | pointer: `.env.remote` → `<VARIABLE>` | `<scope>` |
 
 ### Parameters and env files
 

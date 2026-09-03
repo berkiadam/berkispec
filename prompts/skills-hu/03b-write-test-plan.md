@@ -260,8 +260,8 @@ Forgatókönyvenként egy blokk, pontosan ebben a formában:
 - **🔴 REST-hívásnál a `.http` blokk is kötelező (TS8).** A lépés-tábla `Hívás` cellája a **gépnek** szól (egysoros, futtatható `curl`/parancs) — egy embernek viszont a fejlécekkel és a body-val együtt kell látnia a kérést, kattintható alakban. Ezért minden olyan `TS-NN` blokk végén, amelynek van REST-lépése, áll egy ```http infostringes kódblokk (VSCode REST Client / IntelliJ `.http` alak) **ugyanazokkal az értékekkel**, a lépés számára hivatkozva:
 
 ```http
-@tmp = https://tmp.dev.example.com
-@legacy = https://legacy.dev.example.com
+@tmp = https://tmp.remote.example.com
+@legacy = https://legacy.remote.example.com
 
 ### 3. lépés — munkamenet nyitása (a válasz `sid` mezője → a 4. lépés `{{sid}}` változója)
 POST {{legacy}}/api/v13/login/login
@@ -289,7 +289,7 @@ X-Correlation-Id: 11111111-1111-1111-1111-111111111111
 |---|---|---|---|---|---|---|---|---|
 | unit | gyors | — | `<szó szerinti parancs, gépi riporterrel>` | `junit.xml` | junit | — | lokális | <status:phase_both> |
 | integrációs | gyors | — | `<parancs>` | `<fájl>` | junit | — | lokális | <status:phase_both> |
-| e2e | nehéz | `<a cél elérhetőségi probe-ja; stack indítása>` | `<parancs a cél-hosttal>` | `<fájl>` | junit | `<lebontás>` | `<a cél-környezet neve>` | <status:phase_validate> |
+| e2e | nehéz | `<a cél elérhetőségi probe-ja; stack indítása>` | `<parancs a cél-hosttal>` | `<fájl>` | junit | `<lebontás>` | `<remote — a cél-környezet neve>` | <status:phase_validate> |
 
 **Kitöltési szabályok:**
 - **Típus:** `gyors` (unit/integrációs/typecheck — a VD10 könnyű körben is fut) vagy `nehéz` (E2E/regresszió — csak teljes körben).
@@ -301,9 +301,9 @@ X-Correlation-Id: 11111111-1111-1111-1111-111111111111
   - `{phase}` → a `test-report/`-hoz képest relatív **fázis-mappa** (`validate/round-02`). Ezt írd oda, ahol a `conventions.md` riport-parancsa a `<phase-dir>` helyőrzőt vagy egy `REPORT_PHASE_DIR`-szerű környezeti változót vár: `REPORT_PHASE_DIR={phase} npm run test:pw`.
   - **Tilos a `{round}` elé `test-report/`-ot írni** (`…/test-report/{round}`) — a `{round}` már tartalmazza. Az így keletkező dupla prefix rekurzív `test-report/specs/…` riport-fát épít; a `run-tests.py` a futtatás előtt ellenőrzi, és `exit 3`-mal megáll.
 - **Formátum:** `junit` (ajánlott) vagy `text` (a stdout-ból regexszel számol — gyengébb bizonyíték).
-- **🔴 <field:f_environment> — kötelező minden sorban (EV2–EV5).** Ide `lokális` vagy a cél-környezet neve kerül. Ha nem `lokális`:
-  - a **`Parancs` cellának literálisan tartalmaznia kell a cél-hostot** (env-változóval vagy kapcsolóval, pl. `PLAYWRIGHT_BASE_URL=https://app.dev.example npx playwright test`) — **a célpont nem rejtőzhet konfigfájlban** (EV3). Egy `test:playwright:dev-e2e` nevű script configjában simán állhat `localhost`: **a parancs neve nem bizonyíték, a cím az**;
-  - az **`Előfeltétel` cellába kötelező egy elérhetőségi probe** ugyanarra a hostra (`curl -fsS https://app.dev.example/health`) — a `run-tests.py` az előfeltételt futtatja, és bukásakor a kategória FAIL, tehát **egy le sem futó deploy nem tud zöldre pipálódni** (EV4);
+- **🔴 <field:f_environment> — kötelező minden sorban (EV2–EV5).** Ide `lokális` vagy `remote` kerül — **`remote` minden olyan futás, amely akár EGYETLEN olyan komponenst is hív, ami nem a lokális gépen fut** (a saját gépen futó konténer még `lokális`). Ha nem `lokális`:
+  - a **`Parancs` cellának literálisan tartalmaznia kell a cél-hostot** (env-változóval vagy kapcsolóval, pl. `PLAYWRIGHT_BASE_URL=https://app.remote.example npx playwright test`) — **a célpont nem rejtőzhet konfigfájlban** (EV3). Egy `test:playwright:remote-e2e` nevű script configjában simán állhat `localhost`: **a parancs neve nem bizonyíték, a cím az**;
+  - az **`Előfeltétel` cellába kötelező egy elérhetőségi probe** ugyanarra a hostra (`curl -fsS https://app.remote.example/health`) — a `run-tests.py` az előfeltételt futtatja, és bukásakor a kategória FAIL, tehát **egy le sem futó deploy nem tud zöldre pipálódni** (EV4);
   - `localhost` / `127.0.0.1` a parancsban vagy az előfeltételben **tilos** (EV5) — a `run-tests.py` ilyenkor `exit 4`-gyel megáll, futtatás nélkül.
 - **<field:f_phase> — melyik FÁZIS futtatja (PH1).** Három érték: `<status:phase_implement>` (csak a 06 fázis dev-hurka futtatja), `<status:phase_validate>` (csak a 07-validate), `<status:phase_both>` (mindkettő). **Az üres cella `<status:phase_both>`-t jelent** — a hallgatás soha nem jelent kihagyást, tehát a jelöletlen kategória mindenhol lefut. A `run-tests.py` a `--phase` kapcsolóval szűr: a `06` `--phase <status:phase_implement>`-tel, a `07` `--phase <status:phase_validate>`-tel hívja.
   - **Mikor `<status:phase_implement>`:** olcsó, gyors dev-hurok ellenőrzés, amit a validálásban egy bővebb kategória úgyis lefed (pl. külön `lint` vagy `typecheck` sor a teljes unit-készlet mellett).

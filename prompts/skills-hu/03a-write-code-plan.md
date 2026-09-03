@@ -271,7 +271,7 @@ _**Kötelező szekció — a `plan.md` önhordóságának alapja.** Ide kerül *
 
 _**Szabályok:** placeholder **tilos** (`<TODO>`, `<ide jön a jelszó>`, `TBD`) — ami hiányzik vagy elavult, az `plan-questions.md` kérdés, nem placeholder. Üres cella **tilos**; ami erre a ciklusra nem értelmezhető, oda `—` kerül. Hivatkozás nem helyettesíti az adatot („lásd a spec-et", „a szokásos teszt-user"). Titok-szabály (TC5): dev-hatókörű teszt-user, mock-credential és lokális jelszó **konkrét értékkel** ide kerül; klaszter-, registry-, VPN-, IAM- és éles credential **soha** — helyette pointer (hol tárolják, ki adja ki)._
 
-**<field:f_target_env>:** <a ciklus cél-környezete: `lokális`, `dev`, `lokális + dev`, …>
+**<field:f_target_env>:** <a ciklus cél-környezete: `lokális`, `remote`, `lokális + remote`, …>
 
 _**Kötelező mező (EV1).** Ki kell mondani, MELY környezetre szól ez a ciklus — mert egy zöld teszt önmagában nem bizonyítja, HOL volt zöld. Egy éles ciklus a dev-re telepített, a tesztjei viszont lokális célpontra futottak (egy `…:dev-e2e` nevű script configjában `baseURL: "http://127.0.0.1:5178"` állt): minden zöld lett, és így nem derült ki, hogy a dev-re telepített komponens el sem indult. Ez a mező köti a teszt-célpontot a ciklus szándékához, és erre méri az `05` kapuja a futtatási tábla `<field:f_environment>` oszlopát és a `TS-NN` hívásait (EV1–EV5)._
 

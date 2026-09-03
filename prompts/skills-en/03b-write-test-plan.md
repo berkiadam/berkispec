@@ -260,8 +260,8 @@ One block per scenario, in exactly this form:
 - **🔴 For a REST call the `.http` block is mandatory too (TS8).** The `Call` cell of the step table speaks to the **machine** (a one-line, runnable `curl`/command) — a human, however, needs to see the request with its headers and body, in a clickable form. So at the end of every `TS-NN` block that has a REST step there stands a ```http fenced code block (the VSCode REST Client / IntelliJ `.http` form) with **the same values**, referring to the number of the step:
 
 ```http
-@tmp = https://tmp.dev.example.com
-@legacy = https://legacy.dev.example.com
+@tmp = https://tmp.remote.example.com
+@legacy = https://legacy.remote.example.com
 
 ### step 3 — opening a session (the `sid` field of the response → the `{{sid}}` variable of step 4)
 POST {{legacy}}/api/v13/login/login
@@ -289,7 +289,7 @@ X-Correlation-Id: 11111111-1111-1111-1111-111111111111
 |---|---|---|---|---|---|---|---|---|
 | unit | gyors | — | `<the verbatim command, with a machine reporter>` | `junit.xml` | junit | — | local | <status:phase_both> |
 | integration | gyors | — | `<command>` | `<file>` | junit | — | local | <status:phase_both> |
-| e2e | nehez | `<the reachability probe of the target; starting the stack>` | `<the command with the target host>` | `<file>` | junit | `<tear-down>` | `<the name of the target environment>` | <status:phase_validate> |
+| e2e | nehez | `<the reachability probe of the target; starting the stack>` | `<the command with the target host>` | `<file>` | junit | `<tear-down>` | `<remote — the name of the target environment>` | <status:phase_validate> |
 
 **Rules for filling it in:**
 - **The type:** `gyors` (unit/integration/typecheck — it runs in the VD10 light round as well) or `nehez` (E2E/regression — only in a full round). _(These are the values of the `--type` flag of the script, they are not translated.)_
@@ -301,9 +301,9 @@ X-Correlation-Id: 11111111-1111-1111-1111-111111111111
   - `{phase}` → the **phase folder** relative to `test-report/` (`validate/round-02`). Write this where the report command of `conventions.md` expects the `<phase-dir>` placeholder or a `REPORT_PHASE_DIR`-style environment variable: `REPORT_PHASE_DIR={phase} npm run test:pw`.
   - **Writing `test-report/` before `{round}` is forbidden** (`…/test-report/{round}`) — `{round}` already contains it. The resulting double prefix builds a recursive `test-report/specs/…` report tree; `run-tests.py` checks this before the run and stops with `exit 3`.
 - **The format:** `junit` (recommended) or `text` (it counts from the stdout with a regex — weaker evidence).
-- **🔴 <field:f_environment> — mandatory in every row (EV2–EV5).** `local` or the name of the target environment goes here. If it is not `local`:
-  - the **`Command` cell must literally contain the target host** (through an env variable or a switch, e.g. `PLAYWRIGHT_BASE_URL=https://app.dev.example npx playwright test`) — **the target must not hide in a config file** (EV3). A script named `test:playwright:dev-e2e` may perfectly well have `localhost` in its config: **the name of the command is not evidence, the address is**;
-  - a **reachability probe to the same host is mandatory in the `Prerequisite` cell** (`curl -fsS https://app.dev.example/health`) — `run-tests.py` runs the prerequisite, and on its failure the category is FAIL, so **a deployment that never even started cannot be ticked green** (EV4);
+- **🔴 <field:f_environment> — mandatory in every row (EV2–EV5).** `local` or `remote` goes here — **`remote` is any run that calls even a SINGLE component not running on the local machine** (a container on your own machine still counts as `local`). If it is not `local`:
+  - the **`Command` cell must literally contain the target host** (through an env variable or a switch, e.g. `PLAYWRIGHT_BASE_URL=https://app.remote.example npx playwright test`) — **the target must not hide in a config file** (EV3). A script named `test:playwright:remote-e2e` may perfectly well have `localhost` in its config: **the name of the command is not evidence, the address is**;
+  - a **reachability probe to the same host is mandatory in the `Prerequisite` cell** (`curl -fsS https://app.remote.example/health`) — `run-tests.py` runs the prerequisite, and on its failure the category is FAIL, so **a deployment that never even started cannot be ticked green** (EV4);
   - `localhost` / `127.0.0.1` in the command or in the prerequisite is **forbidden** (EV5) — `run-tests.py` then stops with `exit 4`, without running anything.
 - **<field:f_phase> — which PHASE runs it (PH1).** Three values: `<status:phase_implement>` (only the dev loop of phase 06 runs it), `<status:phase_validate>` (only 07-validate), `<status:phase_both>`. **An empty cell means `<status:phase_both>`** — silence never means skipping, so an unmarked category runs everywhere. `run-tests.py` filters with the `--phase` switch: `06` calls it with `--phase <status:phase_implement>`, `07` with `--phase <status:phase_validate>`.
   - **When `<status:phase_implement>`:** a cheap, fast dev-loop check that a broader category covers anyway during validation (e.g. a separate `lint` or `typecheck` row next to the full unit set).

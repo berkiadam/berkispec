@@ -37,7 +37,7 @@ Mielőtt `<status:ready_for_test_plan>` státuszra váltasz, tedd fel magadnak:
 <!-- INCLUDE:shared/path-format.md -->
 - **Szekció-ID-k (PID1):** minden végrehajtható terv-szekció visel egyedi `[P-…]` ID-t, a korábbiak változatlanok, leltár-szekció nem kapott ID-t?
 - **Scope-kapu (SC1):** a `<sec:reverse_coverage>` tábla kitöltve, minden plan-képességnek van spec-forrása (vagy <sec:out_of_scope> / kérdés)? Az első oszlop a szekció `[P-…]` azonosítóját viseli, a második a `DoD-NN`-t — ezen fut a 05 lefedettségi lánca (`S3`).
-- **<sec:config_lifecycle> (KF1):** minden új/módosított paraméterhez van sor a táblában, **minden futtatási módra** kitöltve (lokális, teszt, konténer/compose, dev deploy) + a „ha hiányzik" viselkedés?
+- **<sec:config_lifecycle> (KF1):** minden új/módosított paraméterhez van sor a táblában, **minden futtatási módra** kitöltve (lokális, teszt, konténer/compose, remote deploy) + a „ha hiányzik" viselkedés?
 - **Horgony-verifikáció:** minden `fájl:hely` és „ez a szimbólum/asszertáció ott van" állítás Grep/Read-del visszaigazolva?
 - **Érték-józanság:** portok, időegységek, URL-séma↔port, verziók, útvonalak átnézve (tipikus elgépelés: `433` a `443` helyett)?
 - **A kapu-konfiguráció együtt mozog? (GC1)** — Ha a ciklus a riport-struktúrát, a riport-parancsokat, a Sonar-konfigot, a teszt-parancsokat, a portokat vagy a merge-stratégiát érinti: a `conventions.md` **érintett szekciója szerepel a `<sec:planned_changes>`-ban, konkrét új tartalommal**, és a 04 tud rá taskot írni? (A `specs/test-conventions.md` frissítése ezt **nem** helyettesíti — a TR3 kapu a `conventions.md`-t olvassa.)

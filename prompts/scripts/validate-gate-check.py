@@ -453,7 +453,7 @@ def check_report(cycle, rep, stage):
 # bizonyíték), itt pedig bukik a kör, ha egy kihagyott teszt a plan lefedettségi
 # leképezésében bizonyítékként szerepel.
 #
-# A join kulcsa a `03b` tesztfájl-adatlapjának `<field:f_test_cases>` sora:
+# A join kulcsa a `03b` tesztfájl-adatlapjának `f_test_cases` mezősora:
 # `**Teszt-esetek:** \`<teszt-függvény>\` → \`TC-01\` · …`
 TEST_CASE_MAP_RE = re.compile(r"`([^`]{4,})`\s*(?:→|->|=>)\s*`?(T[CS]-\d+)`?")
 JUNIT_SUITE_TAGS = ("testsuite",)

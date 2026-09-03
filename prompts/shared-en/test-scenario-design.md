@@ -72,14 +72,14 @@ The block below is **not** your cycle's content: copy its **density** and its **
 
 | # | Step | Call | Expected result |
 |---|---|---|---|
-| 1 | flush the store | `redis-cli -h redis.dev.example.com -n 0 FLUSHDB` | `OK`, and `KEYS ns01_tmp:*` returns an empty list |
-| 2 | reset the request journal | `curl -s -X POST https://mock.dev.example.com/__admin/requests/reset` | `200` |
-| 3 | create 5 sessions | `for i in 1 2 3 4 5; do curl -s -X POST https://tmp.dev.example.com/login -H 'Content-Type: application/json' -d '{"username":"testuser@example.com","password":"Pass1234"}' -o sess-$i.json; done` | all 5 responses are `200`, and the 5 extracted `sid` values are pairwise **different** |
-| 4 | fire 5 requests simultaneously | `printf '%s\n' 1 2 3 4 5 \| xargs -P 5 -I{} curl -s -o out-{}.json -w '%{http_code} %{time_total}\n' -X POST https://tmp.dev.example.com/init-hash -H "Authorization: Bearer $(jq -r .access_token sess-{}.json)"` | all 5 lines are `200`, and every `out-N.json` contains an `initHash` field |
-| 5 | counted side effect | `curl -s https://mock.dev.example.com/__admin/requests/count -d '{"method":"POST","url":"/token","bodyPatterns":[{"contains":"grant_type=client_credentials"}]}' \| jq .count` | `1` — exactly one renewal call for the 5 requests |
-| 6 | read state: key name and shape | `redis-cli -h redis.dev.example.com --no-raw GET ns01_tmp:tokens:s2s \| jq 'keys'` | the key's name is exactly `ns01_tmp:tokens:s2s` (not `…:tokens:tokens:s2s`), and the JSON fields are `["accessToken","expiresAt","issuedAt"]` |
-| 7 | read state: the lock is released | `redis-cli -h redis.dev.example.com EXISTS ns01_tmp:tokens:s2s:lock` | `0` — the holding instance deleted it when it finished |
-| 8 | negative control | **simultaneously** with step 4: `curl -s -o /dev/null -w '%{http_code} %{time_total}\n' https://tmp.dev.example.com/media/42 -H "Authorization: Bearer $(jq -r .access_token sess-1.json)"` | `200`, and the response time is `< 0.5` s — renewing the global token did not block the session-level path |
+| 1 | flush the store | `redis-cli -h redis.remote.example.com -n 0 FLUSHDB` | `OK`, and `KEYS ns01_tmp:*` returns an empty list |
+| 2 | reset the request journal | `curl -s -X POST https://mock.remote.example.com/__admin/requests/reset` | `200` |
+| 3 | create 5 sessions | `for i in 1 2 3 4 5; do curl -s -X POST https://tmp.remote.example.com/login -H 'Content-Type: application/json' -d '{"username":"testuser@example.com","password":"Pass1234"}' -o sess-$i.json; done` | all 5 responses are `200`, and the 5 extracted `sid` values are pairwise **different** |
+| 4 | fire 5 requests simultaneously | `printf '%s\n' 1 2 3 4 5 \| xargs -P 5 -I{} curl -s -o out-{}.json -w '%{http_code} %{time_total}\n' -X POST https://tmp.remote.example.com/init-hash -H "Authorization: Bearer $(jq -r .access_token sess-{}.json)"` | all 5 lines are `200`, and every `out-N.json` contains an `initHash` field |
+| 5 | counted side effect | `curl -s https://mock.remote.example.com/__admin/requests/count -d '{"method":"POST","url":"/token","bodyPatterns":[{"contains":"grant_type=client_credentials"}]}' \| jq .count` | `1` — exactly one renewal call for the 5 requests |
+| 6 | read state: key name and shape | `redis-cli -h redis.remote.example.com --no-raw GET ns01_tmp:tokens:s2s \| jq 'keys'` | the key's name is exactly `ns01_tmp:tokens:s2s` (not `…:tokens:tokens:s2s`), and the JSON fields are `["accessToken","expiresAt","issuedAt"]` |
+| 7 | read state: the lock is released | `redis-cli -h redis.remote.example.com EXISTS ns01_tmp:tokens:s2s:lock` | `0` — the holding instance deleted it when it finished |
+| 8 | negative control | **simultaneously** with step 4: `curl -s -o /dev/null -w '%{http_code} %{time_total}\n' https://tmp.remote.example.com/media/42 -H "Authorization: Bearer $(jq -r .access_token sess-1.json)"` | `200`, and the response time is `< 0.5` s — renewing the global token did not block the session-level path |
 | 9 | measured timing expectation | the `%{time_total}` values from step 4 | each one `< 2.0` s — nothing hangs beyond the wait timeout |
 
 **<field:f_cleanup>:** `rm -f sess-*.json out-*.json`; scale the instance count back to 1; flush the store.
