@@ -79,6 +79,10 @@ from pathlib import Path
 from lang_keys import sec
 
 TABLE_ROW_RE = re.compile(r"^\|(?!\s*-)(.+)\|\s*$")
+SEPARATOR_ROW_RE = re.compile(r"^\|[\s:|-]+\|$")
+# Másodlagos fejléc-felismerés (5.0): elválasztó sor NÉLKÜL, kézzel írt táblákra.
+# Mindkét prompt-fa első oszlop-neve szerepel benne — a szerkezeti ág az elsődleges.
+HEADER_FIRST_CELL_WORDS = ("kategória", "kategoria", "category")
 EMPTY = ("", "-", "—", "n/a", "na", "nincs")
 
 
@@ -96,13 +100,30 @@ def parse_matrix(plan_text):
     nxt = re.search(r"^#+\s", tail, re.MULTILINE)
     block = tail[: nxt.start()] if nxt else tail
 
+    # A FEJLÉCSOR felismerése SZERKEZETBŐL, nem szóból (5.0). A korábbi
+    # literál-lista (`kategória`/`kategoria`) csak a magyar projekt-nyelvre
+    # illeszkedett: egy angol fejlécű (`| Category | Type | … |`) tábla ELSŐ
+    # SORA adatsorként került a listába, és a szkript megpróbálta lefuttatni a
+    # `Command` szót shell parancsként. A fejléc az a sor, amelyet KÖZVETLENÜL
+    # elválasztó sor (`|---|---|…`) követ — ez nyelvfüggetlen. A literál-listát
+    # másodlagos ágként megtartjuk, hogy az elválasztó nélkül, kézzel írt
+    # táblák se törjenek el.
+    lines = [l.strip() for l in block.splitlines()]
+    header_idx = None
+    for i, line in enumerate(lines):
+        if SEPARATOR_ROW_RE.match(line) and i > 0 and TABLE_ROW_RE.match(lines[i - 1]):
+            header_idx = i - 1
+            break
+
     rows = []
-    for line in block.splitlines():
-        mm = TABLE_ROW_RE.match(line.strip())
+    for i, line in enumerate(lines):
+        if header_idx is not None and i == header_idx:
+            continue
+        mm = TABLE_ROW_RE.match(line)
         if not mm:
             continue
         cells = [strip_cell(c) for c in mm.group(1).split("|")]
-        if not cells or cells[0].lower() in ("kategória", "kategoria"):
+        if not cells or cells[0].lower() in HEADER_FIRST_CELL_WORDS:
             continue
         while len(cells) < 9:
             cells.append("")
@@ -193,6 +214,85 @@ def check_environment_mismatch(rows):
             if m:
                 bad.append((row["kategoria"], row["kornyezet"], field, m.group(0)))
     return bad
+
+
+# ── EV7 — a parancs env-változói nem DEKORÁCIÓK ─────────────────────────────
+# Miért kell: egy éles ciklus dev-kategóriájának parancsa `TEST_ENV=dev
+# DEV_BASE_URL=…`-t állított. Mindkét változó NULLA találat volt a célprojekt
+# `test/` fájában — a kód `TMP_BASE_URL`-t és `RUN_DEV_E2E`-t olvasott. Vagyis a
+# „dev" futás bájtra ugyanaz volt, mint a lokális, miközben minden bizonyíték
+# (a parancs, a `results.json` `kornyezet` mezője, a napló) devnek látszott.
+# Az EV3 a cél-HOSTot méri a parancsban — az ott volt; ami hiányzott, az a
+# változó és a KÓD közti kötés.
+ENV_ASSIGN_RE = re.compile(r"(?:^|[\s;&|(])([A-Z][A-Z0-9_]{2,})=")
+PATH_TOKEN_RE = re.compile(r"[\w.\-/]*[\w\-]/[\w.\-/]*|[\w.\-/]+\.(?:py|ts|tsx|js|mjs|cjs|jsx)")
+CODE_SUFFIXES = {".py", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".jsx", ".json",
+                 ".yaml", ".yml", ".ini", ".cfg", ".toml"}
+MAX_SCANNED_FILES = 400
+
+
+def _code_candidates(parancs, repo_root):
+    """A parancs által futtatott ÚTVONAL-jelöltek, amelyek léteznek is."""
+    out = []
+    for token in PATH_TOKEN_RE.findall(parancs or ""):
+        token = token.strip("`\"'").rstrip("/")
+        if not token or token.startswith("-"):
+            continue
+        path = Path(repo_root) / token
+        if path.exists() and path not in out:
+            out.append(path)
+    return out
+
+
+def _scan_files(candidates):
+    """A jelölt fájlok/könyvtárak olvasandó szöveges állományai."""
+    files = []
+    for path in candidates:
+        if path.is_file():
+            if path.suffix.lower() in CODE_SUFFIXES or path.name.startswith(".env"):
+                files.append(path)
+            continue
+        for sub in sorted(path.rglob("*")):
+            if not sub.is_file():
+                continue
+            if sub.suffix.lower() in CODE_SUFFIXES or sub.name.startswith(".env"):
+                files.append(sub)
+            if len(files) >= MAX_SCANNED_FILES:
+                return files
+    return files
+
+
+def check_env_binding(rows, repo_root):
+    """EV7 — a NEM-lokális kategóriák parancsában beállított env-változók
+    megjelennek-e a futtatott teszt-kódban.
+
+    Visszaad: [(kategória, környezet, [nem kötött változók], típus, hány fájlt néztünk)]
+    és külön a KIHAGYOTT sorok listáját (nem tudjuk, mit futtat a parancs)."""
+    findings, skipped = [], []
+    for row in rows:
+        if env_is_local(row.get("kornyezet")):
+            continue
+        parancs = row.get("parancs") or ""
+        variables = list(dict.fromkeys(ENV_ASSIGN_RE.findall(parancs)))
+        if not variables:
+            continue                # a cél-host kapcsolóban is lehet — azt az EV3 méri
+        candidates = _code_candidates(parancs, repo_root)
+        files = _scan_files(candidates)
+        if not files:
+            skipped.append((row["kategoria"], variables))
+            continue
+        blobs = []
+        for path in files:
+            try:
+                blobs.append(path.read_text(encoding="utf-8", errors="ignore"))
+            except OSError:
+                continue
+        haystack = "\n".join(blobs)
+        unbound = [v for v in variables if v not in haystack]
+        if unbound:
+            findings.append((row["kategoria"], (row.get("kornyezet") or "—").strip(),
+                             unbound, row.get("tipus", ""), len(files)))
+    return findings, skipped
 
 
 # ── EV6 (F3) — FORGALMI bizonyíték nem-lokális kategóriánál ─────────────────
@@ -553,6 +653,34 @@ def main():
               file=sys.stderr)
         return 4
 
+    # ── EV7 — env-változó kötés (JAVASLAT-szint, a futtatás ELŐTT) ──
+    # A kilépő kódot SZÁNDÉKOSAN nem befolyásolja: egy szokatlan, de működő
+    # kapcsoló-átadás (pl. `pytest.ini`-ből vagy conftest-ből olvasott név)
+    # hamis pozitív lenne, és egy futást megállító hamis pozitív a legdrágább
+    # hiba. A kimenetben viszont ott áll, és a `results.json` `suggestions`
+    # tömbjébe is bekerül — a kör naplója így hordozza.
+    env_findings, env_skipped = check_env_binding(selected, args.repo)
+    ev7_notes = []
+    for kat, kornyezet, unbound, tipus, n_files in env_findings:
+        loud = len(unbound) == 1 and (tipus or "").startswith("neh")
+        ev7_notes.append(
+            ("🔴 " if loud else "") +
+            f"[EV7] a `{kat}` ({kornyezet}) parancsa "
+            + ", ".join(f"`{v}=…`" for v in unbound)
+            + f"-t állít, de {'ez a változónév' if len(unbound) == 1 else 'ezek a változónevek'} "
+              f"a futtatott teszt-kódban nem szerepel{'nek' if len(unbound) > 1 else ''} "
+              f"({n_files} fájlt néztünk át) — a beállítás DEKORÁCIÓ: a futás ugyanaz, mint "
+              f"lokálisan, miközben minden bizonyíték `{kornyezet}`-nek látszik. Vagy a kód "
+              f"olvassa be a változót, vagy a parancs a TÉNYLEGES kapcsolót használja")
+    for kat, variables in env_skipped:
+        ev7_notes.append(
+            f"[EV7] a `{kat}` parancsa " + ", ".join(f"`{v}`" for v in variables)
+            + " változót állít, de a parancsból nem sikerült létező teszt-útvonalat "
+              "kiolvasni — a kötés nem ellenőrizhető (a check kimarad)")
+    for note in ev7_notes:
+        print(f"  {'✗' if note.startswith('🔴') else '·'} {note}")
+    sys.stdout.flush()
+
     collisions = check_placeholder_collision(selected, round_dir, phase_dir)
     if collisions:
         print("HIBA (TR5/c) — dupla útvonal-prefix a gépi futtatási tábla parancsaiban:",
@@ -665,7 +793,7 @@ def main():
     # ── EV6 — forgalmi bizonyíték a futtatás UTÁN ──
     audit_paths, audit_skip = audit_artifacts(args.conventions)
     traffic = check_traffic_evidence(selected, round_dir, audit_paths, started_at)
-    suggestions = list(tb3_notes)
+    suggestions = list(ev7_notes) + list(tb3_notes)
     for kategoria, host, detail, strong in traffic:
         msg = (f"[EV6] a `{kategoria}` kategória nem-lokális környezetre szól, de a körben "
                f"keletkezett bizonyítékok egyike sem tartalmazza a `{host}` címet — "
@@ -697,6 +825,8 @@ def main():
         for name in e["failed_items"][:15]:
             print(f"      ✗ {name}")
     for msg in suggestions:
+        if msg in ev7_notes:
+            continue            # már kiírtuk a futtatás ELŐTT (EV7)
         print(f"  {'✗' if msg.startswith('[EV6-FAIL]') else '·'} {msg}")
     print(f"  results.json: {out_json}")
     print("VERDICT: " + ("FAIL" if any_fail else "PASS"))

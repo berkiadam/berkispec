@@ -29,6 +29,13 @@ Két szakasz:
     · validation-report.md: van legalább egy `## Kör N` blokk, a körök száma
       nem kevesebb a `# Validation History` futásainál (VD9-guard), és
       minden körhöz létezik a `validate/round-NN/` mappa (TR5)
+    · kör-lefedettség (RUN1): minden TELJES kör `results.json`-ja tartalmazza a
+      plan gépi futtatási táblájának minden `validate`-fázisú kategóriáját —
+      hiányzó `results.json` = a kört nem a táblából hajtották
+      (`RUN-EXEMPT: <kategória> — <indok>` sorral felmenthető, a kör blokkjában)
+    · skip-bizonyíték (SK1): az utolsó kör JUnit XML-jeiben nincs olyan `skipped`
+      eset, amelyet a plan adatlapja `TC-NN` bizonyítékként jelöl
+      (`SKIP-EXEMPT: <teszt> — <indok>` sorral felmenthető)
 
 Kilépő kód: 0 = minden vizsgált kapu rendben
             1 = legalább egy kapu bukott (a kör nem zárható PASS-ra)
@@ -39,6 +46,7 @@ tesztekre bukó körben a review el sem indult). PASS előtt add meg — akkor a
 hiánya bukás.
 """
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -189,10 +197,16 @@ def _norm(text):
     return re.sub(r"\s+", " ", text.replace("`", "").replace('"', "").replace("'", "")).strip().lower()
 
 
-def _exemptions(text, prefix):
-    """{task: indok} a napló jegyzet-szekciójának `<PREFIX>: <task> — <indok>` sorai alapján."""
+def _exemptions(text, prefix, key_re=r"T[A-Z]*\d+[a-z]?"):
+    """{kulcs: indok} a `<PREFIX>: <kulcs> — <indok>` alakú felmentő sorokból.
+
+    A `key_re` alapértéke a TASK-azonosító (`CK-DEVIATION`, `RED-EXEMPT`) —
+    ezekre a hívásokra a viselkedés változatlan. A `RUN-EXEMPT` KATEGÓRIA-nevet,
+    a `SKIP-EXEMPT` TESZT-függvénynevet kulcsol; azok saját mintát adnak.
+    Szándékosan EGY parser marad: három külön felmentés-értelmező csendben
+    szétcsúszna egymástól."""
     out = {}
-    for m in re.finditer(prefix + r":\s*\**\s*(T[A-Z]*\d+[a-z]?)\s*\**\s*[—–-]+\s*(\S.*)", text):
+    for m in re.finditer(prefix + r":\s*\**\s*`?(" + key_re + r")`?\s*\**\s*[—–-]+\s*(\S.*)", text):
         out[m.group(1)] = m.group(2).strip()
     return out
 
@@ -430,6 +444,298 @@ def check_report(cycle, rep, stage):
         rep.info("van még nyitott (`folyamatban`) kör-blokk — a `round-log.py close` nem futott le")
 
 
+# ── SK1 — A NÉMA SKIP NEM BIZONYÍTÉK ────────────────────────────────────────
+# Miért kell: egy éles ciklus egyetlen NEM vacuous tesztje `pytest.skip(...)`-pel
+# lépett ki (`RUN_DEV_E2E != "true"`), a JUnit XML-ben `skipped` esetként. A
+# `dod-check.py` viszont a `<skipped>` esetet `PASS`-ként indexelte — vagyis egy
+# némán kihagyott dev-teszt szolgált `DoD-NN` BIZONYÍTÉKKÉNT. A javítás két
+# helyen történik: a `dod-check.py`-ban a skip önálló állapot lett (nem
+# bizonyíték), itt pedig bukik a kör, ha egy kihagyott teszt a plan lefedettségi
+# leképezésében bizonyítékként szerepel.
+#
+# A join kulcsa a `03b` tesztfájl-adatlapjának `<field:f_test_cases>` sora:
+# `**Teszt-esetek:** \`<teszt-függvény>\` → \`TC-01\` · …`
+TEST_CASE_MAP_RE = re.compile(r"`([^`]{4,})`\s*(?:→|->|=>)\s*`?(T[CS]-\d+)`?")
+JUNIT_SUITE_TAGS = ("testsuite",)
+
+
+def _plan_test_case_map(plan_text):
+    """{teszt-függvény neve: [TC-ID, …]} a plan adatlapjainak `f_test_cases` soraiból."""
+    field = fld("f_test_cases")
+    out = {}
+    for line in plan_text.splitlines():
+        clean = line.strip()
+        if field.lower() not in clean.lower():
+            continue
+        if clean.lstrip("*_ ").lower().startswith("_<"):
+            continue                # a sablon dőlt helyőrző-sora, nem adat
+        for name, tid in TEST_CASE_MAP_RE.findall(clean):
+            name = name.strip().strip("`*_")
+            if len(name) < 4 or name.startswith("<"):
+                continue
+            out.setdefault(name, []).append(tid)
+    return out
+
+
+def _skipped_cases(round_dir):
+    """[(teszt-kulcs, forrás-fájl)] a kör-mappa JUnit XML-jeinek `skipped` eseteiből."""
+    import xml.etree.ElementTree as ET
+    out = []
+    for xml in sorted(Path(round_dir).rglob("*.xml")):
+        try:
+            root = ET.parse(xml).getroot()
+        except Exception:
+            continue
+        suites = [root] if root.tag in JUNIT_SUITE_TAGS else root.iter("testsuite")
+        for suite in suites:
+            for case in suite.iter("testcase"):
+                if case.find("skipped") is None:
+                    continue
+                cls = case.get("classname", "")
+                name = case.get("name", "")
+                out.append((f"{cls} > {name}".strip(" >") or name, xml.name))
+    return out
+
+
+def _last_round_dir(cycle):
+    base = cycle / "test-report" / "validate"
+    if not base.is_dir():
+        return None
+    dirs = sorted((d for d in base.iterdir()
+                   if d.is_dir() and re.fullmatch(r"round-\d+", d.name)),
+                  key=lambda d: int(d.name.split("-")[1]))
+    return dirs[-1] if dirs else None
+
+
+def check_skipped_evidence(cycle, rep, stage):
+    """SK1 — a plan által bizonyítéknak jelölt teszt nem lehet `skipped`.
+
+    A kihagyott teszt nem ellenőriz semmit: egyetlen `pytest.skip` / `it.skip` /
+    `@Disabled` a teszt elején elég lenne ahhoz, hogy a `DoD-NN` „bizonyítékot"
+    kapjon. A join a plan adatlapjainak `teszt-függvény → TC-NN` leképezését veti
+    össze az UTOLSÓ kör JUnit XML-jeinek `skipped` eseteivel.
+    Felmentés: `SKIP-EXEMPT: <teszt-név> — <indok>` a `check-log.md`
+    jegyzet-szekciójában (a `RED-EXEMPT` mintájára).
+    """
+    if stage != "close":
+        return
+    plan_text = read(cycle / "plan.md")
+    if plan_text is None:
+        return
+    round_dir = _last_round_dir(cycle)
+    if round_dir is None:
+        return                      # a hiányzó kör-mappát a check_report (TR5) méri
+    skipped = _skipped_cases(round_dir)
+    if not skipped:
+        return                      # nincs kihagyott eset — nincs mit ítélni
+    case_map = _plan_test_case_map(plan_text)
+    if not case_map:
+        rep.info(f"a plan adatlapjaiban nincs `{fld('f_test_cases')}` leképezés "
+                 f"(teszt-függvény → `TC-NN`) — az SK1 join kimarad, pedig a "
+                 f"`{round_dir.name}` körben {len(skipped)} `skipped` eset van (TA1)")
+        return
+
+    log_text = read(_check_log(cycle)) or ""
+    exempt = _exemptions(log_text, "SKIP-EXEMPT", key_re=r"[\w./:\[\]>-]+(?:[ \t][\w./:\[\]>-]+)*")
+    exempt_norm = {_norm(k) for k in exempt}
+
+    hits, excused = [], []
+    for case_key, source in skipped:
+        key_norm = _norm(case_key)
+        for name, ids in case_map.items():
+            if _norm(name) not in key_norm:
+                continue
+            label = f"`{case_key}` → {', '.join(sorted(set(ids)))} ({source})"
+            if any(e in key_norm or _norm(name) in e for e in exempt_norm):
+                excused.append(label)
+            else:
+                hits.append(label)
+            break
+
+    for label in hits:
+        rep.bad(f"a {label} eset a `{round_dir.name}` körben `skipped` volt, de a plan "
+                f"bizonyítéknak jelöli (SK1) — a kihagyott teszt nem bizonyíték: nem "
+                f"ellenőriz semmit, mégis zöldnek látszik. Futtasd le (állítsd be a "
+                f"kihagyás feltételét adó env-változót), vagy írj "
+                f"`SKIP-EXEMPT: <teszt> — <miért nem futtatható ebben a körben>` sort a "
+                f"`check-log.md` `## {sec('notes')}` szekciójába")
+    if excused:
+        rep.info("SKIP-EXEMPT felmentés: " + ", ".join(excused))
+    if not hits:
+        rep.ok(f"`{round_dir.name}`: a {len(skipped)} `skipped` eset egyike sem szolgál "
+               f"plan-beli bizonyítékként (SK1)"
+               + (f" — {len(excused)} `SKIP-EXEMPT` felmentéssel" if excused else ""))
+
+
+# ── RUN1 — KÖR-LEFEDETTSÉG ───────────────────────────────────────────────────
+# Miért kell: egy éles ciklus PASS-ra zárt úgy, hogy a plan gépi futtatási
+# táblájában deklarált `dev` kategória SOHA nem futott le — se nem íródott meg
+# a dev-módja. Két ágens is elemezte a validálási problémákat, egyik sem vette
+# észre, mert ez HIÁNY-állítás („egy deklarált kategória nem futott le"), amit
+# egy LLM-review szerkezetileg rosszul lát. Determinisztikusan viszont triviális:
+# a plan táblája ↔ a kör `results.json`-ja join.
+#
+# A `run-tests.py` a TÁBLÁBÓL futtat és a kör-mappába írja a `results.json`-t.
+# Ha a mappában nincs `results.json`, akkor a kört NEM a táblából hajtották,
+# hanem ad-hoc kézi parancsokból — és onnantól egyetlen `EV` kapu sem fut le,
+# és nincs gépi nyoma, melyik kategória futott.
+
+_RUN_TESTS_MODULE = None
+
+
+def _load_run_tests_module():
+    """A `run-tests.py` betöltése modulként (a kötőjeles név miatt importlib).
+
+    A tábla parse-olója (`parse_matrix`) és a fázis-értelmezője (`row_phases`)
+    ott él; SZÁNDÉKOSAN nem írjuk meg másodszor — egy harmadik tábla-értelmezés
+    a kapu és a futtató csendes szétcsúszását adná (a `run-tests.py` maga is így
+    emeli be a `report-gate-check.py`-t)."""
+    global _RUN_TESTS_MODULE
+    if _RUN_TESTS_MODULE is not None:
+        return _RUN_TESTS_MODULE or None
+    import importlib.util
+    path = Path(__file__).resolve().parent / "run-tests.py"
+    if not path.exists():
+        _RUN_TESTS_MODULE = False
+        return None
+    spec = importlib.util.spec_from_file_location("_run_tests", path)
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        _RUN_TESTS_MODULE = False
+        return None
+    _RUN_TESTS_MODULE = module
+    return module
+
+
+def _norm_category(value):
+    """Kategória-név normalizálás a joinhoz: a plan celláiban `` `R06` `` és
+    `**e2e**` alak is előfordul, a `results.json`-ban a nyers név áll."""
+    return (value or "").strip().strip("`*_").strip().lower()
+
+
+def check_run_coverage(cycle, rep, stage):
+    """RUN1 — TELJES körben lefutott-e a plan MINDEN `validate`-fázisú kategóriája.
+
+    Csak TELJES körre mér (D3): a könnyű kör (VD10) SZÁNDÉKOSAN futtat
+    részhalmazt, ott a check minden javító körben hamis pozitívot adna.
+    Ha a planban nincs gépi tábla, a check kimarad (`info`) — a régi, lezárt
+    ciklusokat bukató kapu használhatatlan, és a tábla hiányát az `S1` amúgy is
+    méri a `03b` lezárásakor.
+    Felmentés: `RUN-EXEMPT: <kategória> — <indok>` sor az ADOTT kör blokkjában.
+    """
+    if stage != "close":
+        return
+    plan_text = read(cycle / "plan.md")
+    if plan_text is None:
+        return                      # a hiányzó plant a fázis-belépő kapu méri
+    rt = _load_run_tests_module()
+    if rt is None:
+        rep.info("run-tests.py nem tölthető be a scriptek mellől — a RUN1 join kimarad")
+        return
+    try:
+        matrix = rt.parse_matrix(plan_text)
+    except Exception as exc:
+        rep.info(f"a plan gépi futtatási táblája nem értelmezhető ({exc}) — a RUN1 join kimarad")
+        return
+    if not matrix:
+        rep.info(f"plan.md: nincs `{sec('machine_run_table')}` szekció — a RUN1 join kimarad "
+                 "(a tábla hiányát a `03b` `S1` kapuja méri)")
+        return
+
+    expected = []
+    for row in matrix:
+        if "validate" in rt.row_phases(row):
+            expected.append(row["kategoria"])
+    if not expected:
+        rep.info(f"a gépi futtatási tábla egyetlen sora sem fut a "
+                 f"`{st('phase_validate')}` fázisban — a RUN1 join kimarad (ezt a PH1 méri)")
+        return
+
+    report_text = read(cycle / "test-report" / "validation-report.md")
+    if report_text is None:
+        return                      # a check_report már jelezte
+
+    # A kör-blokkok: `## <Kör> N — <dátum> — TELJES|KÖNNYŰ — <státusz>`.
+    # A típus-literált NEM írjuk be: `st("round_type_full")`. A `round-log.py`
+    # a régebbi, más nyelven nyitott riportokat is felismeri, ezért itt is
+    # mindkét nyelv szavát elfogadjuk.
+    full_words = list(dict.fromkeys([st("round_type_full"), "TELJES", "FULL"]))
+    light_words = list(dict.fromkeys([st("round_type_light"), "KÖNNYŰ", "LIGHT"]))
+    types = "|".join(re.escape(w) for w in full_words + light_words)
+    round_re = re.compile(r"^## " + re.escape(sec("round")) + r" (\d+) — .* — (" + types + r")\b",
+                          re.MULTILINE)
+    matches = list(round_re.finditer(report_text))
+    full_rounds = [(m, m.group(1), m.group(2)) for m in matches if m.group(2) in full_words]
+    if not full_rounds:
+        rep.info(f"validation-report.md: nincs `{st('round_type_full')}` kör-blokk — "
+                 "a RUN1 join kimarad (PASS csak teljes körből adható — VD10/1)")
+        return
+
+    # A MEGSZAKADT és a még NYITOTT kör kimarad: a 07 szerint a megszakadt kört
+    # nem írjuk felül, hanem `**Megszakadt**` sorral lezárjuk és új kört nyitunk
+    # — egy ilyen, részleges bizonyítékú kört visszamenőleg bukatni hamis pozitív
+    # lenne (a fejlesztő nem tudja utólag lefuttatni). A nyitott (`folyamatban`)
+    # blokkot a `check_report` amúgy is jelzi.
+    interrupted_words = [w.lower() for w in dict.fromkeys(["megszakadt", "interrupted"])]
+    in_progress_word = st("in_progress").lower()
+
+    covered_rounds, excused_total, ignored = 0, 0, []
+    for m, number, _rtype in full_rounds:
+        # a kör blokkja: a fejlécétől a KÖVETKEZŐ kör-fejlécig (a felmentő sorok
+        # kereséséhez — a felmentés a saját körére szól, nem az egész riportra)
+        nxt = next((x.start() for x in matches if x.start() > m.start()), len(report_text))
+        block = report_text[m.start():nxt]
+        header_line = block.splitlines()[0].lower()
+        block_low = block.lower()
+        if in_progress_word in header_line or any(w in block_low for w in interrupted_words):
+            ignored.append(number)
+            continue
+        exempt = {_norm_category(k): v
+                  for k, v in _exemptions(block, "RUN-EXEMPT",
+                                          key_re=r"[^\s—–]+(?:[ \t][^\s—–]+)*").items()}
+        n = int(number)
+        results_path = cycle / "test-report" / "validate" / f"round-{n:02d}" / "results.json"
+        if not results_path.exists():
+            rep.bad(f"a `round-{n:02d}` {st('round_type_full')} kör, de nincs `results.json` "
+                    f"(RUN1) — a kört NEM a plan gépi futtatási táblájából hajtották. A `07` a "
+                    f"`run-tests.py`-jal futtat, és az írja a `results.json`-t; kézi "
+                    f"parancsokból nincs gépi nyoma, mely kategória futott le — és egyetlen "
+                    f"`EV` kapu sem fut le. Futtasd a kört a `run-tests.py`-jal")
+            continue
+        try:
+            entries = json.loads(results_path.read_text(encoding="utf-8")).get("results", [])
+        except Exception as exc:
+            rep.bad(f"a `round-{n:02d}` `results.json`-ja nem olvasható ({exc}) — RUN1")
+            continue
+        ran = {_norm_category(e.get("kategoria")) for e in entries}
+        missing, excused = [], []
+        for cat in expected:
+            key = _norm_category(cat)
+            if key in ran:
+                continue
+            (excused if key in exempt else missing).append(cat)
+        for cat in missing:
+            rep.bad(f"a `round-{n:02d}` {st('round_type_full')} körből hiányzik a `{cat}` "
+                    f"kategória (RUN1) — a plan a `{st('phase_validate')}` fázisra írja elő, "
+                    f"de a kör `results.json`-jában nem szerepel. Vagy futtasd le "
+                    f"(`run-tests.py --phase validate`), vagy — ha ebben a körben tudatosan "
+                    f"nem futtatható — írj `RUN-EXEMPT: {cat} — <miért>` sort a kör blokkjába")
+        if excused:
+            excused_total += len(excused)
+            rep.info(f"`round-{n:02d}` RUN-EXEMPT felmentés: " + ", ".join(excused))
+        if not missing:
+            covered_rounds += 1
+    if ignored:
+        rep.info("RUN1: kihagyott kör(ök) — megszakadt vagy még nyitott blokk: "
+                 + ", ".join(f"round-{int(n):02d}" for n in ignored))
+    if covered_rounds == len(full_rounds) - len(ignored):
+        rep.ok(f"minden lezárt {st('round_type_full')} kör ({len(full_rounds) - len(ignored)}) lefedi a plan "
+               f"{len(expected)} `{st('phase_validate')}`-fázisú kategóriáját (RUN1)"
+               + (f" — ebből {excused_total} `RUN-EXEMPT` felmentéssel" if excused_total else ""))
+
+
 def check_start_statuses(cycle, rep):
     plan = get_status(cycle / "plan.md")
     spec = get_status(cycle / "spec.md")
@@ -487,6 +793,8 @@ def main():
     check_input_from_prev(cycle, rep, args.stage)
     check_review(cycle, rep, args.stage, args.require_review)
     check_report(cycle, rep, args.stage)
+    check_run_coverage(cycle, rep, args.stage)
+    check_skipped_evidence(cycle, rep, args.stage)
 
     print("EREDMÉNY: " + ("BUKOTT — a fenti ✗ pontokat rendezd" if rep.failed else "OK"))
     return 1 if rep.failed else 0

@@ -320,6 +320,8 @@ If `run-tests.py` returned `exit 2` (there is no machine table), call the `test-
 - If, according to the plan, the category deliberately does not exist → `N/A`, and write this out into the step table of the round as well.
 - If the subagent reported without evidence, **ask it again** for the missing datum before you decide. Your own assumption does not substitute for the run.
 
+> **The suggestion lines of `EV7` measure the env variables of NON-local categories.** If the command sets `DEV_BASE_URL=…` but that variable name does not appear in the test code being run, then the setting is **decoration**: the "dev" run was byte for byte the same as the local one — while the command, the `<field:f_environment>` field of `results.json` and the log all look like dev. The line **does not stop the run** (a switch read from a `pytest.ini` would be a false positive), but it also lands in the `suggestions` array of `results.json`: look at which variable the code actually reads, and either wire up the code or fix the command to the **actual** switch.
+
 **Handling a plan deficiency (TR4) — it is not a code bug, do not start a fixer on it.** If the `## Plan deficiency (TR4)` section of the report is not empty (the runner left out a test group because a runtime detail is not in `plan.md` — e.g. starting the local Keycloak is not described, the test user or obtaining the token is missing):
 
 1. **Look in `plan.md` yourself** — the runner may have been wrong, or it may be in another section. If it is there, hand it over to it explicitly, and run that group again.
@@ -582,6 +584,11 @@ python3 <platform-scripts-mappa>/validate-gate-check.py specs/cycle-NN-<cycle-na
 ```
 
 This checks the existence of the round block, the `## <sec:round> N` ↔ `round-NN/` match (TR5) and the open items. If it is `exit 1`, **do not run the logging script**, and do not close the phase — sort out the ✗ points printed first.
+
+What it measures beyond that:
+
+- **`RUN1` — round coverage.** In a `<status:round_type_full>` round **every** `<status:phase_validate>`-phase category of the machine run table of the plan appears in the `results.json` of the round. **If there is no `results.json` in the round folder, you did not drive the round from the machine table** — run it with `run-tests.py`, not with hand-issued commands: a manual run leaves no machine trace, not a single `EV` gate runs on it, and a whole test category can drop out of it without a trace. If a category deliberately cannot run in this round (no VPN, say), write a `RUN-EXEMPT: <category> — <why>` line **into the round's own block** — this way the exemption is bound to the round, not to the whole report.
+- **`SK1` — a silent skip is not evidence.** If a case is `skipped` in the JUnit XMLs of the round that the test file data sheet of the plan marks as `TC-NN` evidence in its `<field:f_test_cases>` line, the gate fails: the skipped test **verifies nothing**, yet it looks green. Run it (set the env variable that causes the skip), or — if it really cannot run in this round — write a `SKIP-EXEMPT: <test> — <why>` line into the `## <sec:notes>` section of `check-log.md`. The same rule holds in `dod-check.py`: a `skipped` case yields `?` there, not ✓.
 
 ---
 

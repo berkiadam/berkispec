@@ -181,7 +181,7 @@ import re
 import sys
 from pathlib import Path
 
-from lang_keys import fld, sec, st
+from lang_keys import fld, lang, sec, st
 
 
 PLAN_ID_IN_HEADING_RE = re.compile(r"^#{2,4}\s+.*?\[(P-[A-Za-z0-9][A-Za-z0-9-]*)\]", re.MULTILINE)
@@ -695,6 +695,25 @@ def table_rows(text, title_substr):
             continue  # sablonsor
         rows.append(cells)
     return rows
+
+
+def table_header(text, title_substr):
+    """Az adott szekció ELSŐ markdown táblájának FEJLÉC-cellái.
+
+    A `table_rows` szándékosan kihagyja a fejlécet (adatsorokat ad); a TP4/b
+    viszont pont a fejlécet ítéli meg. A fejléc az a táblasor, amelyet
+    KÖZVETLENÜL elválasztó sor (`|---|---|…`) követ — ez nyelvfüggetlen.
+    Üres lista = nincs felismerhető fejléc."""
+    prev = None
+    for line in section_body(text, title_substr).splitlines():
+        m = TABLE_ROW_RE.match(line)
+        if not m:
+            prev = None
+            continue
+        if SEPARATOR_ROW_RE.match(line):
+            return split_cells(prev.group(1)) if prev is not None else []
+        prev = m
+    return []
 
 
 def heading_id_map(plan_text):
@@ -1723,6 +1742,116 @@ def _phase_set(value):
     return (out or {"implement", "validate"}), True
 
 
+# ── TP4/b — a gépi futtatási tábla SÉMÁJA ────────────────────────────────────
+# Miért kell: az `S1` kapu csak azt nézi, hogy a szekció LÉTEZIK-e. Egy éles
+# ciklus táblája `Recept | Kategória | Előfeltétel | Parancs | Időkorlát | …`
+# fejléccel készült — átment az S1-en, de a `run-tests.py` FIX OSZLOP-POZÍCIÓKKAL
+# olvas, tehát nem hibaüzenetet adott, hanem ROSSZ CELLÁKAT használt: a fejléc
+# adatsorként futott volna, az `Eredményfájl` helyén `60s` időkorlát állt. Ezért
+# a fázis kézi parancsokra esett vissza — ahol egyetlen `EV` kapu sem fut le, és
+# ahonnan egy egész teszt-kategória nyom nélkül eltűnt.
+#
+# A tábla parserét SZÁNDÉKOSAN nem tesszük „okossá" (fejléc-alapú oszlop-
+# felismerés): az elrejtené a hibát — egy idegen sémájú tábla akkor is rossz
+# bizonyítékot termelne. A séma KÖTELEZŐ, és ott bukjon, ahol a tábla keletkezik.
+#
+# Az első hét oszlop neve a `03b` sablonjában LITERÁL (nem token), ezért itt is
+# az; az utolsó kettő tokenből jön. A `Kategória`/`Category` szót ugyanúgy
+# bilingvis literál-halmazként ismerjük fel, ahogy a `run-tests.py` teszi
+# (`HEADER_FIRST_CELL_WORDS`) — egy szótár-kulcs bevezetése a két prompt-fa
+# sablonjának átírását is jelentené, az pedig külön munka.
+RUN_TABLE_FIRST_COLUMN_WORDS = {"kategória", "kategoria", "category"}
+RUN_TABLE_COLUMNS = {
+    "hu": ("Kategória", "Típus", "Előfeltétel", "Parancs", "Eredményfájl",
+           "Formátum", "Takarítás"),
+    "en": ("Category", "Type", "Prerequisite", "Command", "Result file",
+           "Format", "Cleanup"),
+}
+# A `Típus` értékei NYELVFÜGGETLEN literálok: a `run-tests.py` a `--type`
+# kapcsolót `gyors`/`nehez` értékekkel veszi, és PREFIX-illesztéssel szűr
+# (`r["tipus"].startswith("gyor"/"nehe")`) — az angol prompt-fa is ezt írja elő.
+# Ha itt új `status`-kulcsot vezetnénk be (`fast`/`heavy`), a kapu és a futtató
+# szétcsúszna: a kapu `fast`-ot követelne, a futtató `gyor` prefixet keresne, és
+# EGYETLEN kategóriát sem választana ki. Ezért: prefix-illesztés, pontosan úgy,
+# ahogy a futtató.
+RUN_TABLE_TYPE_PREFIXES = ("gyor", "neh")
+DURATION_CELL_RE = re.compile(r"^\d+(?:[.,]\d+)?\s*(?:s|m|h|mp|perc|sec|min|ms)$", re.IGNORECASE)
+
+
+def _run_table_schema_text():
+    cols = RUN_TABLE_COLUMNS.get(lang() or "hu", RUN_TABLE_COLUMNS["hu"])
+    return " · ".join(cols + (fld("f_environment"), fld("f_phase")))
+
+
+def check_run_table_schema(plan_text, f):
+    """TP4/b — a gépi futtatási tábla oszlopai a keret SÉMÁJÁT követik-e.
+
+    Három, egymástól független megállapítás:
+      1. a fejléc első cellája a `Kategória` (eltolt tábla → minden cella
+         rossz mezőbe kerül a `run-tests.py`-ban);
+      2. a `Típus` oszlop értéke `gyors`/`nehéz` (ez dönti el, mi fut a
+         könnyű körben — VD10);
+      3. az `Eredményfájl` oszlopban útvonal áll, nem időtartam.
+    """
+    header = table_header(plan_text, sec("machine_run_table"))
+    rows = table_rows(plan_text, sec("machine_run_table"))
+    if not header and not rows:
+        return                      # nincs tábla — azt az S1 méri
+
+    schema = _run_table_schema_text()
+
+    # (1) fejléc-cella
+    first = (header[0] if header else "").strip().strip("`*_").lower()
+    if header and first not in RUN_TABLE_FIRST_COLUMN_WORDS:
+        f.add("TP4/b", "03",
+              f"a `{sec('machine_run_table')}` első oszlopa nem a `Kategória` "
+              f"(`{header[0][:30]}`) — a `run-tests.py` FIX oszlop-pozíciókkal olvas, "
+              f"tehát az eltolt tábla minden celláját rossz mezőbe teszi (a parancs "
+              f"helyére időkorlát, az eredményfájl helyére környezet kerül), és a fázis "
+              f"kézi parancsokra esik vissza, ahol egyetlen `EV` kapu sem fut le. "
+              f"A kötelező oszlop-sorrend: {schema} (az utolsó kettő opcionális)")
+
+    # (2) Típus-oszlop és (3) Eredményfájl-oszlop
+    bad_types, bad_results, empty_types = [], [], []
+    for row in rows:
+        cat = (row[0] if row else "") or "(névtelen)"
+        tipus = (row[1] if len(row) > 1 else "").strip().strip("`*_").lower()
+        if is_empty_cell(tipus):
+            empty_types.append(cat)
+        elif not tipus.startswith(RUN_TABLE_TYPE_PREFIXES):
+            bad_types.append(f"`{cat}` → `{tipus[:20]}`")
+        eredmeny = (row[4] if len(row) > 4 else "").strip().strip("`*_")
+        if is_empty_cell(eredmeny):
+            continue
+        if DURATION_CELL_RE.match(eredmeny):
+            bad_results.append(f"`{cat}` → `{eredmeny}`")
+        elif "/" not in eredmeny and "." not in eredmeny:
+            bad_results.append(f"`{cat}` → `{eredmeny[:20]}`")
+
+    if bad_types:
+        f.add("TP4/b", "03",
+              f"a `{sec('machine_run_table')}` `Típus` oszlopa csak `gyors` vagy `nehéz` "
+              f"lehet — ez dönti el, mi fut a könnyű körben (VD10), és a `run-tests.py` "
+              f"`--type` szűrője erre a két szó-prefixre illeszt. Eltérő érték: "
+              + ", ".join(bad_types[:6])
+              + f". A kategória NEVE az első oszlopba való. Kötelező sorrend: {schema}")
+    if empty_types:
+        f.suggest("TP4/b", "03",
+                  f"a `{sec('machine_run_table')}` `Típus` cellája üres: "
+                  + ", ".join(f"`{c}`" for c in empty_types[:6])
+                  + " — az üres típus egyik `--type` szűrőre sem illeszkedik, tehát a "
+                    "kategória sem a könnyű, sem a nehéz körben nem indul el")
+    if bad_results:
+        f.add("TP4/b", "03",
+              f"a `{sec('machine_run_table')}` `Eredményfájl` oszlopában nem útvonal áll: "
+              + ", ".join(bad_results[:6])
+              + " (TP4/b) — a tábla oszlopai eltolódtak. A `run-tests.py` ezt a cellát "
+                "fájlként nyitná meg, és a darabszámok kinyerése NÉMÁN elbukna: a "
+                "`results.json`-ba `nem sikerült darabszámot kinyerni — csak a kilépő kód "
+                "áll rendelkezésre (TR1 gyenge bizonyíték)` kerülne. Az oszlop értéke "
+                f"útvonal vagy `—`. Kötelező sorrend: {schema}")
+
+
 def check_run_table_phase(plan_text, f):
     """PH1 — a `Fázis` oszlop értékei érvényesek, és marad mit futtatni a 07-ben."""
     rows = table_rows(plan_text, sec("machine_run_table"))
@@ -2436,6 +2565,7 @@ def main():
         check_spec_coverage_scenarios(plan_text, f)
         check_test_artifact_datasheet(plan_text, f)
         check_ts_http_blocks(plan_text, f)
+        check_run_table_schema(plan_text, f)
         check_run_table_phase(plan_text, f)
         check_test_ids(plan_text, f)
     if code_only:

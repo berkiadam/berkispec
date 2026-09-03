@@ -318,6 +318,8 @@ Ha a `run-tests.py` `exit 2`-t adott (nincs gépi tábla), hívd a `test-runner`
 - Ha a plan szerint a kategória szándékosan nem létezik → `N/A`, és ezt írd is ki a kör lépés-táblájába.
 - Ha a subagent bizonyíték nélkül jelentett, **kérd újra** tőle a hiányzó adatot, mielőtt döntesz. A saját feltételezésed nem pótolja a futtatást.
 
+> **Az `EV7` javaslat-sorai a NEM-lokális kategóriák env-változóit mérik.** Ha a parancs `DEV_BASE_URL=…`-t állít, de ez a változónév a futtatott teszt-kódban nem szerepel, akkor a beállítás **dekoráció**: a „dev" futás bájtra ugyanaz volt, mint a lokális — miközben a parancs, a `results.json` `<field:f_environment>` mezője és a napló mind devnek látszik. A sor **nem állítja meg a futást** (egy `pytest.ini`-ből olvasott kapcsoló hamis pozitív lenne), de a `results.json` `suggestions` tömbjébe is bekerül: nézd meg, melyik változót olvassa valójában a kód, és vagy a kódot kösd be, vagy a parancsot javítsd a **tényleges** kapcsolóra.
+
 **Plan-hiány kezelése (TR4) — nem kód-bug, ne indíts rá fixert.** Ha a jelentés `## Plan-hiány (TR4)` szekciója nem üres (a runner azért hagyott ki egy tesztcsoportot, mert egy futtatási részlet nincs a `plan.md`-ben — pl. nincs leírva a lokális Keycloak indítása, hiányzik a teszt-user vagy a token-szerzés):
 
 1. **Nézd meg magad a `plan.md`-ben** — a runner tévedhetett, vagy más szekcióban van. Ha ott van, add át neki explicit, és futtasd újra azt a csoportot.
@@ -580,6 +582,11 @@ python3 <platform-scripts-mappa>/validate-gate-check.py specs/cycle-NN-<cycle-na
 ```
 
 Ez ellenőrzi a kör-blokk meglétét, a `## <sec:round> N` ↔ `round-NN/` egyezést (TR5) és a nyitott tételeket. Ha `exit 1`, **ne futtasd a naplózó szkriptet**, és ne zárd le a fázist — előbb rendezd a kiírt ✗ pontokat.
+
+Amit ezen felül mér:
+
+- **`RUN1` — kör-lefedettség.** `<status:round_type_full>` körben a plan gépi futtatási táblájának **minden** `<status:phase_validate>`-fázisú kategóriája szerepel a kör `results.json`-jában. **Ha a kör-mappában nincs `results.json`, a kört nem a gépi táblából hajtottad** — futtasd a `run-tests.py`-jal, ne kézzel kiadott parancsokkal: a kézi futásnak nincs gépi nyoma, egyetlen `EV` kapu sem fut le rajta, és egy egész teszt-kategória tud belőle nyomtalanul kimaradni. Ha egy kategória ebben a körben tudatosan nem futtatható (pl. nincs VPN), írj `RUN-EXEMPT: <kategória> — <miért>` sort **a kör saját blokkjába** — a felmentés így a körhöz kötött, nem az egész riporthoz.
+- **`SK1` — a néma skip nem bizonyíték.** Ha a kör JUnit XML-jeiben olyan eset `skipped`, amelyet a plan tesztfájl-adatlapja `<field:f_test_cases>` sorában `TC-NN` bizonyítékként jelöl, a kapu bukik: a kihagyott teszt **nem ellenőriz semmit**, mégis zöldnek látszik. Futtasd le (állítsd be a kihagyást okozó env-változót), vagy — ha ebben a körben tényleg nem futtatható — írj `SKIP-EXEMPT: <teszt> — <miért>` sort a `check-log.md` `## <sec:notes>` szekciójába. Ugyanez a szabály a `dod-check.py`-ban is él: a `skipped` eset ott `?`-t ad, nem ✓-t.
 
 ---
 

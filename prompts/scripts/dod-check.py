@@ -20,7 +20,9 @@ A spec.md várt alakja (a `· _bizonyíték:_` rész opcionális, de PASS-hoz aj
 Bizonyíték-típusok:
   · **tesztnév** (alap) — a kör-mappa JUnit XML-jeiben keresi (részszöveg,
     kis/nagybetű-érzéketlen). Megvan és zöld → ✓; megvan és bukott → ✗;
-    nincs ilyen teszt → ✗ (a spec olyan tesztre hivatkozik, ami nem futott).
+    megvan, de `skipped` → `?` (SK1: a némán kihagyott teszt NEM bizonyíték —
+    a pont bizonyíték nélkül marad); nincs ilyen teszt → ✗ (a spec olyan
+    tesztre hivatkozik, ami nem futott).
   · **`cmd: <parancs>`** — a `results.json`-ban keresi a kategóriát/parancsot;
     zöld futás → ✓.
   · **`manual: <mit>`** — szándékosan kézi: `?`, az orchestrátor ítéli meg.
@@ -70,8 +72,19 @@ def collect_dod(text):
     return items
 
 
+# A teszt-eset HÁROM állapotú, nem kettő (SK1). A `<skipped>` eset korábban
+# `PASS`-ként került az indexbe — így egy `pytest.skip(...)` a teszt elejére
+# elég volt ahhoz, hogy a `DoD-NN` bizonyítékot kapjon. A rangsor: a rosszabb
+# nyer (`FAIL` > `SKIP` > `PASS`), és a `SKIP` NEM bizonyíték.
+_STATE_RANK = {"PASS": 0, "SKIP": 1, "FAIL": 2}
+
+
+def _worse(a, b):
+    return a if _STATE_RANK[a] >= _STATE_RANK[b] else b
+
+
 def index_tests(round_dir):
-    """{tesztnév: 'PASS'|'FAIL'} a kör-mappa JUnit XML-jeiből."""
+    """{tesztnév: 'PASS'|'SKIP'|'FAIL'} a kör-mappa JUnit XML-jeiből (SK1)."""
     index = {}
     for xml in sorted(Path(round_dir).rglob("*.xml")):
         try:
@@ -84,9 +97,11 @@ def index_tests(round_dir):
                 cls = case.get("classname", "")
                 name = case.get("name", "")
                 failed = case.find("failure") is not None or case.find("error") is not None
+                skipped = case.find("skipped") is not None
+                state = "FAIL" if failed else ("SKIP" if skipped else "PASS")
                 for key in filter(None, [name, f"{cls} > {name}".strip(" >"), cls]):
                     prev = index.get(key)
-                    index[key] = "FAIL" if failed or prev == "FAIL" else "PASS"
+                    index[key] = state if prev is None else _worse(prev, state)
     return index
 
 
@@ -107,7 +122,9 @@ def match_test(evidence, index):
         return exact[0], index[exact[0]]
     partial = [k for k in index if ev in k.lower()]
     if partial:
-        worst = "FAIL" if any(index[k] == "FAIL" for k in partial) else "PASS"
+        worst = "PASS"
+        for k in partial:
+            worst = _worse(worst, index[k])
         return partial[0] + (f" (+{len(partial)-1} egyező)" if len(partial) > 1 else ""), worst
     return None, None
 
@@ -185,6 +202,12 @@ def main():
         if status == "PASS":
             ok_ids.append(dod_id)
             print(f"| {dod_id} | ✓ | {label} |")
+        elif status == "SKIP":
+            # SK1 — a némán kihagyott teszt NEM bizonyíték. Nem ✗ (a teszt nem
+            # bukott), de nem is ✓: a pont bizonyíték NÉLKÜL marad, kézi ítéletre.
+            manual.append(dod_id)
+            print(f"| {dod_id} | ? | {label} — a hivatkozott teszt lefutott, de "
+                  f"`skipped` volt: nem bizonyíték (SK1) |")
         else:
             failed.append(dod_id)
             print(f"| {dod_id} | ✗ | {label} |")
@@ -209,7 +232,8 @@ def main():
         return 1
     if manual:
         print("VERDICT: MANUAL — bizonyíték nélküli pont(ok): " + " ".join(manual)
-              + "  (az orchestrátor ítéli meg; a hiányzó bizonyíték egyben spec-minőségi jelzés)")
+              + "  (az orchestrátor ítéli meg; a hiányzó bizonyíték egyben spec-minőségi jelzés. "
+                "A `skipped` teszttel jelölt pontnál a teszt LEFUTTATÁSA a megoldás — SK1)")
         return 3
     print("VERDICT: PASS — minden DoD-pont bizonyítottan teljesül")
     return 0

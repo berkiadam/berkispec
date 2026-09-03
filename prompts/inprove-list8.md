@@ -5,7 +5,7 @@
 > keményítés tételes teendőit, a 8. a dokumentációt, a 9. a kapukat, a 10. a végrehajtási sorrendet.
 > **Semmit nem kell kikövetkeztetni** — ha valami mégis hiányzik, az a terv hibája; írd bele.
 >
-> **Státusz:** végrehajtásra vár. A 3. szakasz döntései **lezártak** — nem kell rákérdezned.
+> **Státusz:** VÉGREHAJTVA (2026-09-03). A 3. szakasz döntései **lezártak** — nem kell rákérdezned.
 > **Előzmény:** a `prompts/inprove-list6.md` **B része** (CK1 · RED1 · TB1–TB3 · EV6 · TR7 · RV-FB1)
 > **elkészült**; ez a terv az ott maradt rést zárja. A `list6` **A része** (a `03` hasítása
 > `03a`/`03b`-re) szintén elkészült — ez a terv **a hasítás utáni fájlneveket használja**.
@@ -214,7 +214,7 @@ az egész EV-lánc néma.
 > amely a `validate` fázisban fut (`<field:f_phase>` = `<status:phase_validate>` vagy
 > `<status:phase_both>`, **üres cella = mindkettő**), megjelenik-e a kör `results.json`-jában.
 
-- [ ] **4.1 — Új check a `validate-gate-check.py`-ba: `check_run_coverage(cycle, rep, stage)`.**
+- [x] **4.1 — Új check a `validate-gate-check.py`-ba: `check_run_coverage(cycle, rep, stage)`.**
   A fájl felépítése: modul-szintű `check_*` függvények, mind `(cycle, rep, stage)` szignatúrával,
   a `Report` osztály `ok()` / `info()` / `bad()` metódusaival (a `bad()` állítja a `failed` flaget,
   abból lesz `exit 1`). A `main()` a hívási sorrendet adja (`check_tasks` … `check_report`).
@@ -245,7 +245,7 @@ az egész EV-lánc néma.
        `results.json`-ba kerüljön be `skipped` státusszal és indoklással."*
   7. Ha minden rendben: `rep.ok(...)` a lefedett kategóriák számával.
 
-- [ ] **4.2 — Felmentő ág (`RUN-EXEMPT`).** Egy tudatosan kihagyott kategória (pl. VPN nélküli
+- [x] **4.2 — Felmentő ág (`RUN-EXEMPT`).** Egy tudatosan kihagyott kategória (pl. VPN nélküli
   futás) ne bukassa a kört, de hagyjon nyomot. A felmentés helye a `validation-report.md` **adott
   kör-blokkja**, a `RED-EXEMPT` / `CK-DEVIATION` mintájára:
   `RUN-EXEMPT: <kategória> — <miért nem futtatható ebben a körben>`
@@ -260,14 +260,14 @@ az egész EV-lánc néma.
   > `RED1` és a `CK1` viselkedése bájtra változatlan marad, az új hívások pedig saját mintát adnak
   > (kategóriára pl. `[^\s—–-]+`). Egy parser maradjon, ne három.
 
-- [ ] **4.3 — A `07` skill szövege (HU+EN).** `prompts/skills-{hu,en}/07-validate.md`, a
+- [x] **4.3 — A `07` skill szövege (HU+EN).** `prompts/skills-{hu,en}/07-validate.md`, a
   **kör-lezáró kapu-blokk** felsorolásába egy sor:
   *„**`RUN1`:** TELJES körben a plan minden `validate`-fázisú kategóriája szerepel a kör
   `results.json`-jában. Ha nincs `results.json`, a kört nem a gépi táblából hajtottad — futtasd a
   `run-tests.py`-jal, ne kézzel."*
   A `03b`-re mutató visszairányítás **nem** kell: ez végrehajtási, nem tervezési hiba.
 
-- [ ] **4.4 — Verifikáció.** Gyárts a scratchpadba egy kör-mappát (vagy használj éleset):
+- [x] **4.4 — Verifikáció.** Gyárts a scratchpadba egy kör-mappát (vagy használj éleset):
   - **bukás-próba:** TELJES kör-blokk a `validation-report.md`-ben + hiányzó `results.json` → `exit 1`,
     a `RUN1` sorral;
   - **bukás-próba 2:** `results.json` megvan, de a `validate`-fázisú `e2e` kategória nincs benne → `exit 1`;
@@ -289,7 +289,7 @@ A kötelező séma (a `03b` sablonjából, `prompts/skills-hu/03b-write-test-pla
 ```
 (az utolsó kettő opcionális: 7, 8 vagy 9 oszlop — a régi táblák így futnak tovább).
 
-- [ ] **5.0 — 🔴 ELŐBB: a `parse_matrix()` fejléc-felismerése nyelvfüggő (futásidejű hiba).**
+- [x] **5.0 — 🔴 ELŐBB: a `parse_matrix()` fejléc-felismerése nyelvfüggő (futásidejű hiba).**
   A `run-tests.py` `parse_matrix()`-a így hagyja ki a fejlécsort:
   ```python
   if not cells or cells[0].lower() in ("kategória", "kategoria"):
@@ -312,7 +312,7 @@ A kötelező séma (a `03b` sablonjából, `prompts/skills-hu/03b-write-test-pla
   **Verifikáció:** `parse_matrix()` egy angol és egy magyar fejlécű, egyébként azonos táblán
   **ugyanazt az egy adatsort** adja vissza.
 
-- [ ] **5.1 — Új check az `analyze-gate-check.py`-ba: `check_run_table_schema(plan_text, f)`.**
+- [x] **5.1 — Új check az `analyze-gate-check.py`-ba: `check_run_table_schema(plan_text, f)`.**
   A fájl konvenciói: `table_rows(text, sec("machine_run_table"))` adja a sorokat cellalistaként;
   a megállapítás `f.add(kód, célfázis, üzenet)` (blokkol) vagy `f.suggest(...)` (nem blokkol);
   a nyelvfüggő nevek `sec()` / `fld()` / `st()`. **Mintának a `check_run_table_phase` (PH1)
@@ -347,12 +347,12 @@ A kötelező séma (a `03b` sablonjából, `prompts/skills-hu/03b-write-test-pla
      tábla oszlopai eltolódtak (TP4/b). A `run-tests.py` ezt a cellát fájlként nyitná meg, és a
      darabszámok kinyerése némán elbukna (TR1 gyenge bizonyíték)."*
 
-- [ ] **5.2 — A check hívása.** Az `analyze-gate-check.py` `main()`-jében, a `check_run_table_phase`
+- [x] **5.2 — A check hívása.** Az `analyze-gate-check.py` `main()`-jében, a `check_run_table_phase`
   (PH1) hívása **mellé**, a teszt-oldali blokkba — vagyis abba az ágba, amely `code_only` módban
   **nem** fut (a `--plan-code-only` a `03a` lezárása, ott a tábla még nem létezik). Keresd a
   `if not code_only:` blokkot, ahol a `check_test_scenarios` / `check_run_table_phase` hívások állnak.
 
-- [ ] **5.3 — A `03b` minőségi kapujának új pontja (HU+EN).**
+- [x] **5.3 — A `03b` minőségi kapujának új pontja (HU+EN).**
   `prompts/shared-{hu,en}/quality-check-plan-test.md`, a `PH1`-es pont mellé:
   *„**🔴 A gépi tábla a keret SÉMÁJÁT követi? (TP4/b)** — az oszlopok sorrendje `Kategória · Típus ·
   Előfeltétel · Parancs · Eredményfájl · Formátum · Takarítás · Környezet · Fázis`, a `Típus` értéke
@@ -360,7 +360,7 @@ A kötelező séma (a `03b` sablonjából, `prompts/skills-hu/03b-write-test-pla
   oszlop-pozíciókkal** olvas: egy saját sémájú tábla nem hibaüzenetet ad, hanem **rossz cellákat
   használ** — és a fázis kézi parancsokra esik vissza, ahol egyetlen `EV` kapu sem fut le."*
 
-- [ ] **5.4 — Verifikáció.** `analyze-gate-check.py … --plan-only`:
+- [x] **5.4 — Verifikáció.** `analyze-gate-check.py … --plan-only`:
   - **bukás-próba:** másold a scratchpadba a `cycle-30` planjét (vagy gyárts egy táblát
     `Recept | Kategória | …` fejléccel) → a `TP4/b` mindhárom megállapítása jelenjen meg;
   - **hamis-pozitív próba:** egy szabályos, 7 és egy 9 oszlopos tábla → **nincs** `TP4/b` találat.
@@ -373,7 +373,7 @@ A kötelező séma (a `03b` sablonjából, `prompts/skills-hu/03b-write-test-pla
 > parancs elején), a változó **neve** megjelenik-e a parancs által futtatott teszt-kódban. Ha nem,
 > a „dev" futás bájtra ugyanaz, mint a lokális — miközben minden bizonyíték devnek látszik.
 
-- [ ] **6.1 — Új check a `run-tests.py`-ba: `check_env_binding(rows, repo_root)`.**
+- [x] **6.1 — Új check a `run-tests.py`-ba: `check_env_binding(rows, repo_root)`.**
   A `check_environment_mismatch` (EV5) **mellé**, ugyanabba a szakaszba. Logika:
   1. Csak azokra a sorokra, ahol `not env_is_local(row["kornyezet"])`.
   2. A `parancs` cellából szedd ki a vezető env-hozzárendeléseket:
@@ -389,7 +389,7 @@ A kötelező séma (a `03b` sablonjából, `prompts/skills-hu/03b-write-test-pla
      futtatott teszt-kódban nem szerepel (EV7) — a beállítás dekoráció: a futás ugyanaz, mint
      lokálisan. Vagy a kód olvassa be, vagy a parancs a tényleges kapcsolót használja."*
 
-- [ ] **6.2 — Hova kösd.** A `main()`-ben, közvetlenül a `check_environment_mismatch` (`exit 4`)
+- [x] **6.2 — Hova kösd.** A `main()`-ben, közvetlenül a `check_environment_mismatch` (`exit 4`)
   ág **után**, a futtatás **előtt**. **Kilépő kód: NEM új.** Az `EV7` **javaslat-szintű** (a
   kimenetben `·` sor), nem állítja meg a futást — indoklás: egy szokatlan, de működő
   kapcsoló-átadás (pl. `pytest.ini`-ből olvasott név) hamis pozitív lenne, és egy futást megállító
@@ -397,11 +397,11 @@ A kötelező séma (a `03b` sablonjából, `prompts/skills-hu/03b-write-test-pla
   nem szerepel a kódban, **plusz** a kategória `nehéz` típusú → az üzenet `🔴` prefixet kap
   (a kimenetben feltűnő), de a kilépő kód akkor is változatlan.
 
-- [ ] **6.3 — A `07` skill szövege (HU+EN).** A `run-tests.py` hívása körüli magyarázatba egy mondat:
+- [x] **6.3 — A `07` skill szövege (HU+EN).** A `run-tests.py` hívása körüli magyarázatba egy mondat:
   *„Az `EV7` javaslat-sorai a **nem-lokális** kategóriák env-változóit mérik: ha egy `DEV_BASE_URL=`
   a parancsban van, de a tesztkódban nincs, a „dev" futás lokális futás volt."*
 
-- [ ] **6.4 — Verifikáció.** Gyárts a scratchpadba két sort:
+- [x] **6.4 — Verifikáció.** Gyárts a scratchpadba két sort:
   - `DEV_BASE_URL=https://app.dev.example pytest test/e2e/` + egy `test/e2e/x.py`, amely **nem**
     említi a `DEV_BASE_URL`-t → jelenjen meg az `EV7` javaslat;
   - ugyanez, de a fájlban `os.environ.get("DEV_BASE_URL")` → **ne** szóljon.
@@ -415,7 +415,7 @@ A kötelező séma (a `03b` sablonjából, `prompts/skills-hu/03b-write-test-pla
 > kapujában bukjon, ha a kör JUnit-jaiban olyan eset `skipped`, amelyre a plan `TS-NN`/`TC-NN`
 > lefedettsége hivatkozik.
 
-- [ ] **7.1 — `dod-check.py`: a skip önálló állapot.** Az `index_tests(round_dir)` (a `*.xml`-eket bejáró
+- [x] **7.1 — `dod-check.py`: a skip önálló állapot.** Az `index_tests(round_dir)` (a `*.xml`-eket bejáró
   függvény, ~73–91. sor; a fogyasztója a `match_test(evidence, index)`) ma így dönt:
   ```python
   failed = case.find("failure") is not None or case.find("error") is not None
@@ -436,7 +436,7 @@ A kötelező séma (a `03b` sablonjából, `prompts/skills-hu/03b-write-test-pla
   > **🔴 Ez a terv legfontosabb egyetlen javítása.** Enélkül minden alábbi check megkerülhető:
   > elég egy `pytest.skip(...)` a teszt elejére, és a `DoD` bizonyítékot kap.
 
-- [ ] **7.2 — `validate-gate-check.py`: `check_skipped_evidence(cycle, rep, stage)`.**
+- [x] **7.2 — `validate-gate-check.py`: `check_skipped_evidence(cycle, rep, stage)`.**
   1. `stage == "start"` → `return`.
   2. Gyűjtsd össze a plan `<sec:spec_coverage>` táblájából és a `<sec:test_specification>`
      szekcióból hivatkozott teszt-neveket **és** a `TS-NN`/`TC-NN` azonosítókat. A `TA1` adatlap
@@ -451,12 +451,12 @@ A kötelező séma (a `03b` sablonjából, `prompts/skills-hu/03b-write-test-pla
      A parser a 4.2-ben **általánosított** `_exemptions(text, prefix, key_re=...)` — a teszt-függvény
      neve nem task-azonosító, ezért saját kulcs-mintát adj (`[\w./:\[\]-]+`).
 
-- [ ] **7.3 — A `06` és a `07` szövege (HU+EN).** A `06-implement.md` anti-stub garde-jába
+- [x] **7.3 — A `06` és a `07` szövege (HU+EN).** A `06-implement.md` anti-stub garde-jába
   (a `RED1/TB1` blokk mellé) egy mondat: *„A `pytest.skip` / `it.skip` / `@Disabled` **nem** zárja
   le a taskot: a némán kihagyott teszt a `07` bizonyíték-joinjában sem számít (SK1)."*
   A `07-validate.md` kapu-blokkjába egy sor az `SK1`-ről.
 
-- [ ] **7.4 — Verifikáció.**
+- [x] **7.4 — Verifikáció.**
   - **bukás-próba:** gyárts egy JUnit XML-t egy `<skipped>` esettel, amelynek neve a plan `TA1`
     adatlapjában `TC-01`-ként szerepel → `exit 1`, az `SK1` sorral;
   - **felmentés-próba:** `SKIP-EXEMPT: <teszt> — nincs VPN ebben a körben` a `check-log.md`
@@ -469,16 +469,16 @@ A kötelező séma (a `03b` sablonjából, `prompts/skills-hu/03b-write-test-pla
 
 ## 8. Dokumentáció
 
-- [ ] **8.1 — `README-HU.md` + `README.md`.** Három helyen:
+- [x] **8.1 — `README-HU.md` + `README.md`.** Három helyen:
   - a `07-validate` determinisztikus rétegének táblájába két sor: *„Lefutott-e a plan MINDEN
     validate-fázisú kategóriája?" → `validate-gate-check.py` (`RUN1`)*, és *„A kihagyott teszt
     bizonyíték-e?" → `dod-check.py` + `validate-gate-check.py` (`SK1`)*;
   - a `03b-write-test-plan` sorához egy fél mondat a `TP4/b` séma-kényszerről;
   - **új tanulság-bekezdés** a meglévők közé (a „Az üres teszt is zöld…" bekezdés **után**),
     a 2. szakasz mérésével és a négy kapu táblájával.
-- [ ] **8.2 — `berki-spec-directory-structure.md`.** A `dod-check.py` és a `validate-gate-check.py`
+- [x] **8.2 — `berki-spec-directory-structure.md`.** A `dod-check.py` és a `validate-gate-check.py`
   sorának bővítése az új checkekkel; a `run-tests.py` soráé az `EV7`-tel.
-- [ ] **8.3 — `prompts/meta-improve-prompts.md`: új elv `7/m`**, a `7/l` után. Vázlat a meglévő
+- [x] **8.3 — `prompts/meta-improve-prompts.md`: új elv `7/m`**, a `7/l` után. Vázlat a meglévő
   elvek hangján:
 
   *A `7/l` a **teszt** szintjén kérdezte meg, mi bizonyítja, hogy történt is valami. Egy éles ciklus
@@ -500,29 +500,29 @@ A kötelező séma (a `03b` sablonjából, `prompts/skills-hu/03b-write-test-pla
 
 ## 9. Kapuk és elfogadási kritériumok
 
-- [ ] **9.1** `python3 prompts/scripts/lang-parity-check.py` → hiba nélkül.
-- [ ] **9.2** `python3 prompts/scripts/lang-parity-check.py --strict` → 0.
-- [ ] **9.3** `python3 prompts/scripts/sync-gemini-agents.py --check` → 0 (ha agent-prompt változott,
+- [x] **9.1** `python3 prompts/scripts/lang-parity-check.py` → hiba nélkül.
+- [x] **9.2** `python3 prompts/scripts/lang-parity-check.py --strict` → 0.
+- [x] **9.3** `python3 prompts/scripts/sync-gemini-agents.py --check` → 0 (ha agent-prompt változott,
   előtte írás módban regenerálva).
-- [ ] **9.4** Mind a négy script **szintaktikailag ép** és a súgója fut:
+- [x] **9.4** Mind a négy script **szintaktikailag ép** és a súgója fut:
   ```bash
   for s in analyze-gate-check run-tests validate-gate-check dod-check; do
     python3 -c "import ast;ast.parse(open('prompts/scripts/$s.py').read())" && echo "$s OK"
   done
   ```
-- [ ] **9.5** Telepítési füstteszt legalább egy platformra, **hu és en** prompt-nyelven: a
+- [x] **9.5** Telepítési füstteszt legalább egy platformra, **hu és en** prompt-nyelven: a
   telepített `07-validate` és `03b-write-test-plan` fájlokban **nincs** feloldatlan `INCLUDE:`
   marker és `<sec:` / `<field:` / `<status:` token.
-- [ ] **9.6** Mind a négy check **célzott bukás-próbája** lefutott: 4.4, 5.4, 6.4, 7.4 — és az
+- [x] **9.6** Mind a négy check **célzott bukás-próbája** lefutott: 4.4, 5.4, 6.4, 7.4 — és az
   **5.0** verifikációja is (magyar és angol fejlécű tábla ugyanazt az egy adatsort adja).
-- [ ] **9.7 — Hamis-pozitív próba (kötelező).** Futtasd le a `RUN1`-et és az `SK1`-et **korábbi,
+- [x] **9.7 — Hamis-pozitív próba (kötelező).** Futtasd le a `RUN1`-et és az `SK1`-et **korábbi,
   sikeresen lezárt ciklusokra**. Ami itt bukik, azt **meg kell érteni**: vagy valódi rés volt ott is
   (akkor írd a 11. szakaszba), vagy a check túl agresszív (akkor szűkítsd). **Egy kapu, ami a jó
   ciklust is bukatja, használhatatlan.** A `TP4/b`-nél külön figyelj a régi, 7 oszlopos táblákra.
-- [ ] **9.8 — Éles próba (regressziós teszt).** Ha elérhető a `cycle-30` (vagy hasonló) ciklus-mappa:
+- [x] **9.8 — Éles próba (regressziós teszt).** Ha elérhető a `cycle-30` (vagy hasonló) ciklus-mappa:
   a `RUN1`-nek és a `TP4/b`-nek **buknia kell** rajta, az `SK1`-nek az implement-fázis JUnit-ján.
   Ha valamelyik **nem** bukik, az a check hibája — nem azt méri, amit gondolunk.
-- [ ] **9.9** Commit: `feat(prompts): kör-lefedettség és skip-bizonyíték keményítés — RUN1, TP4/b, EV7, SK1`
+- [x] **9.9** Commit: `feat(prompts): kör-lefedettség és skip-bizonyíték keményítés — RUN1, TP4/b, EV7, SK1`
   (az **5.0** külön, előrehozott commitot is kaphat: `fix(scripts): a gépi futtatási tábla fejléce nyelvfüggetlenül`)
 
 ---
@@ -557,4 +557,51 @@ A kötelező séma (a `03b` sablonjából, `prompts/skills-hu/03b-write-test-pla
 > (3. szakasz) tarthatatlannak bizonyult, **írd ide, mi lett helyette és miért** — ez lesz a
 > `meta-improve-prompts.md` `7/m` elv végleges szövegének forrása.
 
-- _(még nincs bejegyzés)_
+### A végrehajtás menete
+
+A 10. szakasz sorrendjében ment, eltérés nélkül: `7.1` → `5.0` → `5.1–5.4` → `4.` → `7.2–7.3` → `6.` → bukás- és hamis-pozitív próbák → dokumentáció → kapuk. A 3. szakasz **egyetlen döntése sem bizonyult tarthatatlannak** — az alábbiak pontosítások és a próbák eredményei.
+
+### Amit a terv nem látott előre
+
+- **A `Kategória` oszlopnévhez NINCS szótár-kulcs (5.1/1).** A terv úgy fogalmazott, hogy a fejléc első cellája „a `Kategória` (`fld` szerinti) szó" legyen — de a gépi tábla első hét oszlopneve mindkét prompt-fában **literál**, nem `<field:…>` token (csak a `Környezet` és a `Fázis` tokenes). Új szótár-kulcs bevezetése mindkét sablon átírását jelentette volna, ami külön munka. Ezért ugyanaz a megoldás, mint a `Típus`-nál: **bilingvis literál-halmaz** (`RUN_TABLE_FIRST_COLUMN_WORDS = {"kategória", "kategoria", "category"}`), pontosan úgy, ahogy a `run-tests.py` `HEADER_FIRST_CELL_WORDS`-e. A kapu HIBAÜZENETÉBEN viszont a séma **projekt-nyelven** jelenik meg (`RUN_TABLE_COLUMNS` + a két tokenes oszlop) — ellenőrizve: angol telepítésen `Category · Type · Prerequisite · Command · Result file · Format · Cleanup · Environment · Phase`.
+- **A `table_rows()` SZÁNDÉKOSAN kihagyja a fejlécet**, tehát a `TP4/b` első megállapítása nem volt megírható vele. Új segéd készült mellé: `table_header(text, title_substr)` — a fejléc az a táblasor, amelyet közvetlenül elválasztó sor követ (ugyanaz a szerkezeti elv, mint az **5.0**-ban).
+- **Hamis-pozitív rés a `RUN1`-ben, amit a terv nem tárgyalt: a MEGSZAKADT kör.** A `07` szerint a megszakadt kört nem írjuk felül, hanem `**Megszakadt**` sorral lezárjuk és új kört nyitunk — egy ilyen, részleges bizonyítékú TELJES kör viszont visszamenőleg **nem futtatható újra**, tehát bukatni hamis pozitív lenne. A `check_run_coverage` ezért kihagyja azokat a TELJES köröket, amelyek blokkja megszakadás-jelölést hordoz (bilingvis: `Megszakadt` / `Interrupted`), vagy amelyek fejléce még `<status:in_progress>` — utóbbit a `check_report` amúgy is jelzi. Ez **nem** enyhítés: a lezárt körökre a mérés változatlanul kemény.
+- **A `dod-check.py`-ban a `SKIP` `?`-t ad, nem ✗-et** (a 7.1 szövege szerint: „a DoD-pont maradjon bizonyíték nélkül"). Így a `VERDICT: MANUAL` / `exit 3` ágra kerül — az orchestrátornak **döntenie kell**, nem tud rá csendben PASS-t adni. A `match_test()` részleges (substring) találatainál a rangsor `FAIL > SKIP > PASS`, tehát több egyező közül a legrosszabb nyer.
+- **Az `EV7` kimenete a futtatás ELŐTT jelenik meg** (így `--dry-run`-ban is látszik), és bekerül a `results.json` `suggestions` tömbjébe is — de a záró javaslat-lista nem írja ki másodszor. Az `env_skipped` ág (a parancsból nem olvasható ki létező teszt-útvonal) külön, `·` szintű sorként jelenik meg: a néma kimaradás önmagában is információ.
+- **Az `_exemptions()` általánosítása (4.2) mindhárom hívót kiszolgálja**, és a kulcs köré opcionális backtick-elnyelést is kapott (`` `<kulcs>` `` alak is felmenthet). A `RED-EXEMPT` és a `CK-DEVIATION` viselkedése változatlan (ellenőrizve).
+
+### 9.7 — hamis-pozitív próba
+
+**Éles, korábbi ciklus-mappa ebben a környezetben nem érhető el** (a `flowx-token-exchange` projekt nincs a gépen; a `~/tmp/demo-project` ciklusa üres). Ezért a próba a 2. szakasz **mért alakjainak szintetikus reprodukcióival** ment, a scratchpadban. Amit lefedett és az eredmény (mind `exit 0`, egyetlen `RUN1`/`SK1` találat nélkül):
+
+| eset | eredmény |
+|---|---|
+| régi, **7 oszlopos** tábla (nincs `Környezet`/`Fázis`), minden kategória lefutott | ✓ átment |
+| könnyű javító kör + záró teljes kör (a `KÖNNYŰ` körön nincs mérés — D3) | ✓ átment |
+| **megszakadt** teljes kör + jó záró kör | ✓ átment (`info` sorral) |
+| backtickes kategória-név a plan cellájában (`` `unit` ``) vs. nyers név a `results.json`-ban | ✓ átment (normalizálás működik) |
+| `skipped` eset, amelyre a plan **nem** hivatkozik (platform-függő teszt) | ✓ átment |
+| plan gépi tábla **nélkül** (`cycle-26`–`-28` alak) | ✓ átment (`info`, D4) |
+| szabályos 7 és 9 oszlopos tábla a `TP4/b`-n | ✓ átment (nincs találat) |
+
+**Nyitott tétel:** a próbát **éles ciklus-mappákon meg kell ismételni**, amint elérhetők — ez az egyetlen olyan pont, ahol a szintetikus reprodukció nem egyenértékű a valódival (különösen a `RUN1` kör-blokk-regexe és az `SK1` `f_test_cases` leképezés-parsere érzékeny a valódi artefaktumok apró alaki eltéréseire).
+
+### 9.8 — éles próba (a mért hibaalakokon)
+
+Mindhárom mért hibaalak reprodukálva, és **mindhárom bukik**:
+
+| mért alak | kapu | eredmény |
+|---|---|---|
+| `cycle-30` táblája (`Recept | Kategória | … | Időkorlát | …`) | `TP4/b` | ✗ **mindhárom** megállapítás megjelenik (fejléc, `Típus`, `Eredményfájl`) |
+| `cycle-30` `Kör 1`: TELJES kör, 0 `results.json` | `RUN1` | ✗ bukik |
+| `cycle-29` `Kör 5`: záró TELJES, PASS kör `results.json` nélkül | `RUN1` | ✗ bukik |
+| `test_t30_00_dsp01_preflight_readiness` `skipped`, a plan `TC-01`-ként jelöli | `SK1` | ✗ bukik (`validate-gate-check.py`), és a `dod-check.py` `?`-t ad ✓-t helyett |
+| `DEV_BASE_URL=…` a parancsban, a tesztkódban sehol | `EV7` | · javaslat megjelenik (nem bukat — 6.2) |
+
+### 5.0 — a latens nyelvfüggő hiba
+
+A `parse_matrix()` verifikációja lefutott: **magyar és angol fejlécű, egyébként azonos tábla ugyanazt az EGY adatsort adja** (`unit / gyors / npm test`), és az elválasztó sor nélküli, kézzel írt tábla sem törik el (másodlagos literál-ág). A javítás előtt az angol táblán a szkript a `Command` szót adta volna ki shell parancsként, `Category` néven FAIL kategóriával — ami a `RUN1` joinját is megzavarta volna.
+
+### 9.5 — telepítési füstteszt
+
+`claude` platform, **hu és en** prompt-/projekt-nyelven telepítve: a `bs-07-validate`, `bs-03b-write-test-plan` és `bs-06-implement` SKILL.md-jében **0** feloldatlan `INCLUDE:` marker és `<sec:`/`<field:`/`<status:` token, és mind a négy új azonosító (`TP4/b`, `RUN1`, `SK1`, `EV7`) jelen van. A **telepített** scriptek angol `lang-keys.json`-nal is helyesen működnek: a `RUN1` felismeri a `## Round N — … — FULL — …` fejlécet, a `TP4/b` pedig angol oszlopnevekkel írja ki a sémát, és a szabályos angol táblán nem ad találatot.
