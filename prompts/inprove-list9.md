@@ -16,7 +16,7 @@
 ## 0. Hogyan használd ezt a dokumentumot
 
 1. **Olvasd el az 1–2. szakaszt.** Az 1. mondja meg, milyen repóban dolgozol és milyen kézi
-   kapuk kötelezők; a 2. adja az indoklást, ami nélkül a checkek önkényesnek tűnnek.
+   kapuk kötelezők (és az 1.4 megmondja, hol nézhetsz utána a hivatkozott azonosítóknak); a 2. adja az indoklást, ami nélkül a checkek önkényesnek tűnnek.
 2. **A 3. szakasz döntéseit ne nyisd újra.** Ha valamelyik a végrehajtás közben tarthatatlannak
    bizonyul, **írd a 12. szakaszba, mi lett helyette és miért** — ne csendben térj el tőle.
 3. **A 11. szakasz sorrendjében haladj**, és minden teendő után **pipálj ebben a fájlban**
@@ -69,7 +69,23 @@ python3 prompts/scripts/sync-gemini-agents.py --check   # agent.json tükrök   
 Ha egy **agent-prompt** (`prompts/agents-{hu,en}/*.md`) változik, előbb írás módban regenerálj:
 `python3 prompts/scripts/sync-gemini-agents.py`.
 
-### 1.4 Amit ez a terv NEM érint (kimondott nem-célok)
+### 1.4 A hivatkozott azonosítók — hol nézd meg őket
+
+Ez a terv sok meglévő kapu-azonosítót említ (`TR3`, `TR7`, `EV1`–`EV7`, `PH1`, `TP4/b`, `RUN1`,
+`SK1`, `TA1`, `TI1`, `TB1`–`TB3`, `VD10`, `DI1`, `7/g`, `7/l`, `7/m`). **Nem kell fejből tudnod
+őket** — mind a három helyen dokumentálva van, és bármelyik elég:
+
+| hol | mit ad |
+|---|---|
+| `README-HU.md` „determinisztikus réteg" táblái + a tanulság-bekezdések | mit mér és miért létezik |
+| `prompts/meta-improve-prompts.md` `7/…` elvek | az általánosított tanulság |
+| `berki-spec-directory-structure.md` | melyik script melyik checket futtatja |
+| maga a script docstringje (`prompts/scripts/*.py` eleje) | a pontos viselkedés és a kilépő kódok |
+
+A `list8`-ban született négy kapu (`RUN1` · `TP4/b` · `EV7` · `SK1`) leírása a
+`prompts/inprove-list8.md`-ben is ott van, a 11. szakaszában a végrehajtás tapasztalataival együtt.
+
+### 1.5 Amit ez a terv NEM érint (kimondott nem-célok)
 
 - **Nem** nyúlunk a `Környezet` oszlop értékkészletéhez: szabad szöveg marad, `remote` az ajánlott
   címke (a `list8` utáni átnevezés lezárt döntése).
@@ -371,7 +387,8 @@ specs/cycle-30-…/test-report/implement/s2s/rest-logs/remote/test_s2s_renewal/
   *„**A REST-naplók teszt-szerinti almappákba mennek:** `<artefaktum>/<local|remote>/<teszt-név>/`.
   A `local`/`remote` szint **nyelvfüggetlen**, és a **teszt saját jelöléséből** következik (nem a
   hívott címből — egy `oc port-forward` mögötti `127.0.0.1` remote). A teszt-név a teszt-függvény
-  neve, útvonal-biztosra normalizálva (`[^A-Za-z0-9._-]` → `-`). Enélkül a napló egy lapos halom,
+  neve, útvonal-biztosra normalizálva a **7.5/a szabálya szerint** (`[^A-Za-z0-9._-]` → `-`,
+  a széleken lévő `-` levágva; `test_foo[dsp01]` → `test_foo-dsp01`). Enélkül a napló egy lapos halom,
   amelyből utólag nem állapítható meg, melyik teszt mit hívott — és egy korábbi körből örökölt
   fájlokkal teli mappa telinek látszik."*
 
@@ -382,28 +399,78 @@ specs/cycle-30-…/test-report/implement/s2s/rest-logs/remote/test_s2s_renewal/
   egyetlen hely, ahol ez látszik: a `127.0.0.1:8080` a naplóban semmit nem árul el arról, hogy a
   másik végén egy osztott klaszter van."*
 
+  > **🔴 A sor ALAKJA kötött, mert az `RL1` gépileg olvassa.** A `Környezetek és végpontok` tábla
+  > oszlopai: `Környezet | Komponens | URL + port | Health endpoint`. Port-forwardnál a
+  > **`Környezet` cella `remote`**, az **`URL + port` cella a LOKÁLISNAK LÁTSZÓ cím**
+  > (`http://127.0.0.1:8080`), a **`Komponens` cella pedig tartalmazza a `port-forward` szót** és a
+  > valódi célt. Példa:
+  > ```
+  > | remote | keycloak (port-forward → keycloak.apps.ocp.example) | `http://127.0.0.1:8080` | `/health/ready` |
+  > ```
+  > Az `RL1` ebből annyit használ, hogy **a `remote` környezetű sorok `URL + port` cellájából
+  > kigyűjti a lokálisnak látszó címeket** — ezek a „felmentett" címek. Egyszerű és nem találgat:
+  > ha egy `remote/` mappa naplói CSAK ilyen címekre mennek, az nem bukás.
+
 - [ ] **7.4 — `RL1` — útvonal ↔ tartalom.** Új check a `validate-gate-check.py`-ba,
   `check_rest_log_scope(cycle, rep, stage)`:
   1. `stage != "close"` → `return`.
   2. Az utolsó kör-mappát a **meglévő** `_last_round_dir(cycle)` adja (a `list8` írta, az `SK1`-hez).
   3. Keress `rest-logs/local/` és `rest-logs/remote/` alakú mappákat (`rglob`). Ha egy sincs →
      `rep.info(...)` + `return` (a konvenció nincs használatban — D9).
-  4. Minden `remote/<teszt>/` mappára: ha a benne lévő szöveges fájlok **egyikében sem** szerepel
-     nem-lokális host (a `run-tests.py` `LOCAL_HOST_RE` és `HOST_RE` mintáival), és a
-     `conventions.md` nem deklarál port-forwardot → `rep.bad(...)`:
+  4. **🔴 A `conventions.md` bemenet — ezt a tervnek ki KELL mondania, mert ma nincs sehol.**
+     A `validate-gate-check.py`-nak **nincs** `--conventions` kapcsolója (csak `cycle_dir`,
+     `--stage`, `--require-review`). **Vedd fel**, a `run-tests.py` mintájára:
+     ```python
+     parser.add_argument("--conventions", default="conventions.md",
+                         help="a projekt conventions.md-je — az RL1 port-forward felmentéséhez. "
+                              "Ha nem létezik, a felmentés nem alkalmazható (a check attól még fut)")
+     ```
+     A `main()` adja át a checknek. **Ha a fájl nem létezik**, az `RL1` fut tovább, de az üzenet
+     végére kerüljön: *„(a `conventions.md` nem elérhető, ezért a port-forward felmentés nem
+     alkalmazható — add meg a `--conventions` kapcsolóval)"*. A `07` skill hívásába (7.7) is
+     be kell írni a kapcsolót.
+     **A szöveges fájlok kiterjesztés-listáját és a host-regexeket NE írd meg újra:** a
+     `_load_run_tests_module()` (a `list8` írta, ott van a fájlban) betölti a `run-tests.py`-t, és
+     onnan jön a `LOCAL_HOST_RE`, a `HOST_RE` és az `AUDIT_TEXT_SUFFIXES`. Egy host-értelmezés
+     maradjon, ne kettő.
+  5. Minden `remote/<teszt>/` mappára: ha a benne lévő szöveges fájlok **egyikében sem** szerepel
+     nem-lokális host, és a 7.3 szerinti deklarált port-forward-címek egyike sem magyarázza
+     → `rep.bad(...)`:
      *„a `<teszt>` teszt naplói a `remote/` mappában állnak, de egyik sem tartalmaz nem-lokális
      címet (RL1) — a „remote" futás lokális futás volt. Ha `port-forward` mögött fut, vedd fel a
      `conventions.md` Környezetek-táblájába."*
-  5. Minden `local/<teszt>/` mappára: ha **minden** logolt host nem-lokális → `rep.bad(...)`
+  6. Minden `local/<teszt>/` mappára: ha **minden** logolt host nem-lokális → `rep.bad(...)`
      (fordított tévedés: a teszt remote, de local-nak jelölték).
-  6. Rendben: `rep.ok(...)` a mappák és tesztek számával.
+  7. Rendben: `rep.ok(...)` a mappák és tesztek számával.
 
-- [ ] **7.5 — `RL2` — címke ↔ bizonyíték join.** Ugyanabban a checkben, a `RL1` után:
-  1. Olvasd ki a plan `[remote]` forgatókönyveit (a 4.3 regexével — **közös segédfüggvényt**
-     használj, ne harmadik parse-olót; a `list8` `_load_run_tests_module()` mintája szerint akár
-     az `analyze-gate-check.py` is betölthető modulként).
+- [ ] **7.5/a — 🔴 A TESZT-NÉV ↔ MAPPANÉV normalizálás — EGY helyen, mindkét oldalon ugyanaz.**
+  Ez a join kulcsa; ha a két oldal máshogy normalizál, az `RL2` néma hamis pozitívokat ad.
+  A szabály (a 7.2 `conventions.md`-sablonja és az `RL2` **azonos** szöveggel mondja ki):
+  ```
+  teszt-függvény neve  →  [^A-Za-z0-9._-] minden előfordulása `-`-re,
+                          a széleken lévő `-` levágva, kisbetűsítés NINCS
+  ```
+  **Paraméterezett teszt:** `test_foo[dsp01]` → `test_foo-dsp01`. **Egy szint marad** — a
+  paraméter NEM lesz külön alkönyvtár —, mert a függvénynév-prefix így is megmarad, és a
+  `_plan_test_case_map()` a függvénynévre joinol.
+  **Az összevetés PREFIX-illesztés:** a plan `` `test_foo` `` bejegyzése illeszkedik a
+  `test_foo-dsp01` mappára is. Enélkül minden paraméterezett teszt hamisan hiányzónak látszana.
+  A checkben egy `_scope_dir_name(name)` segédfüggvény végezze, és a **7.2 sablonszövege szó
+  szerint ezt írja elő** a célprojektnek.
+
+- [ ] **7.5/b — `RL2` — címke ↔ bizonyíték join.** Ugyanabban a checkben, a `RL1` után:
+  1. Olvasd ki a plan `[remote]` forgatókönyveit. **A parse-olót NE írd meg harmadszor:** a
+     `_load_run_tests_module()` mintájára (`importlib`, a kötőjeles fájlnév miatt) töltsd be az
+     `analyze-gate-check.py`-t modulként, és hívd a `parse_ts_blocks()`-ját — a 4.2 után annak
+     minden blokkja hordozza a `scope` mezőt. *(A modul importálható: a fájl minden futtatható
+     kódja `main()`-ben és `if __name__ == "__main__":` alatt van.)* Ha a betöltés bármiért
+     elszáll → `rep.info(...)` + az `RL2` kimarad (a `RUN1` ugyanígy jár el).
   2. A `<field:f_test_cases>` leképezésből (a `list8` `_plan_test_case_map()`-je **már megvan**)
      szedd ki, mely teszt-függvények tartoznak `[remote]` forgatókönyvhöz.
+     > **A leképezés `TC-NN`/`TS-NN`-re mutat, a `scope` viszont a `TS-NN`-en van.** A
+     > `_plan_test_case_map()` ma `{függvénynév: [azonosítók]}`-t ad; a `TS-NN` azonosítók
+     > közvetlenül joinolnak. **Ha egy függvény csak `TC-NN`-re hivatkozik** (unit-eset),
+     > az D6 szerint `local` — nem hiányzó remote, tehát kimarad az `RL2`-ből.
   3. Ha egy ilyen függvényhez **nincs** `remote/<teszt>/` mappa a körben → `rep.bad(...)`:
      *„a `<teszt>` a plan `<TS-NN>` `[remote]` forgatókönyvéhez tartozik, de a `round-NN` körben
      nincs `rest-logs/remote/` naplója (RL2) — vagy nem futott le, vagy nem indított forgalmat.
@@ -420,8 +487,16 @@ specs/cycle-30-…/test-report/implement/s2s/rest-logs/remote/test_s2s_renewal/
   megnézi, hogy a `remote/` mappában tényleg van-e nem-lokális cím: egy üresen maradt vagy csak
   `127.0.0.1`-et tartalmazó remote mappa bukás."*
 
-- [ ] **7.7 — A `07` szövege (HU+EN).** A kör-lezáró kapu-blokk felsorolásába két sor az
-  `RL1`/`RL2`-ről, a `RUN1`/`SK1` mintájára.
+- [ ] **7.7 — A `07` szövege (HU+EN).** `prompts/skills-{hu,en}/07-validate.md`:
+  (a) a kör-lezáró kapu-blokk felsorolásába két sor az `RL1`/`RL2`-ről, a `RUN1`/`SK1` mintájára;
+  (b) **a `validate-gate-check.py` hívásába be kell írni a 7.4-ben felvett kapcsolót** — a
+  kód-blokk ma így néz ki, és így kell bővülnie:
+  ```bash
+  python3 <platform-scripts-mappa>/validate-gate-check.py specs/cycle-NN-<cycle-name> \
+    --stage close --conventions conventions.md
+  ```
+  Enélkül az `RL1` port-forward felmentése soha nem sülne el — pontosan az a hibaosztály, amit a
+  `list8` 4.2-ben a `results.json` `skipped` státuszánál elkerültünk.
 
 - [ ] **7.8 — Verifikáció.** Gyárts a scratchpadba egy kör-mappát:
   - **bukás-próba 1:** `rest-logs/remote/test_a/` csak `127.0.0.1`-es naplóval → `RL1` bukás;
@@ -513,7 +588,8 @@ _Ez a szakasz szándékosan üres — a 4–7. a négy keményítés, a 9. a dok
 4. **6.** `EV10` — címke ↔ tábla konzisztencia. *Olcsó, és a `03b`-ben fogja meg az ellentmondást.*
 5. **7.2, 7.3** — a `conventions.md` sablon és a port-forward deklaráció. *A `07` oldali checkek
    ezt feltételezik; a konvenciónak előbb kell léteznie, mint a kapunak.*
-6. **7.4–7.8** `RL1`/`RL2` — a bizonyíték-oldal és a prompt-szövegek.
+6. **7.4, 7.5/a, 7.5/b, 7.6–7.8** `RL1`/`RL2` — a bizonyíték-oldal és a prompt-szövegek. *A
+   7.5/a (névnormalizálás) ELŐBB, mint a 7.5/b: a join kulcsát kell először rögzíteni.*
 7. **10.6–10.8** A célzott bukás-próbák, a hamis-pozitív próba és a regresszió-próba.
 8. **9.** Dokumentáció.
 9. **10.1–10.5, 10.9** Kapuk, telepítési füstteszt, commit.
