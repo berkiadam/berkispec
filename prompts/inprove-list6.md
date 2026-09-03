@@ -1160,7 +1160,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   angol szöveg ugyanazt mondja — különös figyelemmel a 8.1/8.2 **új** pontjaira és a `03b`
   belépő kapujának (10.3/5.) indoklására.
 
-- [ ] **15.5 — Commit.** Egy commit, magyar üzenettel, a keret konvenciója szerint:
+- [x] **15.5 — Commit.** Egy commit, magyar üzenettel, a keret konvenciója szerint:
   `refactor(prompts): a 03-plan fázis hasítása kód-tervre (03a) és teszt-tervre (03b)`
   A törzsben: a `--plan-code-only` mód, az új státusz és mező, a `04` EG1 változatlansága.
 
