@@ -36,6 +36,14 @@ Két szakasz:
     · skip-bizonyíték (SK1): az utolsó kör JUnit XML-jeiben nincs olyan `skipped`
       eset, amelyet a plan adatlapja `TC-NN` bizonyítékként jelöl
       (`SKIP-EXEMPT: <teszt> — <indok>` sorral felmenthető)
+    · REST-napló hatóköre (RL1): az utolsó kör
+      `rest-logs/<local|remote>/<teszt>/` mappái közül a `remote/` alattiak
+      tartalmaznak-e valóban nem-lokális címet (a `local/` alattiak pedig nem
+      csak távolit) — a `Környezetek és végpontok` tábla `remote` sorainak
+      lokálisnak látszó címei (port-forward) felmentettek
+    · címke ↔ bizonyíték join (RL2): minden `[remote]`-nak jelölt `TS-NN`
+      forgatókönyv teszt-függvényéhez van-e `rest-logs/remote/<teszt>/` napló
+      ebben a körben (`SCOPE-EXEMPT: <teszt> — <indok>` sorral felmenthető)
 
 Kilépő kód: 0 = minden vizsgált kapu rendben
             1 = legalább egy kapu bukott (a kör nem zárható PASS-ra)
@@ -736,6 +744,306 @@ def check_run_coverage(cycle, rep, stage):
                + (f" — ebből {excused_total} `RUN-EXEMPT` felmentéssel" if excused_total else ""))
 
 
+# ── RL1/RL2 — A REST-NAPLÓ SZERKEZETE ÉS A CÍMKE ↔ BIZONYÍTÉK JOIN ──────────
+# Miért kell: az eddigi bizonyítékok mind KATEGÓRIA-szemcsések. A `results.json`
+# a DEKLARÁLT környezetet írja, az `EV6` a körben keletkezett napló tartalmát nézi
+# kategória-szinten, a JUnit XML pedig hostot nem rögzít. Azt, hogy egy KONKRÉT
+# teszt hol futott, semmi nem mondta meg — a `rest-logs/` egy LAPOS HALOM volt.
+# Egy éles ciklusban 50 naplófájl állt egy mappában, mind egy korábbi körből
+# örökölt és `127.0.0.1`-es: a mappa TELINEK LÁTSZOTT.
+#
+# A `03b` oldalán a `TS-NN` fejléce `[local]`/`[remote]` címkét kap (SZÁNDÉK —
+# `EV8`/`EV9`/`EV10`); itt a napló teszt-szerinti almappába kerül (BIZONYÍTÉK):
+#
+#     <kör-mappa>/<kategória>/rest-logs/<local|remote>/<teszt-név>/
+#
+# Az érték a kettő JOINJÁBAN van:
+#   RL1 — útvonal ↔ TARTALOM: a `remote/` alatti napló tartalmaz-e valóban
+#         nem-lokális címet (és a `local/` alatti nem csak távolit).
+#   RL2 — címke ↔ BIZONYÍTÉK: minden `[remote]`-nak jelölt forgatókönyv tesztje
+#         termelt-e egyáltalán remote naplót ebben a körben.
+# Egy `[remote]`-nak jelölt teszt, amelynek naplói `local/` alá kerültek — vagy
+# amelynek egyáltalán nincs naplója — ÖNELLENTMONDÁS.
+#
+# A besorolás NEM a hívott címből jön (azt a naplózó fixture a teszt SAJÁT
+# jelöléséből választja), mert a cím mindkét irányban téved: egy `oc port-forward`
+# mögötti `127.0.0.1` remote, egy compose service-név pedig local. Ezért az
+# ÚTVONAL önmagában nem bizonyíték — a bizonyíték a mappa TARTALMA (RL1) —, a
+# port-forward pedig DEKLARÁLT: a `Környezetek és végpontok` tábla `remote`
+# környezetű sorainak lokálisnak látszó címei a felmentett címek.
+#
+# Régi ciklus nem bukhat (D9): ha a kör-mappában nincs `local/`/`remote/` alszint,
+# a konvenció nincs használatban — `info`, nem bukás.
+
+_ANALYZE_MODULE = None
+
+
+def _load_analyze_module():
+    """Az `analyze-gate-check.py` betöltése modulként (a kötőjeles név miatt importlib).
+
+    A `TS-NN` fejléc-parser (`parse_ts_blocks`, benne a `scope` mezővel) ott él;
+    SZÁNDÉKOSAN nem írjuk meg harmadszor — a `03b` kapuja és a `07` kapuja
+    ugyanabból az EGY parse-olóból dolgozik, különben a címke-értelmezésük
+    csendben szétcsúszhatna. A fájl importálható: minden futtatható kódja
+    `main()`-ben és `if __name__ == "__main__":` alatt van."""
+    global _ANALYZE_MODULE
+    if _ANALYZE_MODULE is not None:
+        return _ANALYZE_MODULE or None
+    import importlib.util
+    path = Path(__file__).resolve().parent / "analyze-gate-check.py"
+    if not path.exists():
+        _ANALYZE_MODULE = False
+        return None
+    spec = importlib.util.spec_from_file_location("_analyze_gate", path)
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        _ANALYZE_MODULE = False
+        return None
+    _ANALYZE_MODULE = module
+    return module
+
+
+# A `03b` sablonja SZÓ SZERINT ezt a szabályt írja elő a célprojektnek
+# (`00-init-project.md`, TR3 kitöltési szabályok) — a két oldalnak UGYANÚGY kell
+# normalizálnia, különben az RL2 néma hamis pozitívokat ad.
+def _scope_dir_name(name):
+    """Teszt-függvénynév → útvonal-biztos mappanév.
+
+    `[^A-Za-z0-9._-]` → `-`, a széleken lévő `-` levágva, kisbetűsítés NINCS.
+    Paraméterezett teszt: `test_foo[dsp01]` → `test_foo-dsp01` (EGY szint marad,
+    a paraméter nem lesz külön alkönyvtár — a függvénynév-prefix így is megmarad,
+    és a `_plan_test_case_map()` a függvénynévre joinol)."""
+    return re.sub(r"[^A-Za-z0-9._-]", "-", (name or "").strip()).strip("-")
+
+
+# `` `test_foo` → `TC-01` [remote] `` — a függvény szintjén FELÜLÍRT hatókör
+# (vegyes hatókörű tesztfájlnál; a `03b` sablonja ezt engedi meg).
+FUNC_SCOPE_RE = re.compile(r"`([^`]{4,})`\s*(?:→|->|=>)\s*`?T[CS]-\d+`?\s*\[(local|remote)\]",
+                           re.IGNORECASE)
+
+
+def _plan_func_scopes(plan_text):
+    """{teszt-függvény: 'local'|'remote'} a `f_test_cases` sorok EXPLICIT címkéiből."""
+    field = fld("f_test_cases")
+    out = {}
+    for line in plan_text.splitlines():
+        clean = line.strip()
+        if field.lower() not in clean.lower():
+            continue
+        for name, scope in FUNC_SCOPE_RE.findall(clean):
+            out[name.strip().strip("`*_")] = scope.lower()
+    return out
+
+
+def _declared_local_looking_hosts(texts, agc, rt):
+    """A DEKLARÁLT port-forward címek: a `remote` környezetű táblasorok
+    lokálisnak látszó címei (`| remote | keycloak (port-forward → …) |
+    \\`http://127.0.0.1:8080\\` | … |`).
+
+    Nem találgat: a sor ALAKJÁBÓL dolgozik — nem-lokális `Környezet` cella +
+    lokálisnak látszó URL. Ez az egyetlen hely, ahol egyáltalán LÁTSZIK, hogy egy
+    „lokális" cím mögött osztott klaszter van."""
+    out = set()
+    for text in texts:
+        for line in (text or "").splitlines():
+            stripped = line.strip()
+            if not stripped.startswith("|"):
+                continue
+            cells = [c.strip() for c in stripped.strip("|").split("|")]
+            if len(cells) < 3 or agc._env_is_local(cells[0]):
+                continue
+            for host in rt.HOST_RE.findall(stripped):
+                if rt.LOCAL_HOST_RE.search(host):
+                    out.add(host)
+    return out
+
+
+def _scope_units(scope_dir):
+    """A hatókör-mappa vizsgálati egységei: a `<teszt-név>/` alkönyvtárak.
+
+    Ha nincs alkönyvtár, de vannak közvetlen fájlok, MAGA a mappa az egység —
+    így a „scope-olt, de teszt-szerint nem bontott" napló is ítélet alá kerül,
+    ahelyett hogy csendben kimaradna."""
+    subs = sorted(d for d in scope_dir.iterdir() if d.is_dir())
+    if subs:
+        return [(d.name, d) for d in subs]
+    if any(p.is_file() for p in scope_dir.iterdir()):
+        return [("(közvetlen fájlok)", scope_dir)]
+    return []
+
+
+def _logged_hosts(unit_dir, rt):
+    """Az egység szöveges naplófájljaiban szereplő hostok."""
+    hosts = set()
+    for path in sorted(unit_dir.rglob("*")):
+        if not path.is_file() or path.suffix.lower() not in rt.AUDIT_TEXT_SUFFIXES:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        hosts |= set(rt.HOST_RE.findall(text))
+    return hosts
+
+
+def check_rest_log_scope(cycle, rep, stage, conventions_path=None):
+    """RL1/RL2 — a REST-napló hatóköre: útvonal ↔ tartalom, és címke ↔ bizonyíték."""
+    if stage != "close":
+        return
+    round_dir = _last_round_dir(cycle)
+    if round_dir is None:
+        return                      # a hiányzó kör-mappát a check_report (TR5) méri
+
+    # A `local`/`remote` szint egy NAPLÓ-mappa alatt áll (`rest-logs`, `audit-logs`, …).
+    # A szűkítés szándékos: egy máshova tartozó, `local`/`remote` nevű könyvtár ne
+    # kerüljön ítélet alá.
+    scope_dirs = [d for d in sorted(round_dir.rglob("*"))
+                  if d.is_dir() and d.name in ("local", "remote")
+                  and "log" in d.parent.name.lower()]
+    if not scope_dirs:
+        rep.info(f"`{round_dir.name}`: nincs `rest-logs/<local|remote>/` alszint — az RL1/RL2 "
+                 "kimarad (a teszt-szerinti napló-konvenció nincs használatban ebben a "
+                 "projektben; a bevezetését a `conventions.md` TR3 kitöltési szabályai írják le)")
+        return
+
+    rt = _load_run_tests_module()
+    if rt is None:
+        rep.info("run-tests.py nem tölthető be a scriptek mellől — az RL1 tartalom-vizsgálata "
+                 "kimarad (onnan jön a host-értelmezés és a szöveges kiterjesztés-lista)")
+        return
+    agc = _load_analyze_module()
+    if agc is None:
+        rep.info("analyze-gate-check.py nem tölthető be a scriptek mellől — az RL1/RL2 kimarad "
+                 "(onnan jön a `TS-NN` fejléc-parser a hatókör-címkével)")
+        return
+
+    # ── A port-forward FELMENTÉS bemenete ────────────────────────────────────
+    # A `Környezetek és végpontok` tábla a `specs/test-conventions.md` koordináta-
+    # regiszterében áll (TC1/c), de projektenként a `conventions.md`-ben is lehet —
+    # ezért MINDKETTŐT beolvassuk. Ha egyik sem elérhető, a check FUT TOVÁBB, csak a
+    # felmentés nem alkalmazható; az üzenet ezt kimondja.
+    decl_texts, decl_sources = [], []
+    for label, path in (("conventions.md", Path(conventions_path) if conventions_path else None),
+                        ("test-conventions.md", cycle.parent / "test-conventions.md")):
+        if path is not None and path.is_file():
+            decl_texts.append(read(path) or "")
+            decl_sources.append(label)
+    exempt_hosts = _declared_local_looking_hosts(decl_texts, agc, rt)
+    no_decl_hint = ("" if decl_sources else
+                    " (a `conventions.md` / `specs/test-conventions.md` nem elérhető, ezért a "
+                    "port-forward felmentés nem alkalmazható — add meg a `--conventions` kapcsolóval)")
+
+    # ── RL1 — útvonal ↔ tartalom ─────────────────────────────────────────────
+    # A bukást LOKÁLISAN tartjuk számon: a `rep.failed` az egész futásra vonatkozik,
+    # abból nem derülne ki, hogy az RL1 maga rendben volt-e.
+    checked, excused, rl1_failed = 0, [], False
+    for scope_dir in scope_dirs:
+        for unit_name, unit_dir in _scope_units(scope_dir):
+            checked += 1
+            hosts = _logged_hosts(unit_dir, rt)
+            remote_hosts = {h for h in hosts if not rt.LOCAL_HOST_RE.search(h)}
+            rel = unit_dir.relative_to(round_dir)
+            if scope_dir.name == "remote":
+                if remote_hosts:
+                    continue
+                if hosts & exempt_hosts:
+                    excused.append(f"`{rel}` (deklarált port-forward: "
+                                   f"{', '.join(sorted(hosts & exempt_hosts))})")
+                    continue
+                rl1_failed = True
+                rep.bad(f"a `{unit_name}` teszt naplói a `remote/` mappában állnak "
+                        f"(`{rel}`), de egyik sem tartalmaz nem-lokális címet (RL1) — a "
+                        f"„remote\" futás LOKÁLIS futás volt. Ez pontosan az a hibaosztály, "
+                        f"ahol minden teszt zöld lesz, miközben a TELEPÍTETT komponenst senki "
+                        f"nem szólította meg. Ha `port-forward` mögött fut, vedd fel a "
+                        f"`Környezetek és végpontok` táblába `remote` környezetű sorként, a "
+                        f"lokálisnak látszó címmel{no_decl_hint}")
+            elif hosts and not (hosts - remote_hosts):
+                rl1_failed = True
+                rep.bad(f"a `{unit_name}` teszt naplói a `local/` mappában állnak (`{rel}`), de "
+                        f"MINDEN logolt cím nem-lokális ({', '.join(sorted(remote_hosts))}) — RL1. "
+                        f"Fordított tévedés: a teszt valójában `remote`, de `local`-nak jelölték. "
+                        f"Javítsd a teszt jelölését ÉS a plan `TS-NN` fejlécének hatókör-címkéjét "
+                        f"— különben a `[remote]` forgatókönyvek bizonyítéka hiányozni fog")
+
+    if not rl1_failed:
+        rep.ok(f"`{round_dir.name}`: {len(scope_dirs)} hatókör-mappa, {checked} teszt-napló — "
+               f"az útvonal és a tartalom nem mond ellent (RL1)"
+               + (f" — {len(excused)} deklarált port-forward felmentéssel" if excused else ""))
+    if excused:
+        rep.info("RL1 port-forward felmentés: " + ", ".join(excused))
+
+    # ── RL2 — címke ↔ bizonyíték join ────────────────────────────────────────
+    plan_text = read(cycle / "plan.md")
+    if plan_text is None:
+        return                      # a hiányzó plant a fázis-belépő kapu méri
+    try:
+        blocks = agc.parse_ts_blocks(plan_text)
+    except Exception as exc:
+        rep.info(f"a plan `TS-NN` blokkjai nem értelmezhetők ({exc}) — az RL2 join kimarad")
+        return
+    remote_ids = {b["id"] for b in blocks if b.get("scope") == "remote"}
+    explicit = _plan_func_scopes(plan_text)
+    if not remote_ids and "remote" not in explicit.values():
+        rep.info("a plan egyetlen `[remote]` forgatókönyvet sem tartalmaz — az RL2 join kimarad "
+                 "(a remote-lefedettséget a `03b` `EV9` kapuja méri)")
+        return
+
+    case_map = _plan_test_case_map(plan_text)
+    # A leképezés `TC-NN`/`TS-NN`-re mutat, a hatókör viszont a `TS-NN`-en van. Ha egy
+    # függvény CSAK `TC-NN`-re hivatkozik (unit-eset), az definíció szerint izolált,
+    # tehát `local` — nem hiányzó remote, kimarad az RL2-ből.
+    remote_funcs = {name for name, ids in case_map.items() if set(ids) & remote_ids}
+    remote_funcs |= {name for name, sc in explicit.items() if sc == "remote"}
+    remote_funcs -= {name for name, sc in explicit.items() if sc == "local"}
+    if not remote_funcs:
+        rep.info(f"a plan `{fld('f_test_cases')}` leképezéseiből egyetlen teszt-függvény sem "
+                 f"köthető `[remote]` forgatókönyvhöz — az RL2 join kimarad (a leképezés hiányát "
+                 f"a `TA1` méri a `03b` lezárásakor)")
+        return
+
+    have = set()
+    for scope_dir in scope_dirs:
+        if scope_dir.name != "remote":
+            continue
+        have |= {d.name for d in scope_dir.iterdir() if d.is_dir()}
+
+    log_text = read(_check_log(cycle)) or ""
+    scope_exempt = _exemptions(log_text, "SCOPE-EXEMPT", key_re=r"[\w./:\[\]-]+")
+    exempt_dirs = {_scope_dir_name(k) for k in scope_exempt}
+
+    missing, rl2_excused = [], []
+    for name in sorted(remote_funcs):
+        want = _scope_dir_name(name)
+        # PREFIX-illesztés: a plan `test_foo` bejegyzése illeszkedik a paraméterezett
+        # `test_foo-dsp01` mappára is — enélkül minden paraméterezett teszt hamisan
+        # hiányzónak látszana.
+        if any(d == want or d.startswith(want) for d in have):
+            continue
+        if want in exempt_dirs or any(want.startswith(e) or e.startswith(want) for e in exempt_dirs):
+            rl2_excused.append(name)
+            continue
+        missing.append(name)
+
+    for name in missing:
+        ids = ", ".join(sorted(set(case_map.get(name, [])) & remote_ids)) or "[remote]"
+        rep.bad(f"a `{name}` teszt a plan {ids} `[remote]` forgatókönyvéhez tartozik, de a "
+                f"`{round_dir.name}` körben nincs `rest-logs/remote/{_scope_dir_name(name)}/` "
+                f"naplója (RL2) — vagy nem futott le, vagy nem indított forgalmat. A címke "
+                f"SZÁNDÉK, a napló BIZONYÍTÉK: a kettő együtt mondja meg, hogy a teszt tényleg "
+                f"a telepített komponenst szólította meg. Felmentés: "
+                f"`SCOPE-EXEMPT: {name} — <indok>` a `check-log.md` `## {sec('notes')}` "
+                f"szekciójában")
+    if rl2_excused:
+        rep.info("RL2 SCOPE-EXEMPT felmentés: " + ", ".join(rl2_excused))
+    if not missing:
+        rep.ok(f"`{round_dir.name}`: mind a {len(remote_funcs)} `[remote]` teszt-függvényhez van "
+               f"`rest-logs/remote/` napló (RL2)"
+               + (f" — ebből {len(rl2_excused)} `SCOPE-EXEMPT` felmentéssel" if rl2_excused else ""))
+
+
 def check_start_statuses(cycle, rep):
     plan = get_status(cycle / "plan.md")
     spec = get_status(cycle / "spec.md")
@@ -775,6 +1083,12 @@ def main():
     parser.add_argument("--stage", choices=["start", "close"], default="close")
     parser.add_argument("--require-review", action="store_true",
                         help="a code-review.md hiánya bukás (PASS előtt kötelező)")
+    parser.add_argument("--conventions", default="conventions.md",
+                        help="a projekt conventions.md-je — az RL1 port-forward felmentéséhez. "
+                             "A `Környezetek és végpontok` táblát a kapu a "
+                             "`specs/test-conventions.md`-ben is keresi (TC1/c szerint az a "
+                             "koordináta-regiszter). Ha egyik sem létezik, a felmentés nem "
+                             "alkalmazható — a check attól még fut")
     args = parser.parse_args()
 
     cycle = Path(args.cycle_dir)
@@ -795,6 +1109,7 @@ def main():
     check_report(cycle, rep, args.stage)
     check_run_coverage(cycle, rep, args.stage)
     check_skipped_evidence(cycle, rep, args.stage)
+    check_rest_log_scope(cycle, rep, args.stage, conventions_path=args.conventions)
 
     print("EREDMÉNY: " + ("BUKOTT — a fenti ✗ pontokat rendezd" if rep.failed else "OK"))
     return 1 if rep.failed else 0

@@ -377,7 +377,7 @@ After that you continue the dialogue about the **suggestion** through `doc-sync-
 
 | Table | What it collects |
 |---|---|
-| **Environments and endpoints** | the environment (local / remote / …), the component, the URL + port, the health endpoint |
+| **Environments and endpoints** | the environment (local / remote / …), the component, the URL + port, the health endpoint — **a local-looking address behind a `port-forward`/SSH tunnel is a separate row with the `remote` environment** (the `RL1` gate reads the exempted addresses out of this) |
 | **Test users, clients, secrets** | the environment, the name/identifier (user, `client-id`, service account), the secret **or a pointer**, the scope/role |
 | **Parameters and env files** | parameter and environment variable names, the value or a pointer, where we use it |
 

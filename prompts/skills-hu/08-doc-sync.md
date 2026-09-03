@@ -377,7 +377,7 @@ Ezután a **javaslatról** folytatsz párbeszédet a `doc-sync-questions.md`-n k
 
 | Tábla | Mit gyűjt |
 |---|---|
-| **Környezetek és végpontok** | környezet (lokális / remote / …), komponens, URL + port, health endpoint |
+| **Környezetek és végpontok** | környezet (lokális / remote / …), komponens, URL + port, health endpoint — **a `port-forward`/SSH-alagút mögötti, lokálisnak látszó cím külön, `remote` környezetű sor** (az `RL1` kapu ebből olvassa a felmentett címeket) |
 | **Teszt-userek, kliensek, titkok** | környezet, név/azonosító (user, `client-id`, service account), titok **vagy pointer**, scope/szerep |
 | **Paraméterek és env-fájlok** | paraméter- és környezeti változó nevek, érték vagy pointer, hol használjuk |
 

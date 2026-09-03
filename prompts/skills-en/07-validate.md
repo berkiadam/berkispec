@@ -22,7 +22,7 @@ scripts:
   - "scripts/sonar-gate.py — the Sonar Quality Gate from the API (with the QG1 distinction)"
   - "scripts/dod-check.py — the DoD ↔ evidence join (DI1)"
   - "scripts/test-substance-check.py — the vacuous test-body (TB1) and selector-existence (TB2) gate"
-  - "scripts/validate-gate-check.py — the status/task/DoD/IP1/review/round-block/CK1 collective gate"
+  - "scripts/validate-gate-check.py — the status/task/DoD/IP1/review/round-block/CK1/RUN1/SK1/RL1/RL2 collective gate"
   - "scripts/contract-guard.py — the VD3a contract integrity gate"
   - "scripts/report-gate-check.py — the TR3 report gate"
   - "scripts/failure-counter.py — the run log and the stopping limits (VD4)"
@@ -451,16 +451,22 @@ python3 <platform-scripts-mappa>/dod-check.py \
 
 #### A/2 + B. The other gates in a single call (`validate-gate-check.py`)
 
-Open tasks, open DoD ticks, the unclosed items of `validate-input-from-prev.md` (IP1), an open `<status:must_fix>` (RV1), the match of the round block ↔ the `round-NN/` folder (the VD9 guard, TR5), the verbatim, per-task execution of the `[CHECK]` commands (CK1), and the failure evidence of the `[RED]` tasks in `check-log.md` (RED1) — all of them are regex questions, with a single call:
+Open tasks, open DoD ticks, the unclosed items of `validate-input-from-prev.md` (IP1), an open `<status:must_fix>` (RV1), the match of the round block ↔ the `round-NN/` folder (the VD9 guard, TR5), the verbatim, per-task execution of the `[CHECK]` commands (CK1), the failure evidence of the `[RED]` tasks in `check-log.md` (RED1), the round coverage (RUN1), the skip evidence (SK1), the scope of the REST log (RL1) and the scope label ↔ evidence join (RL2) — all of them are regex questions, with a single call:
 
 ```bash
 python3 <platform-scripts-mappa>/validate-gate-check.py \
-  specs/cycle-NN-<cycle-name> --stage close [--require-review]
+  specs/cycle-NN-<cycle-name> --stage close --conventions conventions.md [--require-review]
 ```
 
 - **`exit 0`** → every gate examined is in order;
 - **`exit 1`** → sort out the ✗ points printed (an open task → back to 06 or a fixing task; an open `[ ]` item in the `input-from-prev` → close it with a justification; a missing round block → `round-log.py`);
 - **`exit 2`** → a non-existent cycle folder (a mistyped path).
+
+> **🔴 `RL1` — the CONTENT of the `remote/` folder is the evidence, not its path.** The REST logs go into per-test subfolders (`<round folder>/<category>/rest-logs/<local|remote>/<test-name>/`), and the folder is picked by the test's OWN marking, not by the address called — so the path on its own proves nothing. What the gate looks at is whether the logs under `remote/` really contain a non-local address: a `remote/` folder left empty or containing only `127.0.0.1` is a **failure**, because the "remote" run was a local run. The exception is a **declared** port-forward: if the address stands in a `remote` row of the `Environments and endpoints` table (`| remote | keycloak (port-forward → …) | \`http://127.0.0.1:8080\` | … |`), the gate exempts it. It measures the other direction too: a `local/` folder whose EVERY logged address is remote is a failure as well. **The fix is never rewriting the log or renaming the folder (VD3)** — either the test really did not reach the deployed component (then that is the defect), or the port-forward is not declared (then add it to the table).
+>
+> **🔴 `RL2` — the label is INTENT, the log is EVIDENCE.** Every test function of a `TS-NN` scenario marked `[remote]` needs a `rest-logs/remote/<test-name>/` log in this round. If there is none, the test either did not run or generated no traffic — neither proves that the DEPLOYED component works. Exemption: a `SCOPE-EXEMPT: <test> — <reason>` line in the `## <sec:notes>` section of `check-log.md` (e.g. "no VPN in this round") — **not without a reason**.
+>
+> **An old cycle must not fail:** if there is no `local/`/`remote/` level in the round folder, the convention is not in use — the two checks are skipped with a `·` line, they do not fail the round.
 
 The `--require-review` is needed for the run **before the PASS**: there the absence of `code-review.md` is a failure. In earlier rounds (when the review did not even start) leave it out.
 
@@ -580,7 +586,7 @@ The content expectations of the block (which you fill with the `--step` / `--dod
 **A deterministic self-check** — after `round-log.py close`, **before** `failure-counter.py`:
 
 ```bash
-python3 <platform-scripts-mappa>/validate-gate-check.py specs/cycle-NN-<cycle-name> --stage close
+python3 <platform-scripts-mappa>/validate-gate-check.py specs/cycle-NN-<cycle-name> --stage close --conventions conventions.md
 ```
 
 This checks the existence of the round block, the `## <sec:round> N` ↔ `round-NN/` match (TR5) and the open items. If it is `exit 1`, **do not run the logging script**, and do not close the phase — sort out the ✗ points printed first.
@@ -751,7 +757,7 @@ In the block above, the value of `<PHASE-TAG>` in this phase is: **`07-validate`
 > **The stopping rule (the VD9 guard) — BEFORE the commit, mandatory:** `validation-report.md` must not consist of the `# <sec:validation_history>` only. Check it deterministically:
 > ```bash
 > python3 <platform-scripts-mappa>/validate-gate-check.py \
->   specs/cycle-NN-<cycle-name> --stage close --require-review
+>   specs/cycle-NN-<cycle-name> --stage close --conventions conventions.md --require-review
 > ```
 > If the script gives `exit 1` (there is no `## <sec:round> N` block, there are fewer round blocks than `# <sec:validation_history>` runs, a `round-NN/` folder is missing, or an open item remained), **STOP** — the mandatory output of the phase is missing or incomplete. Add the missing block(s) from the evidence available (the artifacts of the round folders + the lines of the History), and only commit afterwards. This holds on the PASS, the STOP and the escalation branch alike. *(On a STOP/escalation branch the `--require-review` may be omitted if the review did not even start.)*
 

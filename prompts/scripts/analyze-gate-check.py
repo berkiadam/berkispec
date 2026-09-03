@@ -112,6 +112,14 @@ Mit ellenőriz:
   EV5 nincs lokális cél távoli körben  — nem-lokális kategória parancsa és a
                                        `TS-NN` hívások nem mutathatnak
                                        localhostra
+  EV8 hatókör-címke a `TS-NN`-en      — minden forgatókönyv fejléce hordoz
+                                       `[local]` vagy `[remote]` címkét
+                                       (nyelvfüggetlen literál)
+  EV9 remote ciklusban remote teszt    — nem-lokális cél-környezetnél van
+                                       legalább egy `[remote]` forgatókönyv
+                                       (`REMOTE-N/A: <indok>` sorral felmenthető)
+  EV10 címke ↔ gépi tábla              — `[remote]` forgatókönyv mellé kell
+                                       nem-lokális kategória is a táblába
   R1  útvonal-formátum (RP1)           — `file://`, gép-specifikus (`/home/…`,
                                        `C:/Users/…`), placeholder és abszolút
                                        repó-útvonal a tervezési dokumentumokban
@@ -1141,7 +1149,15 @@ def check_test_section_volume(spec_text, plan_text, f):
 # lehettek egymondatosak. A `TS-NN` blokk ugyanaz a forma, amit a kézi tesztterv
 # `TG-NN` csoportjai használnak: onnantól a `bs-manual-test-plan` tényleg ÖSSZESZEREL.
 
-TS_HEADING_RE = re.compile(r"^#{3,5}\s*(TS-(\d+))\s*[—–-]\s*(.+?)\s*$")
+# A hatókör-címke (`[local]`/`[remote]`, EV8) OPCIONÁLIS a regexben, mert a régi,
+# lezárt ciklusok planjei nem hordozzák (D9) — a meglétét az `EV8` méri, nem a parse.
+# A címke NYELVFÜGGETLEN literál (D2): a kör REST-napló-mappájára joinol
+# (`rest-logs/<local|remote>/<teszt>/`), és a mappanevek a keretben mindig angolul
+# állnak. A kis/nagybetű-tűrés CSAK a címkére szól (`(?i:…)`), a `TS-` prefixre NEM:
+# egy `ts-01` fejléc azonosítója a megállapítás-szövegekbe és a TS6 számozásba is
+# beszivárogna.
+TS_HEADING_RE = re.compile(
+    r"^#{3,5}\s*(TS-(\d+))\s*(?:\[(?i:(local|remote))\])?\s*[—–-]\s*(.+?)\s*$")
 # A fejléc DoD-hivatkozásai zárójelben: `#### TS-03 — Legacy login  (DoD-02, DoD-05)`
 TS_CONCRETE_RE = re.compile(r"`[^`]+`|\d")
 # A `Mit tesztelünk` sor tartalmi padlója (TD7): ennél rövidebb nem állítás.
@@ -1149,13 +1165,19 @@ TS_PURPOSE_MIN_CHARS = 45
 
 
 def parse_ts_blocks(plan_text):
-    """A `Teszt-forgatókönyvek` szekció `TS-NN` blokkjai → [{id, num, cim, sorok}]."""
+    """A `Teszt-forgatókönyvek` szekció `TS-NN` blokkjai → [{id, num, scope, cim, sorok}].
+
+    A `scope` a fejléc hatókör-címkéje (`"local"` / `"remote"`), címke nélkül `None`.
+    SZÁNDÉKOSAN itt születik, ebben az EGY parse-olóban: az `EV8`/`EV9`/`EV10` és a
+    `07` oldali `RL2` mind ezt fogyasztja, tehát nincs második címke-értelmező."""
     body = section_body(plan_text, sec("plan_test_scenarios"))
     blocks, cur = [], None
     for line in body.splitlines():
         m = TS_HEADING_RE.match(line.strip())
         if m:
-            cur = {"id": m.group(1), "num": int(m.group(2)), "cim": m.group(3), "lines": []}
+            cur = {"id": m.group(1), "num": int(m.group(2)),
+                   "scope": (m.group(3) or "").lower() or None,
+                   "cim": m.group(4), "lines": []}
             blocks.append(cur)
             continue
         if cur is not None:
@@ -1914,6 +1936,18 @@ def _remote_hosts(text):
             if not LOCAL_HOST_RE.search(h)}
 
 
+def _target_env(plan_text):
+    """(a ciklus cél-környezetének SZÖVEGE, kizárólag lokális-e).
+
+    Az `EV1` és az `EV9` UGYANEZT a mezőt olvassa; két külön kiolvasás csendben
+    szétcsúszna (az egyik `**Cél-környezet:**`-et keresne, a másik valami mást),
+    és a két kapu ellentmondó ítéletet adna ugyanarra a planre."""
+    coords = section_body(plan_text, sec("environment_coords"))
+    m = re.search(r"\*\*" + re.escape(fld("f_target_env")) + r":\*\*\s*(.+)", coords or "")
+    target = (m.group(1).strip() if m else "")
+    return target, (_env_is_local(target) if target else False)
+
+
 def check_target_environment(plan_text, f, code_only=False):
     """EV1–EV5 — a teszt tényleg ott fut-e, ahova a ciklus szól.
 
@@ -1923,8 +1957,7 @@ def check_target_environment(plan_text, f, code_only=False):
     ott a teljes `--plan-only` mód méri.
     """
     coords = section_body(plan_text, sec("environment_coords"))
-    target_m = re.search(r"\*\*" + re.escape(fld("f_target_env")) + r":\*\*\s*(.+)", coords or "")
-    target = (target_m.group(1).strip() if target_m else "")
+    target, target_is_local_only = _target_env(plan_text)
     if not target:
         f.add("EV1", "03", f"a `{sec('environment_coords')}` szekcióból hiányzik a "
               f"`**{fld('f_target_env')}:**` mező (EV1) — ki kell mondani, MELY környezetre szól "
@@ -1932,7 +1965,6 @@ def check_target_environment(plan_text, f, code_only=False):
               "teszt-célpontot a ciklus szándékához: egy zöld futás nem bizonyítja, HOL volt zöld")
     if code_only:
         return
-    target_is_local_only = _env_is_local(target) if target else False
     known_remote = _remote_hosts(coords)
 
     rows = table_rows(plan_text, sec("machine_run_table"))
@@ -1997,6 +2029,103 @@ def check_target_environment(plan_text, f, code_only=False):
         envs = sorted({(r[7] if len(r) > 7 else "—").strip() or "—" for r in rows})
         f.note("TESZT-KÖRNYEZET", f"cél-környezet: `{target or '—'}`; "
                f"a futtatási tábla környezetei: {', '.join(f'`{e}`' for e in envs)}")
+
+
+# ── EV8–EV10 — a forgatókönyv megmondja, HOL fut ──────────────────────────────
+# Miért kell: az `EV1`–`EV6` bizonyítéka KATEGÓRIA-szemcsés — a `results.json` a
+# DEKLARÁLT környezetet írja, a JUnit XML hostot nem rögzít. Azt, hogy egy KONKRÉT
+# forgatókönyv hol futott, semmi nem mondta meg. Egy éles ciklusban ezért fordulhatott
+# elő, hogy a remote (OpenShift) cél-környezetre szóló ciklust nyolc lokális teszt
+# igazolta, és minden kapu zöld maradt: a hiány ott HIÁNY-állítás („nincs remote
+# teszt"), amit egy LLM-review szerkezetileg rosszul lát.
+#
+# A feloldás kettéválasztja a SZÁNDÉKOT és a BIZONYÍTÉKOT: a `TS-NN` fejléce
+# `[local]`/`[remote]` címkét kap (szándék — ez a három check méri), a REST-napló
+# pedig teszt-szerinti almappába megy (bizonyíték — azt a `07` `RL1`/`RL2`-je méri).
+# Az érték a kettő JOINJÁBAN van: egy `[remote]`-nak jelölt teszt, amelynek naplói
+# `local/` alá kerültek, önellentmondás.
+#
+# A címke NYELVFÜGGETLEN literál (`[local]`/`[remote]`), nem projekt-nyelvi status-kulcs: a
+# kör REST-napló-mappájára joinol (`rest-logs/<local|remote>/<teszt>/`), és a
+# mappanevek a keretben mindig angolul állnak. Projekt-nyelvi címke mellé fordítási
+# réteg kellene a kapuban ÉS a naplózó fixture-ben — a kettő csendben szétcsúszna.
+#
+# A HALLGATÁS itt `local`-t jelent, és ez SZÁNDÉKOS eltérés a `PH1`-től (ott az üres
+# cella „mindkettő", mert ott a hallgatás KIHAGYÁST okozna). Ha a hallgatás `remote`
+# lenne, minden unit-teszt remote bizonyítékot követelne, és a kapu használhatatlan
+# volna. A biztonságot nem a default adja, hanem az `EV8` (a fejléc KÖTELEZŐEN jelölt)
+# és az `EV9` (remote ciklusban KELL remote forgatókönyv).
+
+# `REMOTE-N/A: <indok>` — az `EV9` felmentése. KULCS NÉLKÜLI, EGÉSZ CIKLUSRA szóló sor,
+# ezért nem a `<PREFIX>: <kulcs> — <indok>` alakú felmentés-parser (`_exemptions`) mintája.
+REMOTE_NA_RE = re.compile(r"^\s*REMOTE-N/A:\s*(\S.*)$", re.MULTILINE)
+
+
+def check_scenario_scope(plan_text, f):
+    """EV8–EV10 — a `TS-NN` fejléce megmondja-e, hol fut, és van-e remote teszt.
+
+    `EV8`  — minden `TS-NN` fejléce hordoz `[local]` vagy `[remote]` címkét;
+    `EV9`  — nem-lokális cél-környezetű ciklusban van legalább egy `[remote]`;
+    `EV10` — ha van `[remote]` forgatókönyv, a gépi táblában van nem-lokális kategória.
+
+    Ha a planban egyetlen `TS-NN` blokk sincs, a check KIMARAD: a hiányukat a `TS1`
+    méri, és egy régi, lezárt ciklust bukató kapu használhatatlan.
+    """
+    blocks = parse_ts_blocks(plan_text)
+    if not blocks:
+        return
+
+    # ── EV8 — a címke megléte ────────────────────────────────────────────────
+    unlabelled = [b for b in blocks if not b["scope"]]
+    for b in unlabelled:
+        f.add("EV8", "03", f"a(z) {b['id']} forgatókönyv fejlécéből hiányzik a hatókör-címke "
+              f"(EV8) — a forma: `#### {b['id']} [local] — …` vagy `[remote]` (nyelvfüggetlen "
+              "literál). A címke mondja meg, HOL fut a forgatókönyv, és a `07` kapuja ebből "
+              "joinol a kör REST-naplóira (`rest-logs/<local|remote>/<teszt>/`). `remote` minden "
+              "olyan futás, amely akár EGYETLEN olyan komponenst is hív, ami nem a lokális gépen "
+              "fut — a saját gépen futó konténer még `local`. **A cím önmagában nem dönt:** egy "
+              "`oc port-forward` mögötti `127.0.0.1:8080` **remote**, egy compose service-név "
+              "(`http://keycloak:8080`) pedig **local**")
+
+    remote_blocks = [b for b in blocks if b["scope"] == "remote"]
+
+    # ── EV9 — remote ciklusban van remote teszt ──────────────────────────────
+    target, target_is_local_only = _target_env(plan_text)
+    if target and not target_is_local_only and not remote_blocks:
+        # A felmentés a `Tesztelési stratégia` szekcióban áll (a `Teszt-forgatókönyvek`
+        # annak alszekciója, tehát a szekció-törzs mindkettőt lefedi).
+        na = REMOTE_NA_RE.search(section_body(plan_text, sec("testing_strategy")) or "")
+        message = (f"a ciklus cél-környezete `{target}` (nem kizárólag lokális), de a plan "
+                   f"egyetlen `[remote]` forgatókönyvet sem tartalmaz (EV9) — a "
+                   f"`{sec('plan_test_scenarios')}` mind a {len(blocks)} forgatókönyve `local` "
+                   "(vagy címkézetlen, ami `local`-t jelent). Egy remote környezetre szóló "
+                   "ciklus, amelyet csak lokális tesztek igazolnak, pontosan azt NEM bizonyítja, "
+                   "amiért készült: hogy a TELEPÍTETT komponens működik. Írj legalább egy "
+                   "`[remote]` forgatókönyvet — vagy ha ebben a ciklusban tényleg nincs értelme, "
+                   f"indokold `REMOTE-N/A: <miért>` sorral a `{sec('testing_strategy')}` szekcióban")
+        if na:
+            f.suggest("EV9", "03", message + f". Felmentve: `REMOTE-N/A: {na.group(1).strip()}`")
+        else:
+            f.add("EV9", "03", message)
+
+    # ── EV10 — a címke és a gépi tábla nem mondhat ellent ────────────────────
+    # A join SZÁNDÉKOSAN durva: a forgatókönyv → kategória hozzárendelés a planben
+    # nem explicit (a `TS-NN` nem nevezi meg a kategóriáját), és egy parancs-egyeztetésre
+    # épülő, finomabb join törékeny lenne — a `TP4/b` tanulsága szerint egy törékeny
+    # kapu rosszabb, mint egy durva.
+    rows = table_rows(plan_text, sec("machine_run_table"))
+    envs = [(row[7] if len(row) > 7 else "") for row in rows]
+    if remote_blocks and envs and all(_env_is_local(e) for e in envs):
+        f.add("EV10", "03", f"a plan {len(remote_blocks)} `[remote]` forgatókönyvet ír le "
+              f"({', '.join(b['id'] for b in remote_blocks)}), de a "
+              f"`{sec('machine_run_table')}` MINDEN kategóriájának "
+              f"`{fld('f_environment')}` cellája lokális (EV10) — így a remote forgatókönyvet "
+              "SEMMI nem futtatja le remote célpont ellen. Vagy a forgatókönyv címkéje téves, "
+              "vagy hiányzik a nem-lokális kategória a táblából")
+
+    if not unlabelled:
+        f.note("TESZT-HATÓKÖR", f"{len(blocks)} `TS-NN` forgatókönyv címkézve: "
+               f"{len(remote_blocks)} `[remote]`, {len(blocks) - len(remote_blocks)} `[local]`")
 
 
 # ── R1 — útvonal-formátum (RP1) ───────────────────────────────────────────────
@@ -2562,6 +2691,7 @@ def main():
     if not code_only:
         check_test_section_volume(spec_text, plan_text, f)
         check_test_scenarios(spec_text, plan_text, f)
+        check_scenario_scope(plan_text, f)
         check_spec_coverage_scenarios(plan_text, f)
         check_test_artifact_datasheet(plan_text, f)
         check_ts_http_blocks(plan_text, f)

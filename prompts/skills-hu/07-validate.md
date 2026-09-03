@@ -22,7 +22,7 @@ scripts:
   - "scripts/sonar-gate.py — Sonar Quality Gate az API-ból (QG1 megkülönböztetéssel)"
   - "scripts/dod-check.py — DoD ↔ bizonyíték join (DI1)"
   - "scripts/test-substance-check.py — vacuous teszt-törzs (TB1) és szelektor-létezés (TB2)"
-  - "scripts/validate-gate-check.py — státusz/task/DoD/IP1/review/kör-blokk/CK1 gyűjtőkapu"
+  - "scripts/validate-gate-check.py — státusz/task/DoD/IP1/review/kör-blokk/CK1/RUN1/SK1/RL1/RL2 gyűjtőkapu"
   - "scripts/contract-guard.py — VD3a szerződés-integritás kapu"
   - "scripts/report-gate-check.py — TR3 riport-kapu"
   - "scripts/failure-counter.py — futás-napló és leállási korlátok (VD4)"
@@ -449,16 +449,22 @@ python3 <platform-scripts-mappa>/dod-check.py \
 
 #### A/2 + B. A többi kapu egyetlen hívásban (`validate-gate-check.py`)
 
-Nyitott taskok, nyitott DoD-pipák, `validate-input-from-prev.md` lezáratlan tételei (IP1), nyitott `<status:must_fix>` (RV1), a kör-blokk ↔ `round-NN/` mappa egyezése (VD9-guard, TR5), a `[CHECK]` parancsok szó szerinti, taskonkénti futása (CK1), és a `[RED]` taskok bukás-bizonyítéka a `check-log.md`-ben (RED1) — mind regex-kérdés, egyetlen hívással:
+Nyitott taskok, nyitott DoD-pipák, `validate-input-from-prev.md` lezáratlan tételei (IP1), nyitott `<status:must_fix>` (RV1), a kör-blokk ↔ `round-NN/` mappa egyezése (VD9-guard, TR5), a `[CHECK]` parancsok szó szerinti, taskonkénti futása (CK1), és a `[RED]` taskok bukás-bizonyítéka a `check-log.md`-ben (RED1), a kör-lefedettség (RUN1), a skip-bizonyíték (SK1), a REST-napló hatóköre (RL1) és a hatókör-címke ↔ bizonyíték join (RL2) — mind regex-kérdés, egyetlen hívással:
 
 ```bash
 python3 <platform-scripts-mappa>/validate-gate-check.py \
-  specs/cycle-NN-<cycle-name> --stage close [--require-review]
+  specs/cycle-NN-<cycle-name> --stage close --conventions conventions.md [--require-review]
 ```
 
 - **`exit 0`** → minden vizsgált kapu rendben;
 - **`exit 1`** → a kiírt ✗ pontokat rendezd (nyitott task → vissza a 06-ra vagy javító-task; nyitott `[ ]` tétel az `input-from-prev`-ben → zárd le indoklással; hiányzó kör-blokk → `round-log.py`);
 - **`exit 2`** → nem létező ciklusmappa (elgépelt útvonal).
+
+> **🔴 `RL1` — a `remote/` mappa TARTALMA a bizonyíték, nem az útvonala.** A REST-naplók teszt-szerinti almappákba mennek (`<kör-mappa>/<kategória>/rest-logs/<local|remote>/<teszt-név>/`), és a mappát a teszt SAJÁT jelölése választja ki, nem a hívott cím — az útvonal tehát önmagában nem bizonyít semmit. A kapu azt nézi, hogy a `remote/` alatti naplókban tényleg van-e nem-lokális cím: egy üresen maradt vagy csak `127.0.0.1`-et tartalmazó `remote/` mappa **bukás**, mert a „remote" futás lokális futás volt. Kivétel a **deklarált** port-forward: ha a cím a `Környezetek és végpontok` tábla egy `remote` környezetű sorában áll (`| remote | keycloak (port-forward → …) | \`http://127.0.0.1:8080\` | … |`), a kapu felmenti. Fordítva is mér: egy `local/` mappa, amelynek MINDEN logolt címe távoli, szintén bukás. **A javítás soha nem a napló átírása vagy a mappa átnevezése (VD3)** — vagy a teszt tényleg nem szólította meg a telepített komponenst (akkor az a hiba), vagy a port-forward nincs deklarálva (akkor pótold a táblában).
+>
+> **🔴 `RL2` — a címke SZÁNDÉK, a napló BIZONYÍTÉK.** Minden `[remote]`-nak jelölt `TS-NN` forgatókönyv teszt-függvényéhez kell `rest-logs/remote/<teszt-név>/` napló ebben a körben. Ha nincs, a teszt vagy nem futott le, vagy nem indított forgalmat — egyik sem bizonyítja, hogy a TELEPÍTETT komponens működik. Felmentés: `SCOPE-EXEMPT: <teszt> — <indok>` sor a `check-log.md` `## <sec:notes>` szekciójában (pl. „nincs VPN ebben a körben") — **indoklás nélkül nem**.
+>
+> **Régi ciklus nem bukhat:** ha a kör-mappában nincs `local/`/`remote/` alszint, a konvenció nincs használatban — a két check `·` sorral kimarad, nem bukat.
 
 A `--require-review` a **PASS előtti** futtatáshoz kell: ott a `code-review.md` hiánya bukás. Korábbi körökben (amikor a review el sem indult) hagyd el.
 
@@ -578,7 +584,7 @@ A blokk tartalmi elvárásai (amit a `--step` / `--dod` / `--review` / `--decisi
 **Determinisztikus önellenőrzés** — a `round-log.py close` után, a `failure-counter.py` **előtt**:
 
 ```bash
-python3 <platform-scripts-mappa>/validate-gate-check.py specs/cycle-NN-<cycle-name> --stage close
+python3 <platform-scripts-mappa>/validate-gate-check.py specs/cycle-NN-<cycle-name> --stage close --conventions conventions.md
 ```
 
 Ez ellenőrzi a kör-blokk meglétét, a `## <sec:round> N` ↔ `round-NN/` egyezést (TR5) és a nyitott tételeket. Ha `exit 1`, **ne futtasd a naplózó szkriptet**, és ne zárd le a fázist — előbb rendezd a kiírt ✗ pontokat.
@@ -749,7 +755,7 @@ A fenti blokkban a `<FÁZIS-TAG>` értéke ebben a fázisban: **`07-validate`**.
 > **Megállási szabály (VD9-guard) — a commit ELŐTT, kötelező:** a `validation-report.md` nem állhat csak a `# <sec:validation_history>`-ból. Ellenőrizd determinisztikusan:
 > ```bash
 > python3 <platform-scripts-mappa>/validate-gate-check.py \
->   specs/cycle-NN-<cycle-name> --stage close --require-review
+>   specs/cycle-NN-<cycle-name> --stage close --conventions conventions.md --require-review
 > ```
 > Ha a szkript `exit 1`-et ad (nincs `## <sec:round> N` blokk, kevesebb kör-blokk van, mint `# <sec:validation_history>` futás, hiányzik egy `round-NN/` mappa, vagy maradt nyitott tétel), **STOP** — a fázis kötelező outputja hiányzik vagy hiányos. Pótold a hiányzó blokko(ka)t a rendelkezésre álló bizonyítékokból (a kör-mappák artefaktumai + a History sorai), és csak utána commitolj. Ez PASS, STOP és eszkalációs ágon egyaránt érvényes. *(STOP/eszkalációs ágon a `--require-review` elhagyható, ha a review el sem indult.)*
 

@@ -238,7 +238,7 @@ _**Beemelt visszatérő elvárások (TC1) — kötelező, ha létezik `specs/tes
 
 Forgatókönyvenként egy blokk, pontosan ebben a formában:
 
-#### TS-01 — <a forgatókönyv neve>  (DoD-02, DoD-05)
+#### TS-01 [remote] — <a forgatókönyv neve>  (DoD-02, DoD-05)
 
 **<field:f_what_we_test>:** <mit ellenőriz ez a forgatókönyv — a viselkedés, amiért fut, egy mondatban>
 **<field:f_prerequisite>:** <milyen állapotból indul: felhúzott stack, seed, bejelentkezett user, korábbi `TS-NN` eredménye>
@@ -250,6 +250,7 @@ Forgatókönyvenként egy blokk, pontosan ebben a formában:
 **<field:f_cleanup>:** <mit kell utána leállítani vagy visszaállítani>
 
 **Kitöltési szabályok:**
+- **🔴 Hatókör-címke a fejlécben — kötelező, és NYELVFÜGGETLEN: `[local]` vagy `[remote]` (EV8).** `remote` minden olyan forgatókönyv, amely akár EGYETLEN olyan komponenst is megszólít, ami nem a lokális gépen fut — a saját gépen futó konténer még `local`. **A cím önmagában nem dönt:** egy `oc port-forward` mögötti `127.0.0.1:8080` **remote** (a komponens a klaszterben fut), egy compose service-név (`http://keycloak:8080`) pedig **local**. A címke szabja meg, **hova kerülnek a forgatókönyv REST-naplói a kör-mappában** (`…/rest-logs/<local|remote>/<teszt-név>/`), és a `07` kapuja (`RL1`/`RL2`) ebből joinol — ezért nem projekt-nyelvi `status`-token, hanem angol literál: a mappanevek a keretben mindig angolul állnak. A teszt-**függvény** a `<field:f_test_cases>` adatlap-soron át örökli a forgatókönyv címkéjét, tehát nem kell kétszer leírni; vegyes hatókörű tesztfájlnál a függvény szintjén felülírható (`` `test_foo` → `TC-01` [remote] ``). A **`TC-NN` unit-esetek NEM kapnak címkét** (definíció szerint izoláltak, tehát `local`) — **címke nélküli teszt alapértéke `local`**.
 - **`<field:f_what_we_test>` — állítás, nem téma (TD7).** Ez a sor mondja meg, **mit ellenőriz** a forgatókönyv és **miért**: a viselkedés egy eldönthető állításként (*„öt egyidejű kérésből pontosan egy újítja meg a tokent, a többi a meglévővel szolgál ki"*), plusz az elfogadási feltétel vagy kockázat, amit igazol. **A fejléc megismétlése nem elég** („konkurencia-teszt", „az `/init-hash` tesztelése") — abból a 06/07 fázisban nem derül ki, hogy egy bukás valódi hiba-e vagy rossz teszt. A kapu ezt méri (TS2).
 - **`DoD-NN` a fejlécben — kötelező és kétirányú (TS5).** Minden forgatókönyv megnevezi, mely DoD-pontokat igazolja, és **minden `DoD-NN`-hez tartoznia kell legalább egy forgatókönyvnek**. A kapu mindkét irányt méri.
 - **Hívás oszlop — szó szerint futtatható.** REST-nél teljes `curl`: ige, teljes URL porttal, fejlécek, konkrét request body. Nem REST teszt is ide tartozik ugyanebben a formában: UI-lépés (mire kattintunk, mit írunk be), CLI-parancs, DB-lekérdezés. **Hivatkozás nem hívás** — „lásd a `<sec:e2e_infrastructure>` szekciót" nem futtatható.

@@ -5,7 +5,8 @@
 > tételes teendőket, a 9. a dokumentációt, a 10. a kapukat, a 11. a végrehajtási sorrendet.
 > **Semmit nem kell kikövetkeztetni** — ha valami mégis hiányzik, az a terv hibája; írd bele.
 >
-> **Státusz:** végrehajtásra vár. A 3. szakasz döntései **lezártak** — nem kell rákérdezned.
+> **Státusz:** **ELKÉSZÜLT** (2026-09-03). A 4–10. szakasz minden tétele kipipálva; a
+> végrehajtás tapasztalatai és a két tervtől való eltérés a **12. szakaszban**.
 > **Előzmény:** a `prompts/inprove-list8.md` (`RUN1` · `TP4/b` · `EV7` · `SK1`) **elkészült**, és
 > elkészült a `dev` → `remote` környezet-címke egységesítés is (`25bf354`). Ez a terv arra a résre
 > válaszol, amit a `list8` 11. szakasza nyitva hagyott: a bizonyíték ma **kategória-szintű**, és
@@ -233,7 +234,7 @@ sorol be (D3), hanem a teszt saját jelöléséből; a cím a **kapu** bemenete 
 
 > **Mit mér:** minden `TS-NN` blokk fejléce hordoz-e `[local]` vagy `[remote]` címkét.
 
-- [ ] **4.1 — A sablon bővítése (HU+EN).** `prompts/skills-{hu,en}/03b-write-test-plan.md`, a
+- [x] **4.1 — A sablon bővítése (HU+EN).** `prompts/skills-{hu,en}/03b-write-test-plan.md`, a
   `#### TS-01 — <a forgatókönyv neve>  (DoD-02, DoD-05)` mintasor (~241. sor) →
   `#### TS-01 [remote] — <a forgatókönyv neve>  (DoD-02, DoD-05)`, alatta a kitöltési szabály:
   *„**A címke kötelező, és nyelvfüggetlen: `[local]` vagy `[remote]`.** `remote` minden olyan
@@ -243,7 +244,7 @@ sorol be (D3), hanem a teszt saját jelöléséből; a cím a **kapu** bemenete 
   **local**. A címke szabja meg, hova kerülnek a forgatókönyv REST-naplói a kör-mappában
   (`…/rest-logs/<local|remote>/<teszt>/`), és a `07` kapuja ebből joinol."*
 
-- [ ] **4.2 — `TS_HEADING_RE` bővítése.** `analyze-gate-check.py`, ~1144. sor:
+- [x] **4.2 — `TS_HEADING_RE` bővítése.** `analyze-gate-check.py`, ~1144. sor:
   ```python
   TS_HEADING_RE = re.compile(r"^#{3,5}\s*(TS-(\d+))\s*[—–-]\s*(.+?)\s*$")
   ```
@@ -267,7 +268,7 @@ sorol be (D3), hanem a teszt saját jelöléséből; a cím a **kapu** bemenete 
   > **A `scope` mező a blokkban** azért jó, mert innentől a 4.3, az 5.1 és a 6.1 mind ugyanabból
   > az EGY parse-olóból dolgozik — nem lesz második címke-értelmező.
 
-- [ ] **4.3 — Új check: `check_scenario_scope(plan_text, f)`.**
+- [x] **4.3 — Új check: `check_scenario_scope(plan_text, f)`.**
   Járd be a `TS-NN` fejléceket. Amelyiknek nincs címkéje → `f.add("EV8", "03", …)`:
   *„a `TS-NN` forgatókönyv fejlécéből hiányzik a hatókör-címke (EV8) — `#### TS-NN [local] — …`
   vagy `[remote]`. A címke mondja meg, hol fut a forgatókönyv, és a `07` kapuja ebből joinol a
@@ -276,7 +277,7 @@ sorol be (D3), hanem a teszt saját jelöléséből; a cím a **kapu** bemenete 
   Hívás: az `analyze-gate-check.py` `main()` teszt-oldali blokkjában (`if not code_only:`), a
   `check_test_scenarios` **mellé**.
 
-- [ ] **4.4 — Verifikáció.**
+- [x] **4.4 — Verifikáció.**
   - **bukás-próba:** címke nélküli `TS-01` fejléc → `EV8` megállapítás;
   - **átmegy:** `#### TS-01 [remote] — …` és `#### TS-02 [local] — …` → nincs `EV8`;
   - **🔴 regresszió-próba:** futtasd a `--plan-only` kaput egy TELJES, szabályos planre **a
@@ -292,7 +293,7 @@ sorol be (D3), hanem a teszt saját jelöléséből; a cím a **kapu** bemenete 
 > **Mit mér:** ha a ciklus cél-környezete nem kizárólag lokális, van-e legalább egy `[remote]`
 > forgatókönyv. Ez a felhasználó „mindig gondolnia kell rá" követelményének gépi alakja.
 
-- [ ] **5.1 — Az `EV9` ág a `check_scenario_scope`-ban.** A `check_target_environment`
+- [x] **5.1 — Az `EV9` ág a `check_scenario_scope`-ban.** A `check_target_environment`
   (`analyze-gate-check.py`, ~1917. sor) már kiszámolja azt, ami kell:
   ```python
   target_m = re.search(r"\*\*" + re.escape(fld("f_target_env")) + r":\*\*\s*(.+)", coords or "")
@@ -308,12 +309,12 @@ sorol be (D3), hanem a teszt saját jelöléséből; a cím a **kapu** bemenete 
   — vagy ha ebben a ciklusban tényleg nincs értelme, indokold `REMOTE-N/A: <miért>` sorral a
   `<sec:testing_strategy>` szekcióban."*
 
-- [ ] **5.2 — A felmentés parse-olása.** `REMOTE-N/A:` sor a `<sec:testing_strategy>` szekcióban,
+- [x] **5.2 — A felmentés parse-olása.** `REMOTE-N/A:` sor a `<sec:testing_strategy>` szekcióban,
   egyszerű regexszel (`^\s*REMOTE-N/A:\s*(\S.*)$`, `re.MULTILINE`) — **kulcs nélküli**, egész
   ciklusra szóló felmentés, ezért NEM a `_exemptions()` (az kulcs → indok párokat ad). Ha van
   ilyen sor, az `EV9` `f.suggest`-re vált (nyomot hagy, nem blokkol).
 
-- [ ] **5.3 — A `03b` minőségi kapujának új pontja (HU+EN).**
+- [x] **5.3 — A `03b` minőségi kapujának új pontja (HU+EN).**
   `prompts/shared-{hu,en}/quality-check-plan-test.md`, az `EV1–EV5`-ös pont **mellé**:
   *„**🔴 Minden forgatókönyv megmondja, HOL fut — és van remote teszt? (EV8/EV9)** — Minden
   `TS-NN` fejléce hordoz `[local]` vagy `[remote]` címkét (nyelvfüggetlen literál, mert a kör
@@ -324,7 +325,7 @@ sorol be (D3), hanem a teszt saját jelöléséből; a cím a **kapu** bemenete 
   amit csak lokális tesztek igazolnak, pontosan azt nem bizonyítja, amiért készült. Ha tényleg
   nincs értelme, `REMOTE-N/A: <miért>` sor a `<sec:testing_strategy>`-ben."*
 
-- [ ] **5.4 — Verifikáció.**
+- [x] **5.4 — Verifikáció.**
   - **bukás-próba:** `<field:f_target_env>: remote`, minden `TS-NN` `[local]` → `EV9`;
   - **felmentés-próba:** ugyanez + `REMOTE-N/A: a ciklus csak build-konfigurációt módosít` →
     javaslat, nem Must Fix;
@@ -338,7 +339,7 @@ sorol be (D3), hanem a teszt saját jelöléséből; a cím a **kapu** bemenete 
 > **Mit mér:** ha van `[remote]` forgatókönyv, a gépi futtatási táblában van-e egyáltalán
 > nem-lokális kategória, amelyik lefuttathatná.
 
-- [ ] **6.1 — Az `EV10` ág a `check_scenario_scope`-ban.** Ha van legalább egy `[remote]`
+- [x] **6.1 — Az `EV10` ág a `check_scenario_scope`-ban.** Ha van legalább egy `[remote]`
   forgatókönyv, de a gépi tábla **minden** sorának `Környezet` cellája lokális
   (`_env_is_local()` mindegyikre igaz) → `f.add("EV10", "03", …)`:
   *„a plan N `[remote]` forgatókönyvet ír le, de a gépi futtatási tábla minden kategóriája
@@ -349,7 +350,7 @@ sorol be (D3), hanem a teszt saját jelöléséből; a cím a **kapu** bemenete 
   > finomabb join törékeny lenne, és a `TP4/b` tanulsága szerint egy törékeny kapu rosszabb, mint
   > egy durva. **Ne találd ki a finomabb változatot** — ha kell, az külön tétel.
 
-- [ ] **6.2 — Verifikáció.**
+- [x] **6.2 — Verifikáció.**
   - **bukás-próba:** egy `[remote]` `TS-NN` + csak `lokális` kategóriák a táblában → `EV10`;
   - **hamis-pozitív próba:** ugyanez, de a táblában van egy `remote` kategória → **nincs** `EV10`;
   - **hamis-pozitív próba 2:** nincs `[remote]` forgatókönyv → **nincs** `EV10`.
@@ -382,7 +383,7 @@ specs/cycle-30-…/test-report/implement/s2s/rest-logs/remote/test_s2s_renewal/
 > szerkezetet változtatás nélkül látják. Ez a döntés tudatos: a szerkezet **kiegészítés**, nem
 > séma-váltás — így egyetlen meglévő projekt sem törik el.
 
-- [ ] **7.2 — `conventions.md` sablon (HU+EN).** `prompts/lang/{hu,en}/00-init-project.md`, a TR3
+- [x] **7.2 — `conventions.md` sablon (HU+EN).** `prompts/lang/{hu,en}/00-init-project.md`, a TR3
   tábla „Alkalmazás-oldali audit / REST kérés-válasz" sorának kitöltési szabályai közé:
   *„**A REST-naplók teszt-szerinti almappákba mennek:** `<artefaktum>/<local|remote>/<teszt-név>/`.
   A `local`/`remote` szint **nyelvfüggetlen**, és a **teszt saját jelöléséből** következik (nem a
@@ -392,7 +393,7 @@ specs/cycle-30-…/test-report/implement/s2s/rest-logs/remote/test_s2s_renewal/
   amelyből utólag nem állapítható meg, melyik teszt mit hívott — és egy korábbi körből örökölt
   fájlokkal teli mappa telinek látszik."*
 
-- [ ] **7.3 — Port-forward deklaráció a Környezetek-táblában (HU+EN).** Ugyanott, a `Környezetek
+- [x] **7.3 — Port-forward deklaráció a Környezetek-táblában (HU+EN).** Ugyanott, a `Környezetek
   és végpontok` tábla kitöltési szabályai közé:
   *„**Ha egy cím lokálisnak látszik, de távolra visz** (`kubectl`/`oc port-forward`, SSH-alagút),
   azt **külön sorban, `remote` környezettel** kell felvenni, a valódi célt is megnevezve. Ez az
@@ -411,7 +412,7 @@ specs/cycle-30-…/test-report/implement/s2s/rest-logs/remote/test_s2s_renewal/
   > kigyűjti a lokálisnak látszó címeket** — ezek a „felmentett" címek. Egyszerű és nem találgat:
   > ha egy `remote/` mappa naplói CSAK ilyen címekre mennek, az nem bukás.
 
-- [ ] **7.4 — `RL1` — útvonal ↔ tartalom.** Új check a `validate-gate-check.py`-ba,
+- [x] **7.4 — `RL1` — útvonal ↔ tartalom.** Új check a `validate-gate-check.py`-ba,
   `check_rest_log_scope(cycle, rep, stage)`:
   1. `stage != "close"` → `return`.
   2. Az utolsó kör-mappát a **meglévő** `_last_round_dir(cycle)` adja (a `list8` írta, az `SK1`-hez).
@@ -443,7 +444,7 @@ specs/cycle-30-…/test-report/implement/s2s/rest-logs/remote/test_s2s_renewal/
      (fordított tévedés: a teszt remote, de local-nak jelölték).
   7. Rendben: `rep.ok(...)` a mappák és tesztek számával.
 
-- [ ] **7.5/a — 🔴 A TESZT-NÉV ↔ MAPPANÉV normalizálás — EGY helyen, mindkét oldalon ugyanaz.**
+- [x] **7.5/a — 🔴 A TESZT-NÉV ↔ MAPPANÉV normalizálás — EGY helyen, mindkét oldalon ugyanaz.**
   Ez a join kulcsa; ha a két oldal máshogy normalizál, az `RL2` néma hamis pozitívokat ad.
   A szabály (a 7.2 `conventions.md`-sablonja és az `RL2` **azonos** szöveggel mondja ki):
   ```
@@ -458,7 +459,7 @@ specs/cycle-30-…/test-report/implement/s2s/rest-logs/remote/test_s2s_renewal/
   A checkben egy `_scope_dir_name(name)` segédfüggvény végezze, és a **7.2 sablonszövege szó
   szerint ezt írja elő** a célprojektnek.
 
-- [ ] **7.5/b — `RL2` — címke ↔ bizonyíték join.** Ugyanabban a checkben, a `RL1` után:
+- [x] **7.5/b — `RL2` — címke ↔ bizonyíték join.** Ugyanabban a checkben, a `RL1` után:
   1. Olvasd ki a plan `[remote]` forgatókönyveit. **A parse-olót NE írd meg harmadszor:** a
      `_load_run_tests_module()` mintájára (`importlib`, a kötőjeles fájlnév miatt) töltsd be az
      `analyze-gate-check.py`-t modulként, és hívd a `parse_ts_blocks()`-ját — a 4.2 után annak
@@ -478,7 +479,7 @@ specs/cycle-30-…/test-report/implement/s2s/rest-logs/remote/test_s2s_renewal/
   4. Felmentés: `_exemptions(text, "SCOPE-EXEMPT", key_re=r"[\w./:\[\]-]+")` — a `list8`
      általánosította a függvényt, itt **csak hívni kell**.
 
-- [ ] **7.6 — A `06` szövege (HU+EN).** `prompts/skills-{hu,en}/06-implement.md`, az anti-stub
+- [x] **7.6 — A `06` szövege (HU+EN).** `prompts/skills-{hu,en}/06-implement.md`, az anti-stub
   garde mellé: *„**A teszt jelölése nem dekoráció (RL1).** Ha a plan `TS-NN` blokkja `[remote]`, a
   tesztnek hordoznia kell a megfelelő jelölést (`@pytest.mark.remote`, Playwright `@remote` tag), és
   a REST-naplózó fixture ebből választ mappát (`rest-logs/remote/<teszt>/`). **A besorolás a teszt
@@ -487,7 +488,7 @@ specs/cycle-30-…/test-report/implement/s2s/rest-logs/remote/test_s2s_renewal/
   megnézi, hogy a `remote/` mappában tényleg van-e nem-lokális cím: egy üresen maradt vagy csak
   `127.0.0.1`-et tartalmazó remote mappa bukás."*
 
-- [ ] **7.7 — A `07` szövege (HU+EN).** `prompts/skills-{hu,en}/07-validate.md`:
+- [x] **7.7 — A `07` szövege (HU+EN).** `prompts/skills-{hu,en}/07-validate.md`:
   (a) a kör-lezáró kapu-blokk felsorolásába két sor az `RL1`/`RL2`-ről, a `RUN1`/`SK1` mintájára;
   (b) **a `validate-gate-check.py` hívásába be kell írni a 7.4-ben felvett kapcsolót** — a
   kód-blokk ma így néz ki, és így kell bővülnie:
@@ -498,7 +499,7 @@ specs/cycle-30-…/test-report/implement/s2s/rest-logs/remote/test_s2s_renewal/
   Enélkül az `RL1` port-forward felmentése soha nem sülne el — pontosan az a hibaosztály, amit a
   `list8` 4.2-ben a `results.json` `skipped` státuszánál elkerültünk.
 
-- [ ] **7.8 — Verifikáció.** Gyárts a scratchpadba egy kör-mappát:
+- [x] **7.8 — Verifikáció.** Gyárts a scratchpadba egy kör-mappát:
   - **bukás-próba 1:** `rest-logs/remote/test_a/` csak `127.0.0.1`-es naplóval → `RL1` bukás;
   - **bukás-próba 2:** `[remote]` `TS-01` → `test_a`, de nincs `rest-logs/remote/test_a/` → `RL2` bukás;
   - **felmentés-próba:** `SCOPE-EXEMPT: test_a — nincs VPN ebben a körben` a `check-log.md`
@@ -519,14 +520,14 @@ _Ez a szakasz szándékosan üres — a 4–7. a négy keményítés, a 9. a dok
 
 ## 9. Dokumentáció
 
-- [ ] **9.1 — `README-HU.md` + `README.md`.** Két helyen:
+- [x] **9.1 — `README-HU.md` + `README.md`.** Két helyen:
   - a `07-validate` determinisztikus rétegének táblájába egy sor: *„HOL futott ez a KONKRÉT
     teszt?" → `validate-gate-check.py` (`RL1`/`RL2`)*;
   - **új tanulság-bekezdés** a meglévők közé (a „A zöld kör nem bizonyítja…" bekezdés **után**),
     a 2. szakasz réseivel és az öt kapu táblájával.
-- [ ] **9.2 — `berki-spec-directory-structure.md`.** Az `analyze-gate-check.py` sorának bővítése
+- [x] **9.2 — `berki-spec-directory-structure.md`.** Az `analyze-gate-check.py` sorának bővítése
   az `EV8`/`EV9`/`EV10`-zel, a `validate-gate-check.py` soráé az `RL1`/`RL2`-vel.
-- [ ] **9.3 — `prompts/meta-improve-prompts.md`: új elv `7/n`**, a `7/m` után. Vázlat a meglévő
+- [x] **9.3 — `prompts/meta-improve-prompts.md`: új elv `7/n`**, a `7/m` után. Vázlat a meglévő
   elvek hangján:
 
   *A `7/l` a **teszt**, a `7/m` a **kategória** szintjén kérdezte meg, mi bizonyítja, hogy történt
@@ -549,32 +550,32 @@ _Ez a szakasz szándékosan üres — a 4–7. a négy keményítés, a 9. a dok
 
 ## 10. Kapuk és elfogadási kritériumok
 
-- [ ] **10.1** `python3 prompts/scripts/lang-parity-check.py` → hiba nélkül.
-- [ ] **10.2** `python3 prompts/scripts/lang-parity-check.py --strict` → 0.
-- [ ] **10.3** `python3 prompts/scripts/sync-gemini-agents.py --check` → 0.
-- [ ] **10.4** Mindkét érintett script szintaktikailag ép és a súgója fut:
+- [x] **10.1** `python3 prompts/scripts/lang-parity-check.py` → hiba nélkül.
+- [x] **10.2** `python3 prompts/scripts/lang-parity-check.py --strict` → 0.
+- [x] **10.3** `python3 prompts/scripts/sync-gemini-agents.py --check` → 0.
+- [x] **10.4** Mindkét érintett script szintaktikailag ép és a súgója fut:
   ```bash
   for s in analyze-gate-check validate-gate-check; do
     python3 -c "import ast;ast.parse(open('prompts/scripts/$s.py').read())" && echo "$s OK"
   done
   ```
-- [ ] **10.5** Telepítési füstteszt legalább egy platformra, **hu és en** prompt-nyelven: a
+- [x] **10.5** Telepítési füstteszt legalább egy platformra, **hu és en** prompt-nyelven: a
   telepített `03b-write-test-plan`, `06-implement` és `07-validate` **`.md`** fájljaiban **nincs**
   feloldatlan `INCLUDE:` marker és `<sec:` / `<field:` / `<status:` token.
   > *(A `.py` scriptekben lévő token-literálok pre-existing állapot — négy script kommentjeiben
   > `18acadc` óta ott vannak, és az `acceptance-check.sh:80` emiatt már ma is piros. **Ebbe a
   > tervbe ne vedd bele** a javítását; ha zavar, vedd fel külön tételként.)*
-- [ ] **10.6** Mind az öt check **célzott bukás-próbája** lefutott: 4.4, 5.4, 6.2, 7.8.
-- [ ] **10.7 — Hamis-pozitív próba (kötelező).** Futtasd az öt checket **korábbi, sikeresen
+- [x] **10.6** Mind az öt check **célzott bukás-próbája** lefutott: 4.4, 5.4, 6.2, 7.8.
+- [x] **10.7 — Hamis-pozitív próba (kötelező).** Futtasd az öt checket **korábbi, sikeresen
   lezárt ciklusokra**. Ami itt bukik, azt **meg kell érteni**: vagy valódi rés volt ott is (akkor
   írd a 12. szakaszba), vagy a check túl agresszív (akkor szűkítsd). **Egy kapu, ami a jó ciklust
   is bukatja, használhatatlan.** Külön figyelj a `TS-NN` címke nélküli régi planekre (D9) és a
   lapos `rest-logs/` mappákra.
-- [ ] **10.8 — 🔴 `TS_HEADING_RE` regresszió-próba.** A 4.4 harmadik pontja: egy teljes,
+- [x] **10.8 — 🔴 `TS_HEADING_RE` regresszió-próba.** A 4.4 harmadik pontja: egy teljes,
   szabályos plan `--plan-only` kimenete a változtatás **előtt és után** bájtra egyezzen a
   `TS`/`TA1`/`TI1`/`spec_coverage` megállapításokban. Ez a terv egyetlen olyan szerkesztése, amely
   **meglévő, működő checkeket** tud csendben elrontani.
-- [ ] **10.9** Commit: `feat(prompts): teszt-hatókör címke és REST-napló bizonyíték — EV8-EV10, RL1, RL2`
+- [x] **10.9** Commit: `feat(prompts): teszt-hatókör címke és REST-napló bizonyíték — EV8-EV10, RL1, RL2`
 
 ---
 
@@ -609,4 +610,94 @@ _Ez a szakasz szándékosan üres — a 4–7. a négy keményítés, a 9. a dok
 > döntés (3. szakasz) tarthatatlannak bizonyult, **írd ide, mi lett helyette és miért** — ez lesz a
 > `meta-improve-prompts.md` `7/n` elv végleges szövegének forrása.
 
-- _(még nincs bejegyzés)_
+### 12.1 Eltérés a tervtől — a `Környezetek és végpontok` tábla NEM a `conventions.md`-ben van (7.3)
+
+A terv 7.3 pontja azt írta, hogy a port-forward deklaráció a `conventions.md` sablonjába
+(`prompts/lang/{hu,en}/00-init-project.md`) kerül, „ugyanoda", a `Környezetek és végpontok`
+tábla kitöltési szabályai közé. **Ilyen tábla nincs a `conventions.md`-ben** — a
+`00-init-project.md` szekciói: Projekt áttekintés · Tech stack · … · Teszt-riportolás (TR3) ·
+Naming · **Portok és service-ek** (`Komponens | Port`) · Környezeti változók · Sonar · Kockázatok.
+A `Környezetek és végpontok` tábla a **`specs/test-conventions.md`** koordináta-regiszterében áll,
+a `prompts/lang/{hu,en}/08-doc-sync.md` `TC2-test-conventions-vaz` horgonya alatt — és a `TC1/c`
+határvonal szerint **oda is tartozik**: a `conventions.md` a riport-artefaktumoké, a
+`test-conventions.md` a koordinátáké (URL, port, health endpoint, teszt-user).
+
+**Amit helyette csináltam** (a `conventions.md`-be új tábla felvétele helyett, ami második
+igazságforrást teremtett volna):
+
+1. a 7.3 szövege a **`08-doc-sync.md` lang-blokkjába** került, közvetlenül a tábla alá, egy
+   harmadik, port-forwardos **mintasorral** együtt (`| remote | keycloak (port-forward →
+   keycloak.apps.ocp.example) | \`http://127.0.0.1:8080\` | \`/health/ready\` |`);
+2. a `skills-{hu,en}/08-doc-sync.md` tábla-leírója (`:380`) is megmondja, hogy a
+   port-forward külön, `remote` környezetű sor, és hogy az `RL1` ebből olvas;
+3. az **`RL1` MINDKÉT fájlt beolvassa**: a `--conventions` kapcsolóval megadottat ÉS a
+   `<ciklus>/../test-conventions.md`-t. Így a `--conventions` kapcsoló a terv szerint bekerült
+   (7.4/4 és 7.7/b is teljesült), de a felmentés akkor is működik, ha a tábla a valódi helyén áll.
+   Ha egyik fájl sem érhető el, az `RL1` fut tovább, és az üzenet végére kerül a figyelmeztetés.
+
+### 12.2 Eltérés a tervtől — a `TS_HEADING_RE` kis/nagybetű-tűrése SZŰKEBB (4.2)
+
+A terv `re.IGNORECASE`-t írt az EGÉSZ regexre. Ez a **`TS-` prefixet is** case-insensitive-vé
+tette volna, tehát egy `#### ts-01 — …` fejléc innentől illeszkedne, és a `m.group(1)` értéke
+(`ts-01`) beszivárogna a megállapítás-szövegekbe és a `TS6` számozás-ellenőrzésébe — ez a
+teljesítendőn túli, néma viselkedés-változás. Helyette **inline csoport-flag** áll, csak a
+címkén: `(?:\[(?i:(local|remote))\])?`. Ellenőrizve: `[Remote]` illeszkedik, `ts-05` nem
+(a változtatás előtti viselkedéssel egyezően).
+
+### 12.3 A 10.8 regresszió-próba eredménye — TISZTA
+
+Két fixture készült (`scratchpad/regress/specs/cycle-99-fixture` és `cycle-98-fixture-b`), amelyek
+együtt a `parse_ts_blocks()` **mindhárom** `cim`-fogyasztóját kiváltják: a fejléc `DoD-NN`
+hivatkozásainak parse-olását (`TS5`), a `Mit tesztelünk` ↔ cím összevetést (`TS2`) és az `EV5`
+„lokális-e a nevében" keresést. A `--plan-only` kimenet a `TS_HEADING_RE` szerkesztése előtt és
+után **a teljes kimenetre nézve bájtra egyezett** (nem csak a `TS`/`TA1`/`TI1`/`spec_coverage`
+megállapításokra). A terv félelme megalapozott volt, de a szerkesztés tényleg egyetlen sor lett:
+a `parse_ts_blocks()` `cur = {...}` értékadása.
+
+### 12.4 A 10.7 hamis-pozitív próba eredménye — TISZTA, és két VALÓDI rést talált
+
+Két éles projekt **36 lezárt ciklusán** futott le mind az öt check.
+
+**`03b` oldal (`EV8`/`EV9`/`EV10`):** 34 ciklus **néma** — nincs bennük `TS-NN` fejléc, tehát a D9
+kimaradás-ág lép életbe. Kettő szólalt meg, és **mindkettő valódi rés**:
+
+| ciklus | mit talált |
+|---|---|
+| `cycle-29-tmp-openshift-installer` | 10 × `EV8` + 1 × `EV9` — cél-környezet `dev (dsp01)`, mind a 10 forgatókönyve lokális |
+| `cycle-30-tmp-token-concurrency-and-health-improvements` | 8 × `EV8` + 1 × `EV9` — cél-környezet `Lokális (Mock Stack) + Dev (\`dsp01\` OpenShift)`, mind a 8 forgatókönyve lokális |
+
+Ez pontosan az a két ciklus, amelyről a 2. szakasz szól: az `EV9` a `cycle-30` szignatúráját
+**visszamenőleg is** megfogta. Az `EV8` a két ciklusnál technikai értelemben „hamis pozitív"
+(a címke-konvenció akkor még nem létezett), de ezek a ciklusok lezártak — a `03b` kapuja nem fut
+rájuk újra —, és a check szűkítése (pl. „csak ha van már legalább egy címkézett `TS-NN`") azt is
+elrejtené, ha egy MAI plan felében kimarad a címke. **A checket nem szűkítettem.**
+
+**`07` oldal (`RL1`/`RL2`):** MINDEN ciklus `·` (info) — egyetlen bukás sincs. A `cycle-30`
+`round-06` körében ott a 56 lapos naplófájl, `local/`/`remote/` alszint nélkül: a konvenció nincs
+használatban, tehát a két check a D9 szerint kimarad. **A hamis-pozitív próba célja teljesült:
+egy jó, lezárt ciklust egyik új kapu sem bukat.**
+
+### 12.5 Amit a terv nem mondott ki, de kellett
+
+- **A `rep.failed` nem használható lokális állapotként.** Az `RL1` `rep.ok()`-ja eredetileg
+  `if not rep.failed:` alatt állt — csakhogy a `Report.failed` az EGÉSZ futásra vonatkozik, tehát
+  egy korábbi check bukása után az `RL1` „rendben" sora eltűnt volna. Lokális `rl1_failed` flag lett.
+- **A `<local|remote>` szint felismerésének szűkítése.** A terv „`rest-logs/local/` és
+  `rest-logs/remote/` alakú mappákat" mondott. Az `rglob` csak a névre szűrve egy máshova tartozó,
+  `local`/`remote` nevű könyvtárat is ítélet alá vonna, ezért a szülő-mappa nevében **`log`**-ot is
+  megkövetel a check (`rest-logs`, `audit-logs`, `logs` mind illeszkedik). Ha egy projekt máshogy
+  nevezi, a check `info`-val kimarad — a D9 biztonságos iránya.
+- **A „scope-olt, de teszt-szerint nem bontott" napló.** Ha egy `remote/` mappában közvetlenül
+  fájlok állnak alkönyvtár nélkül, a check MAGÁT a mappát veszi egységnek (`(közvetlen fájlok)`
+  néven), ahelyett hogy csendben kimaradna — így ez az átmeneti alak is ítélet alá kerül.
+- **A függvény-szintű címke-felülírás gépi támogatása.** A `03b` sablonja (D5) megengedi a
+  `` `test_foo` → `TC-01` [remote] `` alakot. Ha az `RL2` csak a `TS-NN`-en át joinolna, egy
+  ilyen felülírás **nem hatna semmire** — a prompt olyat ígérne, amit egy kapu sem tart be. Ezért
+  a `_plan_func_scopes()` kiolvassa az explicit címkéket, és azok **felülírják** a `TS-NN`-ből
+  örökölt hatókört (mindkét irányban).
+- **A `<status:…>` pszeudo-token a prompt-szövegben.** Az első fogalmazás a D2 indoklásában
+  szó szerint leírta a `<status:…>` alakot — a telepítő ezt nem oldja fel (nincs ilyen kulcs),
+  tehát a telepített promptban feloldatlan tokenként maradt volna, és a 10.5 füstteszten piros.
+  Átfogalmazva: „projekt-nyelvi `status`-token". Ugyanezért a scriptek kommentjébe sem került új
+  token-literál (a 10.5 megjegyzése szerint az `acceptance-check.sh:80` emiatt már ma is piros —
+  azt nem rontottam tovább).

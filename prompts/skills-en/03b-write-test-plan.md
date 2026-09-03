@@ -238,7 +238,7 @@ _**The recurring expectations lifted over (TC1) — mandatory if `specs/test-con
 
 One block per scenario, in exactly this form:
 
-#### TS-01 — <the name of the scenario>  (DoD-02, DoD-05)
+#### TS-01 [remote] — <the name of the scenario>  (DoD-02, DoD-05)
 
 **<field:f_what_we_test>:** <what this scenario verifies — the behavior it runs for, in one sentence>
 **<field:f_prerequisite>:** <the state it starts from: a stack that is up, seed, a logged-in user, the result of an earlier `TS-NN`>
@@ -250,6 +250,7 @@ One block per scenario, in exactly this form:
 **<field:f_cleanup>:** <what has to be stopped or restored afterwards>
 
 **Rules for filling it in:**
+- **🔴 The scope label in the header — mandatory, and LANGUAGE-INDEPENDENT: `[local]` or `[remote]` (EV8).** `remote` is every scenario that calls even a SINGLE component that does not run on the local machine — a container running on your own machine is still `local`. **The address alone does not decide:** a `127.0.0.1:8080` behind an `oc port-forward` is **remote** (the component runs in the cluster), while a compose service name (`http://keycloak:8080`) is **local**. The label determines **where the REST logs of the scenario go in the round folder** (`…/rest-logs/<local|remote>/<test-name>/`), and the gate of `07` (`RL1`/`RL2`) joins on it — this is why it is not a project-language `status` token but an English literal: folder names always stand in English in the framework. The test **function** inherits the label of the scenario through the `<field:f_test_cases>` datasheet line, so you do not have to write it twice; for a test file of mixed scope it can be overridden at the function level (`` `test_foo` → `TC-01` [remote] ``). The **`TC-NN` unit cases do NOT get a label** (they are isolated by definition, hence `local`) — **the default of a test without a label is `local`**.
 - **`<field:f_what_we_test>` — a claim, not a topic (TD7).** This line says **what** the scenario verifies and **why**: the behaviour as a decidable claim (*"out of five simultaneous requests exactly one renews the token, the rest are served from the existing one"*), plus the acceptance criterion or risk it proves. **Repeating the heading is not enough** ("concurrency test", "testing `/init-hash`") — from that, phases 06/07 cannot tell whether a failure is a real defect or a bad test. The gate measures this (TS2).
 - **`DoD-NN` in the header — mandatory and bidirectional (TS5).** Every scenario names which DoD points it proves, and **every `DoD-NN` must have at least one scenario**. The gate measures both directions.
 - **Call column — literally runnable.** For REST, a full `curl`: verb, full URL with the port, headers, the concrete request body. A non-REST test belongs here in the same form: a UI step (what we click, what we type), a CLI command, a DB query. **A reference is not a call** — "see the `<sec:e2e_infrastructure>` section" is not runnable.

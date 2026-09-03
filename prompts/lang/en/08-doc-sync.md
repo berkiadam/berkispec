@@ -94,6 +94,9 @@ _Every environment, access and parameter datum **in one place** (TC13). The reci
 |---|---|---|---|
 | local | <component> | `http://localhost:PORT` | `/health` |
 | remote | <component> | `https://<host>` | `/health/ready` |
+| remote | keycloak (port-forward → keycloak.apps.ocp.example) | `http://127.0.0.1:8080` | `/health/ready` |
+
+_**🔴 If an address LOOKS local but leads far away** (`kubectl`/`oc port-forward`, an SSH tunnel), it has to be entered **in a separate row, with the `remote` environment**, naming the real target too — this is the ONLY place where this is visible: a `127.0.0.1:8080` in the log tells nothing about a shared cluster being at the other end. **The shape of the row is fixed, because the `RL1` gate of `07` reads it mechanically:** the `Environment` cell is `remote`, the `URL / port` cell is the **address that looks local**, and the `Component` cell contains the word `port-forward` and the real target (the third row above is the pattern). What `RL1` uses out of this is that it collects the local-looking addresses from the `URL / port` cells of the `remote` rows — these are the **exempted** addresses: if the logs of a `rest-logs/remote/<test>/` folder go ONLY to such addresses, that is not a failure._
 
 ### Test users, clients, secrets
 

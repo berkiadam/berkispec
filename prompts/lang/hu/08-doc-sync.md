@@ -94,6 +94,9 @@ _Minden környezet-, hozzáférés- és paraméter-adat **egy helyen** (TC13). A
 |---|---|---|---|
 | lokális | <komponens> | `http://localhost:PORT` | `/health` |
 | remote | <komponens> | `https://<host>` | `/health/ready` |
+| remote | keycloak (port-forward → keycloak.apps.ocp.example) | `http://127.0.0.1:8080` | `/health/ready` |
+
+_**🔴 Ha egy cím lokálisnak LÁTSZIK, de távolra visz** (`kubectl`/`oc port-forward`, SSH-alagút), azt **külön sorban, `remote` környezettel** kell felvenni, a valódi célt is megnevezve — ez az EGYETLEN hely, ahol ez látszik: a `127.0.0.1:8080` a naplóban semmit nem árul el arról, hogy a másik végén egy osztott klaszter van. **A sor alakja kötött, mert a `07` `RL1` kapuja gépileg olvassa:** a `Környezet` cella `remote`, az `URL / port` cella a **lokálisnak látszó cím**, a `Komponens` cella pedig tartalmazza a `port-forward` szót és a valódi célt (a fenti harmadik sor a minta). Az `RL1` ebből annyit használ, hogy a `remote` környezetű sorok `URL / port` cellájából kigyűjti a lokálisnak látszó címeket — ezek a **felmentett** címek: ha egy `rest-logs/remote/<teszt>/` mappa naplói CSAK ilyen címekre mennek, az nem bukás._
 
 ### Teszt-userek, kliensek, titkok
 
