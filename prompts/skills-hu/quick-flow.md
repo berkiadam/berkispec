@@ -32,7 +32,7 @@ Ez a dokumentum a projekt **egyszerűsített, háromfázisú** SDD (Spec-Driven 
 Az Agent a feladat átvétele után **először döntsön a megfelelő flow-ról**, és a döntését indokolja röviden a Felhasználónak.
 
 **Ezt az egyszerűsített flow-t használd, ha a feladat:**
-*   3-4 lépésben, egy ülé/menetben megbízhatóan megoldható;
+*   3-4 lépésben, egy ülésben/menetben megbízhatóan megoldható;
 *   kis, jól körülhatárolt scope-ú — pl. **konfiguráció összeállítása vagy módosítása**, **egyszerűbb script megírása**, kisebb hibajavítás, lokális finomhangolás;
 *   nem érint egyszerre több komponenst, és nincs összetett, előre tervezést igénylő architektúrális döntés.
 

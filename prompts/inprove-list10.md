@@ -494,8 +494,9 @@ teszt-lépéseibe megy. **Kapu-script egyikhez sem készül** (D3).
 - [x] **Füst-teszt a `cycle-status.py`-ra:** egy `tasks.md`-vel és státusszal rendelkező, plusz egy
       régi `task.md`-s (státusz nélküli) próba-ciklusmappán fusson le, és mindkettőre értelmes
       állapotot adjon (QF3 visszafelé-kompatibilitás).
-- [ ] **Emberi review (NYITVA — ez nem gépi kapu):** a `lang-parity-check.py` a **szerkezeti** eltérést fogja meg, a
-      **jelentés**-eltérést nem — a hu/en quick-flow párt át kell olvasni.
+- [x] **Emberi review (ez nem gépi kapu):** a `lang-parity-check.py` a **szerkezeti** eltérést fogja meg, a
+      **jelentés**-eltérést nem — a hu/en quick-flow párt át kell olvasni. **Megtörtént (2026-09-05):**
+      a 344-344 sor tételes összevetése **egyetlen jelentés-eltérést sem** talált (lásd 13/8.).
 
 ---
 
@@ -557,6 +558,17 @@ kiegészítés vagy pontosítás, nem döntés-felülírás.
    `## 6. Segédparancsok` (QF17) — emiatt a Best Practice szekció `## 5.`-ből `## 7.`-re
    csúszott, plusz a fájl elejére bekerült egy `## Belépő` szekció (QF16). A két nyelvi példány
    sorszinten továbbra is igazodik (mindkettő **344 sor**).
+
+8. **Az emberi review eredménye (2026-09-05).** A hu/en `quick-flow.md` pár mind a 344 sora
+   tételesen összevetve: a szekció-sorrend, a QF/QT azonosítók, az INCLUDE markerek, a mermaid
+   ábra élei, a kalibrációs minta és a Megállási szabályok / Segédparancsok táblák **soronként
+   fedik egymást**, jelentés-eltérés nincs. Egyetlen javítás született, és az is a köröktől
+   független, régi (`8bd758c` óta élő) elgépelés a magyar példányban: *„egy ülé/menetben"* →
+   *„egy ülésben/menetben"* (35. sor; az angol pár már helyesen `in a single session/pass`).
+   A `lang/{hu,en}/quick-flow.md` három horgonya és a `manual-test-plan` QF8-ágai szintén
+   egyeznek. A build-füstteszt megismételve: `install-helper.py` hu+en `Success`, a telepített
+   `bs-quick-flow` (502/504 sor) és `bs-manual-test-plan` (445/449 sor) `SKILL.md`-jében **nulla**
+   feloldatlan INCLUDE marker és nulla feloldatlan token.
 
 **A kapuk eredménye (11. szakasz):** `sync-gemini-agents.py` (írás + `--check`) → 0 ·
 `lang-parity-check.py` → 0 · `--strict` → 0 · a `cycle-status.py` füst-teszt négy próba-ciklusra
