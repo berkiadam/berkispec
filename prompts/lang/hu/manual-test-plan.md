@@ -101,9 +101,15 @@ Content-Type: application/json
 készíthető el. Ez a parancs a `plan.md` kitöltött <sec:environment_coords> szekciójára
 épül — hogy az placeholder nélkül, konkrét értékekkel áll, azt az `05-analyze` mechanikus
 kapuja garantálja. Futtasd le előbb az analyze fázist: `/bs-analyze input:
-@specs/cycle-NN-<cycle-name>` — utána hívj újra. (Ha a ciklus az egyszerűsített
-[lightweight] flow-t követi, ez a parancs nem használható: ott nincs `plan.md` és nincs
-analyze fázis — a kézi tesztterv a teljes flow-hoz készült.)"*
+@specs/cycle-NN-<cycle-name>` — utána hívj újra."*
+
+<!-- ANCHOR:quick-flow-kapu-stop -->
+*"Ez a ciklus az egyszerűsített (quick-flow) flow-t követi — nincs `plan.md` és nincs
+analyze fázis —, ezért a kézi tesztterv a `tasks.md` státuszából indul. A `tasks.md`
+státusza most nem `<status:ready_for_implement>` és nem `<status:done>`, tehát a
+feladatlista még nincs jóváhagyva: a terv olyan lépésekre épülne, amelyek még
+változhatnak. Zárd le előbb a `/bs-quick-flow` 2. fázisát (jóváhagyás + státusz +
+commit), utána hívj újra."*
 
 <!-- ANCHOR:mod-bejelentes -->
 *"A kézi tesztterv <mód> módban készül, mert a `tasks.md` státusza: <státusz>. Ha ez nem

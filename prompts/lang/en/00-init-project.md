@@ -74,7 +74,7 @@ The folder of every cycle: `specs/cycle-NN-<cycle-name>/`
 Two flows can be chosen from in the project, **per task**:
 
 - **Full flow (02–09):** for larger, complex tasks — separate `spec.md` / `plan.md` / `tasks.md` + the analyze/validate/doc-sync/review quality gates.
-- **Simplified flow (`/bs-quick-flow`):** for small, well-bounded tasks (configuration, a simpler script, a smaller fix) — a three-phase `spec.md` → `task.md` → implementation.
+- **Simplified flow (`/bs-quick-flow`):** for small, well-bounded tasks (configuration, a simpler script, a smaller fix) — a three-phase `spec.md` → `tasks.md` → implementation.
 
 **Default flow:** _<full | simplified>_ — _(filled in during phase 00 based on the character of the project; e.g. predominantly configuration/scripting/operations → simplified; product development with several components → full)_
 

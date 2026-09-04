@@ -1,8 +1,9 @@
 ---
 name: bs-manual-test-plan
-description: "berkispec - helper command. Assembling the manual test plan of the cycle: component startup, test data, manual call sequences (curl + .http), expected results, and where the results of the automated tests go. Prerequisite: analyze-report.md is PASS. Not a phase: it is not part of the 00-09 process, it can be called any time after the analyze, and it can be re-run any time."
+description: "berkispec - helper command. Assembling the manual test plan of the cycle: component startup, test data, manual call sequences (curl + .http), expected results, and where the results of the automated tests go. Prerequisite: analyze-report.md is PASS — in a simplified (quick-flow) cycle, where there is no plan.md, the status of tasks.md (Ready for implementation or Done). Not a phase: it is not part of the 00-09 process, it can be called any time after the analyze, and it can be re-run any time."
 prerequisites:
   - "specs/cycle-NN-<cycle-name>/analyze/analyze-report.md <field:f_status>: PASS"
+  - "in a quick-flow cycle (no plan.md): specs/cycle-NN-<cycle-name>/tasks.md <field:f_status>: <status:ready_for_implement> or <status:done>"
 output:
   - "specs/cycle-NN-<cycle-name>/manual-test-plan.md — the manual test plan (in <status:mtp_planned> or <status:mtp_as_built> mode)"
 scripts:
@@ -26,7 +27,7 @@ This is **not a phase:** it is not part of the `00–09` chain, it **does not to
 
 | Section | In one sentence |
 |---|---|
-| Prerequisite (MT1) | `analyze-report.md` = `PASS`. Without it **STOP** and back to `05` — that <sec:environment_coords> of `plan.md` is filled in is guaranteed by the mechanical gate of `05`, and that is the single real input of this phase. |
+| Prerequisite (MT1) | `analyze-report.md` = `PASS`. Without it **STOP** and back to `05` — that <sec:environment_coords> of `plan.md` is filled in is guaranteed by the mechanical gate of `05`, and that is the single real input of this phase. **In a simplified (quick-flow) cycle** — where there is no `plan.md` — the gate looks at the status of `tasks.md` (QF8). |
 | Two modes (MT3) | It is decided from the status of `tasks.md`: `<status:mtp_planned>` (there is no finished code yet) or `<status:mtp_as_built>` (after the validation). The user may override it. |
 | Coverage (MT6) | Every test group leads back to a `DoD-NN` or to a spec test case, and every `DoD-NN` has a group **or** an MT10 justification. **You do not invent a new requirement.** |
 | Output (MT4) | **Exclusively** `manual-test-plan.md`. There is no result file, no execution log, and neither `07` nor `09` gates on it. |
@@ -57,11 +58,19 @@ This is **not a phase:** it is not part of the `00–09` chain, it **does not to
 
 1. **`conventions.md` existence check:** read `conventions.md` in the root of the project. If it does not exist, **STOP** — tell the user to return to the `00` project initialization phase, and do not continue.
 
-2. **🔴 The analyze gate (MT1):** read the `<field:f_status>` field of the header of `specs/cycle-NN-<cycle-name>/analyze/analyze-report.md`. _(If the file is not there, look at the old place in the root of the cycle as well — `specs/cycle-NN-<cycle-name>/analyze-report.md`.)_ **If the file does not exist, or its status is not `PASS`, STOP:**
+2. **🔴 Entry gate (MT1) — two equivalent entry points.** First decide which flow the cycle belongs to: if there **is** a `plan.md` in the cycle folder, branch (a) runs; if there is **not**, branch (b).
+
+   **(a) Full flow (there is a `plan.md`) — the analyze gate:** read the `<field:f_status>` field of the header of `specs/cycle-NN-<cycle-name>/analyze/analyze-report.md`. _(If the file is not there, look at the old place in the root of the cycle as well — `specs/cycle-NN-<cycle-name>/analyze-report.md`.)_ **If the file does not exist, or its status is not `PASS`, STOP:**
 
    <!-- INCLUDE:lang/manual-test-plan.md#analyze-kapu-stop -->
 
    **Do not start writing a plan**, and do not try to invent the missing coordinates: without a `PASS` it is not guaranteed that <sec:environment_coords> is filled in, and the plan is usable precisely because it stands there with concrete values.
+
+   **(b) Simplified (quick-flow) cycle (there is NO `plan.md`) — the status gate (QF8):** in this flow there was no analyze phase either, so branch (a) is not applicable. Instead, read the `<field:f_status>` field of `specs/cycle-NN-<cycle-name>/tasks.md`, and accept **exactly two values**: `<status:ready_for_implement>` or `<status:done>`. The statuses are **not ordered**, so there is no "at least this" comparison here — check the two accepted values item by item. For anything else (`<status:draft>`, a missing status field, a missing `tasks.md`) **STOP**:
+
+   <!-- INCLUDE:lang/manual-test-plan.md#quick-flow-kapu-stop -->
+
+   If the gate let you through, the input is `spec.md` — see the quick-flow paragraph of the "Reading the input" section.
 
 3. **Working-tree check (only with VCS):** run: `git status --short`. If the status of `tasks.md` bears an `[analyze-loop]` or `[validate-loop]` marker, **do not offer the folder of the cycle for a commit** — signal in one line that a loop is running, and that the phase-closing commit is path-scoped for that reason (MT9). Otherwise it is enough to signal the uncommitted items in one line: this command only writes a new file, it does not touch the existing work. (In a No-VCS project the step is left out.)
 
@@ -91,6 +100,8 @@ Read **only** these sections, not the whole files:
 - **`plan.md`:** <sec:environment_coords> (and its subsections: <sec:components_endpoints>, <sec:rest_calls_examples>, <sec:test_api_users>, <sec:other_parameters>, <sec:network_access_prereqs>), <sec:testing_strategy>, <sec:machine_run_table>;
 - **`spec.md`:** <sec:definition_of_done> (with the `DoD-NN` identifiers), <sec:test_specification>;
 - **`conventions.md`:** `## <sec:cv_test_reporting>` (together with the TR5 `<field:f_artifact_path_base>` marker), `## <sec:cv_git_conventions>` (to decide the No-VCS branch).
+
+> **In a simplified (quick-flow) cycle the `plan.md` does not exist (QF8).** Read from `spec.md` instead: the **technical outline** (affected files, key elements, <sec:execution_order>, error-handling decision) provides the coordinates in place of <sec:environment_coords>, and the **Mandatory Testing Strategy** provides the `<field:f_target_env>` field, the `[local]` / `[remote]` scope labels, the reachability probes and the test steps — form the `TG-NN` groups from these. The **selector-scoped commands** of the test steps of `tasks.md` go into the automated tests block (there is no machine run table in this flow). Instead of `DoD-NN` identifiers, reference the goal points of `spec.md`, and trace the MT6 coverage back to those.
 
 > **🔴 Carrying over without truncation (the KX2/KX3 analogy).** The `curl` examples, payloads, users, passwords and commands taken from <sec:environment_coords> are carried over **verbatim, with their full value**. It is **FORBIDDEN** to condense them, to replace them with a placeholder (`<TOKEN>`, `...`), or to replace them with a "see the plan" reference: `manual-test-plan.md` is read by a **human** who does not open `plan.md`. For the paths the RP1 convention applies — an absolute, machine-specific or `file://` form is **FORBIDDEN** in the document.
 

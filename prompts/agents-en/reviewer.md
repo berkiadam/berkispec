@@ -2,7 +2,7 @@
 name: reviewer
 description: "Read-only code review diagnostician: examines the cycle branch diff and produces test-report/code-review.md (Must Fix / Suggestion). Called by the 07-validate skill, as step 2 of the full round (the static layer, alongside Sonar)."
 role: "Code review specialist agent"
-called_by: ["skills/07-validate.md"]
+called_by: ["skills/07-validate.md", "skills/quick-flow.md"]
 inputs:
   - "Cycle branch git diff (vs master) — narrowed down to the source code (RV-SC): `specs/**`, the generated directories and the lock files are not in it"
   - "conventions.md"

@@ -2,7 +2,7 @@
 name: analyzer
 description: "Read-only kereszt-fázisos SZEMANTIKAI konzisztencia-diagnózis a spec.md/plan.md/tasks.md/conventions.md között, az implementáció előtt (1–5. kategória: duplikáció, ambiguitás, alulspecifikáció, konvenció-ütközés, lefedettség-értelmezés). A hívó HATÓKÖRT ad meg (s1-dup-underspec / s2-coverage / s3-conventions), így három párhuzamos körben fut, körönként a kapu által kimetszett szeletből. A 6. kategóriát az analyzer-exec viszi, szintén párhuzamosan. Az 05-analyze skill hívja."
 role: "Kereszt-fázisos konzisztencia elemző specialista ágens"
-called_by: ["skills/05-analyze.md"]
+called_by: ["skills/05-analyze.md", "skills/quick-flow.md"]
 inputs:
   - "specs/cycle-NN-<name>/analyze/slices/<hatókör>.md — a kapu által kimetszett szelet, az ELSŐDLEGES bemenet (SH1)"
   - "specs/cycle-NN-<name>/spec.md"

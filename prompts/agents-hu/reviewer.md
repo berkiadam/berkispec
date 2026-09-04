@@ -2,7 +2,7 @@
 name: reviewer
 description: "Read-only kód-review diagnoszta: a cycle branch diffjét vizsgálja és test-report/code-review.md-t ad (Must Fix / Suggestion). A 07-validate skill hívja, a teljes kör 2. lépéseként (statikus réteg, a Sonar mellett)."
 role: "Kód-review specialista ágens"
-called_by: ["skills/07-validate.md"]
+called_by: ["skills/07-validate.md", "skills/quick-flow.md"]
 inputs:
   - "Cycle branch git diff (vs master) — forráskódra szűkítve (RV-SC): a `specs/**`, a generált könyvtárak és a lockfile-ok nincsenek benne"
   - "conventions.md"

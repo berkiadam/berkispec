@@ -1,8 +1,9 @@
 ---
 name: bs-manual-test-plan
-description: "berkispec - segédparancs. Kézi tesztterv összeállítása a ciklushoz: komponens-indítás, tesztadatok, kézi hívási szekvenciák (curl + .http), elvárt eredmények, és az automata tesztek eredményének helye. Előfeltétel: az analyze-report.md PASS. Nem fázis: a 00-09 folyamatnak nem része, bármikor hívható az analyze után, és bármikor újrafuttatható."
+description: "berkispec - segédparancs. Kézi tesztterv összeállítása a ciklushoz: komponens-indítás, tesztadatok, kézi hívási szekvenciák (curl + .http), elvárt eredmények, és az automata tesztek eredményének helye. Előfeltétel: az analyze-report.md PASS — egyszerűsített (quick-flow) ciklusban, ahol nincs plan.md, a tasks.md státusza (Implementálásra kész vagy Kész). Nem fázis: a 00-09 folyamatnak nem része, bármikor hívható az analyze után, és bármikor újrafuttatható."
 prerequisites:
   - "specs/cycle-NN-<cycle-name>/analyze/analyze-report.md <field:f_status>: PASS"
+  - "quick-flow ciklusban (nincs plan.md): specs/cycle-NN-<cycle-name>/tasks.md <field:f_status>: <status:ready_for_implement> vagy <status:done>"
 output:
   - "specs/cycle-NN-<cycle-name>/manual-test-plan.md — kézi tesztterv (<status:mtp_planned> vagy <status:mtp_as_built> módban)"
 scripts:
@@ -26,7 +27,7 @@ Ez **nem fázis:** a `00–09` láncnak nem része, a ciklus státusz-láncához
 
 | Szekció | Egy mondatban |
 |---|---|
-| Előfeltétel (MT1) | `analyze-report.md` = `PASS`. Enélkül **STOP** és vissza az `05`-re — a `plan.md` <sec:environment_coords> kitöltöttségét az `05` mechanikus kapuja garantálja, és ez a fázis egyetlen valódi bemenete. |
+| Előfeltétel (MT1) | `analyze-report.md` = `PASS`. Enélkül **STOP** és vissza az `05`-re — a `plan.md` <sec:environment_coords> kitöltöttségét az `05` mechanikus kapuja garantálja, és ez a fázis egyetlen valódi bemenete. **Egyszerűsített (quick-flow) ciklusban** — ahol nincs `plan.md` — a kapu a `tasks.md` státuszát nézi (QF8). |
 | Két mód (MT3) | A `tasks.md` státuszából dől el: `<status:mtp_planned>` (még nincs kész kód) vagy `<status:mtp_as_built>` (validálás után). A felhasználó felülbírálhatja. |
 | Lefedettség (MT6) | Minden tesztcsoport visszavezet egy `DoD-NN`-re vagy egy spec-tesztesetre, és minden `DoD-NN`-hez tartozik csoport **vagy** MT10-indoklás. **Új követelményt nem találsz ki.** |
 | Kimenet (MT4) | **Kizárólag** a `manual-test-plan.md`. Nincs eredményfájl, nincs végrehajtás-napló, a `07` és a `09` nem kapuz rá. |
@@ -57,11 +58,19 @@ Ez **nem fázis:** a `00–09` láncnak nem része, a ciklus státusz-láncához
 
 1. **`conventions.md` létezés-ellenőrzés:** olvasd be a projekt gyökerében a `conventions.md`-t. Ha nem létezik, **STOP** — jelezd a felhasználónak, hogy térjenek vissza a `00` projekt inicializálás fázishoz, és ne folytasd.
 
-2. **🔴 Analyze-kapu (MT1):** olvasd be a `specs/cycle-NN-<cycle-name>/analyze/analyze-report.md` fejlécének `<field:f_status>` mezőjét. _(Ha a fájl ott nincs meg, nézd meg a ciklus gyökerében lévő régi helyen is — `specs/cycle-NN-<cycle-name>/analyze-report.md`.)_ **Ha a fájl nem létezik, vagy a státusza nem `PASS`, STOP:**
+2. **🔴 Belépő kapu (MT1) — két egyenértékű belépő.** Előbb döntsd el, melyik flow-hoz tartozik a ciklus: ha a ciklus mappájában **van** `plan.md`, az (a) ág fut, ha **nincs**, a (b).
+
+   **(a) Teljes flow (van `plan.md`) — analyze-kapu:** olvasd be a `specs/cycle-NN-<cycle-name>/analyze/analyze-report.md` fejlécének `<field:f_status>` mezőjét. _(Ha a fájl ott nincs meg, nézd meg a ciklus gyökerében lévő régi helyen is — `specs/cycle-NN-<cycle-name>/analyze-report.md`.)_ **Ha a fájl nem létezik, vagy a státusza nem `PASS`, STOP:**
 
    <!-- INCLUDE:lang/manual-test-plan.md#analyze-kapu-stop -->
 
    **Ne kezdj el tervet írni**, és ne próbáld a hiányzó koordinátákat kitalálni: `PASS` nélkül a <sec:environment_coords> kitöltöttsége nem garantált, a terv pedig pontosan attól használható, hogy konkrét értékekkel áll.
+
+   **(b) Egyszerűsített (quick-flow) ciklus (NINCS `plan.md`) — státusz-kapu (QF8):** ebben a flow-ban analyze fázis sem volt, tehát az (a) ág nem alkalmazható. Helyette a `specs/cycle-NN-<cycle-name>/tasks.md` `<field:f_status>` mezőjét olvasd, és **pontosan két értéket** fogadj el: `<status:ready_for_implement>` vagy `<status:done>`. A státuszok **nem rendezettek**, ezért itt nincs „legalább ilyen" összehasonlítás — a két elfogadott értéket tételesen nézd. Bármi más esetén (`<status:draft>`, hiányzó státusz-mező, hiányzó `tasks.md`) **STOP**:
+
+   <!-- INCLUDE:lang/manual-test-plan.md#quick-flow-kapu-stop -->
+
+   Ha a kapu átengedett, a bemenet a `spec.md` — lásd a „Bemenet-beolvasás" szekció quick-flow bekezdését.
 
 3. **Munkafa-ellenőrzés (csak VCS esetén):** futtasd: `git status --short`. Ha a `tasks.md` státusza `[analyze-loop]` vagy `[validate-loop]` markert visel, **ne ajánld fel commitra a ciklus mappáját** — jelezd egy sorban, hogy hurok fut, és a fázis-záró commit ezért path-scoped lesz (MT9). Egyébként a commitálatlan tételeket elég egy sorban jelezni: ez a parancs csak egy új fájlt ír, a meglévő munkát nem érinti. (No-VCS projektben a lépés kimarad.)
 
@@ -91,6 +100,8 @@ A felhasználó felülbírálhatja (`mód: tervezett` / `mód: as-built` inputta
 - **`plan.md`:** <sec:environment_coords> (és alszekciói: <sec:components_endpoints>, <sec:rest_calls_examples>, <sec:test_api_users>, <sec:other_parameters>, <sec:network_access_prereqs>), <sec:testing_strategy>, <sec:machine_run_table>;
 - **`spec.md`:** <sec:definition_of_done> (a `DoD-NN` azonosítókkal), <sec:test_specification>;
 - **`conventions.md`:** `## <sec:cv_test_reporting>` (a TR5 `<field:f_artifact_path_base>` jelölővel együtt), `## <sec:cv_git_conventions>` (a No-VCS ág eldöntéséhez).
+
+> **Egyszerűsített (quick-flow) ciklusban a `plan.md` nem létezik (QF8).** Helyette a `spec.md`-ből olvass: a **technikai vázlat** (érintett fájlok, kulcs-elemek, <sec:execution_order>, hibakezelési döntés) adja a <sec:environment_coords> helyett a koordinátákat, a **Kötelező Tesztelési Stratégia** pedig a `<field:f_target_env>` mezőt, a `[local]` / `[remote]` hatókör-címkéket, az elérhetőségi probe-okat és a teszt-lépéseket — ezekből képezd a `TG-NN` csoportokat. A `tasks.md` teszt-lépéseinek **szelektoros parancsai** kerülnek az automata tesztek blokkjába (gépi futtatási tábla ebben a flow-ban nincs). `DoD-NN` azonosítók helyett a `spec.md` cél-pontjaira hivatkozz, és az MT6 lefedettséget azokra vezesd vissza.
 
 > **🔴 Csonkítás-mentes átemelés (KX2/KX3 analógia).** A <sec:environment_coords>-ból átvett `curl`-példák, payloadok, userek, jelszavak és parancsok **szó szerint, teljes értékkel** kerülnek át. **TILOS** zanzásítani, placeholderre cserélni (`<TOKEN>`, `...`), vagy „lásd a plan-t" hivatkozásra cserélni: a `manual-test-plan.md`-t egy **ember** olvassa, aki a `plan.md`-t nem nyitja meg. Az útvonalakra az RP1 konvenció érvényes — abszolút, gép-specifikus és `file://` alak a dokumentumban **TILOS**.
 

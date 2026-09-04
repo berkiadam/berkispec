@@ -89,7 +89,7 @@
    > *"What is the goal of the new cycle? Describe briefly what behavior you would like to implement."*
 
 <!-- ANCHOR:BS-quick-flow-javaslat -->
-   > > *"This task looks small enough that the full development cycle (separate spec/plan/tasks + analyze/validate/review) may be too much for it. I recommend the simplified flow instead (`/bs-quick-flow`): `spec.md` → `task.md` → implementation, in a few steps. Shall we go with that, or would you still like a full cycle?"*
+   > > *"This task looks small enough that the full development cycle (separate spec/plan/tasks + analyze/validate/review) may be too much for it. I recommend the simplified flow instead (`/bs-quick-flow`): `spec.md` → `tasks.md` → implementation, in a few steps. Shall we go with that, or would you still like a full cycle?"*
 
 <!-- ANCHOR:BD5-nevjavaslat -->
    > *"Based on the goal, the suggested name is: `[suggested-name]`. This will be the name of the branch and of the folder as well (e.g. `cycle-NN-[suggested-name]`). Is it suitable, or would you prefer something else?"*

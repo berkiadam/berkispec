@@ -97,7 +97,7 @@ A felhasználónak **két útja** van; a feladat súlya dönti el, melyik a megf
 
 1. **Teljes berki spec flow (00–09 fázis)** — a nagyobb, összetettebb fejlesztésekhez. Külön `spec.md` → `plan.md` → `tasks.md` dokumentumok, kereszt-fázisos `analyze`, `validate`, `doc-sync` és `review` minőségi kapukkal és önjavító hurkokkal. Üres projektnél a `00-init-project`, új ciklusnál a `01-add-cycles` skillel indul. Ezt írja le a README többi része.
 
-2. **Egyszerűsített (lightweight) flow** — kis, jól körülhatárolt feladatokhoz, amelyek 3-4 lépésben megoldhatók (pl. **konfiguráció összeállítása**, **egyszerűbb script megírása**, kisebb javítás). Egyetlen háromfázisú recept: `spec.md` → `task.md` → implementáció, a `/bs-quick-flow` skillben. Nincs külön plan/bs-analyze/bs-validate/bs-doc-sync fázis; az opcionális ágenseket (`researcher`, `analyzer`, `reviewer`) csak akkor hívja, ha tényleg segítenek.
+2. **Egyszerűsített (lightweight) flow** — kis, jól körülhatárolt feladatokhoz, amelyek 3-4 lépésben megoldhatók (pl. **konfiguráció összeállítása**, **egyszerűbb script megírása**, kisebb javítás). Egyetlen háromfázisú recept: `spec.md` → `tasks.md` → implementáció, a `/bs-quick-flow` skillben. Mindkét artefaktum **státusz-mezőt** hordoz, így a fázishatár commitolt tény (a `/bs-cycle-status` is ebből olvas). Nincs külön plan/bs-analyze/bs-validate/bs-doc-sync fázis; az opcionális ágenseket (`researcher`, `analyzer`, `reviewer`) csak akkor hívja, ha tényleg segítenek.
 
 **Hogyan dönts?**
 
@@ -105,7 +105,7 @@ A felhasználónak **két útja** van; a feladat súlya dönti el, melyik a megf
 |---|---|---|
 | Tipikus feladat | konfiguráció, egyszerű script, kisebb javítás | új funkció, több komponens, összetett logika |
 | Méret | 3-4 lépésben megoldható | önálló, vertikálisan vágható ciklus(ok) |
-| Dokumentumok | `spec.md` + `task.md` | `spec.md` + `plan.md` + `tasks.md` |
+| Dokumentumok | `spec.md` + `tasks.md` (mindkettő státusz-mezővel) | `spec.md` + `plan.md` + `tasks.md` |
 | Minőségi kapuk | inline + opcionális ágensek | `analyze` / `validate` / `doc-sync` / `review` hurkok |
 | Belépő | `/bs-quick-flow` | `/bs-init-project` / `/bs-add-cycles` |
 
@@ -908,7 +908,7 @@ A következő ciklus (`cycle-03-...`) ismét a `02`-vel indul — a `00`/`01` ne
 
 A fenti 00–09 ábrák a **teljes berki spec flow-t** írják le. Ez a szekció a **másik utat**, az egyszerűsített, háromfázisú flow-t részletezi — kis, jól körülhatárolt feladatokhoz (konfiguráció, egyszerűbb script, kisebb javítás), amelyek 3-4 lépésben megoldhatók. Kanonikus hívó parancsa a `/bs-quick-flow`; a flow-választásról lásd fent a „Két fejlesztési út" szekciót.
 
-A teljes flow-val szemben itt **nincs** külön `plan.md` (a technikai vázlat a `spec.md`-be kerül), **nincs** `analyze`/`validate`/`doc-sync`/`review` fázis és **nincs** automatizált önjavító hurok — a minőségi kapuk inline futnak, a dokumentáció frissítése pedig a 3. fázis része. A háromfázisú út: `spec.md` → `task.md` → implementáció, minden fázis végén **kötelező konzisztencia-ellenőrzéssel**, a fázisváltások előtt pedig **⛔ explicit felhasználói jóváhagyással**.
+A teljes flow-val szemben itt **nincs** külön `plan.md` (a technikai vázlat a `spec.md`-be kerül), **nincs** `analyze`/`validate`/`doc-sync`/`review` fázis és **nincs** automatizált önjavító hurok — a minőségi kapuk inline futnak, a dokumentáció frissítése pedig a 3. fázis része. A háromfázisú út: `spec.md` → `tasks.md` → implementáció, minden fázis végén **kötelező konzisztencia-ellenőrzéssel** és a **determinisztikus RP1 útvonal-kapuval** (`analyze-gate-check.py --paths-only` — ez a flow egyetlen kötelező kapu-scriptje), a fázisváltások előtt pedig **⛔ explicit felhasználói jóváhagyással**. A jóváhagyás nem a beszélgetésben marad: mindkét artefaktum **`Státusz` mezőt** kap (`Piszkozat` → `Task írásra kész`, illetve `Piszkozat` → `Implementálásra kész` → `Kész`), és a státuszírás + commit egyetlen, megszakíthatatlan lépéspár — ettől éli túl a ciklus a `/clear`-t és a megszakadást. A git-konvenciót (fő branch, branch-elnevezés, No-VCS, commit-formátum) a `conventions.md` `Git és branching konvenciók` szekciója adja, nem a skill drótozza be.
 
 **Hogyan indul egy ciklus?** A Felhasználó átad egy feladatot, az ágens előkészíti a git ágat, majd egy rövid **interjúval (grill)** tisztázza a célt — addig kérdez, amíg minden információ megvan a `spec.md`-hez. A **flow-méret döntés ennek az interjúnak az alapján** születik: az ágens folyamatosan mérlegeli, hogy a feladat tényleg belefér-e az egyszerűsített flow-ba (3-4 lépés, egyetlen komponens, nincs összetett előzetes tervezés). Ha a feladat túlnő ezen (nagyobb kódírás, több komponens, integráció, összetett tervezés), az ágens **megáll még a `spec.md` előtt**, és a teljes berki spec folyamatot javasolja (`01-add-cycles`). Csak ha a feladat valóban kicsi, javasol ciklusszámot és nevet, kér jóváhagyást, és hozza létre a ciklusmappát.
 
@@ -931,31 +931,31 @@ flowchart TD
     NameApprove["③ Ciklusszám + névjavaslat<br/>→ ⛔ felhasználói jóváhagyás"]:::design
     Dir["④ Ciklusmappa létrehozása<br/>(specs/cycle-NN-...)"]:::design
 
-    P1["<b>1. fázis — Specifikáció (spec.md)</b><br/>cél, paraméterek, technikai vázlat<br/>(plan-helyettesítő), tesztstratégia, README-terv"]:::design
-    C1["Konzisztencia-ellenőrzés<br/>(utak, nevek, portok egyeznek)"]:::doc
+    P1["<b>1. fázis — Specifikáció (spec.md)</b><br/>cél, paraméterek, technikai vázlat (plan-helyettesítő),<br/>tesztstratégia CÉL-KÖRNYEZETTEL, README-terv"]:::design
+    C1["Konzisztencia-ellenőrzés + RP1 útvonal-kapu<br/>(utak, nevek, portok egyeznek)"]:::doc
     Stop1{"⛔ Felhasználói<br/>jóváhagyás?"}:::userInput
 
-    P2["<b>2. fázis — Feladatlista (task.md)</b><br/>pipálható lépések, teszt a dokumentáció elé,<br/>logikus teszt-sorrend"]:::design
-    C2["Konzisztencia-ellenőrzés<br/>(task.md ↔ spec.md)"]:::doc
+    P2["<b>2. fázis — Feladatlista (tasks.md)</b><br/>pipálható lépések [local]/[remote] címkével,<br/>teszt a dokumentáció elé, logikus teszt-sorrend"]:::design
+    C2["Konzisztencia-ellenőrzés + RP1 útvonal-kapu<br/>(tasks.md ↔ spec.md)"]:::doc
     Stop2{"⛔ Felhasználói<br/>jóváhagyás?"}:::userInput
 
-    P3["<b>3. fázis — Megvalósítás</b><br/>kód a task.md szerint,<br/>valós idejű pipálás, leftover-sweep"]:::dev
+    P3["<b>3. fázis — Megvalósítás</b><br/>kód a tasks.md szerint EGY futásban,<br/>valós idejű pipálás, leftover-sweep"]:::dev
     Test{"Tesztek zöldek?"}:::decision
     Stuck{"Beragadás?<br/>(2-3 kör azonos hiba)"}:::decision
     Ask(["Állj meg → célzott,<br/>előremozdító kérdés a Felhasználónak"]):::userInput
-    Close(["Lezárás: dokumentáció frissítve<br/>+ Jira-prefixű záró commit"]):::start
+    Close(["Lezárás: tasks.md → Kész, dokumentáció frissítve,<br/>záró commit + roadmap/drift-jelzés"]):::start
 
     Start --> Git --> Interview --> SizeCheck
     SizeCheck -- "Nem (túlnő rajta)" --> Redirect
     SizeCheck -- "Igen" --> NameApprove --> Dir --> P1
     P1 --> C1 --> Stop1
     Stop1 -- "Nem → várakozás" --> Stop1
-    Stop1 -- "Igen" --> P2
+    Stop1 -- "Igen → státusz: Task írásra kész + commit" --> P2
     P2 --> C2 --> Stop2
     Stop2 -- "Nem → várakozás" --> Stop2
-    Stop2 -- "Igen" --> P3
+    Stop2 -- "Igen → státusz: Implementálásra kész + commit" --> P3
     P3 --> Test
-    Test -- "Nem (bukik) → javít,<br/>majd újra az ÖSSZES teszt" --> Stuck
+    Test -- "Nem (bukik) → javít, majd újra<br/>UGYANAZ a lépés, szelektorral" --> Stuck
     Stuck -- "Nem" --> P3
     Stuck -- "Igen" --> Ask
     Ask --> P3
@@ -967,14 +967,14 @@ flowchart TD
 
 | Fázis | Kimenet | Fő szabály | Kapu a fázis végén |
 |---|---|---|---|
-| **1. Specifikáció** | `spec.md` | Cél + paraméterek + **technikai vázlat** (a `plan.md`-t helyettesítő állványzat: érintett fájlok, kulcs-elemek, végrehajtási sorrend, fő hibaág) + tesztstratégia + README-terv. Projektfájlt itt **nem** módosít. | Konzisztencia-ellenőrzés → **⛔ explicit jóváhagyás** |
-| **2. Feladatlista** | `task.md` | A technikai vázlatra épülő, pipálható lépések. A tesztelés a dokumentáció-frissítés **elé** kerül, logikus **teszt-sorrenddel** (erőforrást előbb létrehozni, csak utána ellenőrizni). | Konzisztencia-ellenőrzés (a `spec.md`-vel is) → **⛔ explicit jóváhagyás** |
-| **3. Megvalósítás** | kód + frissített dokumentáció | Kizárólag a `task.md` szerint, valós idejű pipálással. Csere/átnevezés után **leftover-sweep** (`grep` a régi alakra). Bukó teszt → javít + **az összes** teszt újra. | Tesztek zöldek + dokumentáció kész + egyeztetve → **Jira-prefixű záró commit** |
+| **1. Specifikáció** | `spec.md` (`Piszkozat`) | Cél + paraméterek + **technikai vázlat** (a `plan.md`-t helyettesítő állványzat: érintett fájlok, kulcs-elemek, végrehajtási sorrend, fő hibaág) + tesztstratégia + README-terv. A tesztstratégia hat kötelező eleme: **`Cél-környezet` mező**, nem lokális célnál **literál cél-host + elérhetőségi probe + `localhost`-tilalom**, **`[local]`/`[remote]` címke**, **„mit ellenőriz és miért" állítás** (kalibrációs mintával), **vacuous-teszt tilalom**, **`skipped` nem bizonyíték**. Projektfájlt itt **nem** módosít. | Konzisztencia-ellenőrzés + **RP1 útvonal-kapu** → **⛔ explicit jóváhagyás** → státusz `Task írásra kész` + commit |
+| **2. Feladatlista** | `tasks.md` (`Piszkozat`) | A technikai vázlatra épülő, pipálható lépések; belépéskor **státusz-kapu** a `spec.md`-n. A tesztelés a dokumentáció-frissítés **elé** kerül, logikus **teszt-sorrenddel** (erőforrást előbb létrehozni, csak utána ellenőrizni); minden teszt-lépés viseli a `[local]`/`[remote]` címkét, az állítást, a probe-ot és a **szelektoros** parancsot. A regressziós összefutás külön, **utolsó** lépés. | Konzisztencia-ellenőrzés (a `spec.md`-vel is) + **RP1 útvonal-kapu** → **⛔ explicit jóváhagyás** → státusz `Implementálásra kész` + commit |
+| **3. Megvalósítás** | kód + frissített dokumentáció | Kizárólag a `tasks.md` szerint, **egy futásban** (IM1: a task kipipálása nem fázis-vég), valós idejű pipálással. Csere/átnevezés után **leftover-sweep** (`grep` a régi alakra). **Egy futtatás = egy azonosítható teszt:** bukó teszt → javít + **ugyanaz a lépés** szelektorral újra; a gyűjtő futás nem helyettesíti a lépésenkéntit. | Tesztek zöldek (a skippeltek kimondva) + dokumentáció kész + `docs-generated/` drift-jelzés + egyeztetve → `tasks.md` = `Kész` + **záró commit a `conventions.md` szerint** |
 
 ### 5.3 Két beépített kör-megszakító
 
 - **Beragadás-felismerés (3. fázis):** ha ugyanaz a hiba 2-3 javítási kör után is bukik, vagy körben jár a megoldás, az ágens **megáll**, összefoglalja mit próbált + a pontos hibaüzenetet + a hipotéziseit, és **célzott, döntésre/adatra lebontott kérdést** tesz fel — nem próbálkozik tovább vakon.
-- **Fázis-visszalépés spec-hibára:** ha implementáció közben derül ki, hogy a `spec.md` hiányos vagy téves, **tilos csendben eltérni** tőle — vissza az 1. fázisba, `spec.md` (és ha kell, `task.md`) frissítés, majd **újra-jóváhagyás**, és csak utána tovább.
+- **Fázis-visszalépés spec-hibára:** ha implementáció közben derül ki, hogy a `spec.md` hiányos vagy téves, **tilos csendben eltérni** tőle — vissza az 1. fázisba, `spec.md` (és ha kell, `tasks.md`) frissítés, majd **újra-jóváhagyás**, és csak utána tovább.
 
 ### 5.4 Opcionális ágensek (mind read-only, egyik sem kötelező)
 
@@ -983,8 +983,10 @@ Az egyszerűsített flow szándékosan **kevés** specialistát használ, és mi
 | Ágens | Fázis | Mit ad | Mikor érdemes |
 |---|---|---|---|
 | [`researcher`](prompts/agents-hu/researcher.md) | 1. (spec.md) | Érintett forrásfájlok (`path:sor–sor`) + frissítendő dokumentumok listája | Meglévő kódbázis módosításakor, ha nem nyilvánvaló az érintett fájlkör |
-| [`analyzer`](prompts/agents-hu/analyzer.md) | 2. (task.md) | `spec.md` ↔ `task.md` konzisztencia-diagnózis (lefedettségi rés, alulspecifikáció) | Több követelményes, könnyen kicsúszó task-listánál |
+| [`analyzer`](prompts/agents-hu/analyzer.md) | 2. (tasks.md) | `spec.md` ↔ `tasks.md` konzisztencia-diagnózis (lefedettségi rés, alulspecifikáció) | Több követelményes, könnyen kicsúszó task-listánál |
 | [`reviewer`](prompts/agents-hu/reviewer.md) | 3. (commit előtt) | Diff code review → `Must Fix` / `Suggestion` | Nem triviális kódváltozásnál, commit előtti kapuként |
+
+> **Kontraktus-helyettesítések (a skill adja meg őket, az agent-promptok törzse változatlan):** az `analyzer` **hatókör-paramétert nem** kap (mind az öt kategóriát viszi) és szelet-fájl nélkül fut, a bemenete a `spec.md` + `tasks.md` **pár** — a `plan.md`-re hivatkozó bemeneti pontja üres. A `reviewer` a kötelező `plan.md` helyett a `spec.md` **technikai vázlatát** kapja, és a `specs/cycle-NN-<cycle-name>/code-review.md`-be ír (a ciklus gyökerében, `test-report/` almappa nélkül); a `Must Fix` azonosítók és az inkrementális írás megmarad, önjavító hurok nincs.
 
 > **Amit ez a flow NEM használ:** a fixer-wrappereket (`spec/plan/tasks/bs-implement/review-fixer`) és a `doc-sync-planner`-t — ezek a teljes flow önjavító hurkainak és a `docs-generated/` szinkronjának belépői. Itt nincs automatizált hurok (a hibákat a fő ágens inline javítja), és nincs külön generált doc-réteg (a dokumentáció a 3. fázis része). Ha ezek valóban indokolttá válnának, az annak a jele, hogy **a teljes berki spec flow-ra kell váltani**.
 
@@ -992,6 +994,12 @@ Az egyszerűsített flow szándékosan **kevés** specialistát használ, és mi
 
 ```
 /bs-quick-flow input: <a feladat rövid leírása>
+```
+
+Brainstormból átvéve (az `NN` a `.bs-brainstorm/` munkafájl sorszáma):
+
+```
+/bs-quick-flow brainstorm: NN
 ```
 
 ### 5.6 Példa prompt
@@ -1007,15 +1015,15 @@ Egy kis feladat végigvitele. Itt **egyetlen indító prompt** van; utána a flo
    te: "ok, mehet ezzel a névvel"
 
 # ③  ⛔ 1. fázis — spec.md jóváhagyása
-   → spec.md + konzisztencia-ellenőrzés után megáll
-   te: "jóváhagyom a spec-et, jöhet a task.md"
+   → spec.md + konzisztencia-ellenőrzés + RP1 útvonal-kapu után megáll
+   te: "jóváhagyom a spec-et, jöhet a tasks.md"
 
-# ④  ⛔ 2. fázis — task.md jóváhagyása
-   → task.md után megáll
+# ④  ⛔ 2. fázis — tasks.md jóváhagyása
+   → tasks.md után megáll (státusz: Implementálásra kész + commit)
    te: "rendben, kezdheted az implementációt"
 
 # ⑤  3. fázis — megvalósítás
-   → implementál a task.md szerint, tesztel, frissíti a dokumentációt → Jira-prefixű záró commit
+   → implementál a tasks.md szerint EGY futásban, szelektoros tesztek, dokumentáció → tasks.md = Kész + záró commit
 ```
 
 > Ha az interjú (②) alatt kiderül, hogy a feladat mégis nagyobb, az ágens itt megáll, és a teljes flow-t (`01-add-cycles`) javasolja — lásd az 5.1 ábra „túlnő rajta" ágát. A flow-váltás döntése a tiéd.
@@ -1037,10 +1045,10 @@ Egy kis feladat végigvitele. Itt **egyetlen indító prompt** van; utána a flo
 | `/bs-validate` | Validálás + kódreview | ciklus mappa | PASS/FAIL + `test-report/` (`validation-report.md`, `code-review.md`, `validate/round-NN/`); PASS → státuszok `Kész` — a tesztek/Sonar/E2E futtatását a `test-runner`, a diff átnézését a `reviewer` subagent végzi, a PASS/FAIL döntést és a DoD-ot az orchestrátor; FAIL esetén orchestrált önjavító hurok (`implement-fixer` / `review-fixer`, három leállási korlát, VD3a szerződés-kapu, VD5 eszkaláció) |
 | `/bs-doc-sync` | Doc-sync | ciklus mappa + `docs-generated/` + `specs/test-conventions.md` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README mappa-index) + komponens README-k + `specs/test-conventions.md` (promóció / `Utolsó futás` bump / elavult tétel törlése, TC1–TC11) + `doc-sync-plan.md` — terv (`doc-sync-planner`) → mechanikus végrehajtás → objektív kapu (DS22, 3/4 pont a `ds22-gate-check.py` scripttel, LLM nélkül) + TC8 kapu a regiszterre (`tc8-gate-check.py`, teljesen szkriptelt); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
 | `/bs-merge` | Merge | ciklus mappa, `conventions.md` | merged branch / PR + lezárt roadmap — nincs hurok és nincs subagent; a kapuk (státusz, tiszta review, doc-sync) bukása visszairányít a `07`-re vagy a `08`-ra; a merge kézi megerősítéssel (RD8) |
-| `/bs-quick-flow` | **Egyszerűsített flow** (külön út) | feladat leírása | `spec.md` + `task.md` + implementáció — háromfázisú, kis feladatokhoz; opcionális `researcher`/`analyzer`/`reviewer`; túlnövéskor átirányít a `/bs-add-cycles`-ra |
+| `/bs-quick-flow` | **Egyszerűsített flow** (külön út) | feladat leírása, vagy `brainstorm: NN` | `spec.md` (`Task írásra kész`) + `tasks.md` (`Implementálásra kész` → `Kész`) + implementáció — háromfázisú, kis feladatokhoz; státusz-mezők + RP1 útvonal-kapu; opcionális `researcher`/`analyzer`/`reviewer`; túlnövéskor átirányít a `/bs-add-cycles`-ra |
 | `/bs-brainstorm` | **Ötletelés** (segédparancs, a flow előtt) | téma szabad szöveggel, vagy `folytassuk a NN-est` | `.bs-brainstorm/brainstorm-NN-<slug>.md` — perzisztens munkafájl (tények forrással, alternatívák trade-offokkal, döntések, nyitott kérdések, javasolt ciklus-vágás). Nem fázis, nem változtat státuszt; kódot és a mappán kívül semmit nem ír. Átadás: `/bs-add-cycles brainstorm: NN` (BS18) vagy `/bs-quick-flow`. |
 | `/bs-export-doc` | **PDF export** (segédparancs) | markdown fájl(ok), opcionális — üresen a `docs-generated/architecture.md` és `system-overview.md` | `export/<név>-v<N>.pdf` — fájlonként független verziószám (utolsó + 1, v1-től); pandoc + `mermaid-filter` + xelatex, a ciklus a címlapon (`Lefedve: cycle-NN-ig · vN`). Nem fázis: nincs előfeltétele, nem változtat státuszt. |
-| `/bs-manual-test-plan` | **Kézi tesztterv** (segédparancs, az 05 után bármikor) | ciklus mappa (opcionális), opcionálisan `mód: tervezett` / `mód: as-built` | `manual-test-plan.md` — komponens-indítás, tesztadatok, `TG-NN` tesztcsoportok (`curl` + `.http`, konkrét elvárt eredménnyel), kétirányú `DoD-NN` lefedettség és az automata teszteredmények helye. Előfeltétel: `analyze-report.md` = `PASS`. Determinisztikus kapu (`manual-test-gate-check.py`, MG1–MG10). Nem fázis: nem változtat ciklus-státuszt, újrafuttatáskor néma merge + `Változásnapló`. |
+| `/bs-manual-test-plan` | **Kézi tesztterv** (segédparancs, az 05 után bármikor) | ciklus mappa (opcionális), opcionálisan `mód: tervezett` / `mód: as-built` | `manual-test-plan.md` — komponens-indítás, tesztadatok, `TG-NN` tesztcsoportok (`curl` + `.http`, konkrét elvárt eredménnyel), kétirányú `DoD-NN` lefedettség és az automata teszteredmények helye. Előfeltétel: `analyze-report.md` = `PASS`, **vagy** — egyszerűsített ciklusban, ahol nincs `plan.md` — a `tasks.md` státusza `Implementálásra kész` / `Kész` (QF8). Determinisztikus kapu (`manual-test-gate-check.py`, MG1–MG10). Nem fázis: nem változtat ciklus-státuszt, újrafuttatáskor néma merge + `Változásnapló`. |
 | `/bs-cycle-status` | **Státusz ellenőrző** | ciklus neve vagy elérési útja (opcionális) | Kimutatja a ciklusok státuszát (Kész/Folyamatban), és interaktív TUI vagy közvetlen módon részletesen listázza a fázisok előrehaladását (KÉSZ, KÉSZ*, FOLYAMATBAN, MÉG NEM FUTOTT) felismerve a flow típusát. |
 
 A fázis-skillek (`00–09`) **frontmattere** rögzíti az előfeltételeket, a kimenetet, a szomszédos fázisokat (`prev`/`next`) és a hívott subagenteket. Az egyszerűsített flow skill és a segédparancsok (`bs-brainstorm`, `bs-export-doc`, `bs-manual-test-plan`) ettől eltérő, `name`/`description` alapú frontmattert használnak (nem fázisok, lásd a „Két fejlesztési út" szekciót).
@@ -1189,7 +1197,7 @@ A `09` a merge-megerősítés **előtt** ellenőrzi, hogy a fő branch előremen
 
 ### Fázis-záró commit (PC1)
 
-A három artefaktum-író fázis (`02`-spec, `03`-plan, `04`-tasks) **a felhasználói jóváhagyás pillanatában lezárul és commitol**: megerősítés → státuszírás → `git add specs/cycle-NN-<name>/` + `git commit -m "cycle-NN: <fázis-tag>"` → determinisztikus ellenőrzés (`git log -1 --oneline` + üres `git status --short` a ciklus mappájára) → a commit azonosítója bekerül a záró üzenetbe. A három lépés **egyetlen, megszakíthatatlan lépéssor**: a fázis nem attól kész, hogy a státusz átáll, hanem attól, hogy a státuszváltás commitolva van — a skillek megállási szabályai ezért külön tiltják a „státusz kész, commit nincs" állapotot. Külön engedélyt a commitra nem kérünk (a fázis lezárásának jóváhagyása magában foglalja); a No-VCS ágon az egész lépés kimarad. **Ugyanez a kötelező commit vonatkozik a két önjavító hurok-fázisra is** (`05`-analyze, `07`-validate), egy eltéréssel: ott a hurok **alatt nincs** köztes commit, a fázis-záró commit a hurok lezárásakor **egyszer** történik — de **minden lezáró ágon kötelező** (PASS, `max X`/3-próba STOP, felfelé eszkaláció, Quality Gate-bukás), és felhasználói megerősítést nem igényel. **Fázishatár (PE1):** a fázis a záró üzenettel (commit-azonosító + `/clear` + a következő fázis parancsa) véget ér — az ágens ugyanabban a körben a következő fázisból **semmit nem kezdhet el**, a következő artefaktumot (`plan.md`, `tasks.md`, kód) létre sem hozza. Ez a szabály **felülír** minden továbbmenetelre biztató kontextus-összefoglalót/checkpointot, korábbi saját tervet és korábbi körből származó „menjünk végig a folyamaton" kérést; csak a felhasználó **erre a körre szóló, explicit** kérése írja felül. A commit üzenete pontosan `cycle-NN: <fázis-tag>` — conventional-commit prefix (`docs(...)`, `feat:`) nélkül, mert a 07/09 erre a formátumra keres vissza. A közös eljárás egy helyen él — `prompts/shared-hu/phase-commit.md` —, és build-time inline-olódik a `02`/`03`/`04`/`05`/`07` skillekbe; a `01`, `06` és `08` a saját záró szekciójában hordozza ugyanezt a fázishatár-szabályt. A háromfázisú `quick-flow` ugyanezt a mintát követi a saját (Jira-prefixes) commit-konvenciójával a `spec.md` és a `task.md` jóváhagyásakor.
+A három artefaktum-író fázis (`02`-spec, `03`-plan, `04`-tasks) **a felhasználói jóváhagyás pillanatában lezárul és commitol**: megerősítés → státuszírás → `git add specs/cycle-NN-<name>/` + `git commit -m "cycle-NN: <fázis-tag>"` → determinisztikus ellenőrzés (`git log -1 --oneline` + üres `git status --short` a ciklus mappájára) → a commit azonosítója bekerül a záró üzenetbe. A három lépés **egyetlen, megszakíthatatlan lépéssor**: a fázis nem attól kész, hogy a státusz átáll, hanem attól, hogy a státuszváltás commitolva van — a skillek megállási szabályai ezért külön tiltják a „státusz kész, commit nincs" állapotot. Külön engedélyt a commitra nem kérünk (a fázis lezárásának jóváhagyása magában foglalja); a No-VCS ágon az egész lépés kimarad. **Ugyanez a kötelező commit vonatkozik a két önjavító hurok-fázisra is** (`05`-analyze, `07`-validate), egy eltéréssel: ott a hurok **alatt nincs** köztes commit, a fázis-záró commit a hurok lezárásakor **egyszer** történik — de **minden lezáró ágon kötelező** (PASS, `max X`/3-próba STOP, felfelé eszkaláció, Quality Gate-bukás), és felhasználói megerősítést nem igényel. **Fázishatár (PE1):** a fázis a záró üzenettel (commit-azonosító + `/clear` + a következő fázis parancsa) véget ér — az ágens ugyanabban a körben a következő fázisból **semmit nem kezdhet el**, a következő artefaktumot (`plan.md`, `tasks.md`, kód) létre sem hozza. Ez a szabály **felülír** minden továbbmenetelre biztató kontextus-összefoglalót/checkpointot, korábbi saját tervet és korábbi körből származó „menjünk végig a folyamaton" kérést; csak a felhasználó **erre a körre szóló, explicit** kérése írja felül. A commit üzenete pontosan `cycle-NN: <fázis-tag>` — conventional-commit prefix (`docs(...)`, `feat:`) nélkül, mert a 07/09 erre a formátumra keres vissza. A közös eljárás egy helyen él — `prompts/shared-hu/phase-commit.md` —, és build-time inline-olódik a `02`/`03`/`04`/`05`/`07` skillekbe; a `01`, `06` és `08` a saját záró szekciójában hordozza ugyanezt a fázishatár-szabályt. A háromfázisú `quick-flow` ugyanezt a mintát követi a `spec.md` és a `tasks.md` jóváhagyásakor — státuszírás + commit egyetlen lépéspárban, determinisztikus ellenőrzéssel és PE1 fázishatárral —, azzal az eltéréssel, hogy a commit üzenetének formátumát ott a `conventions.md` git-szekciója adja (a Jira-prefix ennek egyik esete), nem a `cycle-NN: <fázis-tag>` alak: arra a `07`/`09` keres vissza, ami abban a flow-ban nem fut.
 
 ---
 

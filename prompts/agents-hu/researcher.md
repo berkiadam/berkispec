@@ -9,6 +9,7 @@ called_by:
   - "skills/03b-write-test-plan.md"
   - "skills/06-implement.md"
   - "skills/brainstorm.md"
+  - "skills/quick-flow.md"
 inputs:
   - "A hívó skill konkrét kutatási célja: vagy egy strukturált plan-feltárás (spec.md), vagy egy ad-hoc kérdés (modul/szimbólum/nagy fájl megértése — lásd Mód B)"
   - "A projekt kódbázisa és dokumentációja (docs/, README-k, diagramok)"

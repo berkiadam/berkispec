@@ -74,7 +74,7 @@ Minden ciklus mappája: `specs/cycle-NN-<cycle-name>/`
 A projektben kétféle flow közül lehet választani **feladatonként**:
 
 - **Teljes flow (02–09):** nagyobb, összetett feladatokhoz — külön `spec.md` / `plan.md` / `tasks.md` + analyze/validate/doc-sync/review minőségi kapuk.
-- **Egyszerűsített flow (`/bs-quick-flow`):** kis, jól körülhatárolt feladatokhoz (konfiguráció, egyszerűbb script, kisebb javítás) — háromfázisú `spec.md` → `task.md` → implementáció.
+- **Egyszerűsített flow (`/bs-quick-flow`):** kis, jól körülhatárolt feladatokhoz (konfiguráció, egyszerűbb script, kisebb javítás) — háromfázisú `spec.md` → `tasks.md` → implementáció.
 
 **Alapértelmezett flow:** _<teljes | egyszerűsített>_ — _(a projekt jellege alapján kitöltve a 00 fázisban; pl. túlnyomóan konfiguráció/scriptelés/üzemeltetés → egyszerűsített; termékfejlesztés több komponenssel → teljes)_
 

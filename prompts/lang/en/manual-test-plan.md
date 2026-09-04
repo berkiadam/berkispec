@@ -101,9 +101,15 @@ Content-Type: application/json
 cannot be produced. This command builds on the filled-in <sec:environment_coords> section
 of `plan.md` — that it stands there without placeholders, with concrete values, is
 guaranteed by the mechanical gate of `05-analyze`. Run the analyze phase first: `/bs-analyze
-input: @specs/cycle-NN-<cycle-name>` — then call this again. (If the cycle follows the
-simplified [lightweight] flow, this command cannot be used: there is no `plan.md` and no
-analyze phase there — the manual test plan was made for the full flow.)"*
+input: @specs/cycle-NN-<cycle-name>` — then call this again."*
+
+<!-- ANCHOR:quick-flow-kapu-stop -->
+*"This cycle follows the simplified (quick-flow) flow — there is no `plan.md` and no
+analyze phase — so the manual test plan starts from the status of `tasks.md`. The status
+of `tasks.md` is currently neither `<status:ready_for_implement>` nor `<status:done>`, so
+the task list is not approved yet: the plan would build on steps that may still change.
+Close Phase 2 of `/bs-quick-flow` first (approval + status + commit), then call this
+again."*
 
 <!-- ANCHOR:mod-bejelentes -->
 *"The manual test plan is produced in <mode> mode, because the status of `tasks.md` is:

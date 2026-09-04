@@ -2,7 +2,7 @@
 name: analyzer
 description: "Read-only cross-phase SEMANTIC consistency diagnosis across spec.md/plan.md/tasks.md/conventions.md, before implementation (categories 1–5: duplication, ambiguity, under-specification, convention conflict, coverage interpretation). The caller gives a SCOPE (s1-dup-underspec / s2-coverage / s3-conventions), so it runs in three parallel rounds, each from the slice cut by the gate. Category 6 is carried by analyzer-exec, also in parallel. Invoked by the 05-analyze skill."
 role: "Cross-phase consistency analyzer specialist agent"
-called_by: ["skills/05-analyze.md"]
+called_by: ["skills/05-analyze.md", "skills/quick-flow.md"]
 inputs:
   - "specs/cycle-NN-<name>/analyze/slices/<scope>.md — the slice cut by the gate, the PRIMARY input (SH1)"
   - "specs/cycle-NN-<name>/spec.md"

@@ -45,7 +45,7 @@ A **skill is a recipe**: a static methodology that the **main agent** runs. The 
 | `08-doc-sync.md` | Keeps `docs-generated/` and `specs/test-conventions.md` up to date: plan → mechanical execution → an objective gate. Not a self-healing subagent loop. |
 | `09-merge.md` | Merges the cycle branch (local squash or PR), with the status/review/doc-sync gates and mandatory manual confirmation (RD8). |
 | `brainstorm.md` | *(Not a phase.)* Exploratory ideation **before** the flow, with a persistent working file in `.bs-brainstorm/`. It writes nothing outside that folder (BS1). |
-| `quick-flow.md` | *(A separate route.)* The simplified three-phase flow (`spec.md` → `task.md` → implementation) for small tasks. |
+| `quick-flow.md` | *(A separate route.)* The simplified three-phase flow (`spec.md` → `tasks.md` → implementation) for small tasks; both artifacts carry a status field, and the shared `path-format` / `artifact-voice` / `dereferencing` / `conventions-change` blocks are inlined into it. |
 | `cycle-status.md` | *(Helper command.)* Reports the status of the cycles; it runs `cycle-status.py`. |
 | `export-doc.md` | *(Helper command.)* Versioned PDF export from the markdown docs; it runs `export-doc.py`. |
 | `manual-test-plan.md` | *(Helper command.)* Assembles the manual test plan (`manual-test-plan.md`) for a human to walk the cycle through. Zero feedback into the flow (MT4). |

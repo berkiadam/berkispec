@@ -9,6 +9,7 @@ called_by:
   - "skills/03b-write-test-plan.md"
   - "skills/06-implement.md"
   - "skills/brainstorm.md"
+  - "skills/quick-flow.md"
 inputs:
   - "The calling skill's concrete research goal: either a structured plan-exploration (spec.md), or an ad-hoc question (understanding a module/symbol/large file — see Mode B)"
   - "The project's codebase and documentation (docs/, READMEs, diagrams)"

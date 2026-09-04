@@ -89,7 +89,7 @@
    > *"Mi az új ciklus célja? Röviden írd le, milyen viselkedést szeretnél megvalósítani."*
 
 <!-- ANCHOR:BS-quick-flow-javaslat -->
-   > > *„Ez a feladat elég kicsinek tűnik a teljes fejlesztési ciklushoz (külön spec/plan/tasks + analyze/validate/review). Javaslom helyette az egyszerűsített flow-t (`/bs-quick-flow`): `spec.md` → `task.md` → implementáció, néhány lépésben. Mehetünk azzal, vagy mégis teljes ciklust szeretnél?"*
+   > > *„Ez a feladat elég kicsinek tűnik a teljes fejlesztési ciklushoz (külön spec/plan/tasks + analyze/validate/review). Javaslom helyette az egyszerűsített flow-t (`/bs-quick-flow`): `spec.md` → `tasks.md` → implementáció, néhány lépésben. Mehetünk azzal, vagy mégis teljes ciklust szeretnél?"*
 
 <!-- ANCHOR:BD5-nevjavaslat -->
    > *"A cél alapján a javasolt név: `[javasolt-név]`. Ez lesz a branch és a mappa neve is (pl. `cycle-NN-[javasolt-név]`). Megfelelő, vagy inkább mást szeretnél?"*

@@ -95,7 +95,7 @@ The user has **two routes**; the weight of the task decides which one fits:
 
 1. **The full berki spec flow (phases 00–09)** — for larger, more complex developments. Separate `spec.md` → `plan.md` → `tasks.md` documents, with cross-phase `analyze`, `validate`, `doc-sync` and `review` quality gates and self-healing loops. On an empty project it starts with the `00-init-project` skill, for a new cycle with `01-add-cycles`. The rest of this README describes this route.
 
-2. **The simplified (lightweight) flow** — for small, well-bounded tasks that can be solved in 3-4 steps (e.g. **assembling a configuration**, **writing a simpler script**, a minor fix). A single three-phase recipe: `spec.md` → `task.md` → implementation, in the `/bs-quick-flow` skill. There is no separate plan/bs-analyze/bs-validate/bs-doc-sync phase; it calls the optional agents (`researcher`, `analyzer`, `reviewer`) only when they genuinely help.
+2. **The simplified (lightweight) flow** — for small, well-bounded tasks that can be solved in 3-4 steps (e.g. **assembling a configuration**, **writing a simpler script**, a minor fix). A single three-phase recipe: `spec.md` → `tasks.md` → implementation, in the `/bs-quick-flow` skill. Both artifacts carry a **status field**, so the phase boundary is a committed fact (`/bs-cycle-status` reads it from there too). There is no separate plan/bs-analyze/bs-validate/bs-doc-sync phase; it calls the optional agents (`researcher`, `analyzer`, `reviewer`) only when they genuinely help.
 
 **How to decide?**
 
@@ -103,7 +103,7 @@ The user has **two routes**; the weight of the task decides which one fits:
 |---|---|---|
 | Typical task | configuration, simple script, minor fix | new feature, several components, complex logic |
 | Size | solvable in 3-4 steps | self-contained, vertically sliceable cycle(s) |
-| Documents | `spec.md` + `task.md` | `spec.md` + `plan.md` + `tasks.md` |
+| Documents | `spec.md` + `tasks.md` (both with a status field) | `spec.md` + `plan.md` + `tasks.md` |
 | Quality gates | inline + optional agents | `analyze` / `validate` / `doc-sync` / `review` loops |
 | Entry point | `/bs-quick-flow` | `/bs-init-project` / `/bs-add-cycles` |
 
@@ -899,7 +899,7 @@ The next cycle (`cycle-03-...`) starts with `02` again — `00`/`01` do not repe
 
 The 00–09 diagrams above describe the **full berki spec flow**. This section details the **other route**, the simplified, three-phase flow — for small, well-bounded tasks (configuration, a simpler script, a minor fix) that can be solved in 3-4 steps. Its canonical invoking command is `/bs-quick-flow`; for choosing between the flows see the "Two development routes" section above.
 
-Compared with the full flow, here there is **no** separate `plan.md` (the technical outline goes into `spec.md`), **no** `analyze`/`validate`/`doc-sync`/`review` phase and **no** automated self-healing loop — the quality gates run inline, and updating the documentation is part of phase 3. The three-phase route: `spec.md` → `task.md` → implementation, with a **mandatory consistency check** at the end of every phase, and **⛔ explicit user approval** before every phase transition.
+Compared with the full flow, here there is **no** separate `plan.md` (the technical outline goes into `spec.md`), **no** `analyze`/`validate`/`doc-sync`/`review` phase and **no** automated self-healing loop — the quality gates run inline, and updating the documentation is part of phase 3. The three-phase route: `spec.md` → `tasks.md` → implementation, with a **mandatory consistency check** and the **deterministic RP1 path gate** (`analyze-gate-check.py --paths-only` — the only mandatory gate script of this flow) at the end of every phase, and **⛔ explicit user approval** before every phase transition. The approval does not stay in the conversation: both artifacts get a **`Status` field** (`Draft` → `Ready for tasks`, and `Draft` → `Ready for implementation` → `Done`), and writing the status + the commit is a single, uninterruptible step pair — this is what lets the cycle survive a `/clear` or an interruption. The git convention (main branch, branch naming, No-VCS, commit format) comes from the `Git and branching conventions` section of `conventions.md`, it is not hardwired in the skill.
 
 **How does a cycle start?** The user hands over a task, the agent prepares the git branch, and then clarifies the goal with a short **interview (grill)** — it keeps asking until it has all the information for `spec.md`. The **flow-size decision is made on the basis of this interview**: the agent continuously weighs whether the task really fits into the simplified flow (3-4 steps, a single component, no complex up-front design). If the task outgrows this (more code to write, several components, integration, complex design), the agent **stops even before `spec.md`** and proposes the full berki spec process (`01-add-cycles`). Only if the task really is small does it propose a cycle number and a name, ask for approval, and create the cycle folder.
 
@@ -922,31 +922,31 @@ flowchart TD
     NameApprove["③ Cycle number + name proposal<br/>→ ⛔ user approval"]:::design
     Dir["④ Creating the cycle folder<br/>(specs/cycle-NN-...)"]:::design
 
-    P1["<b>Phase 1 — Specification (spec.md)</b><br/>goal, parameters, technical outline<br/>(plan substitute), test strategy, README plan"]:::design
-    C1["Consistency check<br/>(paths, names, ports match)"]:::doc
+    P1["<b>Phase 1 — Specification (spec.md)</b><br/>goal, parameters, technical outline (plan substitute),<br/>test strategy WITH A TARGET ENVIRONMENT, README plan"]:::design
+    C1["Consistency check + RP1 path gate<br/>(paths, names, ports match)"]:::doc
     Stop1{"⛔ User<br/>approval?"}:::userInput
 
-    P2["<b>Phase 2 — Task list (task.md)</b><br/>tickable steps, the test before the documentation,<br/>a logical test order"]:::design
-    C2["Consistency check<br/>(task.md ↔ spec.md)"]:::doc
+    P2["<b>Phase 2 — Task list (tasks.md)</b><br/>tickable steps with a [local]/[remote] label,<br/>the test before the documentation, a logical test order"]:::design
+    C2["Consistency check + RP1 path gate<br/>(tasks.md ↔ spec.md)"]:::doc
     Stop2{"⛔ User<br/>approval?"}:::userInput
 
-    P3["<b>Phase 3 — Implementation</b><br/>code per task.md,<br/>real-time ticking, leftover sweep"]:::dev
+    P3["<b>Phase 3 — Implementation</b><br/>code per tasks.md in ONE pass,<br/>real-time ticking, leftover sweep"]:::dev
     Test{"Are the tests green?"}:::decision
     Stuck{"Stuck?<br/>(2-3 rounds, same defect)"}:::decision
     Ask(["Stop → a targeted,<br/>forward-moving question to the user"]):::userInput
-    Close(["Closing: documentation updated<br/>+ closing commit with a Jira prefix"]):::start
+    Close(["Closing: tasks.md → Done, documentation updated,<br/>closing commit + roadmap/drift note"]):::start
 
     Start --> Git --> Interview --> SizeCheck
     SizeCheck -- "No (it outgrows this)" --> Redirect
     SizeCheck -- "Yes" --> NameApprove --> Dir --> P1
     P1 --> C1 --> Stop1
     Stop1 -- "No → waiting" --> Stop1
-    Stop1 -- "Yes" --> P2
+    Stop1 -- "Yes → status: Ready for tasks + commit" --> P2
     P2 --> C2 --> Stop2
     Stop2 -- "No → waiting" --> Stop2
-    Stop2 -- "Yes" --> P3
+    Stop2 -- "Yes → status: Ready for implementation + commit" --> P3
     P3 --> Test
-    Test -- "No (it fails) → fix,<br/>then ALL the tests again" --> Stuck
+    Test -- "No (it fails) → fix, then THE SAME<br/>step again, with its selector" --> Stuck
     Stuck -- "No" --> P3
     Stuck -- "Yes" --> Ask
     Ask --> P3
@@ -958,13 +958,13 @@ flowchart TD
 
 | Phase | Output | Main rule | Gate at the end of the phase |
 |---|---|---|---|
-| **1. Specification** | `spec.md` | Goal + parameters + a **technical outline** (the scaffolding that substitutes for `plan.md`: affected files, key elements, execution order, main error branch) + test strategy + README plan. It modifies **no** project file here. | Consistency check → **⛔ explicit approval** |
-| **2. Task list** | `task.md` | Tickable steps built on the technical outline. Testing comes **before** the documentation update, in a logical **test order** (create the resource first, only then check it). | Consistency check (against `spec.md` too) → **⛔ explicit approval** |
-| **3. Implementation** | code + updated documentation | Exclusively per `task.md`, with real-time ticking. After a replacement/rename, a **leftover sweep** (`grep` for the old form). A failing test → fix + **all** the tests again. | Tests green + documentation done + agreed → **closing commit with a Jira prefix** |
+| **1. Specification** | `spec.md` (`Draft`) | Goal + parameters + a **technical outline** (the scaffolding that substitutes for `plan.md`: affected files, key elements, execution order, main error branch) + test strategy + README plan. The six mandatory elements of the test strategy: a **`Target environment` field**, for a non-local target a **literal target host + a reachability probe + a `localhost` ban**, a **`[local]`/`[remote]` label**, a **"what it verifies and why" assertion** (with a calibration sample), a **vacuous-test ban**, and **`skipped` is not evidence**. It modifies **no** project file here. | Consistency check + the **RP1 path gate** → **⛔ explicit approval** → status `Ready for tasks` + commit |
+| **2. Task list** | `tasks.md` (`Draft`) | Tickable steps built on the technical outline; on entry, a **status gate** on `spec.md`. Testing comes **before** the documentation update, in a logical **test order** (create the resource first, only then check it); every test step carries the `[local]`/`[remote]` label, the assertion, the probe and the **selector-scoped** command. The regression run is a separate, **last** step. | Consistency check (against `spec.md` too) + the **RP1 path gate** → **⛔ explicit approval** → status `Ready for implementation` + commit |
+| **3. Implementation** | code + updated documentation | Exclusively per `tasks.md`, **in a single pass** (IM1: ticking off a task is not the end of a phase), with real-time ticking. After a replacement/rename, a **leftover sweep** (`grep` for the old form). **One run = one identifiable test:** a failing test → fix + **the same step** again with its selector; a collective run does not replace the per-step ones. | Tests green (the skipped ones stated) + documentation done + `docs-generated/` drift note + agreed → `tasks.md` = `Done` + **closing commit per `conventions.md`** |
 
 ### 5.3 Two built-in loop breakers
 - **Stuck detection (phase 3):** if the same defect still fails after 2-3 fixing rounds, or the solution goes round in circles, the agent **stops**, summarises what it tried + the exact error message + its hypotheses, and asks a **targeted question broken down to a decision or a piece of data** — it does not keep trying blindly.
-- **Phase rollback on a spec defect:** if it turns out during the implementation that `spec.md` is incomplete or wrong, **deviating from it silently is forbidden** — back to phase 1, update `spec.md` (and `task.md` if needed), then **re-approval**, and only then onwards.
+- **Phase rollback on a spec defect:** if it turns out during the implementation that `spec.md` is incomplete or wrong, **deviating from it silently is forbidden** — back to phase 1, update `spec.md` (and `tasks.md` if needed), then **re-approval**, and only then onwards.
 
 ### 5.4 Optional agents (all read-only, none of them mandatory)
 
@@ -973,8 +973,10 @@ The simplified flow deliberately uses **few** specialists, and all of them **opt
 | Agent | Phase | What it gives | When it is worth it |
 |---|---|---|---|
 | [`researcher`](prompts/agents-hu/researcher.md) | 1 (spec.md) | Affected source files (`path:line–line`) + a list of documents to update | When modifying an existing codebase, if the set of affected files is not obvious |
-| [`analyzer`](prompts/agents-hu/analyzer.md) | 2 (task.md) | `spec.md` ↔ `task.md` consistency diagnosis (coverage gap, under-specification) | For a task list with several requirements that easily slips |
+| [`analyzer`](prompts/agents-hu/analyzer.md) | 2 (tasks.md) | `spec.md` ↔ `tasks.md` consistency diagnosis (coverage gap, under-specification) | For a task list with several requirements that easily slips |
 | [`reviewer`](prompts/agents-hu/reviewer.md) | 3 (before the commit) | Diff code review → `Must Fix` / `Suggestion` | For a non-trivial code change, as a gate before the commit |
+
+> **Contract substitutions (given by the skill; the body of the agent prompts is unchanged):** the `analyzer` gets **no scope parameter** (it carries all five categories) and runs without a slice file, and its input is the `spec.md` + `tasks.md` **pair** — its input point referencing `plan.md` is empty. The `reviewer` gets the **technical outline** of `spec.md` instead of the mandatory `plan.md`, and writes into `specs/cycle-NN-<cycle-name>/code-review.md` (in the cycle root, without a `test-report/` subfolder); the `Must Fix` identifiers and the incremental writing are kept, there is no self-healing loop.
 
 > **What this flow does NOT use:** the fixer wrappers (`spec/plan/tasks/bs-implement/review-fixer`) and the `doc-sync-planner` — these are the entry points of the full flow's self-healing loops and of the `docs-generated/` sync. There is no automated loop here (defects are fixed inline by the main agent), and there is no separate generated doc layer (the documentation is part of phase 3). If these genuinely became warranted, that is the sign that **you have to switch to the full berki spec flow**.
 
@@ -982,6 +984,12 @@ The simplified flow deliberately uses **few** specialists, and all of them **opt
 
 ```
 /bs-quick-flow input: <a short description of the task>
+```
+
+Taken over from a brainstorm (`NN` is the number of the `.bs-brainstorm/` working file):
+
+```
+/bs-quick-flow brainstorm: NN
 ```
 
 ### 5.6 Example prompt
@@ -997,15 +1005,15 @@ Walking through a small task. There is **a single starting prompt** here; after 
    you: "ok, go with that name"
 
 # ③  ⛔ Phase 1 — approving spec.md
-   → it stops after spec.md + the consistency check
-   you: "I approve the spec, task.md can come"
+   → it stops after spec.md + the consistency check + the RP1 path gate
+   you: "I approve the spec, tasks.md can come"
 
-# ④  ⛔ Phase 2 — approving task.md
-   → it stops after task.md
+# ④  ⛔ Phase 2 — approving tasks.md
+   → it stops after tasks.md (status: Ready for implementation + commit)
    you: "fine, you can start the implementation"
 
 # ⑤  Phase 3 — implementation
-   → it implements per task.md, tests, updates the documentation → closing commit with a Jira prefix
+   → it implements per tasks.md in ONE pass, selector-scoped tests, documentation → tasks.md = Done + closing commit
 ```
 
 > If it turns out during the interview (②) that the task is bigger after all, the agent stops here and proposes the full flow (`01-add-cycles`) — see the "it outgrows this" branch of diagram 5.1. The decision to switch flows is yours.
@@ -1027,10 +1035,10 @@ Walking through a small task. There is **a single starting prompt** here; after 
 | `/bs-validate` | Validation + code review | the cycle folder | PASS/FAIL + `test-report/` (`validation-report.md`, `code-review.md`, `validate/round-NN/`); PASS → statuses become `Done` — the tests/Sonar/E2E are run by the `test-runner` and the diff is reviewed by the `reviewer` subagent, while the PASS/FAIL decision and the DoD are the orchestrator's; on FAIL, an orchestrated self-healing loop (`implement-fixer` / `review-fixer`, three stopping limits, the VD3a contract gate, VD5 escalation) |
 | `/bs-doc-sync` | Doc-sync | the cycle folder + `docs-generated/` + `specs/test-conventions.md` | a consistent `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README folder index) + component READMEs + `specs/test-conventions.md` (promotion / `Last run` bump / deletion of a stale item, TC1–TC11) + `doc-sync-plan.md` — plan (`doc-sync-planner`) → mechanical execution → the objective gate (DS22, 3 of 4 points with the `ds22-gate-check.py` script, without an LLM) + the TC8 gate on the register (`tc8-gate-check.py`, fully scripted); on a gate failure → human-driven correction (`doc-sync-questions.md`) |
 | `/bs-merge` | Merge | the cycle folder, `conventions.md` | a merged branch / PR + a closed roadmap — there is no loop and no subagent; a failure of the gates (status, clean review, doc-sync) redirects back to `07` or `08`; the merge happens with manual confirmation (RD8) |
-| `/bs-quick-flow` | **Simplified flow** (a separate route) | a description of the task | `spec.md` + `task.md` + implementation — three-phase, for small tasks; optional `researcher`/`analyzer`/`reviewer`; on outgrowing it, it redirects to `/bs-add-cycles` |
+| `/bs-quick-flow` | **Simplified flow** (a separate route) | a description of the task, or `brainstorm: NN` | `spec.md` (`Ready for tasks`) + `tasks.md` (`Ready for implementation` → `Done`) + implementation — three-phase, for small tasks; status fields + the RP1 path gate; optional `researcher`/`analyzer`/`reviewer`; on outgrowing it, it redirects to `/bs-add-cycles` |
 | `/bs-brainstorm` | **Ideation** (a helper command, before the flow) | a topic in free text, or `let's continue number NN` | `.bs-brainstorm/brainstorm-NN-<slug>.md` — a persistent working file (facts with sources, alternatives with trade-offs, decisions, open questions, a proposed cycle split). Not a phase, it changes no status; it writes no code and nothing outside the folder. Handover: `/bs-add-cycles brainstorm: NN` (BS18) or `/bs-quick-flow`. |
 | `/bs-export-doc` | **PDF export** (a helper command) | markdown file(s), optional — empty means `docs-generated/architecture.md` and `system-overview.md` | `export/<name>-v<N>.pdf` — an independent version number per file (the last one + 1, from v1); pandoc + `mermaid-filter` + xelatex, with the cycle on the title page (`Covered: up to cycle-NN · vN`). Not a phase: it has no prerequisite and changes no status. |
-| `/bs-manual-test-plan` | **Manual test plan** (a helper command, any time after 05) | the cycle folder (optional), optionally `mode: planned` / `mode: as-built` | `manual-test-plan.md` — component startup, test data, `TG-NN` test groups (`curl` + `.http`, with concrete expected results), bidirectional `DoD-NN` coverage and the location of the automated test results. Prerequisite: `analyze-report.md` = `PASS`. A deterministic gate (`manual-test-gate-check.py`, MG1–MG10). Not a phase: it changes no cycle status, and on a re-run it does a silent merge + a `Change log`. |
+| `/bs-manual-test-plan` | **Manual test plan** (a helper command, any time after 05) | the cycle folder (optional), optionally `mode: planned` / `mode: as-built` | `manual-test-plan.md` — component startup, test data, `TG-NN` test groups (`curl` + `.http`, with concrete expected results), bidirectional `DoD-NN` coverage and the location of the automated test results. Prerequisite: `analyze-report.md` = `PASS`, **or** — in a simplified cycle, where there is no `plan.md` — the status of `tasks.md` is `Ready for implementation` / `Done` (QF8). A deterministic gate (`manual-test-gate-check.py`, MG1–MG10). Not a phase: it changes no cycle status, and on a re-run it does a silent merge + a `Change log`. |
 | `/bs-cycle-status` | **Status checker** | the name or path of a cycle (optional) | It reports the status of the cycles (Done/In progress), and lists the progress of the phases in detail (DONE, DONE*, IN PROGRESS, NOT YET RUN) in an interactive TUI or directly, recognising the type of the flow. |
 
 The **frontmatter** of the phase skills (`00–09`) records the prerequisites, the output, the neighbouring phases (`prev`/`next`) and the subagents called. The simplified-flow skill and the helper commands (`bs-brainstorm`, `bs-export-doc`, `bs-manual-test-plan`) use a different, `name`/`description`-based frontmatter (they are not phases, see the "Two development routes" section).
@@ -1179,7 +1187,7 @@ The rule lives in a single place — `prompts/shared-hu/parallel-cycles.md` — 
 
 ### The phase-closing commit (PC1)
 
-The three artifact-writing phases (`02`-spec, `03`-plan, `04`-tasks) **close and commit at the moment of the user's approval**: confirmation → writing the status → `git add specs/cycle-NN-<name>/` + `git commit -m "cycle-NN: <phase-tag>"` → a deterministic check (`git log -1 --oneline` + an empty `git status --short` on the cycle folder) → the commit's identifier goes into the closing message. The three steps are **a single, uninterruptible sequence**: a phase is not done because the status flips, but because the status change has been committed — which is why the stopping rules of the skills separately forbid the "status done, no commit" state. We do not ask for separate permission for the commit (the approval of the phase's closing includes it); on the no-VCS branch the whole step is skipped. **The same mandatory commit applies to the two self-healing loop phases too** (`05`-analyze, `07`-validate), with one difference: there is **no** intermediate commit **during** the loop, the phase-closing commit happens **once**, at the closing of the loop — but it is mandatory **on every closing branch** (PASS, `max X`/3-attempt STOP, upward escalation, a Quality Gate failure), and it requires no user confirmation. **Phase boundary (PE1):** the phase ends with the closing message (the commit identifier + `/clear` + the command of the next phase) — in the same round the agent **must not start anything** from the next phase, it must not even create the next artifact (`plan.md`, `tasks.md`, code). This rule **overrides** every context summary/checkpoint that encourages moving on, every earlier plan of its own, and every "let's go through the whole process" request from an earlier round; only the user's **explicit request for this round** overrides it. The message of the commit is exactly `cycle-NN: <phase-tag>` — without a conventional-commit prefix (`docs(...)`, `feat:`), because 07/09 search back for this format. The shared procedure lives in one place — `prompts/shared-hu/phase-commit.md` — and is inlined at build time into the `02`/`03`/`04`/`05`/`07` skills; `01`, `06` and `08` carry the same phase-boundary rule in their own closing section. The three-phase `quick-flow` follows the same pattern with its own (Jira-prefixed) commit convention, at the approval of `spec.md` and `task.md`.
+The three artifact-writing phases (`02`-spec, `03`-plan, `04`-tasks) **close and commit at the moment of the user's approval**: confirmation → writing the status → `git add specs/cycle-NN-<name>/` + `git commit -m "cycle-NN: <phase-tag>"` → a deterministic check (`git log -1 --oneline` + an empty `git status --short` on the cycle folder) → the commit's identifier goes into the closing message. The three steps are **a single, uninterruptible sequence**: a phase is not done because the status flips, but because the status change has been committed — which is why the stopping rules of the skills separately forbid the "status done, no commit" state. We do not ask for separate permission for the commit (the approval of the phase's closing includes it); on the no-VCS branch the whole step is skipped. **The same mandatory commit applies to the two self-healing loop phases too** (`05`-analyze, `07`-validate), with one difference: there is **no** intermediate commit **during** the loop, the phase-closing commit happens **once**, at the closing of the loop — but it is mandatory **on every closing branch** (PASS, `max X`/3-attempt STOP, upward escalation, a Quality Gate failure), and it requires no user confirmation. **Phase boundary (PE1):** the phase ends with the closing message (the commit identifier + `/clear` + the command of the next phase) — in the same round the agent **must not start anything** from the next phase, it must not even create the next artifact (`plan.md`, `tasks.md`, code). This rule **overrides** every context summary/checkpoint that encourages moving on, every earlier plan of its own, and every "let's go through the whole process" request from an earlier round; only the user's **explicit request for this round** overrides it. The message of the commit is exactly `cycle-NN: <phase-tag>` — without a conventional-commit prefix (`docs(...)`, `feat:`), because 07/09 search back for this format. The shared procedure lives in one place — `prompts/shared-hu/phase-commit.md` — and is inlined at build time into the `02`/`03`/`04`/`05`/`07` skills; `01`, `06` and `08` carry the same phase-boundary rule in their own closing section. The three-phase `quick-flow` follows the same pattern at the approval of `spec.md` and `tasks.md` — writing the status + the commit in a single step pair, with the deterministic check and the PE1 phase boundary — with one difference: the format of the commit message comes there from the git section of `conventions.md` (the Jira prefix being one case of it), not from the `cycle-NN: <phase-tag>` form, which 07/09 search back for and which does not run in that flow.
 
 ---
 

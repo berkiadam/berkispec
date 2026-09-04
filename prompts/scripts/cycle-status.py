@@ -105,6 +105,18 @@ def get_status_from_file(file_path):
         pass
     return None
 
+def count_checkboxes(file_path):
+    """(kipipált, összes) markdown-checkbox a fájlban. A státusz-mező nélküli,
+    régi quick-flow feladatlistákhoz (QF3): ott a pipák az egyetlen jel."""
+    if not file_path.exists():
+        return (0, 0)
+    try:
+        content = file_path.read_text(encoding='utf-8')
+    except Exception:
+        return (0, 0)
+    boxes = re.findall(r'^\s*[-*]\s+\[([ xX])\]', content, re.MULTILINE)
+    return (sum(1 for b in boxes if b in 'xX'), len(boxes))
+
 def get_manual_test_plan_state(cycle_path):
     """A kézi tesztterv (`/bs-manual-test-plan`, MT8) állapota egyetlen
     megjelenítendő stringként.
@@ -355,25 +367,41 @@ def analyze_cycle(cycle_path):
 
     else:
         # --- SIMPLIFIED (LIGHTWEIGHT) FLOW ---
-        # 1. Spec
+        # QF3: a quick-flow második artefaktuma `tasks.md`; a `task.md` (egyes
+        # szám) a QF2/QF3 előtti ciklusoké — a régi hely visszafelé
+        # kompatibilitásból marad, ahogy az analyze/ és a test-report/ esetén is.
+        if not tasks_file.exists():
+            legacy_tasks_file = cycle_path / "task.md"
+            if legacy_tasks_file.exists():
+                tasks_file = legacy_tasks_file
+        tasks_label = f"Feladatlista ({tasks_file.name})"
         spec_status = get_status_from_file(spec_file)
+        tasks_status = get_status_from_file(tasks_file)
+
+        # 1. Spec
         if spec_status:
             if tasks_file.exists():
                 phases.append(("Specifikáció (spec.md)", "KÉSZ"))
             else:
                 phases.append(("Specifikáció (spec.md)", "FOLYAMATBAN"))
+        elif spec_file.exists():
+            # Státusz-mező nélküli (QF2 előtti) ciklus: a bizonyíték KÖZVETETT —
+            # a spec megvan, és ha a feladatlista is elkészült belőle, a fázis lezárult.
+            phases.append(("Specifikáció (spec.md)",
+                           INDIRECT if tasks_file.exists() else "FOLYAMATBAN"))
         else:
             phases.append(("Specifikáció (spec.md)", "MÉG NEM FUTOTT"))
 
         # 2. Tasks
-        tasks_status = get_status_from_file(tasks_file)
         if tasks_status:
             if tasks_status == _S_DONE:
-                phases.append(("Feladatlista (tasks.md)", "KÉSZ"))
+                phases.append((tasks_label, "KÉSZ"))
             else:
-                phases.append(("Feladatlista (tasks.md)", "FOLYAMATBAN"))
+                phases.append((tasks_label, "FOLYAMATBAN"))
+        elif tasks_file.exists():
+            phases.append((tasks_label, INDIRECT))
         else:
-            phases.append(("Feladatlista (tasks.md)", "MÉG NEM FUTOTT"))
+            phases.append((tasks_label, "MÉG NEM FUTOTT"))
 
         # 3. Megvalósítás
         if tasks_status:
@@ -381,6 +409,15 @@ def analyze_cycle(cycle_path):
                 phases.append(("Megvalósítás (kód + doksi)", "KÉSZ"))
             else:
                 phases.append(("Megvalósítás (kód + doksi)", "FOLYAMATBAN"))
+        elif tasks_file.exists():
+            # Státusz nélkül a pipák az egyetlen jel (QF3 visszafelé-kompatibilitás).
+            checked, total = count_checkboxes(tasks_file)
+            if total and checked == total:
+                phases.append(("Megvalósítás (kód + doksi)", INDIRECT))
+            elif checked:
+                phases.append(("Megvalósítás (kód + doksi)", "FOLYAMATBAN"))
+            else:
+                phases.append(("Megvalósítás (kód + doksi)", "MÉG NEM FUTOTT"))
         else:
             phases.append(("Megvalósítás (kód + doksi)", "MÉG NEM FUTOTT"))
 
