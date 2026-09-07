@@ -48,6 +48,7 @@ Ez **nem fázis:** a `00–09` láncnak nem része, a ciklus státusz-láncához
 | **a tesztcsoportok maguk: lépések, hívások, elvárt eredmény** | **`plan.md` → <sec:plan_test_scenarios> (`TS-NN`) — ez a `TG-NN` csoportok elsődleges forrása** |
 | mit tesztelünk egy csoporttal | `spec.md` → <sec:test_specification> + <sec:definition_of_done> (`DoD-NN`) |
 | automata teszt-parancsok | `plan.md` → <sec:machine_run_table> |
+| **a meglévő tesztek leltára — a `TG-NN` csoportok HARMADIK forrása** | **`docs-generated/test-description.md` (`TL-NNN` tételek) — LD9** |
 | hova kerülnek az eredmények | `conventions.md` → `## <sec:cv_test_reporting>` (TR3 + a TR5 kör-mappa jelölő) |
 
 ---
@@ -99,7 +100,10 @@ A felhasználó felülbírálhatja (`mód: tervezett` / `mód: as-built` inputta
 
 - **`plan.md`:** <sec:environment_coords> (és alszekciói: <sec:components_endpoints>, <sec:rest_calls_examples>, <sec:test_api_users>, <sec:other_parameters>, <sec:network_access_prereqs>), <sec:testing_strategy>, <sec:machine_run_table>;
 - **`spec.md`:** <sec:definition_of_done> (a `DoD-NN` azonosítókkal), <sec:test_specification>;
-- **`conventions.md`:** `## <sec:cv_test_reporting>` (a TR5 `<field:f_artifact_path_base>` jelölővel együtt), `## <sec:cv_git_conventions>` (a No-VCS ág eldöntéséhez).
+- **`conventions.md`:** `## <sec:cv_test_reporting>` (a TR5 `<field:f_artifact_path_base>` jelölővel együtt), `## <sec:cv_git_conventions>` (a No-VCS ág eldöntéséhez);
+- **`docs-generated/test-description.md`** — a teszt-leltár, ha létezik (LD9): a `TL-NNN` tételek **cél / lépések / elvárt eredmény** mezői.
+
+> **A leltár a HARMADIK bemenet (LD9).** Az „összeszerelek, nem felderítek" elv itt a legerősebb: egy `TL-NNN` tétel **már** hordozza a konkrét lépéseket és a konkrét elvárt eredményt, tehát a `TG-NN` csoport belőle **összeszerelhető** — nem kell újra kitalálni. Amit ilyenkor kötelezően megteszel: a `TG-NN` fejlécében a `DoD-NN` mellett **nevezd meg a lefedett `TL-NNN`-eket is** (`### TG-03 — <név>  (DoD-02, DoD-05 · TL-014, TL-018)`). Ez a `TL` ↔ `TG` join az MT6 lefedettséget is erősíti: látszik, melyik meglévő tesztre épül a kézi lépés, és melyik `TG-NN` az, amihez nincs automata pár. **A leltárat NEM írod** — a gazdája a `08-doc-sync`. Ha a fájl nem létezik, ez a bemenet kimarad, és a `plan.md` `TS-NN` blokkjai maradnak az elsődleges forrás.
 
 > **Egyszerűsített (quick-flow) ciklusban a `plan.md` nem létezik (QF8).** Helyette a `spec.md`-ből olvass: a **technikai vázlat** (érintett fájlok, kulcs-elemek, <sec:execution_order>, hibakezelési döntés) adja a <sec:environment_coords> helyett a koordinátákat, a **Kötelező Tesztelési Stratégia** pedig a `<field:f_target_env>` mezőt, a `[local]` / `[remote]` hatókör-címkéket, az elérhetőségi probe-okat és a teszt-lépéseket — ezekből képezd a `TG-NN` csoportokat. A `tasks.md` teszt-lépéseinek **szelektoros parancsai** kerülnek az automata tesztek blokkjába (gépi futtatási tábla ebben a flow-ban nincs). `DoD-NN` azonosítók helyett a `spec.md` cél-pontjaira hivatkozz, és az MT6 lefedettséget azokra vezesd vissza.
 

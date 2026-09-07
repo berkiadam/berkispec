@@ -309,6 +309,8 @@ python3 <platform-scripts-mappa>/run-tests.py \
 
 > **This is not a new stopping point (IM1).** The run is part of closing the phase, in the same turn — unlike the `[CHECK]`s it does **not** run per task.
 
+> 🔴 **The `--round-dir` may NEVER point under the `test-runs/` tree (D8).** That is the place of the out-of-cycle, convenience run of `/bs-run-tests`, and the result produced there is **not cycle evidence**: `dod-check.py` and `report-gate-check.py` reject a path under `test-runs/` with `exit 2`. The evidence of the phase goes into the `test-report/<phase>/` folder of the cycle — where `07` looks for it.
+
 ## Test-substance gate (TB1) — before closing the phase
 
 Once every task is `[x]`, but **before** the status change, run the test-substance gate. It examines the test files listed in the plan's `TA1` data sheets: is any of them an **empty shell** (`assert True`, `pass`, a body without assertions)?

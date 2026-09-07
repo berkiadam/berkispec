@@ -441,7 +441,7 @@ python3 <platform-scripts-mappa>/dod-check.py \
 - **`exit 0`** → every DoD item is provably ✓ (with the `--apply` the script also ticked them off in `spec.md`);
 - **`exit 1`** → there is a ✗ — the printed `DoD-NN` identifiers go verbatim into the `--failed-item` values of `failure-counter.py`;
 - **`exit 3`** → there is a `?` (an item without evidence or a `manual:` one) — **only for these** is your own judgement needed: give them a ✓/✗ with a one-sentence justification. The absence of the evidence is at the same time a **spec quality signal** towards 02/05 — note it in the report of the round, but do not qualify the round as a FAIL because of it;
-- **`exit 2`** → the DoD items have no `DoD-NN` identifier → add them in `spec.md` (see below), and run it again.
+- **`exit 2`** → the DoD items have no `DoD-NN` identifier → add them in `spec.md` (see below), and run it again. **You also get `exit 2` if the `--round-dir` points under the `test-runs/` tree (D8):** that is the place of the out-of-cycle, convenience run of `/bs-run-tests`, and the result produced there is **NOT cycle evidence** — there is no `DoD-NN`/`TS-NN` join, no round number, so neither the TR7 freshness nor the RUN1 round coverage is interpretable for it. Cycle evidence has to be produced by **this round**, into the `test-report/<phase>/round-NN/` folder of the cycle. The same ban applies to the `--report-subdir` value of `report-gate-check.py`.
 
 **Always reference the items by their `DoD-NN` identifier** (DI1) — in the report, in the log and in the fixing tasks alike.
 

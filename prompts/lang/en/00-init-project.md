@@ -137,7 +137,7 @@ _The following are **recommended defaults** with modern, up-to-date tools (for l
 
 - **Frontend E2E:** Playwright _(recommended — alternative: Cypress)_
 - **Backend tests:** Python — `pytest` + `httpx` _(recommended — alternative: the native framework of the project's language, e.g. Jest/Vitest for Node, go test for Go)_
-  - Location of the test files: `test/` (in the subfolder matching the test structure of the project)
+  - Location of the test files: `test/` (in the subfolder matching the test structure of the project) — _information for a human; the per-category globs of the **machine discovery** are given by the `### Test file locations` table of the `## Test execution` section (RP1: do not duplicate a value here)_
   - Python test dependencies: `requirements-test.txt` or the `pyproject.toml [test]` section
 - **E2E infrastructure:** `docker compose` — a containerized full stack
   - E2E compose file: `docker-compose.e2e.yml` in the root of the project
@@ -172,6 +172,40 @@ _Rules for filling it in:_
 - **🔴 The REST logs go into PER-TEST subfolders:** `<artifact>/<local|remote>/<test-name>/`. The `local`/`remote` level is **language-independent**, and follows from the **test's own marking** (not from the address called — a `127.0.0.1` behind an `oc port-forward` is **remote**, while a compose service name is **local**). The test name is the name of the test function, normalized to be path-safe: **every `[^A-Za-z0-9._-]` character to `-`, leading and trailing `-` trimmed, NO lowercasing** (`test_foo[dsp01]` → `test_foo-dsp01`; the parameter does **not** become a separate subfolder). The gate of `07` (`RL1`/`RL2`) joins on this structure: it checks whether the logs under `remote/` really contain a non-local address, and whether every scenario marked `[remote]` produced a log at all. Without it the log is **one flat heap** from which it cannot be established afterwards which test called what — and a folder full of files inherited from an earlier round **looks full**. _(The artifact cell of the TR3 table does NOT change — it stays `e2e/rest-logs/`; the new levels go BELOW it, and `report-gate-check.py` walks the folder with `rglob`, so it sees the nested structure without any change.)_
 - **Application-side evidence is a TABLE ROW too, not prose.** Whatever is produced during the test run and can be opened afterwards — a REST request/response audit log, a correlation-id trace, an application log excerpt — put it into the table just like the report of the test tool. What the table does not ask for, `report-gate-check.py` **does not look for**: it is silently omitted, and its absence only surfaces months later. The file name and header convention is recorded in `specs/test-conventions.md` (TC1/c), but **whether it is mandatory** belongs here.
 - **If the project does not generate a test report at all**, set the flag above to `no`, **with a justification** (e.g. "there is only a manual smoke test"). This is a conscious, recorded decision — the gate is then skipped. Leaving it empty or leaving an unfilled table is **not** an option: the gate then reports a usage error.
+
+## Test execution
+
+_**Mandatory section (KT1).** This section is the single machine-readable source of truth for **out-of-cycle** test execution: the `/bs-run-tests` helper command reads from it which category to run with which command, and the test inventory of `08-doc-sync` (`docs-generated/test-description.md`) discovers from it which test files exist. **Cycle**-level execution is still given by the machine-readable run table of `plan.md` (TP4) — the two do not replace each other: this section is project-level and cycle-independent, while that one is about one round of one cycle._
+
+**Test categories:** unit, rest-e2e, ui
+
+_The category dictionary of the project, listed with commas (recommended baseline: `unit` · `rest-e2e` · `ui`, optionally `coverage`). The `Category` values of the machine-readable run table of `plan.md` must be **subsets** of this set — this is checked by the mechanical gate of `05-analyze` (KT2). The category identifiers are **language-independent** (they join onto paths and gates: `test-runs/<category>/…`), so do not translate them._
+
+### Project-level run table
+
+_The column schema is **identical** to the machine-readable run table of `plan.md` (TP4/b) — one parser, one rule. `run-tests.py` reads with FIXED column positions, so the first column is always `Category`, and the order cannot be swapped. The values of the `Type` column (`gyors` / `nehez`) are the language-independent values of the script's `--type` flag — they are not translated._
+
+| Category | Type | Prerequisite | Command | Result file | Format | Cleanup | Environment | Phase |
+|---|---|---|---|---|---|---|---|---|
+| unit | gyors | — | `<verbatim command, with a machine-readable reporter>` | `junit.xml` | junit | — | local | — |
+| rest-e2e | nehez | `<the reachability probe of the target>` | `<command with the target host>` | `<file>` | junit | `<teardown>` | `<remote — the name of the target environment>` | — |
+
+_Filling rules:_
+- **The `Phase` column is `—` here:** an out-of-cycle run has no phase, and an empty/`—` cell means "both" in `run-tests.py`, so the phase filter does not make the row disappear.
+- **The `{round}` and `{phase}` placeholders work here too:** `/bs-run-tests` passes the `test-runs/…` run folder as `--round-dir`, so `{round}` resolves to that — not to a cycle folder.
+- **The EV rules apply:** the command of a `remote` environment row contains the target host **literally** (EV3), and there is a `Prerequisite` probe to the same target for it (EV4); `localhost` / `127.0.0.1` without a declared port-forward is **FORBIDDEN** (EV5). `run-tests.py` measures this at runtime as well (`exit 4`).
+
+### Test file locations
+
+_The globs of the **machine discovery**, per category. This is the single input of `test-inventory-check.py` (LD5), and this is the **only regulated place** where the scope of the test inventory can be narrowed: what is not declared here is not looked for by the inventory gate either._
+
+| Category | Glob |
+|---|---|
+| unit | `test/unit/**/test_*.py` |
+| rest-e2e | `test/e2e/**/*.spec.ts` |
+| ui | `test/ui/**/*.spec.ts` |
+
+_The prose "Location of the test files" line of the `## Test framework` section speaks to a **human** and stays — but it does not duplicate a value: the machine-read globs live **only here** (RP1: one concept, one place). If a category has no test file, `—` goes into the `Glob` cell; the category still stays part of the dictionary._
 
 ## Naming conventions
 
@@ -228,6 +262,12 @@ _Project-level technical limitations, accepted POC boundaries._
 
 <!-- ANCHOR:TR3-riport-kerdes -->
 *"What report does your test tool generate, and with which command? (e.g. Allure HTML, Playwright HTML report, pytest-html, JUnit XML, coverage) — this gets into the `specs/cycle-NN-<name>/test-report/` folder in every cycle — into per-round subfolders —, and the validation checks its presence with a deterministic gate."*
+
+<!-- ANCHOR:KT1-futtatas-kerdes -->
+*"Which test categories does the project's test suite break down into (e.g. `unit`, `rest-e2e`, `ui`, `coverage`), with which **verbatim command** do I run each category over the whole project, and where are the test files of the category (glob)? This is used by out-of-cycle execution (`/bs-run-tests`) and by the discovery of the test inventory — cycle-level execution is still given by the table of `plan.md`."*
+
+<!-- ANCHOR:KT7-gitignore-felajanlas -->
+> *"The `test-runs/` folder is currently not excluded from version control. The out-of-cycle test runs of `/bs-run-tests` write here: machine-dependent results, regenerable at any time, which do not count in the evidence logic of the framework anyway (D8). I recommend adding the `test-runs/` entry into `.gitignore`. Should I add it?"*
 
 <!-- ANCHOR:BD9-api-guideline-kerdes -->
 *"Is there an API design guideline / API policy to follow (REST conventions, versioning, error format, naming)? If yes, where is its document?"*

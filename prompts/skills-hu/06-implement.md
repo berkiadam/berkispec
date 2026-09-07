@@ -309,6 +309,8 @@ python3 <platform-scripts-mappa>/run-tests.py \
 
 > **Ez nem új megállási pont (IM1).** A futtatás a fázis lezárásának része, ugyanabban a körben — a `[CHECK]`-ekkel ellentétben taskonként **nem** fut.
 
+> 🔴 **A `--round-dir` SOHA nem mutathat a `test-runs/` fa alá (D8).** Az a `/bs-run-tests` cikluson kívüli, kényelmi futtatásának helye, és az ott keletkező eredmény **nem ciklus-bizonyíték**: a `dod-check.py` és a `report-gate-check.py` a `test-runs/` alatti útvonalat `exit 2`-vel visszautasítja. A fázis bizonyítéka a ciklus `test-report/<fázis>/` mappájába megy — oda, ahol a `07` keresi.
+
 ## Teszt-tartalom kapu (TB1) — a fázis lezárása előtt
 
 Minden task `[x]`, de a státuszváltás **előtt** futtasd le a teszt-tartalom kaput. A plan `TA1` adatlapjaiban felsorolt tesztfájlokat vizsgálja: van-e köztük **üres váz** (`assert True`, `pass`, asszertáció nélküli törzs).

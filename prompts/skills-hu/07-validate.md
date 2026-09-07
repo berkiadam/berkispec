@@ -439,7 +439,7 @@ python3 <platform-scripts-mappa>/dod-check.py \
 - **`exit 0`** → minden DoD-pont bizonyítottan ✓ (a szkript a `--apply`-jal ki is pipálta őket a `spec.md`-ben);
 - **`exit 1`** → van ✗ — a kiírt `DoD-NN` azonosítók mennek szó szerint a `failure-counter.py --failed-item` értékeibe;
 - **`exit 3`** → van `?` (bizonyíték nélküli vagy `manual:` pont) — **csak ezekhez** kell a saját ítéleted: adj rájuk ✓/✗-ot egy mondatos indoklással. A bizonyíték hiánya egyben **spec-minőségi jelzés** a 02/05 felé — jegyezd fel a kör riportjába, de ne minősítsd emiatt FAIL-nek a kört;
-- **`exit 2`** → a DoD-pontoknak nincs `DoD-NN` azonosítójuk → pótold őket a `spec.md`-ben (lásd lent), és futtasd újra.
+- **`exit 2`** → a DoD-pontoknak nincs `DoD-NN` azonosítójuk → pótold őket a `spec.md`-ben (lásd lent), és futtasd újra. **Akkor is `exit 2` jön, ha a `--round-dir` a `test-runs/` fa alá mutat (D8):** az a `/bs-run-tests` cikluson kívüli, kényelmi futtatásának helye, és az ott keletkező eredmény **NEM ciklus-bizonyíték** — nincs `DoD-NN`/`TS-NN` join, nincs kör-szám, tehát a TR7 frissesség és a RUN1 kör-lefedettség sem értelmezhető rá. Ciklus-bizonyítékot **ennek a körnek** kell termelnie a ciklus `test-report/<fázis>/round-NN/` mappájába. Ugyanez a tilalom él a `report-gate-check.py --report-subdir` értékére.
 
 **A pontokra mindig a `DoD-NN` azonosítójukkal hivatkozz** (DI1) — a riportban, a naplóban és a javító-taskokban egyaránt.
 

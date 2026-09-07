@@ -49,6 +49,7 @@ A **skill is a recipe**: a static methodology that the **main agent** runs. The 
 | `cycle-status.md` | *(Helper command.)* Reports the status of the cycles; it runs `cycle-status.py`. |
 | `export-doc.md` | *(Helper command.)* Versioned PDF export from the markdown docs; it runs `export-doc.py`. |
 | `manual-test-plan.md` | *(Helper command.)* Assembles the manual test plan (`manual-test-plan.md`) for a human to walk the cycle through. Zero feedback into the flow (MT4). |
+| `run-tests.md` | *(Helper command.)* Runs tests **outside a cycle**, per category, from the project-level run table of `conventions.md` (KT1/KT4); it runs `run-tests.py --table-source conventions` and writes into the gitignored `test-runs/` tree. Its result is **never cycle evidence** (D8). |
 
 ### 1.3 `prompts/agents-<lang>/` — the specialist agents
 
@@ -174,7 +175,9 @@ Next to the scripts the installer also places **`lang-keys.json`** — the slice
 │   ├── architecture.md
 │   ├── CHANGELOG.md
 │   ├── design-drift.md
+│   ├── test-description.md
 │   └── <component>/README.md
+├── test-runs/
 ├── export/
 └── .bs-brainstorm/
     └── brainstorm-NN-<slug>.md
@@ -186,6 +189,7 @@ Next to the scripts the installer also places **`lang-keys.json`** — the slice
 | `specs/roadmap.md` | The cycle list with dependencies and test criteria; a cycle is closed here at the merge. | `01`, `09` |
 | `specs/test-conventions.md` | What has to be tested in **every** cycle, per component, as-built — with a mandatory coordinate block (TC13) and the recipe register. **Nothing runs from it automatically** (TC1/a): a recipe only executes if 02/03 has consciously lifted it into the cycle's spec/plan. | `08` |
 | `docs-generated/` | The generated, as-built documentation. It is the deliverable — it must be committed and must not go into `.gitignore`. Every file carries a header block (DS17) with `Covered` / `Last updated` / `Generator/scope`. | `08` |
+| `test-runs/` | The result tree of the **out-of-cycle** test runs: `test-runs/<category>/<UTC-timestamp>/<env>/`, with `results.json` in the root of each run and a `latest.json` per category in the root of the tree. Machine-dependent and regenerable → it belongs in `.gitignore`. **It is never cycle evidence** (D8): `dod-check.py` and `report-gate-check.py` reject a path under it with `exit 2`. | `bs-run-tests` |
 | `export/` | Versioned PDF exports (`<name>-v<N>.pdf`). Binary, it grows per cycle and can be regenerated at any time → it belongs in `.gitignore`. | `bs-export-doc` |
 | `.bs-brainstorm/` | The persistent working files of the ideation sessions. Raw thinking, not a deliverable → gitignored; what is worth keeping is distilled into the cycle's `cycle-design-input.md`. | `bs-brainstorm` |
 
@@ -198,6 +202,7 @@ Next to the scripts the installer also places **`lang-keys.json`** — the slice
 | `architecture.md` | How the system is built and how it runs — components, build, deployment, ops. Its exclusive owner is 08 (the architecture-writing task of 06 has been retired, DS4). |
 | `CHANGELOG.md` | A detailed, incremental, per-cycle change log of what changed in the behaviour/documentation of the system. |
 | `design-drift.md` | The deviations of the implemented system from the HLD/LLD intent (DS20). A resolved deviation is not deleted, it moves to the "Closed deviations" section. |
+| `test-description.md` | The **test inventory** (LD1–LD8): the `TL-NNN` items per category — environment (`local`/`remote`), goal, steps with a concrete command, expected result, run command, recipe reference, last run, source cycle. It answers *which tests exist and what they prove*; `specs/test-conventions.md` answers *how I run them* (field-level ownership, D3 — the two never carry the same field, and the `R-NN` ↔ `TL-NNN` reference is two-way). The `TL-NNN` is never reused, and a retired item stays in the file with a `Retired` marking. Its completeness is a **hard gate** (`test-inventory-check.py`, LD5), measured against the test files discovered from the globs of `conventions.md`. |
 | `<component>/README.md` | The component READMEs. An **existing** component's README is owned by 08; only a **new** component's first README may be written by 06. |
 | _(project-specific extra docs)_ | Any further generated doc. The skill does not hardcode them: the folder walk finds them and the header scope decides whether a cycle affects them. |
 
@@ -270,6 +275,7 @@ specs/cycle-NN-<cycle-name>/
 | `specs/**` (spec, plan, tasks, questions, reports) | **yes** | The design documents and the evidence are the deliverable; after a `/clear` this is the only place the work can be reconstructed from. |
 | `specs/cycle-*/analyze/slices/` | no | Generated input slices; the folder hides itself with a `.gitignore`. |
 | `docs-generated/**` | **yes** | The living documentation is a deliverable. |
+| `test-runs/**` | no | The results of the out-of-cycle, convenience runs: machine-dependent, regenerable, and never cycle evidence (D8) — in version control they are only noise. |
 | `export/**` | no | Binary, regenerable from the version-controlled markdown. |
 | `.bs-brainstorm/**` | no | Raw thinking; the distillate goes into `cycle-design-input.md`, and that is what gets committed. |
 | The platform folders (`.claude/`, `.agents/`, `.codex/`, `.cursor/`, `.github/`) | project decision | Whichever way you decide, note that a worktree only receives git-**tracked** files — for the gitignored case `worktree-setup.py` (PW4) supplies them. |

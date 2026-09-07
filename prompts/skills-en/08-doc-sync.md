@@ -8,6 +8,7 @@ prerequisites:
   - "specs/cycle-NN-<name>/spec.md status: <status:done>"
 output:
   - "a consistent state of docs-generated/ (system-overview.md, architecture.md, CHANGELOG.md, design-drift.md, README.md folder index + the other files of the folder)"
+  - "docs-generated/test-description.md — the test inventory of the project: which tests exist and what they prove (LD1)"
   - "specs/test-conventions.md — the live register of the recurring test expectations and of the recipes belonging to them (TC1)"
   - "The affected component READMEs updated"
   - "specs/cycle-NN-<name>/doc-sync-plan.md (the anchor of the execution and of the continuation)"
@@ -105,6 +106,7 @@ The **project-specific** paths of level 3 are read by the doc-sync from the **`#
 | `docs-generated/architecture.md` | "How it is built/runs" — components, build, deployment, ops, **technical contracts** (config fields, log/event schema, error-code table — verbatim, DS23) **and environment coordinates** (URL/port/test user, DS25) | the structure and the operation of the system |
 | `docs-generated/CHANGELOG.md` | A detailed, incremental change log per cycle (DS15) | the behavior/document change of every closed cycle |
 | `docs-generated/design-drift.md` | The deviations of the realized system from the HLD/LLD intent (DS20) | the design ↔ as-built deviations + "<sec:closed_deviations>" |
+| `docs-generated/test-description.md` | The **test inventory** of the project: `TL-NNN` items per category — goal, steps, expected result, run command (LD1–LD8) | the complete test suite discovered with the globs of the `### Test file locations` of `conventions.md` |
 | _(project-specific extra documents)_ | found by the folder walk; the header scope decides whether it is affected | declared by the own header of the file |
 
 ---
@@ -132,9 +134,9 @@ The doc-sync may be interrupted at any time. At a restart, do **NOT** start with
 The doc-sync follows the **"the plan first, then mechanical execution"** pattern. The steps:
 
 1. **Branching:** bootstrap or incremental? (see below)
-2. **Producing the plan:** the `doc-sync-planner` subagent writes `doc-sync-plan.md` (a checkable plan per file) — together with the items of `specs/test-conventions.md`.
+2. **Producing the plan:** the `doc-sync-planner` subagent writes `doc-sync-plan.md` (a checkable plan per file) — together with the items of `specs/test-conventions.md` and of `docs-generated/test-description.md`.
 3. **Mechanical execution:** the main agent carries out the `[ ]` items of the plan, saving and ticking per file.
-4. **The objective consistency gate (DS22):** running the core gate; in case of a failure a human-driven fixing loop (the question into `doc-sync-questions.md`). This is followed by the own gate of `test-conventions.md` (TC8, `tc8-gate-check.py`).
+4. **The objective consistency gate (DS22):** running the core gate; in case of a failure a human-driven fixing loop (the question into `doc-sync-questions.md`). This is followed by the **two own gates**: that of `test-conventions.md` (TC8, `tc8-gate-check.py`) and that of the test inventory (LD5, `test-inventory-check.py`). **All three are mandatory**, and all three must be green before the commit.
 5. **Commit + moving on to 09.**
 
 ---
@@ -277,6 +279,8 @@ The **index/manifest** of the folder — it briefly describes what each file is 
 - **An outdated entry → out** (the actual content of the folder == the entries of the README, set equality).
 
 At the **creation** of the folder (the bootstrap) the index is created as well. This `docs-generated/README.md` is **separate** from `prompts/README.md` and from the root `README.md`.
+
+> **`test-description.md` is a file of the folder too**, so it gets an index line (LD8/a) — otherwise the set-match gate fails.
 
 ---
 
@@ -535,6 +539,126 @@ python3 <platform-scripts-mappa>/tc8-gate-check.py specs/test-conventions.md \
 
 ---
 
+## Maintaining `docs-generated/test-description.md` (LD1–LD8)
+
+### LD1 — What this is, and what it is NOT
+
+`docs-generated/test-description.md` is the **test inventory** of the project: it answers the question of **which tests exist in the project and what they prove**. The doc-sync is its **exclusive owner** (like of the other files of `docs-generated/`); `03b-write-test-plan`, `bs-manual-test-plan`, `02-write-spec` and `bs-quick-flow` only **read** it.
+
+> **🔴 LD1/a — This is not a runnable source either, and not a recipe register.** The `test-runner` and `run-tests.py` do **not** read this file; the truth of execution is the machine-readable table of `plan.md` (at cycle level) and the `## <sec:cv_test_execution>` section of `conventions.md` (at project level). The inventory is the **human- and agent-readable truth** about what is already tested.
+
+**The boundary towards `specs/test-conventions.md` (D3) — field-level ownership:** the inventory is the truth of **<field:f_goal> / <field:f_steps> / <field:f_expected_result>** for **every** test; `test-conventions.md` is the truth of the **recipe** (`<field:f_startup>`, `<field:f_example_call>`, `<field:f_prerequisite>`, `<field:f_cleanup>`, credential pointer) for the **promoted, recurring** expectations. **The two never carry the same field**; on a conflict the given file wins per field. The link is given by the two-way `R-NN` ↔ `TL-NNN` reference (LD6).
+
+**A consequence you MUST STATE:** a test written **outside a cycle** (`/bs-run-tests`) or **in the simplified flow** (`/bs-quick-flow`) only shows up in the inventory at the **next** doc-sync run — until then the file is out of date for that test. This is what the drift signal of quick-flow is for (QF7/LD10).
+
+**Structure (LD1):** header block (DS17) → `# <sec:test_inventory>` → the introductory paragraphs → **one `##` section per category**, with the name from the `**<field:f_test_categories>:**` dictionary of `conventions.md` (D6) → within the section the `TL-NNN` items **by their number**. The `TL-NNN` is **global and permanent**: the items are **not** reordered on a category change, and they do not get a new number.
+
+### LD2 — The datasheet of an item (MANDATORY format)
+
+**Every `TL-NNN` item carries these nine elements** — check 3 of `test-inventory-check.py` measures them one by one:
+
+```md
+<!-- INCLUDE:lang/08-doc-sync.md#LD2-tl-adatlap-vaz -->
+```
+
+- **`<field:f_environment>`:** exactly `local` or `remote`. This is a **language-independent literal** (EV8): it joins onto the `test-runs/<category>/<timestamp>/<env>/<TL-NNN>/` path segment, so a project-language form would split the result tree under two names.
+- **`<field:f_steps>`:** the steps contain a **concrete command/call and a concrete expected value** (with the density of the `TG-NN` groups of `bs-manual-test-plan`, D2) — **not** a behaviour-level summary. A line saying "the test checks the login" is not reproducible, therefore worthless.
+- **`<field:f_run_command>`:** the **selector-based** run in one line (it runs only this one test). This field joins to the discovery: check 1 of the gate reads from it which test file the item is about.
+- **`<field:f_recipe>`:** an `R-NN` reference into `test-conventions.md`, or `—`. Leaving it empty is not an option (the gate catches the **absence** of the field, while `—` is a legitimate value).
+- **`<field:f_last_run>`:** a date + `local`/`remote`. This is the mitigation of the risk accepted in D2 (LD7).
+- **`<field:f_source_cycle>`:** which cycle created the test. On a `<status:retired>` item this is the **only** mandatory field beside the marking.
+
+**A calibration sample** (the floor on its own does not produce detail — copy the sample for its **density**, not for its topic):
+
+```md
+<!-- INCLUDE:lang/08-doc-sync.md#LD2-tl-adatlap-pelda -->
+```
+
+### LD3 — The life of the identifier (D4)
+
+- The `TL-NNN` is a **project-level, three-digit** number (`TL-001`), and you **never reuse** it.
+- You **do not rewrite an existing item** to a different number: the join (the `test-runs/<TL-NNN>/` result folder, the `TG-NN` group header, the `R-NN` back-reference) builds on a **literal match** — the same rule as for the `TS-NN` and `AF-NN` identifiers.
+- **Renaming, moving or rewriting** a test file does **NOT** change the number; in that case you fix the `<field:f_run_command>`.
+- **The item of a retired test gets a `<status:retired>` marking, and STAYS in the file** (audit trail) — beside the marking the justification and the retiring cycle:
+
+```md
+<!-- INCLUDE:lang/08-doc-sync.md#LD3-retired-jeloles -->
+```
+
+**This is why the numbering has no gaps:** check 2 of the gate finds a gap if you **deleted** an item instead of a `<status:retired>` marking.
+
+### LD4 — The course of the maintenance (in every doc-sync run)
+
+1. **List the tests of the cycle** from two sources: the **actual** content of `test-report/` (what ran — this is the evidence) and the `TS-NN` blocks of the `<sec:plan_test_scenarios>` of `plan.md` (what was produced). In the simplified flow the test strategy of `spec.md` and the test steps of `tasks.md` give the same.
+2. **Carry them over into the inventory** — three kinds of operation, item by item: a **new item** (with the next free `TL-NNN`), **updating an existing one** (typically bumping the `<field:f_last_run>` and refining the steps), or a **`<status:retired>` marking**.
+3. **Do NOT write in unverified data.** If the goal, a step or the expected result of an item cannot be established unambiguously from the test file and from the evidence either, that is a **question into `doc-sync-questions.md`** (following the TC3 verification rule) — **guessing is forbidden**:
+
+```md
+<!-- INCLUDE:lang/08-doc-sync.md#LD4-leltar-kerdes -->
+```
+
+4. **Bump the `<field:f_last_run>`** on those items that **really** ran in this cycle (`test-report/` is the evidence) — on nothing else.
+5. **The inventory gets a SEPARATE, tickable line in `doc-sync-plan.md`** (per-file plan, the DS pattern) — and every `<status:retired>` marking is a separate plan line too, so that the user sees it and ticks it before it happens.
+
+### LD5 — The file's own gate (`test-inventory-check.py` — scripted)
+
+The DS22 core gate measures the **set** and **marker** matches of the `docs-generated/` folder, but it cannot measure the **completeness** of the inventory — that needs the test files of the repo to be discovered. Therefore the file has its **own gate**, and that one is **fully scripted**: there is no LLM judgment in it, so **do not grep by hand**, run the script.
+
+<!-- INCLUDE:shared/python-cmd.md -->
+
+```bash
+python3 <platform-scripts-mappa>/test-inventory-check.py docs-generated/test-description.md \
+  --project-root . \
+  --conventions conventions.md \
+  --test-conventions specs/test-conventions.md
+```
+
+**The seven checks:**
+
+| # | What it checks | Blocking? |
+|---|---|---|
+| 1 | **Discovery ↔ inventory set match (LD5/1)** — EVERY test file discovered with the globs of the `### Test file locations` of `conventions.md` has at least one `TL-NNN`, and the `<field:f_run_command>` of every live item points to an **existing** file | **FAIL** in both directions, listing the missing element item by item |
+| 2 | **Gapless, unique `TL-NNN` (LD5/2)** — the TS6 pattern | **FAIL** — a gap means that an item was deleted instead of a `<status:retired>` marking |
+| 3 | **Mandatory fields (LD5/3)** — the nine elements of the LD2 datasheet on every item | **FAIL** |
+| 4 | **Category validity (LD5/4)** — the `##` section of the item comes from the dictionary of `conventions.md` (D6) | **FAIL** |
+| 5 | **`<field:f_environment>` value (LD5/5)** — exactly `local` or `remote` (the EV8 literal) | **FAIL** |
+| 6 | **Two-way `R-NN` join (LD5/6)** — see LD6 | **FAIL** — a one-sided reference is a failure too |
+| 7 | **Out-of-date target host (LD5/7)** — see LD7 | **WARN** (`exit 0`) → a question into `doc-sync-questions.md` |
+
+**Exit code:** `0` = every hard check PASS (WARN allowed), `1` = at least one FAIL, `2` = a usage error. **If the `docs-generated/` folder does not exist**, the script returns `0` with a "skipped" note (the bootstrap has not run yet); **if the folder exists but the inventory does not**, that is a **FAIL** — the inventory is a mandatory file of the folder (LD8).
+
+> **There is NO `TL-EXEMPT` exemption list.** Narrowing the scope happens **only** in the glob declaration of the `### Test file locations` of `conventions.md` — this is the single regulated loophole (D5). If a set of test files is deliberately left out of the inventory, the glob must be narrowed, agreed with the user.
+
+**On a failure (`1`)** the same **human-driven** fixing loop runs as at DS22: the concrete difference goes into `doc-sync-questions.md` as a `Knn`, then the fix, then the gate runs again until it is green.
+
+### LD6 — Two-way join with `test-conventions.md` (the mitigation of D3)
+
+If a `TL-NNN` item has a recipe, it must be visible **in both directions**:
+
+- the inventory item points to the `R-NN` in its `**<field:f_recipe>:**` field, **and**
+- the `### R-NN` datasheet of `test-conventions.md` points back to the `TL-NNN` in its `**<field:f_inventory_items>:**` field.
+
+Check 6 of the gate measures **both directions** (following the two-way `DoD-NN` ↔ `TS-NN` coverage of TS5). **A one-sided reference → failure** — because a silent overlap is exactly the failure class for which `RP1` abolished the path rule that lived in three places.
+
+**What this means for the TC10/b detail block:** do **NOT write the steps again** into the TC10/b block of `test-conventions.md` if the test has an inventory item — reference the `TL-NNN`. And the inventory must **NOT repeat** the `<field:f_startup>`, `<field:f_example_call>`, `<field:f_prerequisite>` and `<field:f_cleanup>` fields. The two artifacts may **mention** the same test, but they **never duplicate a single field**.
+
+### LD7 — Freshness (the mitigation of D2)
+
+The decision of D2 (a concrete command and a literal host in the inventory) comes with an accepted risk: a port or host change **silently** leaves something out of date. Two mitigations apply:
+
+1. The `**<field:f_last_run>:**` is **mandatory** on every live item (a date + `local`/`remote`).
+2. Check 7 of the gate performs a comparison: whether the **target hosts** appearing in the commands of the items are a subset of the environments declared in `conventions.md`. If an item calls a host that the project no longer declares, the gate gives a **WARN** with the identifier of the item — and **you put a question** into `doc-sync-questions.md` (you may not ignore the WARN: the answer is either a fix or a question).
+
+### LD8 — Bootstrap and the folder index
+
+**(a) The folder index (DS21).** `docs-generated/README.md` gets an index line for `test-description.md` — otherwise the DS21 **set match** gate fails (`ds22-gate-check.py` compares the **actual** `.md` list of the folder with the entries of the README).
+
+**(b) The bootstrap is INDEPENDENT of the `system-overview.md` branch** (following the pattern of `test-conventions.md`): the inventory has to run even if `docs-generated/` is being born now, **and** even if the folder already exists but the inventory does not. **At bootstrap the discovery gives the `TL-NNN` skeletons** (with the globs of `conventions.md`), but the **descriptions have to be filled in with the user** — the name of the test file does not tell what the test proves, and **guessing is forbidden** (TC3). Offer the skeletons and the missing data in one `Knn` question, **in one round**.
+
+> **The TC6 "do not create an empty skeleton" rule does NOT apply here.** `test-conventions.md` is promotion-based, so its absence is justified in an early cycle; the inventory, on the other hand, is complete from the **discovery**, so if there is even one declared test file, the file must exist. If the project has no test file at all, the `### Test file locations` table of `conventions.md` is empty — and then the gate looks for nothing either.
+
+---
+
 ## The objective consistency gate (DS22) + handling a gate failure (DS10)
 
 After the execution it is **mandatory** to run the two-layer, project-independent gate. The core gate is **objective/deterministic** (grep, set comparison, inventory pairing, reading markers) — there is no "judge whether the text is good" in it, therefore Layer 1 is **done by a script, you do not grep by hand**.
@@ -712,8 +836,18 @@ Every item is one line + (for the `<status:op_reconciliation>`/`<status:op_new>`
   ```
 - **Prerequisite / order:** `oc login` has happened (the credential is not here — a TC5 pointer: in the vault of the team); after the restart the health returns `ready`, only then may any I item run
 - **Scope:** `shared-remote` — the dev cluster is used by others as well
+- **Inventory items:** TL-014, TL-018
 - **Last run:** cycle-29
 ````
+
+### `docs-generated/test-description.md` (LD1)
+
+**Skeleton** — the header block (DS17), the `# <sec:test_inventory>` heading, the introductory paragraphs, then **one `##` section per category**; into the sections go the `TL-NNN` items per the datasheet of `LD2`, by their number:
+```md
+<!-- INCLUDE:lang/08-doc-sync.md#LD1-test-description-vaz -->
+```
+
+> The skeleton of the item datasheet and the calibration sample stand in the `LD2` section; the form of the `<status:retired>` marking is in `LD3`.
 
 ### A `docs-generated/README.md` index row (DS21)
 

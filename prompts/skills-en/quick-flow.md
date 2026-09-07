@@ -251,9 +251,14 @@ In this phase the actual coding happens according to the task list.
     <!-- INCLUDE:lang/quick-flow.md#BS-drift-sor -->
 
     **and** state to the User that `docs-generated/` remains outdated until the `08-doc-sync` phase of the next full cycle. The reason: `02-write-spec` reads `system-overview.md` as **current truth**, so an unmarked drift poisons the spec of the next full cycle. Do **not touch** the **other** files of `docs-generated/` (`system-overview.md`, `architecture.md`, `CHANGELOG.md`, the folder index) — their owner is `08-doc-sync`. If the folder does not exist, this point is skipped.
+*   **Test inventory drift note (LD10):** if this cycle **added or changed a test**, `docs-generated/test-description.md` **remains outdated** until the `08-doc-sync` phase of the next full cycle — the owner of the inventory is `08` (LD1), do **not touch** that file. In that case **two things are mandatory**: a separate drift row into `design-drift.md`,
+
+    <!-- INCLUDE:lang/quick-flow.md#LD10-teszt-leltar-drift-sor -->
+
+    **and** a warning to the User about the same — naming which test file(s) it is about, so that the discovery of the next doc-sync does not rely on the glob alone. The reason is the same as at QF7, one degree sharper: `03b-write-test-plan` reads the inventory as **current truth** for selecting the regression round (LD9) — an unmarked new test causes either duplication or a missed regression. If the `docs-generated/` folder does not exist, this point is skipped as well.
 *   **Completion criteria / Cycle closing:** The implementation and the whole cycle can **only be considered finished and closed** if:
     1. The specified tests ran without error — per step, with a selector, plus the closing regression run; the skipped tests stated.
-    2. The related documentation (e.g. `README.md`) has been updated, and — if relevant — the drift row of `docs-generated/design-drift.md` has been added.
+    2. The related documentation (e.g. `README.md`) has been updated, and — if relevant — the drift row of `docs-generated/design-drift.md` has been added (for the behavior change per QF7, for the new/changed test per LD10).
     3. The results achieved have been verified and confirmed with the User.
     4. **The status of `tasks.md` is `<status:done>`, and the cycle's closing commit has been made** — the commit message follows the git convention of `conventions.md`. If `specs/roadmap.md` exists, the cycle's row is set to a closed state as well (QF6); if it does not exist, state this in one line.
 
@@ -327,6 +332,7 @@ If the task is so large that these loops and agents would truly be warranted, th
 |---|---|
 | `/bs-cycle-status` | Recognizes the simplified flow (no `plan.md`), and tells where the cycle stands from the status fields of `spec.md` + `tasks.md`. This is why the QF2 status field is mandatory: without it, it prints "not run yet" for every phase. |
 | `/bs-manual-test-plan` | **Usable from this flow too (QF8):** if there is no `plan.md` in the cycle, the gate looks at the status of `tasks.md`, and assembles the manual test plan from the technical outline + testing strategy of `spec.md`. For a configuration or operations cycle this is the most useful addition. |
+| `/bs-run-tests` | **Out-of-cycle test execution per category (KT4):** it runs from the `## <sec:cv_test_execution>` table of `conventions.md`, and writes into the `test-runs/` tree — this flow needs **no** `plan.md` for it. Useful for the closing regression run; its result is **not** cycle evidence (D8), but in this flow there is no `07` gate anyway. |
 | `/bs-export-doc` | Export of the cycle's documents (e.g. into a shareable format) — flow-independent. |
 | `/bs-brainstorm` | Exploratory ideation **before** the cycle; you take over its distillate per the entry-point section (QF16). |
 

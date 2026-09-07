@@ -5,8 +5,9 @@
 > tételes teendőket, a 7. a dokumentációt, a 8. a kapukat, a 9. a végrehajtási sorrendet.
 > **Semmit nem kell kikövetkeztetni** — ha valami mégis hiányzik, az a terv hibája; írd bele.
 >
-> **Státusz:** **TERV** (2026-09-07) — a 3. szakasz döntései a felhasználóval **lezárva**,
-> a végrehajtás még nem kezdődött el.
+> **Státusz:** **ELKÉSZÜLT** (2026-09-07) — a 3. szakasz döntései a felhasználóval **lezárva**,
+> a végrehajtás **befejeződött**, minden kapu zöld. A tervtől való négy eltérés és a
+> végrehajtás tapasztalatai a **10. szakaszban**.
 > **Előzmény:** a `prompts/inprove-list10.md` (`QF1`–`QF20` · `QT1`–`QT6`) **elkészült**
 > (`3132cd9`, review-utómunka `e9244f1`). Ez a kör nem egy meglévő fázist keményít, hanem
 > **két új képességet** ad a kerethez: (a) egy **projekt-szintű teszt-leltárt**, amit a
@@ -24,7 +25,7 @@
    végrehajtás közben tarthatatlannak bizonyul, **írd a 10. szakaszba, mi lett helyette és
    miért** — ne csendben térj el tőle.
 3. **A 9. szakasz sorrendjében haladj**, és minden teendő után **pipálj ebben a fájlban**
-   (`- [ ]` → `- [x]`).
+   (`- [x]` → `- [x]`).
 4. **Kétnyelvű repó:** minden prompt-szerkesztés **hu ÉS en párban** megy (1.2), és ez a kör
    — a `list10`-zel ellentétben — **bővíti a `status-keys.json`-t** (6. szakasz).
 5. **Nincs CI és nincs pre-commit hook** — a kapukat (8. szakasz) **kézzel futtasd le**, commit előtt.
@@ -260,12 +261,12 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
 
 ## 4. A teszt-leltár (`docs-generated/test-description.md`)
 
-- [ ] **LD1 — Az artefaktum szerkezete.** Fejléc (`<field:f_last_run>`-mentes, de a generálás
+- [x] **LD1 — Az artefaktum szerkezete.** Fejléc (`<field:f_last_run>`-mentes, de a generálás
       dátumával), majd **kategóriánként egy szekció** a `conventions.md`-ben deklarált kategória
       nevével (D6), és a szekción belül a `TL-NNN` tételek **sorszám szerint**. A fájl
       címsora/fő szekciója `<sec:test_inventory>`. A tételek **nem** rendeződnek át a
       kategória-váltáskor: a `TL-NNN` sorszám globális és állandó (D4).
-- [ ] **LD2 — A tétel adatlapja** — új `ANCHOR` a `prompts/lang/{hu,en}/08-doc-sync.md`-ben,
+- [x] **LD2 — A tétel adatlapja** — új `ANCHOR` a `prompts/lang/{hu,en}/08-doc-sync.md`-ben,
       a skillben INCLUDE marker hivatkozik rá. Kötelező mezők (mind **meglévő** token, kivéve
       ahol jelezve):
       `### TL-NNN — <cím>` · `**<field:f_environment>:**` `local` / `remote` ·
@@ -279,17 +280,17 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
       **Kalibrációs minta kell mellé** (kitöltött példa), mert a `7/h` szerint a padló önmagában
       nem termel részletet — a mintát a `08-doc-sync.md:698` `R03` recept és a
       `03b-write-test-plan.md` `TS-NN` blokkja sűrűségéért másold, ne a témájáért (`TD5`).
-- [ ] **LD3 — Azonosító-életút (D4).** A `08` **soha nem használ újra** `TL-NNN`-t, és **nem
+- [x] **LD3 — Azonosító-életút (D4).** A `08` **soha nem használ újra** `TL-NNN`-t, és **nem
       írja át** a meglévőt (a `TS`/`AF` azonosítók szabálya: a join szó szerinti egyezésre épül).
       Megszűnt teszt tétele `<status:retired>` (**ÚJ token**) jelölést kap az indoklással és a
       kivezető ciklussal; a tétel a fájlban **marad**.
-- [ ] **LD4 — A `08` karbantartási lépései.** Minden doc-sync futásban: (a) sorold fel a ciklus
+- [x] **LD4 — A `08` karbantartási lépései.** Minden doc-sync futásban: (a) sorold fel a ciklus
       tesztjeit (a `test-report/` tényleges tartalmából és a `plan.md` `TS-NN` blokkjaiból),
       (b) vezesd át a leltárba (új tétel / meglévő frissítése / `retired`), (c) a **nem
       verifikált** adatot **ne** írd be, hanem kérdés a `doc-sync-questions.md`-be (a `TC3`
       verifikációs szabály mintájára), (d) a `<field:f_last_run>` bumpolása.
       **A leltár a `doc-sync-plan.md` pipálható tervének külön sorát kapja** (per-fájl terv, DS-minta).
-- [ ] **LD5 — `test-inventory-check.py` (a kemény kapu, D5).** Amit mér:
+- [x] **LD5 — `test-inventory-check.py` (a kemény kapu, D5).** Amit mér:
       1. **Felderítés ↔ leltár halmaz-egyezés:** a `conventions.md` tesztfájl-hely deklarációjából
          globbal összeszedett tesztfájlok mindegyikéhez tartozik legalább egy `TL-NNN` tétel, és
          minden `TL-NNN` tétel `<field:f_run_command>`-ja **létező** fájlra mutat (nem `retired`
@@ -300,7 +301,9 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
       5. **`<field:f_environment>` értéke** pontosan `local` vagy `remote` (EV8 literál).
       6. **Kétirányú `R-NN` join** (LD6).
       7. **Elavult cél-host** (LD7) — ez **figyelmeztetés** (`exit 0` + WARN), nem bukás.
-      **A CLI-szerződés (a `tc8-gate-check.py:627`–`:633` tényleges alakja szerint):**
+      **A CLI-szerződés (a `tc8-gate-check.py:627`–`:633` tényleges alakja szerint)** —
+      _a 6. checkhez egy negyedik, opcionális flag is kellett (`--test-conventions`), lásd a
+      10.3 szakaszt:_
       ```
       test-inventory-check.py [docs-generated/test-description.md]  # pozicionális, opcionális, ez az alapérték
                               --project-root .                       # a felderítés gyökere
@@ -308,19 +311,19 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
       exit 0 = PASS (WARN-ok a kimeneten) · 1 = FAIL (tételes hiánylista) · 2 = használati hiba
       ```
       A kimenet nyelve a `lang_keys.py`-n megy (mint a többi kapunál).
-- [ ] **LD6 — Kétirányú join a `test-conventions.md`-vel (a D3 mitigációja).** Ha egy `TL-NNN`
+- [x] **LD6 — Kétirányú join a `test-conventions.md`-vel (a D3 mitigációja).** Ha egy `TL-NNN`
       tételhez tartozik recept, a tétel `<field:f_recipe>`-je az `R-NN`-re mutat, **és** a
       `test-conventions.md` `R-NN` adatlapja visszamutat a `TL-NNN`-re. A kapu **mindkét irányt**
       méri (a `TS5` kétirányú `DoD-NN` ↔ `TS-NN` lefedettség mintájára). Egyoldalú hivatkozás → bukás.
       **Mező-szintű tulajdon kimondása:** a `08` a TC10/b részletező blokkba **nem** írja be újra a
       lépéseket, hanem a `TL-NNN`-re hivatkozik; a leltár pedig **nem** ismétli meg az indítást,
       a példa hívást, az előfeltételt és a takarítást.
-- [ ] **LD7 — Frissesség (a D2 mitigációja).** A `<field:f_last_run>` kötelező, és a kapu
+- [x] **LD7 — Frissesség (a D2 mitigációja).** A `<field:f_last_run>` kötelező, és a kapu
       összevetést végez: a tételek parancsaiban szereplő **cél-hostok** részhalmazát adják-e a
       `conventions.md`-ben deklarált környezeteknek. Ha egy tétel olyan hostot használ, amit a
       projekt már nem deklarál, a kapu **WARN**-t ad a tétel azonosítójával, és a `08` kérdést
       tesz a `doc-sync-questions.md`-be.
-- [ ] **LD8 — Bootstrap és mappa-index.** (a) A `docs-generated/README.md` (DS21) index-sort kap a
+- [x] **LD8 — Bootstrap és mappa-index.** (a) A `docs-generated/README.md` (DS21) index-sort kap a
       `test-description.md`-re — a DS21 **halmaz-egyezés** kapu különben elbukik.
       _(Ellenőrizve: a `ds22-gate-check.py` `check_folder_index()` (`:79`) a mappa **tényleges**
       `.md` listáját veti össze a README bejegyzéseivel — **nincs bedrótozott fájllista**, tehát
@@ -329,7 +332,7 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
       `test-conventions.md` mintájára, `08-doc-sync.md:361`): akkor is le kell futnia, ha a
       `docs-generated/` most születik. Bootstrapkor a felderítés adja a `TL-NNN` vázakat, a
       leírásokat a felhasználóval kell kitölteni — **találgatni tilos** (TC3).
-- [ ] **LD9 — Fogyasztók (csak olvasás).** Egy-egy bekezdés:
+- [x] **LD9 — Fogyasztók (csak olvasás).** Egy-egy bekezdés:
       - **`03b-write-test-plan.md`** — a leltár **current truth** a meglévő tesztekről: a
         regressziós kör kiválasztásához és a duplikáció elkerüléséhez innen olvass (ma erre
         semmi nem mutat). A fájlt a `03b` **nem írja**.
@@ -339,13 +342,13 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
         munkáját, és a `TL` ↔ `TG` join az MT6 lefedettséget is erősíti.
       - **`02-write-spec.md`** — egy sor: a leltárból látszik, mi van már letesztelve, tehát a
         spec ne írjon elő már létező tesztet újra.
-- [ ] **LD10 — quick-flow drift-jelzés (`7/o`).** A `quick-flow` lezárási pontja (ma QF7 a
+- [x] **LD10 — quick-flow drift-jelzés (`7/o`).** A `quick-flow` lezárási pontja (ma QF7 a
       `design-drift.md`-re) mondja ki: ha a ciklus **tesztet adott vagy módosított**, a
       `docs-generated/test-description.md` a következő teljes ciklus `08-doc-sync` fázisáig
       **elavult marad** — ez bekerül a drift-sorba **és** a felhasználóhoz szóló figyelmeztetésbe.
       A leltárhoz a quick-flow **nem nyúl** (D1: a gazda a `08`).
 
-- [ ] **LD11 — A két frontmatter, amit könnyű elfelejteni** (mindkettő **hu + en** párban):
+- [x] **LD11 — A két frontmatter, amit könnyű elfelejteni** (mindkettő **hu + en** párban):
       1. **`08-doc-sync.md` `output:` lista** (`:9`–`:14`) — új sor a
          `docs-generated/test-description.md`-re, a `specs/test-conventions.md` sorának (`:11`)
          stílusában. A frontmatter-listák hosszát a `lang-parity-check.py` **méri**
@@ -365,14 +368,17 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
 
 ## 5. A központi futtatás (`/bs-run-tests` + `test-runs/`)
 
-- [ ] **KT1 — `conventions.md` `## <sec:cv_test_execution>` szekció** (**ÚJ token**) — sablon a
+- [x] **KT1 — `conventions.md` `## <sec:cv_test_execution>` szekció** (**ÚJ token**) — sablon a
       `prompts/lang/{hu,en}/00-init-project.md`-be, a `## <sec:cv_test_reporting>` (`:146`)
       **szomszédjaként**, és kötelező bekérdezés a `00-init-project.md`-ben (a TR3 kérdés
       mintájára). Tartalma:
       - `**<field:f_test_categories>:**` (**ÚJ token**) — a projekt kategória-szótára,
         vesszővel (`unit, rest-e2e, ui`).
-      - A **futtatási tábla**, a plan gépi táblájával **azonos oszlop-sémával** (TP4/b):
-        `| Kategória | <field:f_environment> | Parancs | Időkorlát | Riport-artefaktum |`.
+      - A **futtatási tábla**, a plan gépi táblájával **azonos oszlop-sémával** (TP4/b).
+        **🔴 AZ ITT EREDETILEG FELSOROLT ÖT OSZLOP TÉVES VOLT — lásd a 10.1 szakaszt:**
+        a `D10` „azonos oszlop-séma" elve nyert, tehát a tábla a **teljes kilenc oszlopos**
+        TP4/b sémát követi (`Kategória | Típus | Előfeltétel | Parancs | Eredményfájl |
+        Formátum | Takarítás | <field:f_environment> | <field:f_phase>`).
         A tábla fejléce a `run-tests.py:86` `HEADER_FIRST_CELL_WORDS` szerint felismerhető
         (`kategória` / `category`) — **ne írj más első oszlopot**.
       - **Tesztfájl-helyek deklarációja** (a `LD5` felderítés bemenete): kategóriánként egy
@@ -388,12 +394,12 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
       - **EV-szabályok érvényesek:** `remote` kategória sora **literál cél-hostot** hordoz
         (EV3), és van hozzá `Előfeltétel`-probe (EV4); `localhost`/`127.0.0.1` tilos deklarált
         port-forward nélkül (EV5).
-- [ ] **KT2 — Kategória-részhalmaz kapu (D6).** Az `analyze-gate-check.py`-ba (a plan-oldali
+- [x] **KT2 — Kategória-részhalmaz kapu (D6).** Az `analyze-gate-check.py`-ba (a plan-oldali
       checkek közé) egy check: a `plan.md` gépi futtatási táblájának `Kategória` értékei
       részhalmazai a `conventions.md` `<field:f_test_categories>` halmazának. Eltérés → a
       `03b` lezáró kapuja bukik, a nem deklarált érték felsorolásával.
       _(Ez ma szabad szöveg, tehát csendben elcsúszhat — ugyanaz a hibamód, mint a `TP4/b`-nél.)_
-- [ ] **KT3 — `run-tests.py`: projekt-szintű tábla-forrás.** A `parse_matrix()` (`:94`)
+- [x] **KT3 — `run-tests.py`: projekt-szintű tábla-forrás.** A `parse_matrix()` (`:94`)
       **szövegre** dolgozik, tehát a parser **változatlan** marad (`7/m`). Amit módosítani kell:
       a `plan_file` pozicionális argumentum (`:570`) általánosítása — javasolt alak:
       `--table-source plan|conventions` + a fájl útvonala, a régi pozicionális hívás
@@ -418,7 +424,7 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
       `round-log.py`, `validate-gate-check.py`, `manual-test-gate-check.py`, `install-helper.py`.
       _Ha a régi pozicionális alak megmarad, ezek egyike sem igényel szerkesztést — ezért
       választjuk a **bővítést** és nem az átírást (`7/m`: a hívó ne találgasson)._
-- [ ] **KT4 — `/bs-run-tests` skill (hu + en).** Tartalma:
+- [x] **KT4 — `/bs-run-tests` skill (hu + en).** Tartalma:
       - **Belépő alakok:** `/bs-run-tests` (kérdezze meg, melyik kategória és melyik környezet),
         `/bs-run-tests <kategória>`, `/bs-run-tests <kategória> <local|remote>`.
       - **Nem fázis (D10):** státuszt nem változtat, ciklus-artefaktumot nem ír, a `00`–`09`
@@ -430,22 +436,24 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
         (a `skipped` **nem** zöld — SK1), a mappa útvonala, a `test-runs/` teljes mérete (D12).
       - **Bizonyíték-tűzfal kimondva (D8):** *„ez a futás NEM ciklus-bizonyíték; a `07` kapuja
         nem fogadja el"* — plusz a `latest.json` frissítése.
-- [ ] **KT5 — A mappa-séma és a mutató.** `test-runs/<kategória>/<YYYY-MM-DDTHH-MMZ>/<env>/<TL-NNN>/`,
+- [x] **KT5 — A mappa-séma és a mutató.** `test-runs/<kategória>/<YYYY-MM-DDTHH-MMZ>/<env>/<TL-NNN>/`,
       a futás gyökerében `results.json`, a `test-runs/latest.json`-ben kategóriánként az utolsó
       futás útvonala és összegzése (D11). A `<TL-NNN>` szegmens joinolja az eredményt a leltárhoz —
       **ez a leltár második haszna**: egy központi futás eredménye tételenként visszakereshető.
       _(Ha egy futtatott teszt nem azonosítható `TL-NNN`-hez, az `LD5` kapu hiányát jelzi — a
       skill ilyenkor `unmapped/<teszt-név>/` alá írja, és a záró üzenetben jelzi.)_
-- [ ] **KT6 — Bizonyíték-tűzfal implementáció (D8).** (a) A `run-tests.py` a `results.json`-be
+- [x] **KT6 — Bizonyíték-tűzfal implementáció (D8).** (a) A `run-tests.py` a `results.json`-be
       `"cycle": null`-t ír, ha a `--round-dir` a `test-runs/` alatt van; (b) a `dod-check.py`
       (`--round-dir`, `:157`) és a `report-gate-check.py` (`--report-subdir`, `:321`)
       **`exit 2`-vel megáll**, ha a kapott útvonal a `test-runs/` alatt van, a kimondott
       indoklással; (c) a `07-validate.md` és a `06-implement.md` egy sora kimondja ugyanezt
       prózában is.
-- [ ] **KT7 — `.gitignore`** — `test-runs/` felvétele (a mai tartalom: `history`,
-      `__pycache__/`, `*.pyc`). **A célprojekt `.gitignore`-ját a `00-init-project` írja** —
-      ezért a `00` skillbe is bekerül a sor, nem csak ebbe a repóba.
-- [ ] **KT9 — Az új skill kötelező boilerplate-je** (ezt nulla kontextusból könnyű elhibázni):
+- [x] **KT7 — `.gitignore`** — `test-runs/` felvétele (a mai tartalom: `history`,
+      `__pycache__/`, `*.pyc`). ~~**A célprojekt `.gitignore`-ját a `00-init-project` írja**~~ —
+      **ez a premissza téves volt: a `00` ma egyáltalán nem nyúl a `.gitignore`-hoz.**
+      A sor a `BS4` (brainstorm) mintája szerint, **jóváhagyás-kötött felajánlásként** került
+      a `00`-ba — lásd a 10.4 szakaszt.
+- [x] **KT9 — Az új skill kötelező boilerplate-je** (ezt nulla kontextusból könnyű elhibázni):
       1. **Frontmatter** a `manual-test-plan.md:1`–`:13` mintája szerint: `name: bs-run-tests`,
          `description:` (a `descriptions.json` **nem** helyettesíti — a skill fájlban is kell),
          `prerequisites:` (a `conventions.md` `## <sec:cv_test_execution>` szekciója),
@@ -460,7 +468,7 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
          *„ebbe a vezető jegyzetbe ne kerüljön komment-lezáró szekvencia"* figyelmeztetés).
       4. **Sorszintű igazodás:** a hu és en példány címsorai ugyanazokon a sorokon álljanak
          (a `quick-flow` párnál ez ma 344/344) — így a paritás-kapu kimenete olvasható marad.
-- [ ] **KT8 — Segédparancs-kereszthivatkozások.** A `/bs-run-tests` bekerül: a `quick-flow.md`
+- [x] **KT8 — Segédparancs-kereszthivatkozások.** A `/bs-run-tests` bekerül: a `quick-flow.md`
       6. szekciójának segédparancs-táblájába (QF17), a `README-HU.md`/`README.md`
       segédparancs-táblájába, és a `meta-improve-prompts.md` segédparancs-listájába (7. szakasz).
 
@@ -468,7 +476,8 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
 
 ## 6. Új nyelvi kulcsok (`prompts/lang/status-keys.json`)
 
-- [ ] **TK1 — Hat új kulcs, mindkét nyelven.** A meglévő kulcsokat **ne** duplikáld: ellenőrizve
+- [x] **TK1 — Hat új kulcs, mindkét nyelven.** _(Végül **hét** kellett: a `LD6` kétirányú
+      joinjához a `f_inventory_items` mező is — lásd a 10.2 szakaszt.)_ A meglévő kulcsokat **ne** duplikáld: ellenőrizve
       (2026-09-07), hogy a `<field:f_goal>` (`Cél`), `<field:f_steps>` (`Lépések`),
       `<field:f_expected_result>` (`Elvárt eredmény`), `<field:f_environment>` (`Környezet`),
       `<field:f_recipe>` (`Recept`), `<field:f_last_run>` (`Utolsó futás`),
@@ -483,6 +492,7 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
 | `fields` | `f_run_command` | Futtató parancs | Run command |
 | `fields` | `f_source_cycle` | Forrás-ciklus | Source cycle |
 | `fields` | `f_test_categories` | Teszt-kategóriák | Test categories |
+| `fields` | `f_inventory_items` | Leltár-tételek | Inventory items | _(**+1, a tervben nem volt** — 10.2)_
 | `status` | `retired` | Kivezetve | Retired |
 
 > **Ha a végrehajtás közben kiderül, hogy további kulcs kell, az a terv hibája → 10. szakasz.**
@@ -502,7 +512,7 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
 > (`README-HU.md`, `README.md`, `berki-spec-directory-structure.md`) — a `jegyzet.md`
 > **privát munkaterület: ne olvasd, ne szerkeszd, ne commitold.**
 
-- [ ] **7.1 — `README-HU.md`** (a **tartalmat** keresd, ne a sorszámot — a szerkesztés közben
+- [x] **7.1 — `README-HU.md`** (a **tartalmat** keresd, ne a sorszámot — a szerkesztés közben
       csúszik):
       - a **„Dokumentumok" tábla**: új sor a `docs-generated/test-description.md`-re;
       - a **`docs-generated/` fájlkészletét** bemutató szakasz (a `08` leírásánál): a leltár
@@ -513,27 +523,27 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
         **nem ciklus-bizonyíték** (D8);
       - a `test-conventions.md` fogyasztóit felsoroló mondat: a leltár **nem** helyettesíti,
         a határvonal a D3 szerinti mező-szintű tulajdon.
-- [ ] **7.2 — `README.md` (az ANGOL pár) — ugyanaz az öt szerkesztés.** Nem rövidítve, nem
+- [x] **7.2 — `README.md` (az ANGOL pár) — ugyanaz az öt szerkesztés.** Nem rövidítve, nem
       összefoglalva: a két README **tartalmilag egyenértékű**. A helyek ugyanott vannak,
       néhány sorral eltolva (a `list10` mérése szerint az angol pár ~10-12 sorral előrébb
       tart). A `TL-NNN`, `test-runs/`, `local`/`remote` és a kategória-azonosítók **mindkét
       nyelven ugyanazok** (nyelvfüggetlen literálok, 1.2).
-- [ ] **7.3 — `prompts/meta-improve-prompts.md`.** (a) A **script-tábla** két új sora:
+- [x] **7.3 — `prompts/meta-improve-prompts.md`.** (a) A **script-tábla** két új sora:
       `test-inventory-check.py` (ki futtatja: `08`, `doc-sync-planner`) és a `run-tests.py`
       sorának bővítése a `bs-run-tests` hívóval. (b) A **segédparancs-lista** új tétele:
       `bs-run-tests`. (c) A **fájl-tábla** új sora: `prompts/skills-hu/run-tests.md`.
       (d) **Új tervezési elv: `7/p` — „a bizonyíték ciklushoz kötött; a kényelmi futtatás nem
       bizonyíték"** — a D8 indoklásával és azzal a méréssel, amit a 2.1/(c) ad.
-- [ ] **7.4 — `prompts/lang/{hu,en}/descriptions.json`**: a `bs-run-tests` kulcs (kötelező —
+- [x] **7.4 — `prompts/lang/{hu,en}/descriptions.json`**: a `bs-run-tests` kulcs (kötelező —
       `install-helper.py:440`), a `bs-manual-test-plan` leírásának stílusában: mit tesz, mi a
       bemenete, és hogy **nem fázis**.
-- [ ] **7.5 — `berki-spec-directory-structure.md`**: a `docs-generated/test-description.md`, a
+- [x] **7.5 — `berki-spec-directory-structure.md`**: a `docs-generated/test-description.md`, a
       `test-runs/` (gitignore-olt) és a `run-tests.md` skill felvétele — kinek a tulajdona
       melyik (a fájl épp ezt a kérdést válaszolja meg).
       _**Ennek nincs angol párja** (ellenőrizve: a gyökérben csak `berki-spec-directory-structure.md`
       van) — tehát itt nincs mit párosítani, ne keresd a `-EN` változatot, és ne is hozz létre
       újat: az nem ennek a körnek a hatóköre._
-- [ ] **7.6 — `prompts/lang/{hu,en}/08-doc-sync.md` és `…/run-tests.md`**: minden **user-facing
+- [x] **7.6 — `prompts/lang/{hu,en}/08-doc-sync.md` és `…/run-tests.md`**: minden **user-facing
       mondat** és **artefaktum-sablon** (a `TL-NNN` adatlap, a `retired` jelölés szövege, a
       `latest.json` összegző mondata, a tűzfal-figyelmeztetés) **nem** a skillbe kerül, hanem új
       `ANCHOR` a lang-fájlba, **mindkét nyelven**, és a skillben INCLUDE marker hivatkozik rá
@@ -543,24 +553,24 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
 
 ## 8. Kapuk (kézzel, commit előtt)
 
-- [ ] `python3 prompts/scripts/lang-parity-check.py` → 0
-- [ ] `python3 prompts/scripts/lang-parity-check.py --strict` → 0
-- [ ] `python3 prompts/scripts/sync-gemini-agents.py` **(írás mód — KÖTELEZŐ)**, mert az
+- [x] `python3 prompts/scripts/lang-parity-check.py` → 0
+- [x] `python3 prompts/scripts/lang-parity-check.py --strict` → 0
+- [x] `python3 prompts/scripts/sync-gemini-agents.py` **(írás mód — KÖTELEZŐ)**, mert az
       `LD11/2` módosítja a `doc-sync-planner` frontmatterét
-- [ ] `python3 prompts/scripts/sync-gemini-agents.py --check` → 0
-- [ ] **Build-füstteszt** (1.3): `install-helper.py claude . <tmp>/hu hu hu` és `… en en` →
+- [x] `python3 prompts/scripts/sync-gemini-agents.py --check` → 0
+- [x] **Build-füstteszt** (1.3): `install-helper.py claude . <tmp>/hu hu hu` és `… en en` →
       `Success`, és a telepített `bs-run-tests` + `bs-doc-sync` `SKILL.md`-jében **nulla**
       feloldatlan `INCLUDE:` marker és **nulla** `<sec:|<field:|<status:` token.
-- [ ] **`test-inventory-check.py` füst-teszt** próba-fixtúrán: (a) teljes leltár → `exit 0`;
+- [x] **`test-inventory-check.py` füst-teszt** próba-fixtúrán: (a) teljes leltár → `exit 0`;
       (b) felderített, de nem leltározott tesztfájl → `exit 1` a fájl nevével; (c) leltározott,
       de nem létező tesztfájl → `exit 1`; (d) egyoldalú `R-NN` hivatkozás → `exit 1`;
       (e) nem deklarált host → `exit 0` + WARN.
-- [ ] **`run-tests.py --dry-run` füst-teszt** a `conventions.md` futtatási táblájára
+- [x] **`run-tests.py --dry-run` füst-teszt** a `conventions.md` futtatási táblájára
       (`--table-source conventions`), és a **régi** pozicionális `plan.md` hívásra is
       (visszafelé kompatibilitás, KT3).
-- [ ] **Tűzfal füst-teszt** (D8): `dod-check.py --round-dir test-runs/…` → `exit 2`;
+- [x] **Tűzfal füst-teszt** (D8): `dod-check.py --round-dir test-runs/…` → `exit 2`;
       `report-gate-check.py … --report-subdir` `test-runs/` alatti értékkel → `exit 2`.
-- [ ] **Emberi review (nem gépi kapu) — két külön dolog:**
+- [x] **Emberi review (nem gépi kapu) — két külön dolog:**
       1. **Prompt-fa:** a `lang-parity-check.py` a **szerkezeti** eltérést fogja meg, a
          **jelentés**-eltérést nem — az új `run-tests.md` hu/en párt és a `08` módosított
          szakaszait át kell olvasni.
@@ -592,5 +602,138 @@ jelzett, ezért **mérhető mitigáció** kerül melléjük. Ezek nem opcionáli
 
 ## 10. A végrehajtás tapasztalatai és a tervtől való eltérések
 
-_(Kitöltendő a végrehajtás közben. Ide kerül minden pont, ahol a terv tévedett vagy hiányos volt —
-a `D1`–`D13` döntések felülírása helyett a tapasztalat rögzítésével.)_
+_Kitöltve a végrehajtás során (2026-09-07). A `D1`–`D13` döntéseket nem írtuk felül;
+az alábbi pontok azok, ahol a **teendő-szintű leírás** tévedett vagy hiányos volt._
+
+### 10.1 A `KT1` oszlop-listája ellentmondott a `D10`-nek — a `D10` nyert
+
+**Amit a terv írt.** A `KT1` a `conventions.md` futtatási táblájának oszlopait így sorolta:
+`| Kategória | <field:f_environment> | Parancs | Időkorlát | Riport-artefaktum |` (öt oszlop).
+
+**Miért tarthatatlan.** A `D10` — a felhasználóval **lezárt** döntés — azt mondja ki, hogy a
+tábla oszlop-sémája **azonos** a plan gépi tábláját (TP4/b), *„egy parser, egy szabály
+(`7/m`)"*. A TP4/b séma viszont **kilenc** oszlop, és a `run-tests.py` `parse_matrix()`
+**fix oszlop-pozíciókkal** olvas (`cells[0]`…`cells[8]`). A `KT1` öt oszlopa így minden
+cellát rossz mezőbe tett volna: a `Parancs` a `elofeltetel` mezőbe, az `Időkorlát` a
+`parancs` mezőbe — azaz a szkript az „Időkorlát" szót próbálta volna shell-parancsként
+lefuttatni. Ez **pontosan a `TP4/b` hibamódja**, ami miatt a `7/m` szerint a parsert
+szándékosan nem tettük „okossá".
+
+**Amit helyette tettünk.** A `D10` nyer: a `## <sec:cv_test_execution>` szekció táblája a
+**teljes kilenc oszlopos TP4/b séma**
+(`Kategória | Típus | Előfeltétel | Parancs | Eredményfájl | Formátum | Takarítás |
+<field:f_environment> | <field:f_phase>`). A `Fázis` oszlop cikluson kívül `—` (ami a
+`run-tests.py`-ban „mindkettő", tehát a fázis-szűrés nem tünteti el a sort), a `Típus`
+értékei pedig a szkript nyelvfüggetlen CLI-értékei (`gyors` / `nehez`) — **mindkét
+prompt-nyelven ugyanazok**, ahogy a `03b` táblája is előírja. A `KT1` „Időkorlát" és
+„Riport-artefaktum" oszlopa így **nem létezik**: az időkorlátot a `--timeout` adja, a
+riport-artefaktumot pedig az `Eredményfájl` oszlop.
+
+**Tanulság a következő körre.** Ha egy terv egyszerre mond ki egy **elvet** („azonos
+oszlop-séma") és sorol fel egy **konkrét listát**, a kettőt a terv írásakor össze kell
+vetni — itt a lista egy korábbi vázlatból maradt benne, és csendben ellentmondott a
+lezárt döntésnek.
+
+### 10.2 Egy hetedik nyelvi kulcs kellett (`f_inventory_items`) — a `TK1` hiánya
+
+**Amit a terv írt.** A `TK1` **hat** új kulcsot sorolt fel, és kimondta: *„Ha a végrehajtás
+közben kiderül, hogy további kulcs kell, az a terv hibája → 10. szakasz."*
+
+**Mi hiányzott.** Az `LD6` **kétirányú** joinhoz a `test-conventions.md` recept-adatlapján
+egy **visszamutató mező** kell (`R-NN` → `TL-NNN`). A terv az irányt kimondta („a `R-NN`
+adatlapja visszamutat a `TL-NNN`-re"), a hozzá tartozó **mezőnevet** viszont nem — és
+mezőnév nélkül a prompt csak literált tudott volna írni, amit a paritás-kapu megfog.
+
+**Amit tettünk.** Új `fields` kulcs: `f_inventory_items` — hu `Leltár-tételek`, en
+`Inventory items`. Bekerült a `TC2-test-conventions-vaz` recept-sablonjába és a `08`
+skill `R03` kész példájába is. A `status-keys.json` így **hét** kulccsal bővült, nem
+hattal (`sections`: 100, `fields`: 70, `status`: 38).
+
+### 10.3 A `test-inventory-check.py` egy negyedik CLI-flaget kapott
+
+**Amit a terv írt.** A `LD5` CLI-szerződése három argumentumot adott meg: a pozicionális
+leltár-útvonalat, a `--project-root`-ot és a `--conventions`-t.
+
+**Mi hiányzott.** A **6. check** (kétirányú `R-NN` join) a `specs/test-conventions.md`-t is
+olvassa — annak útvonalát viszont a szerződés nem adta meg. Ezért a script kapott egy
+`--test-conventions` flaget `specs/test-conventions.md` alapértékkel. A dokumentált három
+argumentum **változatlanul működik** (a flag opcionális, sane default-tal), tehát ez
+bővítés, nem átírás — ugyanaz a megközelítés, amit a `KT3` a `run-tests.py`-nál választott.
+Ha a fájl nem létezik (TC6: korai ciklusban ez nem hiba), a 6. check **WARN**-nal kimarad.
+
+**Két további, a terv által nem részletezett viselkedés-döntés a kapuban:**
+
+1. **A `<field:f_recipe>` mezőnél a `—` LEGITIM érték, nem hiány.** A `LD2` ezt kimondja
+   (*„`R-NN` hivatkozás vagy »—«"*), a 3. check „kötelező mezők" listája viszont naivan
+   üresként kezelte volna. A kapu ezért mezőnként háromféle jelenlét-szabályt használ:
+   a `<field:f_steps>`-nél a **számozott lépés-lista** a tartalom (az inline érték jogosan
+   üres), a `<field:f_recipe>`-nél a mező **léte** elég, minden más mezőnél nem lehet üres
+   és nem lehet `—`.
+2. **A nem létező leltár csak akkor FAIL, ha a `docs-generated/` mappa létezik.** A terv
+   `LD8/b`-je kimondta, hogy a bootstrap független a `system-overview.md` ágától, de nem
+   mondta meg, mit tegyen a kapu egy olyan projektben, ahol a `docs-generated/` **még
+   egyáltalán nincs**. Ott a script `0`-val, „kihagyva" jelzéssel tér vissza (a `tc8`
+   mintájára); ha viszont a mappa létezik és csak a leltár nincs meg, az **FAIL**.
+
+### 10.4 A `KT7` premisszája téves volt: a `00-init-project` nem ír `.gitignore`-t
+
+**Amit a terv írt.** *„A célprojekt `.gitignore`-ját a `00-init-project` írja — ezért a `00`
+skillbe is bekerül a sor."*
+
+**Mi a valóság.** A `00-init-project` **egyáltalán nem nyúl** a `.gitignore`-hoz; a
+keretben ezt a mintát a `bs-brainstorm` (`BS4`) és a `bs-export-doc` használja:
+**jóváhagyás-kötött, egyszeri felajánlás**, és ha a felhasználó nemet mond, a skill
+**soha többé nem kérdezi újra**.
+
+**Amit tettünk.** A `test-runs/` bejegyzés a `00`-ba került, de a `BS4` mintája szerint:
+`grep -qxF` létezés-ellenőrzés → felajánlás (`KT7-gitignore-felajanlas` horgony, hu+en) →
+írás **csak jóváhagyás után**, pontosan egy sor. A `/bs-run-tests` ezért **nem kérdez**
+újra (az kettős kérdés lenne, és megsértené a „ha nemet mond, ne kérdezd újra" szabályt):
+csak **egy sorban jelzi**, ha a bejegyzés hiányzik. A repó saját `.gitignore`-ja is
+megkapta a `test-runs/` sort.
+
+### 10.5 Amit a terv helyesen mért fel (nem kellett eltérni)
+
+Ezeket a végrehajtás **megerősítette** — érdemes rögzíteni, mert egy következő kör
+ugyanezeket a kérdéseket fogja feltenni:
+
+- **A `KT3` visszafelé kompatibilitása elég volt.** A `plan_file` `nargs="?"`-ra váltása +
+  a `--table-source plan|conventions` mellett a **31 meglévő hivatkozási hely és mind a
+  három tényleges bash-hívás** (`06-implement` ×1, `07-validate` ×2) **változatlan** —
+  egyetlen call site-ot sem kellett szerkeszteni, és a `results.json`-t olvasó öt script
+  (`dod-check`, `report-gate-check`, `round-log`, `validate-gate-check`,
+  `failure-counter`) sem, mert a két új kulcs (`cycle`, `table_source`) **additív**.
+- **A `parse_matrix()` törzse valóban változatlan maradt** — csak egy opcionális
+  `section` paramétert kapott (`7/m` betartva).
+- **A `normalize_round_dir()` viszont NEM volt „szövegre dolgozó".** A terv a parsert
+  említette, de a normalizálót nem: az `cycle / "test-report" / phase_dir`-t épített,
+  tehát a `test-runs/…` értéket **`<ciklus>/test-report/test-runs/…`-ra mangolta volna**.
+  Ezért kapott egy `CENTRAL_RUN_ROOT` ágat, amely a `test-runs/` alatti útvonalat szó
+  szerint veszi át, és a `cycle=None` esetet is kezeli. _(Ez a `7/e` „egy fogalom, egy
+  útvonal-alak" elv gyakorlati csapdája: a `D9` helyesen mondta, hogy nincs negyedik
+  bázis, de a meglévő normalizáló implicit feltételezte, hogy MINDIG van ciklus.)_
+- **A telepítő tényleg nem igényelt módosítást** (glob-alapú skill-felderítés,
+  glob-alapú script-másolás) — mind az **öt platform** (claude, codex, antigravity,
+  cursor, copilot) `Success`-szel épült, és a `bs-run-tests` + a
+  `test-inventory-check.py` mindegyikben megjelent.
+- **A `ds22-gate-check.py` valóban nem igényelt módosítást** a `DS21` mappa-indexhez
+  (`check_folder_index()` a mappa tényleges `.md` listáját olvassa).
+- **A `manual-test-gate-check.py` `TG-NN` fejléc-parsere elbírja a `TL-NNN` kiterjesztést**
+  (`DOD_RE.findall` a fejléc maradékán fut, a `TG_TOKEN_RE` pedig csak a lefedettségi
+  táblán) — az `LD9` szerinti
+  `### TG-03 — <név>  (DoD-02, DoD-05 · TL-014, TL-018)` alak nem törte el a kaput.
+
+### 10.6 Amit ez a kör NEM oldott meg (tudatosan)
+
+- **A `KT5` `<TL-NNN>/` alkönyvtár-elhelyezése prompt-szintű, nem script-szintű.** A
+  `run-tests.py` a riport-artefaktumot a kör-mappa gyökerébe másolja; a tételenkénti
+  szétosztást a `/bs-run-tests` skill végzi a futás után. Egy következő kör
+  determinisztikussá teheti (a `TL-NNN` ↔ tesztfájl join a leltárból gépiesen olvasható),
+  de ehhez a `run-tests.py`-nak ismernie kellene a leltárat — az pedig új bemenet-kötés
+  egy eddig leltár-független szkriptben.
+- **A `test-runs/latest.json` írása is prompt-szintű.** A szkript a `results.json`-t írja;
+  a `latest.json` aggregálása a skill dolga. Indok ugyanaz: a `run-tests.py` nem tudja,
+  hogy központi futásról van-e szó **azon túl**, amit a `--round-dir`-ből kiolvas, és a
+  `latest.json` séma projekt-szintű aggregátum, nem futás-eredmény.
+- **A `16.6` éles próba** (a `prompts/inprove-list10.md` és a kétnyelvűsítési terv nyitott
+  tétele) továbbra is nyitott — ez a kör nem érintette.

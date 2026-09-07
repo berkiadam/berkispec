@@ -48,6 +48,7 @@ This is **not a phase:** it is not part of the `00–09` chain, it **does not to
 | **the test groups themselves: steps, calls, expected result** | **`plan.md` → <sec:plan_test_scenarios> (`TS-NN`) — this is the primary source of the `TG-NN` groups** |
 | what we test with a group | `spec.md` → <sec:test_specification> + <sec:definition_of_done> (`DoD-NN`) |
 | automated test commands | `plan.md` → <sec:machine_run_table> |
+| **the inventory of the existing tests — the THIRD source of the `TG-NN` groups** | **`docs-generated/test-description.md` (`TL-NNN` items) — LD9** |
 | where the results go | `conventions.md` → `## <sec:cv_test_reporting>` (TR3 + the TR5 round-folder marker) |
 
 ---
@@ -99,7 +100,10 @@ Read **only** these sections, not the whole files:
 
 - **`plan.md`:** <sec:environment_coords> (and its subsections: <sec:components_endpoints>, <sec:rest_calls_examples>, <sec:test_api_users>, <sec:other_parameters>, <sec:network_access_prereqs>), <sec:testing_strategy>, <sec:machine_run_table>;
 - **`spec.md`:** <sec:definition_of_done> (with the `DoD-NN` identifiers), <sec:test_specification>;
-- **`conventions.md`:** `## <sec:cv_test_reporting>` (together with the TR5 `<field:f_artifact_path_base>` marker), `## <sec:cv_git_conventions>` (to decide the No-VCS branch).
+- **`conventions.md`:** `## <sec:cv_test_reporting>` (together with the TR5 `<field:f_artifact_path_base>` marker), `## <sec:cv_git_conventions>` (to decide the No-VCS branch);
+- **`docs-generated/test-description.md`** — the test inventory, if it exists (LD9): the **goal / steps / expected result** fields of the `TL-NNN` items.
+
+> **The inventory is the THIRD input (LD9).** The "I assemble, I do not discover" principle is strongest here: a `TL-NNN` item **already** carries the concrete steps and the concrete expected result, so the `TG-NN` group can be **assembled** from it — it does not have to be invented again. What you must do in that case: in the header of the `TG-NN`, beside the `DoD-NN`, **name the covered `TL-NNN`s as well** (`### TG-03 — <name>  (DoD-02, DoD-05 · TL-014, TL-018)`). This `TL` ↔ `TG` join strengthens the MT6 coverage too: it becomes visible which existing test a manual step builds on, and which `TG-NN` is the one that has no automated pair. **You do NOT write the inventory** — its owner is `08-doc-sync`. If the file does not exist, this input is skipped, and the `TS-NN` blocks of `plan.md` remain the primary source.
 
 > **In a simplified (quick-flow) cycle the `plan.md` does not exist (QF8).** Read from `spec.md` instead: the **technical outline** (affected files, key elements, <sec:execution_order>, error-handling decision) provides the coordinates in place of <sec:environment_coords>, and the **Mandatory Testing Strategy** provides the `<field:f_target_env>` field, the `[local]` / `[remote]` scope labels, the reachability probes and the test steps — form the `TG-NN` groups from these. The **selector-scoped commands** of the test steps of `tasks.md` go into the automated tests block (there is no machine run table in this flow). Instead of `DoD-NN` identifiers, reference the goal points of `spec.md`, and trace the MT6 coverage back to those.
 

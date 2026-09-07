@@ -137,6 +137,33 @@ def match_cmd(evidence, results):
     return None, None
 
 
+# ── KT6/b — BIZONYÍTÉK-TŰZFAL (D8) ──────────────────────────────────────────
+# A `test-runs/` a `/bs-run-tests` cikluson kívüli, kényelmi futtatásának
+# gyökere. Az ott keletkező eredmény SOHA nem ciklus-bizonyíték: a keret
+# bizonyíték-logikája `DoD-NN`/`TS-NN` joinra, TR7 frissességre és RUN1
+# kör-lefedettségre épül — egy cikluson kívüli futásnak nincs mihez joinolnia.
+# Enélkül az első dolog, amit egy gyengébb modell tenni fog: lefuttatja a
+# központi szvitet, és ráállítja ezt a kaput. Ezért a kapu itt `exit 2`-vel
+# MEGÁLL, nem FAIL-t ad: ez használati hiba, nem bukott teszt.
+CENTRAL_RUN_ROOT = "test-runs"
+
+
+def reject_central_run(raw, flag):
+    """`True`, ha a kapott útvonal a `test-runs/` fa alá mutat (D8)."""
+    parts = [x for x in str(raw or "").replace("\\", "/").strip("/").split("/")
+             if x and x != "."]
+    if not parts or CENTRAL_RUN_ROOT not in parts:
+        return False
+    print(f"HIBA (D8): a `{flag}` értéke a `{CENTRAL_RUN_ROOT}/` fa alá mutat "
+          f"(`{raw}`). A `{CENTRAL_RUN_ROOT}/` a `/bs-run-tests` cikluson kívüli, "
+          f"kényelmi futtatásának helye, és az ott keletkező eredmény NEM "
+          f"ciklus-bizonyíték: nincs `DoD-NN`/`TS-NN` join, nincs kör-szám, tehát a "
+          f"TR7 frissesség és a RUN1 kör-lefedettség sem értelmezhető rá. "
+          f"Ciklus-bizonyítékot a `07`/`06` köre termel a ciklus "
+          f"`test-report/<fázis>/round-NN/` mappájába — oda mutass.", file=sys.stderr)
+    return True
+
+
 def _force_utf8_output():
     """Windows-kompatibilitás: a konzol örökölt kódlapja (cp852 / cp1250 / cp1252)
     nem tudja megjeleníteni a kimenet tipográfiai és ékezetes karaktereit (✓, ✗, —, ő),
@@ -160,6 +187,9 @@ def main():
     parser.add_argument("--apply", action="store_true",
                         help="a bizonyítottan ✓ pontok kipipálása a spec.md-ben")
     args = parser.parse_args()
+
+    if reject_central_run(args.round_dir, "--round-dir"):
+        return 2
 
     cycle = Path(args.cycle_dir)
     spec = cycle / "spec.md"

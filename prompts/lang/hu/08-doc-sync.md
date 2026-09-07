@@ -136,6 +136,7 @@ _**🔴 Ha egy cím lokálisnak LÁTSZIK, de távolra visz** (`kubectl`/`oc port
 - **Leállítás / takarítás:** <hogyan állítom le a felhúzott környezetet, mit kell törölni>
 - **Előfeltétel / sorrend:** <mi kell hozzá — másik receptre `R-ID`-vel hivatkozva, mi jön előtte/utána>
 - **Hatókör:** `lokális` | `osztott-remote` — <ha osztott, a beemelésnél a 03 kötelezően rákérdez>
+- **Leltár-tételek:** <a receptre hivatkozó `TL-NNN` tételek a teszt-leltárból, vagy `—` — a hivatkozás KÉTIRÁNYÚ (LD6), a kapu mindkét irányt méri>
 - **Utolsó futás:** cycle-NN
 
 ## 2. Minden körben szükséges lokális (mock alapú) tesztek
@@ -177,6 +178,64 @@ _**🔴 Ha egy cím lokálisnak LÁTSZIK, de távolra visz** (`kubectl`/`oc port
 _(Opcionális appendix, TC12 — nem számozott szekció. Ide kerül, amit a felhasználó nem kért projekt szintre; a következő ciklus ezeket már nem kínálja fel újra.)_
 
 - <önhordó viselkedés-leírás> — döntés: `nem promótálandó` (<indok>) · cycle-NN
+
+<!-- ANCHOR:LD1-test-description-vaz -->
+> **Lefedve:** cycle-NN-ig · **Utolsó frissítés:** cycle-NN (YYYY-MM-DD) · **Generátor/scope:** a projekt teljes tesztkészlete — minden tesztfájl, amit a `conventions.md` `## Teszt-futtatás` szekciója glob-bal deklarál; forrás: a ciklusok `test-report/` bizonyítékai + a `plan.md` teszt-forgatókönyvei.
+
+# Teszt-leltár
+
+_Ez a fájl arra a kérdésre válaszol, hogy **milyen tesztek léteznek a projektben, és mit bizonyítanak** — egy helyen, végigolvashatóan, egy friss kontextusú ágensnek és egy új kollégának egyaránt. A gazdája a `08-doc-sync`: más fázis és más parancs nem írja._
+
+_**Amit ez a fájl NEM:** nem futtatható forrás és nem recept-regiszter. Az indítást, a példa hívást, az előfeltételt és a takarítást a `specs/test-conventions.md` hordozza (mező-szintű tulajdon: azonos mezőt a kettő nem duplikál), a ciklus-szintű futtatást pedig a `plan.md` gépi futtatási táblája. Innen a **cél / lépések / elvárt eredmény** az igazság._
+
+_A tételek **kategóriánként** csoportosulnak (a `conventions.md` kategória-szótára szerint), a `TL-NNN` sorszám viszont **projekt-szintű és globális**: soha nem újrahasznosított, és a kategória-váltás sem írja át._
+
+## <kategória — a `conventions.md` `Teszt-kategóriák` szótárából>
+
+<!-- ANCHOR:LD2-tl-adatlap-vaz -->
+### TL-NNN — <a tétel önhordó címe: milyen bemenetre mi a helyes kimenet>
+
+- **Környezet:** local | remote
+- **Cél:** <egy állítás-mondat: mit bizonyít ez a teszt, és melyik képességről>
+- **Lépések:**
+  1. <konkrét parancs / hívás — szó szerint kiadhatóan, nem viselkedés-szintű összefoglaló>
+  2. <...>
+- **Elvárt eredmény:** <eldönthető érték backtickben: státuszkód, mezőnév, darabszám>
+- **Futtató parancs:** `<a szelektoros futtatás EGY sorban — csak ezt az egy tesztet futtatja>`
+- **Recept:** <`R-NN` hivatkozás a `specs/test-conventions.md`-be, vagy `—`, ha nincs>
+- **Utolsó futás:** <YYYY-MM-DD> (local | remote)
+- **Forrás-ciklus:** cycle-NN
+
+<!-- ANCHOR:LD2-tl-adatlap-pelda -->
+### TL-014 — A token-init végpont ugyanarra a payloadra ugyanazt a hash-t adja, ismételt initre 409-et
+
+- **Környezet:** remote
+- **Cél:** bizonyítja, hogy az init-hash idempotens, és a duplikált init nem hoz létre második session-t.
+- **Lépések:**
+  1. `curl -s -X POST "https://tmp-dev.example.local/init-hash" -H 'Content-Type: application/json' -d '{"clientRef":"dsp01"}'`
+  2. Ugyanaz a hívás, változatlan payloaddal, 1 másodpercen belül.
+  3. `curl -s "https://tmp-dev.example.local/sessions?clientRef=dsp01"`
+- **Elvárt eredmény:** az 1. lépésre `200` + `{"initHash":"<64 hex>"}`; a 2. lépésre `409` + `TMP_031` errorCode; a 3. lépésre pontosan `1` session.
+- **Futtató parancs:** `npx playwright test test/e2e/init-hash.spec.ts --grep "idempotent init"`
+- **Recept:** R03
+- **Utolsó futás:** 2026-09-04 (remote)
+- **Forrás-ciklus:** cycle-16
+
+<!-- ANCHOR:LD3-retired-jeloles -->
+### TL-007 — A régi /init-cache végpont 200-at ad érvényes payloadra — **Kivezetve**
+
+- **Kivezetve:** a végpont a cycle-16-ban `/init-hash`-re neveződött át, a régi útvonal megszűnt. A tétel utódja: `TL-014`.
+- **Forrás-ciklus:** cycle-11
+
+<!-- ANCHOR:LD4-leltar-kerdes -->
+- [ ] K04 — A teszt-leltár melyik hiányzó adatát töltsem ki?
+
+| # | Tétel | Mi hiányzik / mi bizonytalan | Miért nem írom be magamtól |
+|---|---|---|---|
+| 1 | TL-018 (`test/e2e/payment.spec.ts`) | mit bizonyít a teszt (cél) és mi az elvárt eredmény | a tesztfájl neve nem mondja meg, és ebben a ciklusban nem futott — találgatni tilos |
+| 2 | TL-009 | a parancs a `old-app.stale.example` hostra hív, amit a `conventions.md` már nem deklarál | vagy a tétel elavult, vagy a `conventions.md` környezet-deklarációja — ezt nem dönthetem el |
+
+**Válaszként elég a hiányzó adat megadása tételenként** (vagy „töröld"/„jelöld kivezetettnek", ha a teszt már nem él).
 
 <!-- ANCHOR:DS21-readme-index-vaz -->
 - `<fájlnév>` — <egysoros leírás: mi ez, ki/mikor írja>

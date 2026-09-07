@@ -251,9 +251,14 @@ Ebben a fázisban történik a tényleges kódolás a feladatlista alapján.
     <!-- INCLUDE:lang/quick-flow.md#BS-drift-sor -->
 
     **és** mondd ki a Felhasználónak, hogy a `docs-generated/` a következő teljes ciklus `08-doc-sync` fázisáig elavult marad. Indok: a `02-write-spec` a `system-overview.md`-t **current truth**-ként olvassa be, tehát egy jelöletlen drift a következő nagy ciklus specjét mérgezi. A `docs-generated/` **többi** fájljához (`system-overview.md`, `architecture.md`, `CHANGELOG.md`, mappa-index) **ne nyúlj** — azok gazdája a `08-doc-sync`. Ha a mappa nem létezik, ez a pont kimarad.
+*   **Teszt-leltár drift-jelzés (LD10):** ha ez a ciklus **tesztet adott vagy módosított**, a `docs-generated/test-description.md` a következő teljes ciklus `08-doc-sync` fázisáig **elavult marad** — a leltár gazdája a `08` (LD1), ehhez a fájlhoz **ne nyúlj**. Ilyenkor **két dolog kötelező**: egy külön drift-sor a `design-drift.md`-be,
+
+    <!-- INCLUDE:lang/quick-flow.md#LD10-teszt-leltar-drift-sor -->
+
+    **és** a Felhasználónak szóló figyelmeztetés ugyanerről — megnevezve, mely tesztfájl(ok)ról van szó, hogy a következő doc-sync felderítése ne csak a globra támaszkodjon. Indok ugyanaz, mint a QF7-nél, egy fokkal élesebben: a `03b-write-test-plan` a leltárat **current truth**-ként olvassa a regressziós kör kiválasztásához (LD9) — egy jelöletlen új teszt vagy duplikációt, vagy kimaradó regressziót okoz. Ha a `docs-generated/` mappa nem létezik, ez a pont is kimarad.
 *   **Befejezési feltétel / Ciklus Lezárása:** Az implementáció és a teljes ciklus **kizárólag akkor tekinthető késznek és lezártnak**, ha:
     1. A meghatározott tesztek hiba nélkül lefutottak — lépésenként, szelektorral, plusz a záró regressziós futás; a skippelt tesztek kimondva.
-    2. A kapcsolódó dokumentáció (pl. `README.md`) frissítésre került, és — ha releváns — a `docs-generated/design-drift.md` drift-sora bekerült.
+    2. A kapcsolódó dokumentáció (pl. `README.md`) frissítésre került, és — ha releváns — a `docs-generated/design-drift.md` drift-sora bekerült (a viselkedés-változásra QF7 szerint, az új/módosított tesztre LD10 szerint).
     3. Az elért eredményeket a Felhasználóval ellenőriztük és egyeztettük.
     4. **A `tasks.md` státusza `<status:done>`, és a ciklust lezáró commit elkészült** — a commit üzenete a `conventions.md` git-konvenciója szerint. Ha a `specs/roadmap.md` létezik, a ciklus sora is lezárt állapotot kap (QF6); ha nem létezik, ezt egy sorban jelezd.
 
@@ -327,6 +332,7 @@ Ha a feladat olyan nagy, hogy ezek a hurkok és ágensek valóban indokoltak len
 |---|---|
 | `/bs-cycle-status` | Felismeri az egyszerűsített flow-t (nincs `plan.md`), és a `spec.md` + `tasks.md` státusz-mezőiből mondja meg, hol tart a ciklus. Ezért kötelező a QF2 státusz-mező: enélkül minden fázisra „még nem futott"-at ír. |
 | `/bs-manual-test-plan` | **Ebből a flow-ból is használható (QF8):** ha a ciklusban nincs `plan.md`, a kapu a `tasks.md` státuszát nézi, és a `spec.md` technikai vázlatából + tesztstratégiájából szereli össze a kézi tesztervet. Konfigurációs és üzemeltetési ciklusnál ez a leghasznosabb kiegészítés. |
+| `/bs-run-tests` | **Cikluson kívüli teszt-futtatás kategóriánként (KT4):** a `conventions.md` `## <sec:cv_test_execution>` táblájából futtat, és a `test-runs/` fába ír — ehhez a flow-hoz **nem** kell `plan.md`. Hasznos a záró regressziós futáshoz; az eredménye **nem** ciklus-bizonyíték (D8), de ebben a flow-ban amúgy sincs `07` kapu. |
 | `/bs-export-doc` | A ciklus dokumentumainak exportja (pl. megosztható formátumba) — flow-független. |
 | `/bs-brainstorm` | A ciklus **előtti** feltáró ötletelés; a desztillátumát a belépő szekció szerint veszed át (QF16). |
 
