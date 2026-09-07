@@ -13,17 +13,12 @@ scripts:
 shared:
   - "shared/context-check.md"
   - "shared/path-format.md"
-  - "shared/artifact-voice.md"
   - "shared/dereferencing.md"
   - "shared/conventions-change.md"
 ---
 # SDD (Spec-Driven Development) — Egyszerűsített (Lightweight) Flow
 <!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
-
----
-
-Ez a dokumentum a projekt **egyszerűsített, háromfázisú** SDD (Spec-Driven Development) flow-ját írja le, kis és jól körülhatárolt feladatokhoz. Ezt a mintát kövesse az AI asszisztens (Agent) akkor, amikor a feladat mérete nem indokolja a teljes (00–09 fázisú) berki spec ciklust.
 
 ---
 
@@ -51,19 +46,13 @@ A flow-váltás döntése mindig a Felhasználóé; te javasolsz és indokolsz, 
 
 ## Belépő — mit kaphatsz hívásként
 
-| Hívás alakja | Mit tegyél |
-|---|---|
-| `/bs-quick-flow` (paraméter nélkül) | indítsd az interjút a nulláról (2. szekció) |
-| `/bs-quick-flow input: <a feladat egy mondatban>` | a mondat az interjú kiindulópontja; a hiányzó adatokat kérdezd be |
-| `/bs-quick-flow brainstorm: NN` | **brainstorm-átvétel (QF16)** — lásd alább |
+**Hívás-alakok.** `/bs-quick-flow` paraméter nélkül → indítsd az interjút a nulláról (2. szekció). · `/bs-quick-flow input: <a feladat egy mondatban>` → a mondat az interjú kiindulópontja, a hiányzó adatokat kérdezd be. · `/bs-quick-flow brainstorm: NN` → **brainstorm-átvétel (QF16)**, lásd alább.
 
 **Brainstorm-átvétel (QF16).** Ha a hívás egy brainstorm sorszámára hivatkozik (vagy a Felhasználó egy `.bs-brainstorm/brainstorm-NN-<slug>.md` fájlra mutat), a `spec.md` előtt **olvasd be a desztillátumot**: `ls -1 .bs-brainstorm/brainstorm-NN-*.md`, majd a fájlból a `<sec:bs_goal_question>`, `<sec:bs_facts>`, `<sec:bs_decisions>` és `<sec:bs_open_questions>` szekciókat. A cél, a tények és a döntések **készen kapott bemenetek** — ne kérdezd újra őket. A `<sec:bs_open_questions>` alatti tételeket viszont **egyenként kérdezd meg** a Felhasználótól: a brainstorm szándékosan nyitva hagyta őket, és egy nyitott kérdés kitalálása pontosan az a csendes döntés, amit ez a flow tilt. Ha a `<sec:bs_cycle_split>` szekció **több** ciklus-jelöltet sorol, az a túlnövés jele → javasold a `/bs-add-cycles` folyamatot.
 
 ---
 
 ## Gyors lépéssor (a teljes folyamat dióhéjban)
-
-> Ez a „happy path". A részleteket lentebb találod; ha elbizonytalanodsz, ide térj vissza.
 
 1. **Branch + flow-méret.** Olvasd a `conventions.md` git-szekcióját, és aszerint készítsd elő az ágat. Döntsd el: tényleg kicsi a feladat? Ha nem → javasold a teljes berki spec-et (`/bs-add-cycles`), és állj meg.
 2. **Ciklusmappa.** Határozd meg a következő szabad ciklusszámot a **BQ2** formulával, javasolj nevet, kérj jóváhagyást, majd hozd létre: `specs/cycle-NN-<cycle-name>/`.
@@ -78,34 +67,28 @@ A **⛔** jelnél SOHA ne lépj tovább a Felhasználó kifejezett „igen"-je n
 
 ## 1. Alapelvek és könyvtárszerkezet
 
-*   **Ciklusok (Cycles):** Minden egyes önálló feladat, funkció vagy fejlesztési szakasz egy dedikált mappában történik, az alábbi elnevezési sémát követve:
-    `cycle-NN-<cycle-name>` (Pl. `cycle-01-database-management`, `cycle-02-logging-improvement`).
-*   **Dokumentumvezérelt fejlesztés:** Kódot írni vagy módosítani szigorúan tilos addig, amíg a tervezési és felbontási fázisok le nem zárultak.
-*   **A README.md karbantartása:** A fejlesztések során a projekt fő `README.md` fájljának naprakészen tartása és frissítése nem opcionális lépés; ennek mindig a tervezés (`spec.md`) és a feladatlista (`tasks.md`) részét kell képeznie.
+*   **Ciklusok (Cycles):** minden önálló feladat, funkció vagy fejlesztési szakasz dedikált mappában él, a `cycle-NN-<cycle-name>` séma szerint (pl. `cycle-01-database-management`, `cycle-02-logging-improvement`).
+*   **Dokumentumvezérelt fejlesztés:** kódot írni vagy módosítani tilos, amíg az 1. és a 2. fázis le nem zárult. A projekt fő `README.md`-jének naprakészen tartása **nem opcionális**: mindig a `spec.md` és a `tasks.md` része.
 *   **Két artefaktum, két státusz:** a ciklus mappájában **pontosan két** tervezési dokumentum él — `spec.md` és `tasks.md` —, és mindkettő fejléce hordoz egy `<field:f_status>` mezőt (QF2). Nincs `plan.md`: annak a szerepét a `spec.md` technikai vázlata veszi át.
-*   **Dokumentáció nyelve:** a fájl elején álló **A kimenet nyelve** blokk szerint — a ciklus-dokumentumok (`spec.md`, `tasks.md`) és a hozzájuk tartozó leírások azt követik. Itt nincs külön szabály; a kódban használt azonosítók, kapcsolók és technikai kifejezések ettől függetlenül angolul maradnak.
+*   **A dokumentáció nyelve és hangja:** a ciklus-dokumentumok a fájl elején álló **A kimenet nyelve** blokkot követik; a kódban használt azonosítók, kapcsolók és technikai kifejezések angolul maradnak. **Az artefaktum az implementálónak szól, nem neked (AV1):** a skill-szöveget — imperatívuszokat („tilos…", „kötelező ellenőrizned…"), `🔴` jelölést — ne másold át a `spec.md`/`tasks.md`-be; írd le **döntésként**, leíró hangnemben.
 
 ---
 
 <!-- INCLUDE:shared/path-format.md -->
 
-> **Ez a flow EGYETLEN kötelező determinisztikus kapuja (QF11).** Az `--paths-only` hívás a ciklus mappájában meglévő `spec.md` / `tasks.md` párra fut, tehát az 1. és a 2. fázis lezárása előtt is. A többi kapu-script (`analyze-gate-check.py` teljes mód, `run-tests.py`, `dod-check.py`, `report-gate-check.py`) a teljes flow-hoz tartozik, és **itt nem fut** — ha ezekre lenne szükséged, az a túlnövés jele.
-
----
-
-<!-- INCLUDE:shared/artifact-voice.md -->
+> **Ez a flow EGYETLEN kötelező determinisztikus kapuja (QF11).** Az `--paths-only` a ciklus mappájának `spec.md` / `tasks.md` párjára fut, tehát az 1. és a 2. fázis lezárása előtt is. A többi kapu-script (`analyze-gate-check.py` teljes mód, `run-tests.py`, `dod-check.py`, `report-gate-check.py`) a teljes flow-hoz tartozik, és **itt nem fut** — ha ezekre lenne szükséged, az a túlnövés jele.
 
 ---
 
 <!-- INCLUDE:shared/dereferencing.md -->
 
-> **Ebben a flow-ban ez még szigorúbb (KX2):** nincs `plan.md`, tehát a `spec.md` az **egyetlen** végrehajtási igazság. Amit itt hivatkozásként hagysz, azt a 3. fázisban senki nem oldja fel helyetted — a `<sec:environment_coords>` helyett a `spec.md` technikai vázlata és tesztstratégiája veszi fel a feloldott értékeket (parancsok, URL-ek, payload, koordináták).
+> **Ebben a flow-ban ez még szigorúbb (KX2):** nincs `plan.md`, tehát a `spec.md` az **egyetlen** végrehajtási igazság — amit hivatkozásként hagysz, azt a 3. fázisban senki nem oldja fel helyetted. A `<sec:environment_coords>` helyét a `spec.md` technikai vázlata és tesztstratégiája veszi át, a feloldott értékekkel (parancsok, URL-ek, payload, koordináták).
 
 ---
 
 <!-- INCLUDE:shared/conventions-change.md -->
 
-> **A négy feltétel leképezése erre a flow-ra (GC1):** a 2. feltétel (a plan tervezi) helyett a `spec.md` **technikai vázlata** rögzíti a `conventions.md` érintett szekciójának konkrét új tartalmát; a 4. feltétel (a 07 teljes köre újra fut) helyett a 3. fázis **tesztje** fut a frissített `conventions.md`-vel. Az 1. és a 3. feltétel változatlan: legyen rá explicit döntés a `spec.md`-ben, és legyen rá külön task a `tasks.md`-ben. Ez a flow tipikus feladata (konfiguráció, port, teszt-parancs) épp az, amit a kapuk a `conventions.md`-ből olvasnak — a frissítése tehát a ciklus része, nem a következő ciklus adóssága.
+> **A négy feltétel leképezése erre a flow-ra (GC1):** a 2. feltétel (a plan tervezi) helyett a `spec.md` **technikai vázlata** rögzíti a `conventions.md` érintett szekciójának új tartalmát; a 4. feltétel (a `07` teljes köre újra fut) helyett a 3. fázis **tesztje** fut a frissített `conventions.md`-vel. Az 1. és a 3. feltétel változatlan: explicit döntés a `spec.md`-ben, külön task a `tasks.md`-ben. Ez a flow tipikus feladata (konfiguráció, port, teszt-parancs) épp az, amit a kapuk a `conventions.md`-ből olvasnak — a frissítése tehát a ciklus része, nem a következő ciklus adóssága.
 
 ---
 
@@ -266,37 +249,15 @@ Ebben a fázisban történik a tényleges kódolás a feladatlista alapján.
 
 ## 4. Felhasznált specialista ágensek
 
-Az egyszerűsített flow szándékosan **kevés** specialista ágenst használ, és mindegyiket **opcionálisan** — a kis feladatok többségénél a fő ágens önállóan, subagent nélkül is elvégzi a munkát.
+Az egyszerűsített flow **három** specialista ágenst ismer, mindet **opcionálisan** — kis feladatnál a fő ágens subagent nélkül is elvégzi a munkát, és **gyengébb/olcsóbb modellel bátran hagyd ki mind a hármat** (magának a vezénylésnek is van hibakockázata). A tábla harmadik oszlopa a **kontraktus-helyettesítés (QF18)**: az agent-promptok törzse a teljes flow-hoz készült és változatlan, ezért a hívásodban **mondd ki explicit**, mi kerül a hiányzó bemenetek helyére és hova íródik a kimenet — különben az ágens nem létező fájlokat keres.
 
-> **Gyengébb/olcsóbb modellel:** ha bizonytalan vagy, **nyugodtan hagyd ki mind a három opcionális ágenst** — a flow nélkülük is teljes. Magának a subagentek vezénylésének is van hibakockázata, ezért kis feladatnál inkább dolgozz közvetlenül, és csak akkor nyúlj ágenshez, ha egyértelműen segít.
-
-A használható ágensek (mind a platform telepített agent-definícióiból, ezeken a neveken hívhatók):
-
-| Ágens | Hol (fázis) | Mit ad | Mikor érdemes |
-|---|---|---|---|
-| `researcher` | 1. fázis (spec.md) | Érintett forrásfájlok (`path:sor–sor`) + frissítendő dokumentumok tömör listája (read-only) | Meglévő kódbázis módosításakor, ha nem nyilvánvaló az érintett fájlkör |
-| `analyzer` | 2. fázis (tasks.md) | `spec.md` ↔ `tasks.md` konzisztencia-diagnózis: lefedettségi rés, kétértelműség, alulspecifikáció (read-only) | Több követelményes, könnyen kicsúszó task-listánál |
-| `reviewer` | 3. fázis (záró commit előtt) | Diff code review: konvenciók, scope, hibakezelés, spec-megfelelés → `<status:must_fix>` / `<status:suggestion>` (read-only) | Nem triviális kódváltozásnál, a commit előtti minőségi kapuként |
-
-### Kontraktus-helyettesítések (QF18) — a hiányzó bemenetek pótlása
-
-A három agent-prompt **törzse a teljes flow-hoz készült**, és változatlan marad. Amit ez a flow ad hozzá: mi kerül a hiányzó bemenetek helyére, és hova íródik a kimenet. **A hívásodban ezt mondd ki explicit**, különben az ágens nem létező fájlokat keres.
-
-| Ágens | Amit a prompt vár | Amit ebben a flow-ban kap |
+| Ágens (fázis) | Mikor érdemes | Mit mondj a hiányzó bemenet helyett (QF18) |
 |---|---|---|
-| `researcher` | ad-hoc kutatási kérdés (Mód B) | **változatlan használat** — nincs helyettesítés |
-| `analyzer` | hatókör-paraméter + `analyze/slices/<hatókör>.md` szelet | **hatókör-paramétert nem adunk** → a prompt dokumentált degradációs ága szerint mind az öt kategóriát viszi; **szelet-fájl nincs** |
-| `analyzer` | `spec.md` + `plan.md` + `tasks.md` hármas, `<sec:coverage_matrix>` blokk | a `spec.md` + `tasks.md` **pár**; a `plan.md` helyét a `spec.md` **technikai vázlata** veszi át. **A `plan.md`-re hivatkozó bemeneti pontja ebben a flow-ban üres**, és lefedettségi mátrix sincs (nincs `DoD-NN → [P-…] → task` lánc) |
-| `reviewer` | kötelező `plan.md` | a `spec.md` **technikai vázlata** (és a tesztstratégiája) |
-| `reviewer` | kimenet: `specs/cycle-NN-<cycle-name>/test-report/code-review.md` | **`specs/cycle-NN-<cycle-name>/code-review.md`** — a ciklus gyökerében, `test-report/` almappa nélkül: azt a mappát ez a flow nem használja |
-| `reviewer` | `MF-NN` azonosítók, RV-INC inkrementális írás | **megmarad** (ez adja a megszakadás-tűrést) |
-| `reviewer` | önjavító hurok, per-item számláló, `review-fixer` | **nincs** — a `<status:must_fix>` tételeket a fő ágens a lezárás előtt **inline** javítja, a `<status:suggestion>`-öket jelzi |
+| `researcher` (1. fázis, read-only) | meglévő kódbázis módosításakor, ha nem nyilvánvaló az érintett fájlkör; érintett forrásfájlokat (`path:sor–sor`) és frissítendő dokumentumokat ad | semmit — Mód B (ad-hoc kutatási kérdés), **változatlan használat** |
+| `analyzer` (2. fázis, read-only) | több követelményes, könnyen kicsúszó task-listánál; `spec.md` ↔ `tasks.md` konzisztencia-diagnózist ad (lefedettségi rés, kétértelműség, alulspecifikáció) | hatókör-paramétert **nem** adsz (a prompt dokumentált degradációs ága mind az öt kategóriát viszi), szelet-fájl nincs; a bemenet a `spec.md` + `tasks.md` **pár** — a `plan.md`-re hivatkozó bemeneti pontja **üres**, a helyét a `spec.md` technikai vázlata veszi át, és lefedettségi mátrix sincs |
+| `reviewer` (3. fázis, záró commit előtt, read-only) | nem triviális kódváltozásnál, a commit előtti minőségi kapuként; diff-review konvenciókra, scope-ra, hibakezelésre, spec-megfelelésre | a kötelező `plan.md` helyett a `spec.md` **technikai vázlata** + tesztstratégiája; a kimenet `specs/cycle-NN-<cycle-name>/code-review.md` (a ciklus gyökerében, `test-report/` almappa nélkül); az `MF-NN` azonosítók és az RV-INC inkrementális írás **megmarad**, de **önjavító hurok, per-item számláló és `review-fixer` nincs** — a `<status:must_fix>` tételeket a lezárás előtt **inline** javítod, a `<status:suggestion>`-öket jelzed |
 
-**Amit ez a flow NEM használ (és miért):**
-*   **Fixer-wrapperek** (`spec-fixer`, `plan-fixer`, `tasks-fixer`, `implement-fixer`, `review-fixer`): ezek a teljes flow **önjavító hurkainak** belépői (05-analyze / 07-validate). Itt nincs automatizált önjavító hurok — a hibákat a fő ágens közvetlenül, inline javítja. A `plan-fixer` ráadásul `plan.md`-t feltételez, ami ennél a flow-nál nem létezik.
-*   **`doc-sync-planner`**: a teljes flow `docs-generated/` élő dokumentáció-szinkronjának (08-doc-sync) tervkészítője. Az egyszerűsített flow-ban a dokumentáció frissítése a 3. fázis része (pl. `README.md`), nincs külön generált doc-réteg — a drift-jelzésre a QF7 szolgál.
-
-Ha a feladat olyan nagy, hogy ezek a hurkok és ágensek valóban indokoltak lennének, az általában annak a jele, hogy **a teljes berki spec folyamatra kell váltani** (lásd a „Mikor ezt a flow-t…" szekciót).
+**Amit ez a flow NEM használ:** a fixer-wrappereket (`spec`/`plan`/`tasks`/`implement`/`review-fixer`) és a `doc-sync-planner`-t — ezek a teljes flow önjavító hurkainak (05/07) és a `docs-generated/` szinkronjának (08) belépői; itt nincs automatizált hurok (inline javítasz), és nincs generált doc-réteg (a drift-jelzés a QF7/LD10). A `plan-fixer` ráadásul `plan.md`-t feltételez, ami itt nem létezik. Ha ezek valóban indokolttá válnának, az a **teljes berki spec folyamatra váltás** jele (lásd a „Mikor ezt a flow-t…" szekciót).
 
 ---
 
@@ -328,13 +289,7 @@ Ha a feladat olyan nagy, hogy ezek a hurkok és ágensek valóban indokoltak len
 
 ## 6. Segédparancsok, amelyek ezt a flow-t is ismerik
 
-| Parancs | Mit ad ebben a flow-ban |
-|---|---|
-| `/bs-cycle-status` | Felismeri az egyszerűsített flow-t (nincs `plan.md`), és a `spec.md` + `tasks.md` státusz-mezőiből mondja meg, hol tart a ciklus. Ezért kötelező a QF2 státusz-mező: enélkül minden fázisra „még nem futott"-at ír. |
-| `/bs-manual-test-plan` | **Ebből a flow-ból is használható (QF8):** ha a ciklusban nincs `plan.md`, a kapu a `tasks.md` státuszát nézi, és a `spec.md` technikai vázlatából + tesztstratégiájából szereli össze a kézi tesztervet. Konfigurációs és üzemeltetési ciklusnál ez a leghasznosabb kiegészítés. |
-| `/bs-run-tests` | **Cikluson kívüli teszt-futtatás kategóriánként (KT4):** a `conventions.md` `## <sec:cv_test_execution>` táblájából futtat, és a `test-runs/` fába ír — ehhez a flow-hoz **nem** kell `plan.md`. Hasznos a záró regressziós futáshoz; az eredménye **nem** ciklus-bizonyíték (D8), de ebben a flow-ban amúgy sincs `07` kapu. |
-| `/bs-export-doc` | A ciklus dokumentumainak exportja (pl. megosztható formátumba) — flow-független. |
-| `/bs-brainstorm` | A ciklus **előtti** feltáró ötletelés; a desztillátumát a belépő szekció szerint veszed át (QF16). |
+`/bs-cycle-status` — a `spec.md` + `tasks.md` státusz-mezőiből mondja meg, hol tart a ciklus (ezért kötelező a QF2 mező: enélkül minden fázisra „még nem futott"-at ír). · `/bs-manual-test-plan` — **ebből a flow-ból is fut (QF8):** `plan.md` híján a `tasks.md` státuszát nézi, és a `spec.md` technikai vázlatából + tesztstratégiájából szereli össze a kézi tesztervet. · `/bs-run-tests` — cikluson kívüli teszt-futtatás kategóriánként (KT4) a `conventions.md` `## <sec:cv_test_execution>` táblájából, a `test-runs/` fába; `plan.md` nem kell hozzá, hasznos a záró regressziós futáshoz, de az eredménye **nem** ciklus-bizonyíték (D8). · `/bs-export-doc` — a ciklus dokumentumainak exportja, flow-független. · `/bs-brainstorm` — a ciklus **előtti** ötletelés; a desztillátumát a belépő szekció szerint veszed át (QF16).
 
 ---
 
@@ -342,9 +297,6 @@ Ha a feladat olyan nagy, hogy ezek a hurkok és ágensek valóban indokoltak len
 
 1.  **Szintaxis-ellenőrzés:** Bármilyen scriptmódosítás után mindig fusson le a szintaktikai teszt (pl. `bash -n script.sh`), mielőtt a logikai tesztek elkezdődnek.
 2.  **Kezelt hibák:** Ha külső erőforráshoz (pl. adatbázis) kapcsolódik a kód, a kapcsolódási hibák mindig legyenek egyedileg lekezelve, és a hibaüzenet mutasson a konfigurációs állományra.
-3.  **Környezeti izoláció:** A dinamikus port-forwarding vagy egyéb alacsony szintű hálózati beállítások paramétereit mindig a konfigurációs fájlokból (pl. `include/config.sh`) olvassa a kód, soha ne legyenek beégetve.
-4.  **Relatív fájlútvonalak:** A dokumentációban (specifikációk, feladatlisták, README-k) a hivatkozások és elérési utak mindig relatívak legyenek, az „Útvonal-formátum" blokk (RP1) szerint. A termék scriptek (pl. `deploy.sh`, `certcheck.sh`) belső működésében a `cd` parancsok használata megengedett.
-5.  **Takarítási biztonság:** A tesztelés során (különösen a tesztek végén végzett takarítás/cleanup folyamatban) szigorúan tilos olyan állományok, könyvtárak vagy külső szerverkomponensek törlése, amelyeket nem maga az aktuális tesztfutás hozott létre. Mindig ügyelni kell arra, hogy a takarítási logika pontosan célzott legyen, és ne érintsen létező projektelemeket vagy megosztott erőforrásokat.
-6.  **Infrastruktúra-specifikus defaultok ellenőrzése:** Ha egy script vagy konfiguráció dinamikusan (pl. környezet- vagy névtér-változók összefűzésével) generál hálózati elérési utakat, hostneveket vagy URL-eket, a specifikáció során kötelező ellenőrizni, hogy a generált alapértelmezett értékek működőképesek-e a célkörnyezet tényleges routing- és DNS-struktúrájában. Sose feltételezzük, hogy a legegyszerűbb névadási kombináció automatikusan helyes; ha a hálózati infrastruktúra megköveteli, a generálási logikának támogatnia kell a név-specifikus eltéréseket (pl. prefixelés, központi gyűjtődomainek használata).
-7.  **Teljes körű csere / minden előfordulás:** Ha egy visszatérő elem (változó, függvény, parancs, érték, minta) előállítását vagy alakját módosítod, a változás scope-ja **minden** előfordulása, nem csak az, amire a feladat fókuszál. Csere ELŐTT vedd számba az összeset (`grep -rn`), csere UTÁN ellenőrizd, hogy a régi alakból **nem maradt elárvult példány**. A tesztek zöld státusza önmagában **nem bizonyítja a teljességet**, ha egyes kódágak nincsenek lefedve — a grep-sweep a determinisztikus biztosíték.
-8.  **A zöld teszt nem mondja meg, HOL volt zöld:** a cél-környezet (`<field:f_target_env>`), a literál cél-host és a `[local]` / `[remote]` címke együtt teszik a tesztet bizonyítékká. Egy konfigurációs ciklus tipikus csendes bukása, hogy a teszt a lokális példányon futott, miközben a változás a távoli környezetbe ment ki.
+3.  **Környezeti izoláció:** A dinamikus port-forwarding vagy egyéb alacsony szintű hálózati beállítások paramétereit mindig a konfigurációs fájlokból (pl. `include/config.sh`) olvassa a kód, soha ne legyenek beégetve. _(A dokumentációban az útvonalak relatívak — lásd az „Útvonal-formátum" blokkot; a termék scriptek belső működésében a `cd` viszont megengedett.)_
+4.  **Takarítási biztonság:** A tesztelés során (különösen a tesztek végén végzett takarítás/cleanup folyamatban) szigorúan tilos olyan állományok, könyvtárak vagy külső szerverkomponensek törlése, amelyeket nem maga az aktuális tesztfutás hozott létre. Mindig ügyelni kell arra, hogy a takarítási logika pontosan célzott legyen, és ne érintsen létező projektelemeket vagy megosztott erőforrásokat.
+5.  **Infrastruktúra-specifikus defaultok ellenőrzése:** Ha egy script vagy konfiguráció dinamikusan (pl. környezet- vagy névtér-változók összefűzésével) generál hálózati elérési utakat, hostneveket vagy URL-eket, a specifikáció során kötelező ellenőrizni, hogy a generált alapértelmezett értékek működőképesek-e a célkörnyezet tényleges routing- és DNS-struktúrájában. Sose feltételezzük, hogy a legegyszerűbb névadási kombináció automatikusan helyes; ha a hálózati infrastruktúra megköveteli, a generálási logikának támogatnia kell a név-specifikus eltéréseket (pl. prefixelés, központi gyűjtődomainek használata).

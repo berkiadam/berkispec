@@ -13,17 +13,12 @@ scripts:
 shared:
   - "shared/context-check.md"
   - "shared/path-format.md"
-  - "shared/artifact-voice.md"
   - "shared/dereferencing.md"
   - "shared/conventions-change.md"
 ---
 # SDD (Spec-Driven Development) — Simplified (Lightweight) Flow
 <!-- INCLUDE:lang/output-language.md#output-language -->
 <!-- INCLUDE:shared/context-check.md -->
-
----
-
-This document describes the project's **simplified, three-phase** SDD (Spec-Driven Development) flow, for small and well-bounded tasks. The AI assistant (Agent) should follow this pattern when the size of the task does not justify the full (00–09 phase) berki spec cycle.
 
 ---
 
@@ -51,19 +46,13 @@ The decision to switch flows always belongs to the User; you recommend and justi
 
 ## Entry point — the call forms you may receive
 
-| Call form | What to do |
-|---|---|
-| `/bs-quick-flow` (no parameter) | start the interview from scratch (section 2) |
-| `/bs-quick-flow input: <the task in one sentence>` | the sentence is the starting point of the interview; ask for the missing data |
-| `/bs-quick-flow brainstorm: NN` | **brainstorm handover (QF16)** — see below |
+**Call forms.** `/bs-quick-flow` with no parameter → start the interview from scratch (section 2). · `/bs-quick-flow input: <the task in one sentence>` → the sentence is the starting point of the interview, ask for the missing data. · `/bs-quick-flow brainstorm: NN` → **brainstorm handover (QF16)**, see below.
 
 **Brainstorm handover (QF16).** If the call references a brainstorm number (or the User points at a `.bs-brainstorm/brainstorm-NN-<slug>.md` file), **read the distillate** before the `spec.md`: `ls -1 .bs-brainstorm/brainstorm-NN-*.md`, then from the file the `<sec:bs_goal_question>`, `<sec:bs_facts>`, `<sec:bs_decisions>` and `<sec:bs_open_questions>` sections. The goal, the facts and the decisions are **inputs you already have** — do not ask about them again. The items under `<sec:bs_open_questions>`, however, must be **asked one by one** of the User: the brainstorm deliberately left them open, and inventing an answer to an open question is exactly the silent decision this flow rules out. If the `<sec:bs_cycle_split>` section lists **several** cycle candidates, that is a sign of outgrowing → recommend the `/bs-add-cycles` process.
 
 ---
 
 ## Quick step sequence (the full process in a nutshell)
-
-> This is the "happy path". Details are found below; return here if you get uncertain.
 
 1. **Branch + flow size.** Read the git section of `conventions.md`, and prepare the branch accordingly. Decide: is the task really small? If not → recommend the full berki spec (`/bs-add-cycles`), and stop.
 2. **Cycle folder.** Determine the next free cycle number with the **BQ2** formula, propose a name, request approval, then create it: `specs/cycle-NN-<cycle-name>/`.
@@ -78,34 +67,28 @@ At the **⛔** mark NEVER proceed without the User's explicit "yes". The signal 
 
 ## 1. Principles and directory structure
 
-*   **Cycles:** Every independent task, feature, or development stage happens in a dedicated folder, following the naming scheme below:
-    `cycle-NN-<cycle-name>` (e.g. `cycle-01-database-management`, `cycle-02-logging-improvement`).
-*   **Document-driven development:** Writing or modifying code is strictly forbidden until the design and breakdown phases have been closed.
-*   **Maintaining the README.md:** Keeping the project's main `README.md` file up to date and updated during development is not an optional step; it must always be part of the design (`spec.md`) and the task list (`tasks.md`).
+*   **Cycles:** every independent task, feature, or development stage lives in a dedicated folder, per the `cycle-NN-<cycle-name>` scheme (e.g. `cycle-01-database-management`, `cycle-02-logging-improvement`).
+*   **Document-driven development:** writing or modifying code is forbidden until Phase 1 and Phase 2 have been closed. Keeping the project's main `README.md` up to date is **not optional**: it is always part of `spec.md` and `tasks.md`.
 *   **Two artifacts, two statuses:** **exactly two** design documents live in the cycle folder — `spec.md` and `tasks.md` — and the header of both carries a `<field:f_status>` field (QF2). There is no `plan.md`: its role is taken over by the technical outline of `spec.md`.
-*   **Documentation language:** according to the **Output language** block at the top of the file — the cycle documents (`spec.md`, `tasks.md`) and their descriptions follow it. There is no separate rule here; identifiers, flags, and technical terms used in code remain in English regardless.
+*   **The language and the voice of the documentation:** the cycle documents follow the **Output language** block at the top of the file; identifiers, flags, and technical terms used in code remain in English. **The artifact speaks to the implementer, not to you (AV1):** do not copy skill text — imperatives ("it is forbidden…", "you must check…"), the `🔴` marking — into `spec.md`/`tasks.md`; write it down as a **decision**, in a descriptive voice.
 
 ---
 
 <!-- INCLUDE:shared/path-format.md -->
 
-> **This is the ONLY mandatory deterministic gate of this flow (QF11).** The `--paths-only` call runs on the `spec.md` / `tasks.md` pair present in the cycle folder, so it also runs before closing Phase 1 and Phase 2. The other gate scripts (`analyze-gate-check.py` in full mode, `run-tests.py`, `dod-check.py`, `report-gate-check.py`) belong to the full flow and **do not run here** — if you would need them, that is a sign of outgrowing.
-
----
-
-<!-- INCLUDE:shared/artifact-voice.md -->
+> **This is the ONLY mandatory deterministic gate of this flow (QF11).** The `--paths-only` call runs on the `spec.md` / `tasks.md` pair of the cycle folder, so it also runs before closing Phase 1 and Phase 2. The other gate scripts (`analyze-gate-check.py` in full mode, `run-tests.py`, `dod-check.py`, `report-gate-check.py`) belong to the full flow and **do not run here** — if you would need them, that is a sign of outgrowing.
 
 ---
 
 <!-- INCLUDE:shared/dereferencing.md -->
 
-> **In this flow this is even stricter (KX2):** there is no `plan.md`, so `spec.md` is the **single** execution truth. Whatever you leave here as a reference, nobody will resolve for you in Phase 3 — instead of `<sec:environment_coords>`, the technical outline and the testing strategy of `spec.md` take up the resolved values (commands, URLs, payload, coordinates).
+> **In this flow this is even stricter (KX2):** there is no `plan.md`, so `spec.md` is the **single** execution truth — whatever you leave as a reference, nobody will resolve for you in Phase 3. The place of `<sec:environment_coords>` is taken by the technical outline and the testing strategy of `spec.md`, with the resolved values (commands, URLs, payload, coordinates).
 
 ---
 
 <!-- INCLUDE:shared/conventions-change.md -->
 
-> **How the four conditions map onto this flow (GC1):** instead of condition 2 (the plan designs it), the **technical outline** of `spec.md` records the concrete new content of the affected `conventions.md` section; instead of condition 4 (the full 07 round runs again), the **test** of Phase 3 runs with the updated `conventions.md`. Conditions 1 and 3 are unchanged: there must be an explicit decision about it in `spec.md`, and a separate task for it in `tasks.md`. The typical task of this flow (configuration, port, test command) is exactly what the gates read from `conventions.md` — updating it is therefore part of the cycle, not debt left to the next one.
+> **How the four conditions map onto this flow (GC1):** instead of condition 2 (the plan designs it), the **technical outline** of `spec.md` records the new content of the affected `conventions.md` section; instead of condition 4 (the full `07` round runs again), the **test** of Phase 3 runs with the updated `conventions.md`. Conditions 1 and 3 are unchanged: an explicit decision in `spec.md`, a separate task in `tasks.md`. The typical task of this flow (configuration, port, test command) is exactly what the gates read from `conventions.md` — updating it is therefore part of the cycle, not debt left to the next one.
 
 ---
 
@@ -266,37 +249,15 @@ In this phase the actual coding happens according to the task list.
 
 ## 4. Specialist agents used
 
-The simplified flow deliberately uses **few** specialist agents, and each of them **optionally** — for most small tasks the main agent does the work independently, without a subagent.
+The simplified flow knows **three** specialist agents, and all of them **optionally** — for a small task the main agent does the work without a subagent, and **with a weaker/cheaper model feel free to skip all three** (orchestrating subagents itself carries error risk). The third column of the table is the **contract substitution (QF18)**: the body of the agent prompts was written for the full flow and stays unchanged, so **state explicitly in your call** what goes in place of the missing inputs and where the output is written — otherwise the agent will look for files that do not exist.
 
-> **With a weaker/cheaper model:** if you are uncertain, **feel free to skip all three optional agents** — the flow is complete without them. Orchestrating subagents itself carries error risk, so for a small task it is better to work directly, and only reach for an agent when it clearly helps.
-
-The usable agents (all callable by these names from the platform's installed agent definitions):
-
-| Agent | Where (phase) | What it gives | When it's worth it |
-|---|---|---|---|
-| `researcher` | Phase 1 (spec.md) | Concise list of affected source files (`path:line–line`) + documents to be updated (read-only) | When modifying an existing codebase, if the affected file set is not obvious |
-| `analyzer` | Phase 2 (tasks.md) | `spec.md` ↔ `tasks.md` consistency diagnosis: coverage gap, ambiguity, underspecification (read-only) | For a task list with multiple requirements, that easily slips |
-| `reviewer` | Phase 3 (before the closing commit) | Diff code review: conventions, scope, error handling, spec compliance → `<status:must_fix>` / `<status:suggestion>` (read-only) | For a non-trivial code change, as a quality gate before the commit |
-
-### Contract substitutions (QF18) — filling in the missing inputs
-
-The **body** of the three agent prompts **was written for the full flow**, and stays unchanged. What this flow adds: what goes in place of the missing inputs, and where the output is written. **State this explicitly in your call**, otherwise the agent will look for files that do not exist.
-
-| Agent | What the prompt expects | What it gets in this flow |
+| Agent (phase) | When it is worth it | What to state in place of the missing input (QF18) |
 |---|---|---|
-| `researcher` | an ad-hoc research question (Mode B) | **unchanged usage** — no substitution |
-| `analyzer` | scope parameter + the `analyze/slices/<scope>.md` slice | **we pass no scope parameter** → per the prompt's documented degradation branch it carries all five categories; **there is no slice file** |
-| `analyzer` | the `spec.md` + `plan.md` + `tasks.md` triple, `<sec:coverage_matrix>` block | the `spec.md` + `tasks.md` **pair**; the place of `plan.md` is taken by the **technical outline** of `spec.md`. **Its input point referencing `plan.md` is empty in this flow**, and there is no coverage matrix either (there is no `DoD-NN → [P-…] → task` chain) |
-| `reviewer` | the mandatory `plan.md` | the **technical outline** of `spec.md` (and its testing strategy) |
-| `reviewer` | output: `specs/cycle-NN-<cycle-name>/test-report/code-review.md` | **`specs/cycle-NN-<cycle-name>/code-review.md`** — in the cycle root, without a `test-report/` subfolder: this flow does not use that folder |
-| `reviewer` | `MF-NN` identifiers, RV-INC incremental writing | **kept** (this is what gives interruption tolerance) |
-| `reviewer` | self-fix loop, per-item counter, `review-fixer` | **none** — the `<status:must_fix>` items are fixed **inline** by the main agent before closing, the `<status:suggestion>` items are reported |
+| `researcher` (Phase 1, read-only) | when modifying an existing codebase, if the affected file set is not obvious; it gives affected source files (`path:line–line`) and documents to be updated | nothing — Mode B (ad-hoc research question), **unchanged usage** |
+| `analyzer` (Phase 2, read-only) | for a task list with multiple requirements that easily slips; it gives a `spec.md` ↔ `tasks.md` consistency diagnosis (coverage gap, ambiguity, underspecification) | you pass **no** scope parameter (per the prompt's documented degradation branch it carries all five categories), and there is no slice file; the input is the `spec.md` + `tasks.md` **pair** — its input point referencing `plan.md` is **empty**, its place is taken by the technical outline of `spec.md`, and there is no coverage matrix either |
+| `reviewer` (Phase 3, before the closing commit, read-only) | for a non-trivial code change, as a quality gate before the commit; diff review for conventions, scope, error handling, spec compliance | instead of the mandatory `plan.md`, the **technical outline** of `spec.md` + its testing strategy; the output is `specs/cycle-NN-<cycle-name>/code-review.md` (in the cycle root, without a `test-report/` subfolder); the `MF-NN` identifiers and RV-INC incremental writing are **kept**, but there is **no self-fix loop, no per-item counter and no `review-fixer`** — you fix the `<status:must_fix>` items **inline** before closing, and report the `<status:suggestion>` ones |
 
-**What this flow does NOT use (and why):**
-*   **Fixer-wrappers** (`spec-fixer`, `plan-fixer`, `tasks-fixer`, `implement-fixer`, `review-fixer`): these are the entry points of the full flow's **self-fix loops** (05-analyze / 07-validate). Here there is no automated self-fix loop — the main agent fixes errors directly, inline. The `plan-fixer`, moreover, assumes a `plan.md`, which does not exist in this flow.
-*   **`doc-sync-planner`**: the plan creator for the full flow's `docs-generated/` live documentation sync (08-doc-sync). In the simplified flow, updating documentation is part of Phase 3 (e.g. `README.md`), there is no separate generated doc layer — QF7 serves as the drift note.
-
-If the task is so large that these loops and agents would truly be warranted, that is generally a sign that **you should switch to the full berki spec process** (see the "When to use this flow…" section).
+**What this flow does NOT use:** the fixer wrappers (`spec`/`plan`/`tasks`/`implement`/`review-fixer`) and the `doc-sync-planner` — these are the entry points of the full flow's self-fix loops (05/07) and of the `docs-generated/` sync (08); here there is no automated loop (you fix inline), and there is no generated doc layer (the drift note is QF7/LD10). The `plan-fixer`, moreover, assumes a `plan.md`, which does not exist here. If these genuinely became warranted, that is the sign to **switch to the full berki spec process** (see the "When to use this flow…" section).
 
 ---
 
@@ -328,13 +289,7 @@ If the task is so large that these loops and agents would truly be warranted, th
 
 ## 6. Helper commands that also know this flow
 
-| Command | What it gives in this flow |
-|---|---|
-| `/bs-cycle-status` | Recognizes the simplified flow (no `plan.md`), and tells where the cycle stands from the status fields of `spec.md` + `tasks.md`. This is why the QF2 status field is mandatory: without it, it prints "not run yet" for every phase. |
-| `/bs-manual-test-plan` | **Usable from this flow too (QF8):** if there is no `plan.md` in the cycle, the gate looks at the status of `tasks.md`, and assembles the manual test plan from the technical outline + testing strategy of `spec.md`. For a configuration or operations cycle this is the most useful addition. |
-| `/bs-run-tests` | **Out-of-cycle test execution per category (KT4):** it runs from the `## <sec:cv_test_execution>` table of `conventions.md`, and writes into the `test-runs/` tree — this flow needs **no** `plan.md` for it. Useful for the closing regression run; its result is **not** cycle evidence (D8), but in this flow there is no `07` gate anyway. |
-| `/bs-export-doc` | Export of the cycle's documents (e.g. into a shareable format) — flow-independent. |
-| `/bs-brainstorm` | Exploratory ideation **before** the cycle; you take over its distillate per the entry-point section (QF16). |
+`/bs-cycle-status` — tells where the cycle stands from the status fields of `spec.md` + `tasks.md` (this is why the QF2 field is mandatory: without it, it prints "not run yet" for every phase). · `/bs-manual-test-plan` — **runs from this flow too (QF8):** lacking a `plan.md` it looks at the status of `tasks.md`, and assembles the manual test plan from the technical outline + testing strategy of `spec.md`. · `/bs-run-tests` — out-of-cycle test execution per category (KT4) from the `## <sec:cv_test_execution>` table of `conventions.md`, writing into the `test-runs/` tree; it needs no `plan.md`, it is useful for the closing regression run, but its result is **not** cycle evidence (D8). · `/bs-export-doc` — export of the cycle's documents, flow-independent. · `/bs-brainstorm` — ideation **before** the cycle; you take over its distillate per the entry-point section (QF16).
 
 ---
 
@@ -342,9 +297,6 @@ If the task is so large that these loops and agents would truly be warranted, th
 
 1.  **Syntax check:** After any script modification, the syntax test (e.g. `bash -n script.sh`) should always run before the logic tests start.
 2.  **Handled errors:** If the code connects to an external resource (e.g. a database), connection errors should always be individually handled, and the error message should point to the configuration file.
-3.  **Environment isolation:** The parameters of dynamic port-forwarding or other low-level network settings should always be read by the code from configuration files (e.g. `include/config.sh`), never hardcoded.
-4.  **Relative file paths:** In documentation (specifications, task lists, READMEs), references and paths should always be relative, per the "Path format" block (RP1). In the internal workings of product scripts (e.g. `deploy.sh`, `certcheck.sh`), using `cd` commands is permitted.
-5.  **Cleanup safety:** During testing (especially in the cleanup process performed at the end of tests), deleting files, directories, or external server components that were not created by the current test run itself is strictly forbidden. Always make sure that the cleanup logic is precisely targeted, and does not touch existing project elements or shared resources.
-6.  **Checking infrastructure-specific defaults:** If a script or configuration dynamically generates network paths, hostnames, or URLs (e.g. by concatenating environment or namespace variables), it is mandatory during specification to check whether the generated default values are functional within the target environment's actual routing and DNS structure. Never assume that the simplest naming combination is automatically correct; if the network infrastructure requires it, the generation logic must support name-specific deviations (e.g. prefixing, using central collector domains).
-7.  **Full replacement / every occurrence:** If you modify the production or form of a recurring element (variable, function, command, value, pattern), the scope of the change is **every** occurrence of it, not just the one the task focuses on. BEFORE replacing, take stock of all of them (`grep -rn`), AFTER replacing, verify that **no orphaned instance** of the old form remains. Tests being green **does not in itself prove completeness**, if some code branches are not covered — the grep sweep is the deterministic safeguard.
-8.  **A green test does not tell you WHERE it was green:** the target environment (`<field:f_target_env>`), the literal target host and the `[local]` / `[remote]` label together make a test into evidence. The typical silent failure of a configuration cycle is that the test ran against the local instance while the change went out to the remote environment.
+3.  **Environment isolation:** The parameters of dynamic port-forwarding or other low-level network settings should always be read by the code from configuration files (e.g. `include/config.sh`), never hardcoded. _(In documentation, paths are always relative — see the "Path format" block; in the internal workings of product scripts, however, using `cd` is permitted.)_
+4.  **Cleanup safety:** During testing (especially in the cleanup process performed at the end of tests), deleting files, directories, or external server components that were not created by the current test run itself is strictly forbidden. Always make sure that the cleanup logic is precisely targeted, and does not touch existing project elements or shared resources.
+5.  **Checking infrastructure-specific defaults:** If a script or configuration dynamically generates network paths, hostnames, or URLs (e.g. by concatenating environment or namespace variables), it is mandatory during specification to check whether the generated default values are functional within the target environment's actual routing and DNS structure. Never assume that the simplest naming combination is automatically correct; if the network infrastructure requires it, the generation logic must support name-specific deviations (e.g. prefixing, using central collector domains).
