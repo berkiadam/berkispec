@@ -8,6 +8,7 @@ prerequisites:
   - "specs/cycle-NN-<name>/spec.md státusz: <status:done>"
 output:
   - "docs-generated/ konzisztens állapota (system-overview.md, architecture.md, CHANGELOG.md, design-drift.md, README.md mappa-index + a mappa többi fájlja)"
+  - "docs-generated/test-description.md — a projekt teszt-leltára: milyen tesztek léteznek és mit bizonyítanak (LD1)"
   - "specs/test-conventions.md — a visszatérő teszt-elvárások és a hozzájuk tartozó receptek élő regisztere (TC1)"
   - "Érintett komponens README-k frissítve"
   - "specs/cycle-NN-<name>/doc-sync-plan.md (a végrehajtás és a folytatás horgonya)"
@@ -105,6 +106,7 @@ A 3. szint **projekt-specifikus** elérési útjait a doc-sync a **`conventions.
 | `docs-generated/architecture.md` | „Hogyan épül/fut" — komponensek, build, deployment, ops, **technikai szerződések** (config-mezők, log/esemény-séma, hibakód-tábla — szó szerint, DS23) **és környezeti koordináták** (URL/port/teszt-user, DS25) | a rendszer felépítése és üzemeltetése |
 | `docs-generated/CHANGELOG.md` | Részletes, inkrementális, ciklusonkénti változásnapló (DS15) | minden lezárt ciklus működés-/doksi-változása |
 | `docs-generated/design-drift.md` | A megvalósult rendszer eltérései a HLD/LLD szándéktól (DS20) | a terv ↔ as-built eltérések + „<sec:closed_deviations>" |
+| `docs-generated/test-description.md` | A projekt **teszt-leltára**: `TL-NNN` tételek kategóriánként — cél, lépések, elvárt eredmény, futtató parancs (LD1–LD8) | a `conventions.md` `### Tesztfájl-helyek` globjaival felderített teljes tesztkészlet |
 | _(projekt-specifikus extra doksik)_ | a mappa-bejárás találja meg; a fejléc-scope dönti el az érintettséget | a fájl saját fejléce deklarálja |
 
 ---
@@ -132,9 +134,9 @@ A doc-sync bármikor megszakadhat. Újraindításkor **NE kezdj tiszta lapról**
 A doc-sync **„terv előbb, aztán mechanikus végrehajtás"** mintát követ. A lépések:
 
 1. **Ág-elágazás:** bootstrap vagy inkrementális? (lásd lent)
-2. **Tervkészítés:** a `doc-sync-planner` subagent megírja a `doc-sync-plan.md`-t (per-fájl pipálható terv) — a `specs/test-conventions.md` tételeivel együtt.
+2. **Tervkészítés:** a `doc-sync-planner` subagent megírja a `doc-sync-plan.md`-t (per-fájl pipálható terv) — a `specs/test-conventions.md` és a `docs-generated/test-description.md` tételeivel együtt.
 3. **Mechanikus végrehajtás:** a fő ágens végrehajtja a terv `[ ]` tételeit, fájlonként mentve és pipálva.
-4. **Objektív konzisztencia-kapu (DS22):** a magkapu lefuttatása; bukáskor ember-vezérelt javító hurok (a kérdés a `doc-sync-questions.md`-be). Ezt követi a `test-conventions.md` saját kapuja (TC8, `tc8-gate-check.py`).
+4. **Objektív konzisztencia-kapu (DS22):** a magkapu lefuttatása; bukáskor ember-vezérelt javító hurok (a kérdés a `doc-sync-questions.md`-be). Ezt követi a **két saját kapu**: a `test-conventions.md`-é (TC8, `tc8-gate-check.py`) és a teszt-leltáré (LD5, `test-inventory-check.py`). **Mindhárom kötelező**, és mindhárom zöld kell legyen a commit előtt.
 5. **Commit + továbblépés a 09-re.**
 
 ---
@@ -277,6 +279,8 @@ A mappa **indexe/manifesztje** — röviden leírja, melyik fájl micsoda (egy-e
 - **Elavult bejegyzés → ki** (a mappa tényleges tartalma == a README bejegyzései, halmaz-egyezés).
 
 A mappa **létrehozásakor** (bootstrap) az index is létrejön. Ez a `docs-generated/README.md` **külön** a `prompts/README.md`-től és a gyökér `README.md`-től.
+
+> **A `test-description.md` is a mappa fájlja**, tehát index-sort kap (LD8/a) — a halmaz-egyezés kapu különben elbukik.
 
 ---
 
@@ -535,6 +539,126 @@ python3 <platform-scripts-mappa>/tc8-gate-check.py specs/test-conventions.md \
 
 ---
 
+## A `docs-generated/test-description.md` karbantartása (LD1–LD8)
+
+### LD1 — Mi ez, és mi NEM
+
+A `docs-generated/test-description.md` a projekt **teszt-leltára**: arra a kérdésre válaszol, hogy **milyen tesztek léteznek a projektben, és mit bizonyítanak**. A doc-sync a **kizárólagos gazdája** (mint a `docs-generated/` többi fájljának); a `03b-write-test-plan`, a `bs-manual-test-plan`, a `02-write-spec` és a `bs-quick-flow` **csak olvassa**.
+
+> **🔴 LD1/a — Ez sem futtatható forrás, és nem recept-regiszter.** A `test-runner` és a `run-tests.py` ezt a fájlt **nem olvassa**; a futtatás igazsága a `plan.md` gépi táblája (ciklus-szinten) és a `conventions.md` `## <sec:cv_test_execution>` szekciója (projekt-szinten). A leltár az **emberi és ágens-olvasható igazság** arról, hogy mi van letesztelve.
+
+**A határvonal a `specs/test-conventions.md`-hez (D3) — mező-szintű tulajdon:** a leltár a **<field:f_goal> / <field:f_steps> / <field:f_expected_result>** igazsága **minden** tesztre; a `test-conventions.md` a **recept** (`<field:f_startup>`, `<field:f_example_call>`, `<field:f_prerequisite>`, `<field:f_cleanup>`, credential-pointer) igazsága a **promótált, visszatérő** elvárásokra. **Azonos mezőt a kettő nem hordoz**; ütközésnél mezőnként az adott fájl nyer. A kapcsolatot a kétirányú `R-NN` ↔ `TL-NNN` hivatkozás adja (LD6).
+
+**Következmény, amit KI KELL MONDANOD:** egy **cikluson kívül** (`/bs-run-tests`) vagy **egyszerűsített flow-ban** (`/bs-quick-flow`) írt teszt csak a **következő** doc-sync futásban jelenik meg a leltárban — addig a fájl arra a tesztre elavult. Erre szolgál a quick-flow drift-jelzése (QF7/LD10).
+
+**Szerkezet (LD1):** fejléc-blokk (DS17) → `# <sec:test_inventory>` → a bevezető bekezdések → **kategóriánként egy `##` szekció**, a `conventions.md` `**<field:f_test_categories>:**` szótárának nevével (D6) → a szekción belül a `TL-NNN` tételek **sorszám szerint**. A `TL-NNN` **globális és állandó**: a tételek a kategória-váltáskor **nem** rendeződnek át, és nem kapnak új számot.
+
+### LD2 — A tétel adatlapja (KÖTELEZŐ formátum)
+
+**Minden `TL-NNN` tétel ezt a kilenc elemet hordozza** — a `test-inventory-check.py` 3. checkje tételesen méri:
+
+```md
+<!-- INCLUDE:lang/08-doc-sync.md#LD2-tl-adatlap-vaz -->
+```
+
+- **`<field:f_environment>`:** pontosan `local` vagy `remote`. Ez **nyelvfüggetlen literál** (EV8): a `test-runs/<kategória>/<időbélyeg>/<env>/<TL-NNN>/` útvonal-szegmensre joinol, tehát a projekt-nyelvi alak két néven hasítaná szét az eredmény-fát.
+- **`<field:f_steps>`:** a lépések **konkrét parancsot/hívást és konkrét elvárt értéket** tartalmaznak (a `bs-manual-test-plan` `TG-NN` csoportjainak sűrűségével, D2) — **nem** viselkedés-szintű összefoglaló. Egy „a teszt ellenőrzi a bejelentkezést" sor nem reprodukálható, tehát értéktelen.
+- **`<field:f_run_command>`:** a **szelektoros** futtatás egy sorban (csak ezt az egy tesztet futtatja). Ez a mező joinol a felderítéshez: a kapu 1. checkje ebből olvassa ki, melyik tesztfájlról van szó.
+- **`<field:f_recipe>`:** `R-NN` hivatkozás a `test-conventions.md`-be, vagy `—`. Üresen hagyni nem opció (a kapu a mező **hiányát** fogja meg, a `—` legitim érték).
+- **`<field:f_last_run>`:** dátum + `local`/`remote`. Ez a D2 vállalt kockázatának mitigációja (LD7).
+- **`<field:f_source_cycle>`:** melyik ciklus hozta létre a tesztet. `<status:retired>` tételnél ez az **egyetlen** kötelező mező a jelölés mellett.
+
+**Kalibrációs minta** (a padló önmagában nem termel részletet — a mintát a **sűrűségéért** másold, ne a témájáért):
+
+```md
+<!-- INCLUDE:lang/08-doc-sync.md#LD2-tl-adatlap-pelda -->
+```
+
+### LD3 — Azonosító-életút (D4)
+
+- A `TL-NNN` **projekt-szintű, három számjegyű** sorszám (`TL-001`), és **soha nem hasznosítod újra**.
+- A **meglévő tételt nem írod át** más sorszámra: a join (a `test-runs/<TL-NNN>/` eredmény-mappa, a `TG-NN` csoport-fejléc, az `R-NN` visszahivatkozás) **szó szerinti egyezésre** épül — ugyanaz a szabály, mint a `TS-NN` és az `AF-NN` azonosítóknál.
+- Tesztfájl **átnevezése, mozgatása vagy átírása NEM** változtatja meg a sorszámot; ilyenkor a `<field:f_run_command>`-ot javítod.
+- **Kivezetett teszt tétele `<status:retired>` jelölést kap, és a fájlban MARAD** (audit-nyom) — a jelölés mellé az indoklás és a kivezető ciklus:
+
+```md
+<!-- INCLUDE:lang/08-doc-sync.md#LD3-retired-jeloles -->
+```
+
+**Ezért nem hézagos a sorszámozás:** a kapu 2. checkje hézagot talál, ha egy tételt `<status:retired>` jelölés helyett **kitöröltél**.
+
+### LD4 — A karbantartás menete (minden doc-sync futásban)
+
+1. **Sorold fel a ciklus tesztjeit** két forrásból: a `test-report/` **tényleges** tartalmából (mi futott le — ez a bizonyíték) és a `plan.md` `<sec:plan_test_scenarios>` `TS-NN` blokkjaiból (mi készült el). Egyszerűsített flow-nál a `spec.md` teszt-stratégiája és a `tasks.md` teszt-lépései adják ugyanezt.
+2. **Vezesd át a leltárba** — háromféle művelet, tételenként: **új tétel** (a következő szabad `TL-NNN`-nel), **meglévő frissítése** (jellemzően a `<field:f_last_run>` bumpolása és a lépések pontosítása), vagy **`<status:retired>` jelölés**.
+3. **A nem verifikált adatot NE írd be.** Ha egy tétel célja, lépése vagy elvárt eredménye a tesztfájlból és a bizonyítékból sem derül ki egyértelműen, az **kérdés a `doc-sync-questions.md`-be** (a TC3 verifikációs szabály mintájára) — **találgatni tilos**:
+
+```md
+<!-- INCLUDE:lang/08-doc-sync.md#LD4-leltar-kerdes -->
+```
+
+4. **Bumpold a `<field:f_last_run>`-t** azokon a tételeken, amelyek ebben a ciklusban **tényleg** futottak (a `test-report/` a bizonyíték) — máson ne.
+5. **A leltár a `doc-sync-plan.md` KÜLÖN, pipálható sorát kapja** (per-fájl terv, DS-minta) — és minden `<status:retired>` jelölés is külön tervsor, hogy a felhasználó lássa és pipálja, mielőtt megtörténik.
+
+### LD5 — A fájl saját kapuja (`test-inventory-check.py` — szkriptelt)
+
+A DS22 magkapu a `docs-generated/` mappa **halmaz-** és **marker**-egyezését méri, a leltár **teljességét** viszont nem tudja — ahhoz a repó tesztfájljait kell felderíteni. Ezért a fájlnak **saját kapuja** van, és az **teljesen szkriptelt**: nincs benne LLM-ítélet, ezért **ne grepelj kézzel**, futtasd a scriptet.
+
+<!-- INCLUDE:shared/python-cmd.md -->
+
+```bash
+python3 <platform-scripts-mappa>/test-inventory-check.py docs-generated/test-description.md \
+  --project-root . \
+  --conventions conventions.md \
+  --test-conventions specs/test-conventions.md
+```
+
+**A hét check:**
+
+| # | Mit ellenőriz | Blokkol? |
+|---|---|---|
+| 1 | **Felderítés ↔ leltár halmaz-egyezés (LD5/1)** — a `conventions.md` `### Tesztfájl-helyek` globjaival felderített MINDEN tesztfájlhoz tartozik legalább egy `TL-NNN`, és minden élő tétel `<field:f_run_command>`-ja **létező** fájlra mutat | **FAIL** mindkét irányban, a hiányzó elem tételes felsorolásával |
+| 2 | **Hézagmentes, egyedi `TL-NNN` (LD5/2)** — a `TS6` mintája | **FAIL** — a hézag azt jelenti, hogy egy tétel `<status:retired>` jelölés helyett kitörlődött |
+| 3 | **Kötelező mezők (LD5/3)** — az LD2 adatlap kilenc eleme minden tételen | **FAIL** |
+| 4 | **Kategória-érvényesség (LD5/4)** — a tétel `##` szekciója a `conventions.md` szótárából van (D6) | **FAIL** |
+| 5 | **`<field:f_environment>`-érték (LD5/5)** — pontosan `local` vagy `remote` (EV8 literál) | **FAIL** |
+| 6 | **Kétirányú `R-NN` join (LD5/6)** — lásd LD6 | **FAIL** — az egyoldalú hivatkozás is bukás |
+| 7 | **Elavult cél-host (LD5/7)** — lásd LD7 | **WARN** (`exit 0`) → kérdés a `doc-sync-questions.md`-be |
+
+**Kilépő kód:** `0` = minden kemény check PASS (WARN megengedett), `1` = legalább egy FAIL, `2` = használati hiba. **Ha a `docs-generated/` mappa nem létezik**, a script `0`-val, „kihagyva" jelzéssel tér vissza (a bootstrap még nem futott le); **ha a mappa létezik, de a leltár nem**, az **FAIL** — a leltár a mappa kötelező fájlja (LD8).
+
+> **`TL-EXEMPT` felmentő lista NINCS.** A hatókör szűkítése **kizárólag** a `conventions.md` `### Tesztfájl-helyek` glob-deklarációjában történik — ez az egyetlen szabályozott kiskapu (D5). Ha egy tesztfájl-halmaz szándékosan kimarad a leltárból, a glob-ot kell szűkíteni, a felhasználóval egyeztetve.
+
+**Bukáskor (`1`)** ugyanaz az **ember-vezérelt** javító hurok fut, mint a DS22-nél: a konkrét eltérés `Knn`-ként a `doc-sync-questions.md`-be, javítás, majd a kapu újrafut, amíg zöld nem lesz.
+
+### LD6 — Kétirányú join a `test-conventions.md`-vel (a D3 mitigációja)
+
+Ha egy `TL-NNN` tételhez tartozik recept, akkor **mindkét irányban** látszania kell:
+
+- a leltár tétele a `**<field:f_recipe>:**` mezőben az `R-NN`-re mutat, **és**
+- a `test-conventions.md` `### R-NN` adatlapja a `**<field:f_inventory_items>:**` mezőben visszamutat a `TL-NNN`-re.
+
+A kapu 6. checkje **mindkét irányt** méri (a `TS5` kétirányú `DoD-NN` ↔ `TS-NN` lefedettség mintájára). **Egyoldalú hivatkozás → bukás** — mert egy néma átfedés pontosan az a hibaosztály, ami miatt az `RP1` a három helyen élő útvonal-szabályt megszüntette.
+
+**Mit jelent ez a TC10/b részletező blokkra:** a `test-conventions.md` TC10/b blokkjába **NE írd be újra** a lépéseket, ha a tesztnek van leltár-tétele — hivatkozz a `TL-NNN`-re. A leltár pedig **NE ismételje meg** az `<field:f_startup>`, `<field:f_example_call>`, `<field:f_prerequisite>` és `<field:f_cleanup>` mezőket. A két artefaktum ugyanazt a tesztet **említheti**, de **egyetlen mezőt sem duplikál**.
+
+### LD7 — Frissesség (a D2 mitigációja)
+
+A D2 döntése (konkrét parancs és literál host a leltárban) egy vállalt kockázattal jár: egy port- vagy host-váltás **csendben** hagy elavultat. Két mitigáció él:
+
+1. A `**<field:f_last_run>:**` **kötelező** minden élő tételen (dátum + `local`/`remote`).
+2. A kapu 7. checkje összevetést végez: a tételek parancsaiban szereplő **cél-hostok** a `conventions.md`-ben deklarált környezetek részhalmazát adják-e. Ha egy tétel olyan hostra hív, amit a projekt már nem deklarál, a kapu **WARN**-t ad a tétel azonosítójával — és **te kérdést teszel** a `doc-sync-questions.md`-be (a WARN-t nem hagyhatod figyelmen kívül: vagy javítás, vagy kérdés).
+
+### LD8 — Bootstrap és mappa-index
+
+**(a) Mappa-index (DS21).** A `docs-generated/README.md` index-sort kap a `test-description.md`-re — a DS21 **halmaz-egyezés** kapu különben elbukik (a `ds22-gate-check.py` a mappa **tényleges** `.md` listáját veti össze a README bejegyzéseivel).
+
+**(b) A bootstrap FÜGGETLEN a `system-overview.md` ágától** (a `test-conventions.md` mintájára): a leltárnak akkor is le kell futnia, ha a `docs-generated/` most születik, **és** akkor is, ha a mappa már létezik, de a leltár még nem. **Bootstrapkor a felderítés adja a `TL-NNN` vázakat** (a `conventions.md` globjaival), a **leírásokat viszont a felhasználóval kell kitölteni** — a tesztfájl neve nem mondja meg, mit bizonyít a teszt, és **találgatni tilos** (TC3). A vázakat és a hiányzó adatokat egy `Knn` kérdésben, **egy körben** kínáld fel.
+
+> **A TC6 „ne hozz létre üres vázat" szabály itt NEM érvényes.** A `test-conventions.md` promóció-alapú, ezért a hiánya korai ciklusban jogos; a leltár viszont a **felderítésből** teljes, tehát ha van egyetlen deklarált tesztfájl is, a fájlnak létezni kell. Ha a projektnek egyáltalán nincs tesztfájlja, a `conventions.md` `### Tesztfájl-helyek` táblája üres — ilyenkor a kapu sem keres semmit.
+
+---
+
 ## Objektív konzisztencia-kapu (DS22) + kapu-bukás kezelése (DS10)
 
 A végrehajtás után **kötelező** lefuttatni a kétrétegű, projektfüggetlen kaput. A magkapu **objektív/determinisztikus** (grep, halmaz-összevetés, leltár-párosítás, marker-olvasás) — nincs benne „ítéld meg, jó-e a szöveg", ezért a Réteg 1-et **szkript végzi, nem te grepelsz kézzel**.
@@ -712,8 +836,18 @@ Minden tétel egy sor + (a `<status:op_reconciliation>`/`<status:op_new>` tétel
   ```
 - **Előfeltétel / sorrend:** `oc login` megtörtént (a credential nem itt van — TC5 pointer: a csapat vault-jában); a restart után a health `ready`-t ad, csak utána futhat bármely I-tétel
 - **Hatókör:** `osztott-remote` — a dev klasztert más is használja
+- **Leltár-tételek:** TL-014, TL-018
 - **Utolsó futás:** cycle-29
 ````
+
+### `docs-generated/test-description.md` (LD1)
+
+**Váz** — fejléc-blokk (DS17), a `# <sec:test_inventory>` címsor, a bevezető bekezdések, majd **kategóriánként egy `##` szekció**; a szekciókba az `LD2` adatlapja szerinti `TL-NNN` tételek kerülnek, sorszám szerint:
+```md
+<!-- INCLUDE:lang/08-doc-sync.md#LD1-test-description-vaz -->
+```
+
+> A tétel-adatlap váza és a kalibrációs minta az `LD2` szekcióban áll; a `<status:retired>` jelölés alakja az `LD3`-ban.
 
 ### `docs-generated/README.md` index-sor (DS21)
 

@@ -137,7 +137,7 @@ _Az alábbiak **ajánlott default-ok** modern, korszerű eszközökkel (lokális
 
 - **Frontend E2E:** Playwright _(ajánlott — alternatíva: Cypress)_
 - **Backend tesztek:** Python — `pytest` + `httpx` _(ajánlott — alternatíva: a projekt nyelvének natív keretrendszere, pl. Jest/Vitest Node, go test Go)_
-  - Tesztfájlok helye: `test/` (a projekt test struktúrájának megfelelő almappában)
+  - Tesztfájlok helye: `test/` (a projekt test struktúrájának megfelelő almappában) — _embernek szóló tájékoztatás; a **gépi felderítés** kategóriánkénti globjait a `## Teszt-futtatás` szekció `### Tesztfájl-helyek` táblája adja (RP1: itt ne duplikálj értéket)_
   - Python test függőségek: `requirements-test.txt` vagy `pyproject.toml [test]` szekció
 - **E2E infrastruktúra:** `docker compose` — konténerizált teljes stack
   - E2E compose fájl: `docker-compose.e2e.yml` a projekt gyökerében
@@ -172,6 +172,40 @@ _Kitöltési szabályok:_
 - **🔴 A REST-naplók TESZT-SZERINTI almappákba mennek:** `<artefaktum>/<local|remote>/<teszt-név>/`. A `local`/`remote` szint **nyelvfüggetlen**, és a **teszt saját jelöléséből** következik (nem a hívott címből — egy `oc port-forward` mögötti `127.0.0.1` **remote**, egy compose service-név pedig **local**). A teszt-név a teszt-függvény neve, útvonal-biztosra normalizálva: **minden `[^A-Za-z0-9._-]` karakter `-`-re, a széleken lévő `-` levágva, kisbetűsítés NINCS** (`test_foo[dsp01]` → `test_foo-dsp01`; a paraméter **nem** lesz külön alkönyvtár). A `07` kapuja (`RL1`/`RL2`) erre a szerkezetre joinol: megnézi, hogy a `remote/` alatti naplók tartalmaznak-e valóban nem-lokális címet, és hogy minden `[remote]`-nak jelölt forgatókönyv termelt-e naplót. Enélkül a napló **egy lapos halom**, amelyből utólag nem állapítható meg, melyik teszt mit hívott — és egy korábbi körből örökölt fájlokkal teli mappa **telinek látszik**. _(A TR3 tábla artefaktum-cellája NEM változik — marad `e2e/rest-logs/`; az új szintek az ALÁ kerülnek, és a `report-gate-check.py` `rglob`-bal járja be a mappát, tehát a beágyazott szerkezetet változtatás nélkül látja.)_
 - **Az alkalmazás-oldali bizonyíték is TÁBLASOR, nem próza.** Ami a teszt-futás alatt keletkezik és utólag megnyitható — REST kérés/válasz audit-napló, korrelációs-azonosító nyom, alkalmazás-log-kivonat —, azt ugyanúgy vedd fel a táblába, mint a teszt-eszköz riportját. Amit a tábla nem kér, azt a `report-gate-check.py` **nem is keresi**: csendben elmarad, és a hiánya csak hónapokkal később derül ki. A fájlnév- és fejléc-konvenciót a `specs/test-conventions.md` rögzíti (TC1/c), a **kötelezőség** viszont ide tartozik.
 - **Ha a projekt egyáltalán nem generál teszt-riportot**, a fenti flaget írd `nem`-re, **indoklással** (pl. „csak manuális smoke-teszt van"). Ez tudatos, rögzített döntés — a kapu ilyenkor kihagyódik. Üresen hagyni vagy kitöltetlen táblázatot hagyni **nem** opció: a kapu ilyenkor használati hibát jelez.
+
+## Teszt-futtatás
+
+_**Kötelező szekció (KT1).** Ez a szekció a **cikluson kívüli** teszt-futtatás egyetlen gépi igazságforrása: a `/bs-run-tests` segédparancs ebből olvassa ki, mely kategóriát milyen paranccsal futtasson, és a `08-doc-sync` teszt-leltára (`docs-generated/test-description.md`) ebből deríti fel, milyen tesztfájlok léteznek. A **ciklus**-szintű futtatást továbbra is a `plan.md` gépi futtatási táblája adja (TP4) — a kettő nem helyettesíti egymást: ez a szekció projekt-szintű és ciklus-független, az pedig egy ciklus egy körére szól._
+
+**Teszt-kategóriák:** unit, rest-e2e, ui
+
+_A projekt kategória-szótára, vesszővel felsorolva (ajánlott alap: `unit` · `rest-e2e` · `ui`, opcionálisan `coverage`). A `plan.md` gépi futtatási táblájának `Kategória` értékei ennek a halmaznak a **részhalmazai** kell legyenek — ezt az `05-analyze` mechanikus kapuja ellenőrzi (KT2). A kategória-azonosítók **nyelvfüggetlenek** (útvonalra és kapura joinolnak: `test-runs/<kategória>/…`), ezért ne fordítsd le őket._
+
+### Projekt-szintű futtatási tábla
+
+_Az oszlop-séma **azonos** a `plan.md` gépi futtatási táblájával (TP4/b) — egy parser, egy szabály. A `run-tests.py` FIX oszlop-pozíciókkal olvas, tehát az első oszlop mindig a `Kategória`, és a sorrend nem cserélhető fel. A `Típus` oszlop értékei (`gyors` / `nehez`) a szkript `--type` kapcsolójának nyelvfüggetlen értékei — ezeket nem fordítjuk._
+
+| Kategória | Típus | Előfeltétel | Parancs | Eredményfájl | Formátum | Takarítás | Környezet | Fázis |
+|---|---|---|---|---|---|---|---|---|
+| unit | gyors | — | `<szó szerinti parancs, gépi riporterrel>` | `junit.xml` | junit | — | lokális | — |
+| rest-e2e | nehéz | `<a cél elérhetőségi probe-ja>` | `<parancs a cél-hosttal>` | `<fájl>` | junit | `<lebontás>` | `<remote — a cél-környezet neve>` | — |
+
+_Kitöltési szabályok:_
+- **A `Fázis` oszlop itt `—`:** a cikluson kívüli futásnak nincs fázisa, és az üres/`—` cella a `run-tests.py`-ban „mindkettő"-t jelent, tehát a fázis-szűrés nem tünteti el a sort.
+- **A `{round}` és a `{phase}` helyőrző itt is működik:** a `/bs-run-tests` a `test-runs/…` futás-mappát adja át `--round-dir`-ként, tehát a `{round}` arra oldódik fel — nem ciklus-mappára.
+- **EV-szabályok érvényesek:** a `remote` környezetű sor parancsa **literálisan** tartalmazza a cél-hostot (EV3), és van hozzá `Előfeltétel`-probe ugyanarra a célra (EV4); `localhost` / `127.0.0.1` deklarált port-forward nélkül **TILOS** (EV5). A `run-tests.py` ezt futásidőben is méri (`exit 4`).
+
+### Tesztfájl-helyek
+
+_A **gépi felderítés** globjai, kategóriánként. Ez a `test-inventory-check.py` (LD5) egyetlen bemenete, és ez az **egyetlen szabályozott hely**, ahol a teszt-leltár hatóköre szűkíthető: ami itt nincs deklarálva, azt a leltár-kapu nem is keresi._
+
+| Kategória | Glob |
+|---|---|
+| unit | `test/unit/**/test_*.py` |
+| rest-e2e | `test/e2e/**/*.spec.ts` |
+| ui | `test/ui/**/*.spec.ts` |
+
+_A `## Teszt keretrendszer` szekció prózai „Tesztfájlok helye" sora **embernek** szól és megmarad — de értéket nem duplikál: a gépiesen olvasott globok **kizárólag itt** élnek (RP1: egy fogalom, egy hely). Ha egy kategóriának nincs tesztfájlja, a `Glob` cellába `—` kerül; a kategória akkor is a szótár része marad._
 
 ## Naming konvenciók
 
@@ -228,6 +262,12 @@ _Projekt szintű technikai korlátok, elfogadott POC határok._
 
 <!-- ANCHOR:TR3-riport-kerdes -->
 *„Milyen riportot generál a teszt-eszközötök, és milyen paranccsal? (pl. Allure HTML, Playwright HTML report, pytest-html, JUnit XML, coverage) — ez minden ciklusban bekerül a `specs/cycle-NN-<name>/test-report/` mappába — körönkénti almappákba —, és a validálás determinisztikus kapuval ellenőrzi a meglétét."*
+
+<!-- ANCHOR:KT1-futtatas-kerdes -->
+*„Milyen teszt-kategóriákra bomlik a projekt tesztkészlete (pl. `unit`, `rest-e2e`, `ui`, `coverage`), melyik kategóriát milyen **szó szerinti paranccsal** futtatom le a teljes projektre, és hol vannak a kategória tesztfájljai (glob)? Ezt a cikluson kívüli futtatás (`/bs-run-tests`) és a teszt-leltár felderítése használja — a ciklus-szintű futtatást továbbra is a `plan.md` táblája adja."*
+
+<!-- ANCHOR:KT7-gitignore-felajanlas -->
+> *„A `test-runs/` mappa most nincs kizárva a verziókezelésből. Ide a `/bs-run-tests` cikluson kívüli teszt-futtatásai írnak: gépfüggő, bármikor újragenerálható eredmények, amelyek a keret bizonyíték-logikájában amúgy sem számítanak (D8). Javaslom felvenni a `.gitignore`-ba a `test-runs/` bejegyzést. Felvegyem?"*
 
 <!-- ANCHOR:BD9-api-guideline-kerdes -->
 *„Van követendő API design guideline / API-szabályzat (REST konvenciók, verziózás, hibaformátum, elnevezés)? Ha igen, hol a dokumentuma?"*

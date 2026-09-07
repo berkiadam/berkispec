@@ -9,12 +9,14 @@ inputs:
   - "conventions.md (különösen a Projekt referenciák szekció)"
   - "docs-generated/ aktuális tartalma és fejléc-scope mezői"
   - "specs/test-conventions.md aktuális tartalma (ha létezik) + a ciklus test-report/ eredménye"
+  - "docs-generated/test-description.md aktuális tartalma (ha létezik) + a conventions.md Teszt-futtatás szekciójának tesztfájl-hely globjai"
 outputs:
   - "Per-fájl doc-sync-plan.md tervjavaslat (a fő ágens írja fájlba)"
   - "Minden `<status:op_reconciliation>`/`<status:op_new>` tételhez a KÉSZ csereszöveg (sebészi patch: cél-szekció + a lecserélendő pontos jelenlegi szövegrészlet + a megírt új szöveg) — a fő ágens mechanikusan alkalmazza, nem komponál újra"
   - "doc-sync-questions.md-be felveendő döntési pontok / kapu-bukások listája"
   - "DS22 objektív kapu-leltár: átnevezések, ábrák, mappa-index, coverage-marker, feltételes API-check"
   - "specs/test-conventions.md terv-tételei: promóció, Utolsó futás bump, törlés (TC3/TC4) + a TC8 létezés-leltár"
+  - "docs-generated/test-description.md terv-tételei: új TL-NNN tétel, meglévő frissítése, Kivezetve jelölés (LD4) + a nem verifikált adatra szóló kérdésjavaslatok"
 tools: ["Read", "Bash", "Grep", "Glob"]
 ---
 
@@ -62,6 +64,7 @@ Mindig adj tervsort az alábbiakra:
 - a `docs-generated/design-drift.md` drift-összevetésére, ha a fájl létezik vagy bootstrap hozza létre;
 - az érintett komponens README-k ellenőrzésére/frissítésére;
 - a `specs/test-conventions.md` karbantartására (lásd lent — akkor is, ha a fájl még nem létezik);
+- a `docs-generated/test-description.md` teszt-leltár karbantartására (lásd lent — akkor is, ha a fájl még nem létezik);
 - a DS22 objektív konzisztencia-kapu futtatására.
 
 ## `specs/test-conventions.md` — terv-tételek (TC3/TC4/TC5/TC6)
@@ -76,6 +79,17 @@ Ez a fájl a `docs-generated/`-en **kívül** van (a `specs/roadmap.md` mellett)
 3. **Titok-szűrés (TC5):** minden javasolt értéket osztályozz a „személyt hitelesít vagy osztott platformhoz ad hozzáférést?" kérdéssel. Dev-hatókörű teszt-user/jelszó/realm-admin **bekerülhet**; klaszter-, registry-, VPN-, IAM-, git/CI-credential **nem** — helyette pointer. **Bizonytalan eset → kérdésjavaslat**, és a csereszövegbe pointer kerül, nem érték.
 4. **Staleness (TC4):** ha egy tétel `<field:f_last_run>` markere 3+ ciklussal régebbi az aktuálisnál, adj kérdésjavaslatot, hogy még érvényes-e vagy törlendő.
 5. **TC8 leltár (informatív):** a kapu-ellenőrzést maga a `tc8-gate-check.py` script végzi (útvonal-létezés, lógó hivatkozás, titok-check, `<field:f_last_run>` marker) — **ezt te nem futtatod, és nem is grepelsz kézzel**. A te dolgod annyi, hogy a leltárban jelezd, ha a tervezett változtatás nyomán a script bukására számítasz (pl. olyan tesztfájlra hivatkozó tétel marad benne, amit a ciklus törölt), hogy a fő ágens már a végrehajtáskor kezelni tudja.
+
+## `docs-generated/test-description.md` — terv-tételek (LD4)
+
+Ez a **teszt-leltár**: milyen tesztek léteznek a projektben és mit bizonyítanak. A mappa-bejárással **megtalálod** (3. alapszabály), de az aktív karbantartás abból nem következik — a szabályait a `08-doc-sync.md` „A `docs-generated/test-description.md` karbantartása (LD1–LD8)" szekciója írja le, **azt kövesd**. A te dolgod:
+
+1. **A ciklus tesztjeinek felsorolása** két forrásból: a `test-report/` **tényleges** tartalma (mi futott le — ez a bizonyíték) és a `plan.md` `<sec:plan_test_scenarios>` `TS-NN` blokkjai (mi készült el).
+2. **Felderítés a `conventions.md` globjaival.** Olvasd be a `## <sec:cv_test_execution>` szekció `### Tesztfájl-helyek` tábláját, és sorold fel a felderített tesztfájlokat. Ami felderített, de a leltárban nincs, az **új `TL-NNN` tervsor**; ami a leltárban van, de a fájlja nincs meg, az **`<status:retired>` jelölés vagy parancs-javítás** tervsora.
+3. **Három művelet, tételenként külön tervsor:** új tétel (a következő szabad `TL-NNN`-nel), meglévő frissítése (`<field:f_last_run>` bump + lépés-pontosítás), `<status:retired>` jelölés (indoklással és a kivezető ciklussal). **A `TL-NNN` sorszámot soha ne hasznosítsd újra és soha ne írd át** (D4).
+4. **Nem verifikált adat → kérdésjavaslat.** Ha egy tétel célja, lépése vagy elvárt eredménye a tesztfájlból és a bizonyítékból sem derül ki egyértelműen, **ne találgass** a csereszövegben: kérdésjavaslat a `doc-sync-questions.md`-be (TC3 elve).
+5. **Kétirányú `R-NN` join (LD6).** Ha egy tételhez recept tartozik, **mindkét** csereszöveget add meg: a leltár `**<field:f_recipe>:**` mezőjét és a `test-conventions.md` recept-adatlapjának `**<field:f_inventory_items>:**` mezőjét. Egyoldalú hivatkozásnál a kapu bukik.
+6. **LD5 leltár (informatív):** a kapu-ellenőrzést a `test-inventory-check.py` végzi — **ezt te nem futtatod, és nem is grepelsz kézzel**. Annyit jelezz, ha a tervezett változtatás nyomán a script bukására számítasz.
 
 ## DS22 kapu-leltár
 
@@ -130,6 +144,15 @@ _(minden `<status:op_reconciliation>`/`<status:op_new>` tervsorhoz egy blokk; `<
 **Törlés:** <tétel + indok, külön terv-tételként vagy N/A>
 **Titok-döntés:** <mi került be értékként, mi lett pointer, mi ment kérdésbe>
 **TC8 létezés-leltár:** <megnevezett repo-belső útvonalak + lógó hivatkozások vagy N/A>
+
+## teszt-leltár (LD)
+
+**Felderítés:** <a conventions.md globjaival talált tesztfájlok száma kategóriánként>
+**Új tétel:** <TL-NNN + melyik tesztfájl, vagy N/A>
+**Frissítés:** <mely TL-NNN tételek <field:f_last_run> markere → dátum, vagy N/A>
+**<status:retired>:** <TL-NNN + indok + kivezető ciklus, külön terv-tételként vagy N/A>
+**Kétirányú join:** <TL-NNN ↔ R-NN párok, mindkét oldal csereszövegével, vagy N/A>
+**Nem verifikált (kérdésbe megy):** <mely tétel melyik adata>
 ```
 
 Ha nincs kérdés, a `Doc-sync kérdésjavaslatok` blokkban írd: `<status:none_marker>`.

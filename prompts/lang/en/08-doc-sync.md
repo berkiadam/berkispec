@@ -136,6 +136,7 @@ _**🔴 If an address LOOKS local but leads far away** (`kubectl`/`oc port-forwa
 - **Shutdown / cleanup:** <how I stop the environment I brought up, what has to be deleted>
 - **Prerequisite / order:** <what it needs — referencing another recipe by `R-ID`, what comes before/after it>
 - **Scope:** `local` | `shared-remote` — <if shared, phase 03 must ask about it when inlining>
+- **Inventory items:** <the `TL-NNN` items from the test inventory that reference this recipe, or `—` — the reference is TWO-WAY (LD6), the gate measures both directions>
 - **Last run:** cycle-NN
 
 ## 2. Local (mock-based) tests required in every round
@@ -177,6 +178,64 @@ _**🔴 If an address LOOKS local but leads far away** (`kubectl`/`oc port-forwa
 _(Optional appendix, TC12 — an unnumbered section. Whatever the user did not want at project level goes here; the next cycle will not offer these again.)_
 
 - <self-contained behavior description> — decision: `not to promote` (<justification>) · cycle-NN
+
+<!-- ANCHOR:LD1-test-description-vaz -->
+> **Covered:** up to cycle-NN · **Last updated:** cycle-NN (YYYY-MM-DD) · **Generator/scope:** the complete test suite of the project — every test file that the `## Test execution` section of `conventions.md` declares with a glob; source: the `test-report/` evidence of the cycles + the test scenarios of `plan.md`.
+
+# Test inventory
+
+_This file answers the question of **which tests exist in the project and what they prove** — in one place, readable end to end, both for an agent with a fresh context and for a new colleague. Its owner is `08-doc-sync`: no other phase and no other command writes it._
+
+_**What this file is NOT:** it is not a runnable source and not a recipe register. The startup, the example call, the prerequisite and the cleanup are carried by `specs/test-conventions.md` (field-level ownership: the two never duplicate the same field), and cycle-level execution by the machine-readable run table of `plan.md`. From here the **goal / steps / expected result** is the truth._
+
+_The items are grouped **per category** (following the category dictionary of `conventions.md`), but the `TL-NNN` number is **project-level and global**: it is never reused, and a category change does not rewrite it either._
+
+## <category — from the `Test categories` dictionary of `conventions.md`>
+
+<!-- ANCHOR:LD2-tl-adatlap-vaz -->
+### TL-NNN — <the self-contained title of the item: on which input what is the correct output>
+
+- **Environment:** local | remote
+- **Goal:** <one assertion sentence: what this test proves, and about which capability>
+- **Steps:**
+  1. <a concrete command / call — issuable verbatim, not a behaviour-level summary>
+  2. <...>
+- **Expected result:** <a decidable value in backticks: status code, field name, count>
+- **Run command:** `<the selector-based run in ONE line — it runs only this one test>`
+- **Recipe:** <an `R-NN` reference into `specs/test-conventions.md`, or `—` if there is none>
+- **Last run:** <YYYY-MM-DD> (local | remote)
+- **Source cycle:** cycle-NN
+
+<!-- ANCHOR:LD2-tl-adatlap-pelda -->
+### TL-014 — The token-init endpoint returns the same hash for the same payload, and 409 for a repeated init
+
+- **Environment:** remote
+- **Goal:** it proves that init-hash is idempotent, and that a duplicated init does not create a second session.
+- **Steps:**
+  1. `curl -s -X POST "https://tmp-dev.example.local/init-hash" -H 'Content-Type: application/json' -d '{"clientRef":"dsp01"}'`
+  2. The same call, with an unchanged payload, within 1 second.
+  3. `curl -s "https://tmp-dev.example.local/sessions?clientRef=dsp01"`
+- **Expected result:** for step 1 `200` + `{"initHash":"<64 hex>"}`; for step 2 `409` + the `TMP_031` errorCode; for step 3 exactly `1` session.
+- **Run command:** `npx playwright test test/e2e/init-hash.spec.ts --grep "idempotent init"`
+- **Recipe:** R03
+- **Last run:** 2026-09-04 (remote)
+- **Source cycle:** cycle-16
+
+<!-- ANCHOR:LD3-retired-jeloles -->
+### TL-007 — The old /init-cache endpoint returns 200 for a valid payload — **Retired**
+
+- **Retired:** the endpoint was renamed to `/init-hash` in cycle-16, the old route is gone. The successor of the item: `TL-014`.
+- **Source cycle:** cycle-11
+
+<!-- ANCHOR:LD4-leltar-kerdes -->
+- [ ] K04 — Which missing data of the test inventory should I fill in?
+
+| # | Item | What is missing / uncertain | Why I do not write it in on my own |
+|---|---|---|---|
+| 1 | TL-018 (`test/e2e/payment.spec.ts`) | what the test proves (goal) and what the expected result is | the name of the test file does not tell it, and it did not run in this cycle — guessing is forbidden |
+| 2 | TL-009 | the command calls the `old-app.stale.example` host, which `conventions.md` no longer declares | either the item is out of date, or the environment declaration of `conventions.md` — I cannot decide this |
+
+**As an answer it is enough to give the missing data per item** (or "delete it" / "mark it retired", if the test no longer lives).
 
 <!-- ANCHOR:DS21-readme-index-vaz -->
 - `<file name>` — <one-line description: what it is, who writes it and when>

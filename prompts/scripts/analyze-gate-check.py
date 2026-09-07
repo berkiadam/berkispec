@@ -1874,6 +1874,70 @@ def check_run_table_schema(plan_text, f):
                 f"útvonal vagy `—`. Kötelező sorrend: {schema}")
 
 
+# KT2 — a `conventions.md` `Teszt-kategóriák` mezője a kategória-SZÓTÁR; a plan
+# gépi táblájának `Kategória` cellái ennek részhalmazai. Ma mindkettő szabad
+# szöveg, tehát a `rest-e2e` ↔ `e2e` elcsúszás CSENDES: a plan tábla lefut, a
+# `/bs-run-tests` viszont a projekt-szintű táblából már nem találja meg ugyanazt
+# a kategóriát, és a `test-runs/<kategória>/` fa két néven gyűjt ugyanarról.
+CATEGORY_SPLIT_RE = re.compile(r"[,;/]+")
+
+
+def declared_test_categories(conventions_text):
+    """A `conventions.md` `## Teszt-futtatás` szekciójának kategória-szótára.
+
+    `None` = a szekció vagy a mező nincs meg (régi projekt) → a check kimarad.
+    Üres halmaz = a mező ott van, de nincs benne érték."""
+    body = section_body(conventions_text, sec("cv_test_execution"))
+    if not body:
+        return None
+    m = re.search(r"^\s*\**\s*" + re.escape(fld("f_test_categories")) + r"\s*:?\s*\**\s*:?\s*(.*)$",
+                  body, re.MULTILINE)
+    if not m:
+        return None
+    return {c.strip().strip("`*_").lower() for c in CATEGORY_SPLIT_RE.split(m.group(1))
+            if c.strip().strip("`*_") and not is_empty_cell(c)}
+
+
+def check_run_table_categories(plan_text, conventions_path, f):
+    """KT2 (D6) — a plan gépi táblájának kategóriái a projekt-szótár részhalmaza."""
+    if not conventions_path or not conventions_path.is_file():
+        return
+    declared = declared_test_categories(conventions_path.read_text(encoding="utf-8"))
+    if declared is None:
+        f.note("KT2", f"a `{conventions_path}` nem tartalmaz "
+                      f"`## {sec('cv_test_execution')}` szekciót `{fld('f_test_categories')}` "
+                      f"mezővel (KT1) — a kategória-részhalmaz check kimarad. Pótlása a `00` "
+                      f"fázis dolga; enélkül a `/bs-run-tests` sem tud futtatni")
+        return
+    rows = table_rows(plan_text, sec("machine_run_table"))
+    if not rows:
+        return
+    used = []
+    for row in rows:
+        cat = (row[0] if row else "").strip().strip("`*_")
+        if cat and not is_empty_cell(cat):
+            used.append(cat)
+    if not declared:
+        f.add("KT2", "00", f"a `{conventions_path}` `{fld('f_test_categories')}` mezője üres, "
+              f"a plan gépi táblája viszont {len(used)} kategóriát futtat "
+              f"({', '.join(f'`{c}`' for c in used[:6])}) — a szótár nélkül a kategória-nevek "
+              f"ellenőrizetlenek, és a `/bs-run-tests` a projekt-szintű táblából nem találja "
+              f"meg őket. Töltsd ki a `## {sec('cv_test_execution')}` szekciót (KT1)")
+        return
+    unknown = [c for c in used if c.lower() not in declared]
+    if unknown:
+        f.add("KT2", "03", f"a `{sec('machine_run_table')}` `{fld('f_test_category')}` értékei "
+              f"a `conventions.md` `{fld('f_test_categories')}` szótárának RÉSZHALMAZAI kell "
+              f"legyenek (D6). Nem deklarált érték: "
+              + ", ".join(f"`{c}`" for c in dict.fromkeys(unknown))
+              + f" · deklarált szótár: {', '.join(f'`{c}`' for c in sorted(declared))}. "
+                "Vagy a plan táblájának kategória-nevét igazítsd a szótárhoz, vagy — ha valóban "
+                "új kategória keletkezett — vedd fel a szótárba (a `conventions.md` szerkesztése "
+                "ilyenkor a ciklus része, a „Kapu-konfiguráció együtt mozog” szabály szerint). "
+                "Enélkül a cikluson kívüli futtatás (`/bs-run-tests`) ugyanarra a tesztkészletre "
+                "MÁS kategória-néven gyűjt eredményt, és a `test-runs/` fa kettéhasad")
+
+
 def check_run_table_phase(plan_text, f):
     """PH1 — a `Fázis` oszlop értékei érvényesek, és marad mit futtatni a 07-ben."""
     rows = table_rows(plan_text, sec("machine_run_table"))
@@ -2697,6 +2761,7 @@ def main():
         check_ts_http_blocks(plan_text, f)
         check_run_table_schema(plan_text, f)
         check_run_table_phase(plan_text, f)
+        check_run_table_categories(plan_text, Path(args.conventions), f)
         check_test_ids(plan_text, f)
     if code_only:
         check_gate_stamp(plan_text, f, field="f_gate_code",

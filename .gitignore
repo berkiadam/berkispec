@@ -5,3 +5,7 @@ history
 # Python bytecode
 __pycache__/
 *.pyc
+
+# A /bs-run-tests cikluson kívüli, kényelmi teszt-futtatásának eredmény-fája (D7/KT7).
+# Gépfüggő, újragenerálható, és SOHA nem ciklus-bizonyíték (D8) — nem verziókezeljük.
+test-runs/

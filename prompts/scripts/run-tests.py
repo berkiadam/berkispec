@@ -91,9 +91,18 @@ def strip_cell(cell):
     return cell.strip().strip("`").strip()
 
 
-def parse_matrix(plan_text):
-    """A gépi futtatási tábla sorai dict-ként. Üres lista = nincs tábla."""
-    m = re.search(r"^#+\s*" + re.escape(sec("machine_run_table")) + r".*$",
+def parse_matrix(plan_text, section=None):
+    """A gépi futtatási tábla sorai dict-ként. Üres lista = nincs tábla.
+
+    A `section` a tábla SZEKCIÓ-CÍMSORÁT adja meg; az alapérték a plan
+    `Gépi futtatási tábla` szekciója. A cikluson kívüli futtatás (KT3) a
+    `conventions.md` `Teszt-futtatás` szekcióját adja át — a tábla OSZLOP-SÉMÁJA
+    ott is UGYANEZ (D10/TP4/b), ezért a parser törzse változatlan: egy parser,
+    egy szabály (`7/m` — a parsert nem tesszük „okossá", hogy kétféle táblát is
+    megegyen)."""
+    if section is None:
+        section = sec("machine_run_table")
+    m = re.search(r"^#+\s*" + re.escape(section) + r".*$",
                   plan_text, re.MULTILINE | re.IGNORECASE)
     if not m:
         return []
@@ -439,6 +448,18 @@ def check_placeholder_collision(rows, round_dir, phase_dir):
     return bad
 
 
+# A központi (cikluson kívüli) futás gyökere — NYELVFÜGGETLEN literál (D7). A
+# név szándékosan nem `test-results/`: az a `test-report/`-tól egy betűben térne
+# el, és a `7/e` elv pont az ilyen útvonal-összekeverésekből született.
+CENTRAL_RUN_ROOT = "test-runs"
+
+
+def is_central_run(raw):
+    """A `--round-dir` a `test-runs/` fa alá mutat-e (KT5/KT6)."""
+    parts = [x for x in str(raw).replace("\\", "/").strip("/").split("/") if x and x != "."]
+    return bool(parts) and parts[0] == CENTRAL_RUN_ROOT
+
+
 def normalize_round_dir(raw, cycle):
     """A kör-mappa háromféle alakját egyre hozza (TR5/c) → (teljes útvonal, fázis-mappa).
 
@@ -454,11 +475,21 @@ def normalize_round_dir(raw, cycle):
     a `fázis-mappa` pedig az az alak, amit a projekt riport-parancsai várnak
     (`REPORT_PHASE_DIR` / `<phase-dir>` helyőrző)."""
     parts = [x for x in str(raw).replace("\\", "/").strip("/").split("/") if x and x != "."]
-    if cycle.name in parts:
+    # KÖZPONTI FUTÁS (KT5): a `test-runs/…` NEM ciklus-relatív, és nincs
+    # `test-report/` szintje — a mappa szó szerint az, amit a hívó megadott.
+    # A `{phase}` helyőrző itt ugyanezt az útvonalat kapja: fázis-fogalom
+    # cikluson kívül nincs, viszont a projekt riport-parancsai a helyőrzőt
+    # akkor is behelyettesíthetik.
+    if parts and parts[0] == CENTRAL_RUN_ROOT:
+        joined = "/".join(parts)
+        return Path(joined), joined
+    if cycle is not None and cycle.name in parts:
         parts = parts[parts.index(cycle.name) + 1:]
     if parts and parts[0] == "test-report":
         parts = parts[1:]
     phase_dir = "/".join(parts) or "validate/round-01"
+    if cycle is None:
+        return Path(phase_dir), phase_dir
     return cycle / "test-report" / phase_dir, phase_dir
 
 
@@ -567,7 +598,18 @@ def main():
     _force_utf8_output()
     parser = argparse.ArgumentParser(
         description="Tesztek futtatása a plan.md gépi táblájából, gépi összegzéssel.")
-    parser.add_argument("plan_file", help="specs/cycle-NN-<name>/plan.md")
+    parser.add_argument("plan_file", nargs="?", default=None,
+                        help="specs/cycle-NN-<name>/plan.md — a ciklus-szintű futtatás "
+                             "tábla-forrása. `--table-source conventions` mellett elhagyható "
+                             "(akkor a tábla a `--conventions` fájl `Teszt-futtatás` "
+                             "szekciójából jön, KT3)")
+    parser.add_argument("--table-source", default="plan", choices=["plan", "conventions"],
+                        help="a gépi futtatási tábla FORRÁSA (KT3). `plan` (alap): a "
+                             "`plan_file` `Gépi futtatási tábla` szekciója — a ciklus egy köre. "
+                             "`conventions`: a `--conventions` fájl `Teszt-futtatás` szekciója "
+                             "— a projekt-szintű, cikluson kívüli futtatás (`/bs-run-tests`). "
+                             "Az oszlop-séma a kettőben AZONOS (D10), ezért ugyanaz a parser "
+                             "olvassa mindkettőt")
     parser.add_argument("--round-dir", required=True,
                         help="a kör riport-mappája; mind a három útvonal-alak elfogadott "
                              "(TR5/c): `specs/cycle-NN-<name>/test-report/validate/round-NN`, "
@@ -595,15 +637,36 @@ def main():
     # minden, a körben keletkezett artefaktumot elavultnak minősítene.
     started_at = time.time()
 
-    plan = Path(args.plan_file)
-    if not plan.exists():
-        print(f"HIBA: nincs ilyen plan: {plan}", file=sys.stderr)
-        return 2
-    matrix = parse_matrix(plan.read_text(encoding="utf-8"))
+    if args.table_source == "conventions":
+        table_file = Path(args.conventions)
+        table_section = sec("cv_test_execution")
+        cycle = None                     # cikluson kívüli futás (KT5) — nincs ciklus-mappa
+        if not table_file.exists():
+            print(f"HIBA: nincs ilyen conventions.md: {table_file}", file=sys.stderr)
+            return 2
+    else:
+        if not args.plan_file:
+            print("HIBA: `--table-source plan` mellett a plan.md útvonala kötelező "
+                  "(pozicionális argumentum).", file=sys.stderr)
+            return 2
+        table_file = Path(args.plan_file)
+        table_section = sec("machine_run_table")
+        if not table_file.exists():
+            print(f"HIBA: nincs ilyen plan: {table_file}", file=sys.stderr)
+            return 2
+        cycle = table_file.parent
+    plan = table_file
+    matrix = parse_matrix(table_file.read_text(encoding="utf-8"), table_section)
     if not matrix:
-        print("HIBA: a plan.md nem tartalmaz `### Gépi futtatási tábla` szekciót (TR4). "
-              "Ez a 03 fázis hiánya — essen vissza a hívó a `test-runner` subagentre, "
-              "és jelezze a plan kiegészítésének igényét.", file=sys.stderr)
+        if args.table_source == "conventions":
+            print(f"HIBA: a {table_file} nem tartalmaz `## {table_section}` szekciót "
+                  f"projekt-szintű futtatási táblával (KT1). Ez a `00-init-project` "
+                  f"kötelező szekciója — pótold a felhasználóval egyeztetve, mielőtt "
+                  f"cikluson kívül futtatnál.", file=sys.stderr)
+        else:
+            print(f"HIBA: a plan.md nem tartalmaz `### {table_section}` szekciót (TR4). "
+                  "Ez a 03 fázis hiánya — essen vissza a hívó a `test-runner` subagentre, "
+                  "és jelezze a plan kiegészítésének igényét.", file=sys.stderr)
         return 2
 
     matrix_all = matrix
@@ -632,7 +695,8 @@ def main():
               f"(fázis-szűrő: {args.phase}).", file=sys.stderr)
         return 2
 
-    round_dir, phase_dir = normalize_round_dir(args.round_dir, plan.parent)
+    round_dir, phase_dir = normalize_round_dir(args.round_dir, cycle)
+    central = is_central_run(args.round_dir)
     if str(round_dir).replace("\\", "/") != str(args.round_dir).replace("\\", "/").strip("/"):
         print(f"MEGJEGYZÉS (TR5/c): a --round-dir értéke `{args.round_dir}` volt, "
               f"a szkript repó-relatív alakra normalizálta: `{round_dir}`.")
@@ -810,9 +874,17 @@ def main():
                     entry.setdefault("failed_items", []).append(f"EV6: nincs forgalmi bizonyíték ({host})")
                     any_fail = True
 
+    # KT6/a — BIZONYÍTÉK-TŰZFAL (D8). A `test-runs/` alatti futás SOHA nem
+    # ciklus-bizonyíték: nincs mihez joinolnia (`DoD-NN`/`TS-NN` lefedettség,
+    # TR7 frissesség, RUN1 kör-lefedettség mind ciklus-fogalom). A jelölő
+    # EXPLICIT `null`, nem hiányzó kulcs: a `dod-check.py` és a
+    # `report-gate-check.py` így a bizonyíték-fájlból is látja, mit kapott.
     out_json = Path(args.json) if args.json else round_dir / "results.json"
     with open(out_json, "w", encoding="utf-8", newline="\n") as fh:
-        json.dump({"started_at": started_at, "results": results,
+        json.dump({"started_at": started_at,
+                   "cycle": None if central else (cycle.name if cycle else None),
+                   "table_source": args.table_source,
+                   "results": results,
                    "suggestions": suggestions}, fh, ensure_ascii=False, indent=2)
 
     print(f"Teszt-futtatás — kör-mappa: {round_dir}")
@@ -830,6 +902,11 @@ def main():
             continue            # már kiírtuk a futtatás ELŐTT (EV7)
         print(f"  {'✗' if msg.startswith('[EV6-FAIL]') else '·'} {msg}")
     print(f"  results.json: {out_json}")
+    if central:
+        print("  🔴 KÖZPONTI FUTÁS (D8): ez az eredmény NEM ciklus-bizonyíték — a "
+              "`results.json` `cycle` mezője `null`, és a `07` kapui "
+              "(`dod-check.py`, `report-gate-check.py`) a `test-runs/` alatti "
+              "útvonalat visszautasítják.")
     print("VERDICT: " + ("FAIL" if any_fail else "PASS"))
     return 1 if any_fail else 0
 

@@ -9,12 +9,14 @@ inputs:
   - "conventions.md (especially the Project references section)"
   - "Current content of docs-generated/ and header-scope fields"
   - "Current content of specs/test-conventions.md (if it exists) + the cycle's test-report/ result"
+  - "Current content of docs-generated/test-description.md (if it exists) + the test file location globs of the Test execution section of conventions.md"
 outputs:
   - "Per-file doc-sync-plan.md plan proposal (written to file by the main agent)"
   - "For every `<status:op_reconciliation>`/`<status:op_new>` item, the FINISHED replacement text (surgical patch: target section + the exact current text snippet to be replaced + the newly written text) — applied mechanically by the main agent, not recomposed"
   - "List of decision points / gate failures to add to doc-sync-questions.md"
   - "DS22 objective gate inventory: renames, diagrams, folder index, coverage marker, conditional API check"
   - "specs/test-conventions.md plan items: promotion, Last run bump, deletion (TC3/TC4) + the TC8 existence inventory"
+  - "docs-generated/test-description.md plan items: a new TL-NNN item, updating an existing one, a Retired marking (LD4) + the question proposals for unverified data"
 tools: ["Read", "Bash", "Grep", "Glob"]
 ---
 
@@ -62,6 +64,7 @@ Always give a plan line for the following:
 - a drift comparison in `docs-generated/design-drift.md`, if the file exists or bootstrap creates it;
 - checking/updating the affected component READMEs;
 - maintaining `specs/test-conventions.md` (see below — even if the file does not yet exist);
+- maintaining the `docs-generated/test-description.md` test inventory (see below — even if the file does not yet exist);
 - running the DS22 objective consistency gate.
 
 ## `specs/test-conventions.md` — plan items (TC3/TC4/TC5/TC6)
@@ -76,6 +79,17 @@ This file is **outside** `docs-generated/` (alongside `specs/roadmap.md`), owned
 3. **Secret filtering (TC5):** classify every proposed value with the question "does it authenticate a person or grant access to a shared platform?" A dev-scoped test user/password/realm-admin **may be included**; cluster, registry, VPN, IAM, git/CI credentials **must not** — use a pointer instead. **Uncertain case → question proposal**, and the replacement text gets a pointer, not a value.
 4. **Staleness (TC4):** if an item's `<field:f_last_run>` marker is 3+ cycles older than the current one, give a question proposal about whether it is still valid or should be deleted.
 5. **TC8 inventory (informative):** the gate check itself is performed by the `tc8-gate-check.py` script (path existence, dangling reference, secret check, `<field:f_last_run>` marker) — **you do not run this, and do not grep it by hand either**. Your job is only to flag in the inventory if you expect the script to fail as a result of the planned change (e.g. an item referencing a test file that the cycle deleted remains in it), so the main agent can already handle it at execution time.
+
+## `docs-generated/test-description.md` — plan items (LD4)
+
+This is the **test inventory**: which tests exist in the project and what they prove. You **find** it with the folder walk (basic rule 3), but the active maintenance does not follow from that — its rules are described by the "Maintaining `docs-generated/test-description.md` (LD1–LD8)" section of `08-doc-sync.md`, **follow that**. Your job:
+
+1. **Listing the tests of the cycle** from two sources: the **actual** content of `test-report/` (what ran — this is the evidence) and the `TS-NN` blocks of the `<sec:plan_test_scenarios>` of `plan.md` (what was produced).
+2. **Discovery with the globs of `conventions.md`.** Read the `### Test file locations` table of the `## <sec:cv_test_execution>` section, and list the discovered test files. What is discovered but not in the inventory is a **new `TL-NNN` plan line**; what is in the inventory but whose file is gone is the plan line of a **`<status:retired>` marking or a command fix**.
+3. **Three operations, a separate plan line per item:** a new item (with the next free `TL-NNN`), updating an existing one (a `<field:f_last_run>` bump + refining the steps), a `<status:retired>` marking (with the justification and the retiring cycle). **Never reuse and never rewrite a `TL-NNN` number** (D4).
+4. **Unverified data → a question proposal.** If the goal, a step or the expected result of an item cannot be established unambiguously from the test file and from the evidence either, **do not guess** in the replacement text: a question proposal into `doc-sync-questions.md` (the TC3 principle).
+5. **The two-way `R-NN` join (LD6).** If an item has a recipe, give **both** replacement texts: the `**<field:f_recipe>:**` field of the inventory and the `**<field:f_inventory_items>:**` field of the recipe datasheet of `test-conventions.md`. On a one-sided reference the gate fails.
+6. **The LD5 inventory (informative):** the gate check is done by `test-inventory-check.py` — **you do not run it, and you do not grep by hand either**. Just flag it if you expect the script to fail as a consequence of the planned change.
 
 ## DS22 gate inventory
 
@@ -130,6 +144,15 @@ _(one block per `<status:op_reconciliation>`/`<status:op_new>` plan line; none f
 **Deletion:** <item + reason, as a separate plan item or N/A>
 **Secret decision:** <what was included as a value, what became a pointer, what went into a question>
 **TC8 existence inventory:** <named repo-internal paths + dangling references or N/A>
+
+## test inventory (LD)
+
+**Discovery:** <the number of test files found with the globs of conventions.md, per category>
+**New item:** <TL-NNN + which test file, or N/A>
+**Update:** <which TL-NNN items' <field:f_last_run> marker → a date, or N/A>
+**<status:retired>:** <TL-NNN + reason + the retiring cycle, as a separate plan item or N/A>
+**Two-way join:** <TL-NNN ↔ R-NN pairs, with the replacement text of both sides, or N/A>
+**Unverified (goes into a question):** <which data of which item>
 ```
 
 If there are no questions, in the `Doc-sync question proposals` block write: `<status:none_marker>`.
