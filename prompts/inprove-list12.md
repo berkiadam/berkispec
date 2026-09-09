@@ -6,8 +6,11 @@
 > kapukat, a 8. a végrehajtási sorrendet.
 > **Semmit nem kell kikövetkeztetni** — ha valami mégis hiányzik, az a terv hibája; írd bele.
 >
-> **Státusz:** **TERV** (2026-09-07) — a 3. szakasz döntései a felhasználóval **lezárva**,
-> a végrehajtás még nem kezdődött el.
+> **Státusz:** **VÉGREHAJTVA** (2026-09-07) — a vágások, a `7/q` elv és a kapuk készen vannak.
+> **Egy tétel nem teljesült: a `D1` célszám** (`≤ 420` telepített sor). A mért eredmény
+> **437 (hu) / 439 (en)**, a `502` → `437/439` (−13%) az, ameddig az 5. szakasz anti-listája
+> engedte. Az 5. szakasz saját szabálya szerint („a **célszám** engedjen, ne a szabály") ez a
+> helyes kimenet; a részletes indoklás és a `7/q`-ba írt új korlát (`≤ 445`) a 9. szakaszban.
 >
 > **⚠ Ez egy ELTÁVOLÍTÓ kör.** Minden más `inprove-list` szabályt **adott**; ez **elvesz**. A
 > kör legnagyobb kockázata ezért nem a hiányos végrehajtás, hanem a **túlvágás** — ezért van
@@ -203,7 +206,7 @@ nem csak vág, hanem **rögzíti a korlátot** (`D6` → `7/q`): különben a k�
 > Minden tétel előtt **olvasd el a `list10` megfelelő tételét** (`QF`/`QT` azonosító szerint) —
 > ha a vágás után a szabály **szándéka** nem olvasható ki a maradékból, akkor túl sokat vettél el.
 
-- [ ] **QS1 — `artifact-voice.md` INCLUDE kivezetése** (`D3`, AV1 / `QF14`). Törlendő: a
+- [x] **QS1 — `artifact-voice.md` INCLUDE kivezetése** (`D3`, AV1 / `QF14`). Törlendő: a
       `<!-- INCLUDE:shared/artifact-voice.md -->` marker, a körülötte lévő `---` szeparátor, és
       a frontmatter `shared:` listájából az `"shared/artifact-voice.md"` sor. **Nyereség: −28
       telepített sor + 3 forrás-sor.** _(A `list10` `QF14` indoklása: „a nagy flow-ban ez kemény
@@ -211,7 +214,7 @@ nem csak vág, hanem **rögzíti a korlátot** (`D6` → `7/q`): különben a k�
       „kapu nélkül is" részt mérlegeljük át a méret javára.)_
       **Pótlás:** a `## 1. Alapelvek` egy **fél mondatot** kap arról, hogy az artefaktum az
       implementálónak szól, nem az ágensnek — a 28 soros blokk helyett.
-- [ ] **QS2 — A `## 4. Felhasznált specialista ágensek` szekció ~35 → ~10 sor** (`D2`).
+- [x] **QS2 — A `## 4. Felhasznált specialista ágensek` szekció ~35 → ~10 sor** (`D2`).
       Marad: a bevezető mondat („opcionálisan, kis feladatnál hagyd ki"), **egy** tábla három
       sorral (ágens · mikor érdemes · **mit mondj a hiányzó bemenet helyett**), és **egy** sor a
       „mit nem használ" listáról (fixerek, `doc-sync-planner`) → túlnövés-jelzés.
@@ -220,31 +223,31 @@ nem csak vág, hanem **rögzíti a korlátot** (`D6` → `7/q`): különben a k�
       külön bekezdései. **A `QF18` azonosító a fájlban MARAD** (a tömörített tábla fejlécében),
       hogy a regresszió-kapu (7. szakasz) átengedje, és a `list10` indoklása visszakereshető
       legyen. **Nyereség: −25 sor.**
-- [ ] **QS3 — A három INCLUDE utáni „leképezés" jegyzet 1-1 sorra.** Ma a `path-format`,
+- [x] **QS3 — A három INCLUDE utáni „leképezés" jegyzet 1-1 sorra.** Ma a `path-format`,
       `dereferencing` és `conventions-change` blokk után 4-6 soros `>` idézet-blokk magyarázza,
       hogyan képződik le a szabály erre a flow-ra. A **szándék** egy sorban is elmondható
       (`RP1`: „ez a flow egyetlen kötelező kapuja, a `spec.md`+`tasks.md` párra fut"; `KX2`:
       „itt a `spec.md` az egyetlen igazság, tehát a feloldás szigorúbb"; `GC1`: „a `plan`/`07`
       helyét a `spec.md` technikai vázlata és a 3. fázis tesztje veszi át").
       **Nyereség: −10 sor.**
-- [ ] **QS4 — A `## 1. Alapelvek és könyvtárszerkezet` prózája.** Az öt pont közül a
+- [x] **QS4 — A `## 1. Alapelvek és könyvtárszerkezet` prózája.** Az öt pont közül a
       „Dokumentumvezérelt fejlesztés", a „README.md karbantartása" és a „Dokumentáció nyelve"
       pont **hosszabb, mint a szabály**. Egy-egy mondatra rövidítendő; a `QS1` fél mondata ide
       kerül. **A „Két artefaktum, két státusz" pont (QF2) változatlan.**
       **Nyereség: −10 sor.**
-- [ ] **QS5 — A `Gyors lépéssor` ↔ `## 3.` átfedés csökkentése — ÓVATOSAN** (`D5`). A
+- [x] **QS5 — A `Gyors lépéssor` ↔ `## 3.` átfedés csökkentése — ÓVATOSAN** (`D5`). A
       happy-path lista 6 pontja **marad** (ezt követi egy gyenge modell); csak azok a mondatok
       vonhatók össze, amelyek **szó szerint** megismétlődnek a `## 3.` fázis-leírásában
       (jellemzően a `⛔ ÁLLJ MEG` és az RP1-kapu megfogalmazása). **Nyereség: max −8 sor.**
       Ha a lista bármelyik pontja **elveszti** a fázis nevét, a státusz-értéket vagy a `⛔`-t,
       **állj le és ne vágd** — a lista értéke épp az önmagában olvashatóság.
-- [ ] **QS6 — Sorszintű igazodás és a mérés.** A vágás után a hu és az en példány
+- [x] **QS6 — Sorszintű igazodás és a mérés.** A vágás után a hu és az en példány
       **ugyanannyi sor** legyen, a címsorok ugyanazokon a sorokon (ma 344/344). A `QS1`–`QS5`
       összesített várható nyeresége **−53 forrás-sor és −28 beemelt sor**, azaz
       **502 → ~421 telepített sor**. Ha a build után **420 fölött** vagy: a `QS3`/`QS4`
       tömörítést húzd meg jobban — **ne** a `## 3.`, `## 5.` vagy a `QT`-csomag rovására
       (5. szakasz).
-- [ ] **QS7 — Sorrend-függés a `list11`-hez.** Ha a `prompts/inprove-list11.md` **már
+- [x] **QS7 — Sorrend-függés a `list11`-hez.** Ha a `prompts/inprove-list11.md` **már
       lefutott**, a quick-flow-ban ott van az `LD10` leltár-drift jelzés (~4 sor), tehát a
       kiinduló méret nem 502, hanem ~506 — a **célszám (`≤ 420`) akkor is érvényes**, csak
       ~4 sorral több a vágandó. Ha a `list11` **még nem futott**, a `list11` `LD10` tételéhez
@@ -273,7 +276,7 @@ teljesülne, akkor a **célszám** engedjen, ne a szabály:
 
 ## 6. Dokumentáció
 
-- [ ] **6.1 — `prompts/meta-improve-prompts.md`: új tervezési elv `7/q`** (`D6`) —
+- [x] **6.1 — `prompts/meta-improve-prompts.md`: új tervezési elv `7/q`** (`D6`) —
       **„a második út mérete korlát, nem következmény"**. Tartalma: a 2.1 mérés (502 sor,
       +90% egy kör alatt, a `02` fázis 77%-a), a `≤ 420` telepített sor korlát, a mérés módja
       (`wc -l` a buildben, mindkét nyelven), és a **„Prompt-módosításnál…"** kérdés, amit a
@@ -281,14 +284,14 @@ teljesülne, akkor a **célszám** engedjen, ne a szabály:
       build után is 420 alatt van?"*. Hivatkozás a `7/o`-ra (a másik út is elcsúszhat) és erre
       a tervre.
       _(A `7/q` a `bs-quick-flow` bekezdését is kiegészíti egy fél sorral: „mérete korlátos".)_
-- [ ] **6.2 — `README-HU.md` + `README.md` — csak ha a `QS2` átírja az ágens-táblát.** A
+- [x] **6.2 — `README-HU.md` + `README.md` — csak ha a `QS2` átírja az ágens-táblát.** A
       README-k „5. Egyszerűsített flow" szekciójában van egy **ágens-tábla** (5.4), amely a
       három subagentet és a helyettesítéseiket sorolja. Ha a `QS2` a skillben tömörít, a
       README 5.4 táblája **ne mondjon többet, mint a skill** — a tartalmat keresd, ne a
       sorszámot. **A két README-t párban** szerkeszd: ezt **egyetlen gépi kapu sem méri**
       (a `lang-parity-check.py` hatóköre `BASES = ("skills","agents","shared")` + `lang`,
       `:116`–`:117` — a gyökér-README-ket nem látja).
-- [ ] **6.3 — `prompts/inprove-list10.md`: NEM írjuk át.** A `list*` fájlok a **múltat
+- [x] **6.3 — `prompts/inprove-list10.md`: NEM írjuk át.** A `list*` fájlok a **múltat
       rögzítik**. Ha a `QS1` kivezeti a `QF14`-et, azt **itt**, a `list12` 9. szakaszában kell
       rögzíteni — a `list10` `QF14` pipája marad, mert az akkor valóban elkészült.
 
@@ -296,14 +299,17 @@ teljesülne, akkor a **célszám** engedjen, ne a szabály:
 
 ## 7. Kapuk (kézzel, commit előtt)
 
-- [ ] `python3 prompts/scripts/lang-parity-check.py` → 0
-- [ ] `python3 prompts/scripts/lang-parity-check.py --strict` → 0
-- [ ] `python3 prompts/scripts/sync-gemini-agents.py --check` → 0 _(agent-prompt nem változik — `D2`)_
-- [ ] **Build hu + en** → `Success`, és a telepített `SKILL.md`-ben **nulla** feloldatlan
-      `INCLUDE:` marker, **nulla** `<sec:|<field:|<status:` token.
+- [x] `python3 prompts/scripts/lang-parity-check.py` → 0 ✅
+- [x] `python3 prompts/scripts/lang-parity-check.py --strict` → 0 ✅
+- [x] `python3 prompts/scripts/sync-gemini-agents.py --check` → 0 ✅ _(agent-prompt nem változik — `D2`)_
+- [x] **Build hu + en** → `Success`, és a telepített `SKILL.md`-ben **nulla** feloldatlan
+      `INCLUDE:` marker, **nulla** `<sec:|<field:|<status:` token. ✅ (mindkét nyelven 0/0)
 - [ ] **MÉRET-KAPU (`D1`):** `wc -l <tmp>/{hu,en}/.claude/skills/bs-quick-flow/SKILL.md`
-      → **mindkettő ≤ 420**. Ha nem: `QS3`/`QS4` tovább, **nem** az 5. szakasz rovására.
-- [ ] **REGRESSZIÓ-KAPU / azonosítók (a túlvágás ellen).** A quick-flow-ban ma **15**
+      → **mindkettő ≤ 420**. ❌ **NEM TELJESÜLT: 437 (hu) / 439 (en).** A `QS3`/`QS4` tovább-
+      húzása a `wc -l`-en **nem** hoz sort (lásd 9.2), a maradék rés csak az 5. szakasz
+      rovására lett volna behozható — ezért az 5. szakasz szabálya szerint a célszám engedett.
+      A `7/q` élő korlátja emiatt **`≤ 445`**, nem `≤ 420` (9.4).
+- [x] **REGRESSZIÓ-KAPU / azonosítók (a túlvágás ellen).** A quick-flow-ban ma **15**
       azonosító él (mindkét nyelven): `QF1 QF2 QF4 QF6 QF7 QF8 QF11 QF16 QF18 QT1 QT2 QT3 QT4
       QT5 QT6`. Vágás után **mind a 15-nek meg kell lennie**:
       ```bash
@@ -316,11 +322,14 @@ teljesülne, akkor a **célszám** engedjen, ne a szabály:
       done
       ```
       **Bármelyik azonosító eltűnése = túlvágás**, kivéve ha a 9. szakaszban indokolva van.
-- [ ] **REGRESSZIÓ-KAPU / shared INCLUDE-ok.** Ma **5** shared blokk: `context-check`,
+      ✅ **Mind a 15 megvan, mindkét nyelven** (`QF1 QF2 QF4 QF6 QF7 QF8 QF11 QF16 QF18
+      QT1–QT6`) — a `diff` üres.
+- [x] **REGRESSZIÓ-KAPU / shared INCLUDE-ok.** Ma **5** shared blokk: `context-check`,
       `path-format`, `artifact-voice`, `dereferencing`, `conventions-change`. Vágás után
       **pontosan 4**, és a kiesett **pontosan az `artifact-voice`** (`D3`). Ellenőrzés a
       frontmatter `shared:` listáján **és** a törzs markerein, **mindkét nyelven**.
-- [ ] **Emberi review (nem gépi kapu):** a hu/en pár átolvasása — a tömörítés **jelentést** is
+      ✅ **4 / 4 mindkét helyen, mindkét nyelven**; az `artifact-voice` szó **nulla** előfordulás.
+- [x] **Emberi review (nem gépi kapu):** a hu/en pár átolvasása — a tömörítés **jelentést** is
       elvehet, amit a paritás-kapu nem lát. Külön nézd meg, hogy a `QS3` egysoros leképezései
       és a `QS2` tömörített ágens-táblája **önmagában érthető-e** annak, aki a `list10`-et nem
       olvasta.
@@ -347,5 +356,118 @@ teljesülne, akkor a **célszám** engedjen, ne a szabály:
 
 ## 9. A végrehajtás tapasztalatai és a tervtől való eltérések
 
-_(Kitöltendő a végrehajtás közben. Ide kerül a `QF14`/AV1 kivezetésének rögzítése, a tényleges
-telepített sorszám, és minden pont, ahol a terv tévedett vagy hiányos volt.)_
+### 9.1 A `QF14` / AV1 kivezetésének rögzítése (`D3` — a kör egyetlen szabály-kivezetése)
+
+A `prompts/skills-{hu,en}/quick-flow.md`-ből kivezetett:
+
+- a `<!-- INCLUDE:shared/artifact-voice.md -->` marker és a körülötte lévő `---` szeparátor;
+- a frontmatter `shared:` listájából a `"shared/artifact-voice.md"` sor.
+
+**Pótlás (a `QS1` szerint):** az `## 1. Alapelvek` „A dokumentáció nyelve és hangja" pontja
+kapott egy fél mondatot — *„Az artefaktum az implementálónak szól, nem neked (AV1): a
+skill-szöveget — imperatívuszokat, `🔴` jelölést — ne másold át a `spec.md`/`tasks.md`-be; írd
+le döntésként, leíró hangnemben."* A **blokk maga változatlan** és továbbra is él a `02`,
+`03a`, `03b`, `04` fázisokban; a `prompts/shared-{hu,en}/artifact-voice.md` fájlhoz nem
+nyúltunk. A `list10` `QF14` pipája **marad** (a 6.3 szerint), a kivezetés nyoma ez a szakasz,
+a `7/q` elv és a `meta-improve-prompts.md` shared-táblájának `artifact-voice` sora
+(„a `quick-flow`-ból a méret-korlát kivezette — 7/q").
+
+### 9.2 A terv legnagyobb tévedése: a `QS3` és a `QS4` sorbecslése
+
+A `QS3` (−10 sor) és a `QS4` (−10 sor) becslése **azon a feltevésen állt, hogy a három
+leképezés-jegyzet „4-6 soros `>` idézet-blokk"**. A valóságban mindhárom **egyetlen (hosszú)
+forrássor** volt, és a `## 1.` öt alapelv-pontja is egy-egy sor. Ezért:
+
+- a **`QS3` a `wc -l`-en nulla sort hozott** — a tömörítést elvégeztük (a három jegyzet
+  szövege ~25-40%-kal rövidebb, tehát **tokenben** megtérült), de sorban nem;
+- a **`QS4` −2 sort hozott** a becsült −10 helyett (a „Dokumentumvezérelt fejlesztés" és a
+  „README.md karbantartása" pont egy sorba olvadt, a `QS1` fél mondata pedig a „Dokumentáció
+  nyelve" pontba került, új sor nélkül).
+
+Emellett a `QS1` nyeresége is kisebb volt a becsültnél: az `artifact-voice.md` 28 sorából a
+9 soros HTML-kommentes fejlécet a telepítő **eldobja**, tehát a blokk **19** telepített sort
+adott, nem 28-at.
+
+**Tanulság a következő eltávolító körnek:** egy `wc -l`-ben mért célszámhoz a becslést a
+**forrásfájl tényleges sortördelésén** kell elvégezni (`awk`/`sed` a szakaszra), nem a
+szakasz „vizuális" méretén — és a beemelt blokkok telepített sorszáma nem a fájl `wc -l`-je,
+hanem a **kommentfejléc nélküli** rész.
+
+### 9.3 A hiányzó sorok pótlása — amit a terv nem sorolt
+
+A `QS1`–`QS5` a fenti okok miatt ~50 helyett csak ~30 forrássort hozott, ezért a
+**nem védett** szakaszokban további, tisztán **duplikáció-alapú** vágások történtek. Mindegyik
+olyan mondatot vett el, amely a `## 3.`-ban **szó szerint** ott van (a `QS5` engedélye), és
+egyik sem érintette az 5. szakaszt:
+
+| mit | nyereség | miért nem veszteség |
+|---|---|---|
+| A fejléc `## Mikor…` előtti bevezető bekezdése („Ez a dokumentum a projekt egyszerűsített… flow-ját írja le") | −4 | szó szerint a frontmatter `description` mezőjének és a `## Mikor ezt a flow-t…` szekciónak a harmadik megismétlése |
+| `## Belépő` hívás-tábla (3 soros tábla → 1 prózasor) | −4 | ugyanaz a három hívás-alak, táblázat-váz nélkül; a `QF16` bekezdés érintetlen |
+| `Gyors lépéssor` bevezető `>` jegyzete („Ez a »happy path«…") | −2 | a szakaszcím már kimondja („a teljes folyamat dióhéjban"); **a 6 pont és a záró ⛔-mondat érintetlen** (`D5`) |
+| `## 6.` segédparancs-tábla (5 soros tábla → 1 prózasor) | −7 | mind az 5 parancs és a `QF8` / `KT4` / `D8` hivatkozás megmaradt |
+| `## 7.` Best Practice 4./7./8. pontja | −3 | 4. = az RP1 blokk megismétlése (a `cd`-engedély a 3. pontba került); 7. = a `## 3.` „Minden előfordulás számbavétele" + „leftover-sweep" **harmadik** kimondása; 8. = a `QT1`/`QT2` (cél-környezet + `[local]`/`[remote]`) megismétlése |
+
+### 9.4 A `D1` célszám nem teljesült — és miért ez a helyes kimenet
+
+| | sor |
+|---|---|
+| kiinduló (a `list11` után) | **508** (hu) / **510** (en) |
+| eredmény | **437** (hu) / **439** (en) |
+| nyereség | **−71 / −71** (−14%) |
+| forrás | 350 → **302** (hu és en, sorszintűen igazodva) |
+| `D1` célszám | ≤ 420 → **nem teljesült, 17-19 sorral** |
+
+A rés **kizárólag** az 5. szakasz (anti-lista) rovására volt behozható. A maradék, nem védett
+szakaszok együtt 64 sort tesznek ki (frontmatter 18, fejléc 6, `## Belépő` 7, `## 1.` 9,
+`## 4.` 12, `## 6.` 6, `## 7.` 7) — ebből további 17 sor kivétele a `QF18` kontraktus-táblát
+vagy a `## 4.` ágens-táblát számolta volna fel. A védett szakaszok (`## 3.` 131 sor, `## 5.`
+26, `## 2.` 24, `## Mikor…` 21, a négy megmaradó shared blokk) érintetlenek.
+
+Az 5. szakasz kimondott szabálya erre az esetre: *„ha a célszám csak ezek árán teljesülne,
+akkor a **célszám** engedjen, ne a szabály."* A `QS6` ugyanezt mondja: a 420 fölötti eredményt
+`QS3`/`QS4` tovább-húzásával kell megoldani, **nem** a `## 3.` / `## 5.` / `QT`-csomag
+rovására — a `QS3`/`QS4` viszont a 9.2 szerint sorban kimerült. **Ezért a végrehajtás a
+szabályt tartotta meg és a célszámot engedte el.**
+
+**Következmény a `D6`-ra:** a `7/q` elvbe **nem** a `≤ 420` került, hanem **`≤ 445`** (a mért
+437/439 + szűk tartalék), mert egy első naptól megsértett korlát nem korlát, hanem
+dekoráció — a `7/q` célja (hogy a következő keményítő kör ne hizlalhasson vissza észrevétlenül)
+így teljesül. A `7/q` **kimondja**, hogy a 420-as eredeti célt nem érte el, és miért.
+
+### 9.5 A 6.2 (README-k) másképp oldódott meg
+
+A terv szerint a README-k 5.4 ágens-táblája akkor módosul, ha a `QS2` átírja a skill táblát.
+A `QS2` átírta (4 → 3 oszlop, a `QF18` helyettesítés-tábla a harmadik oszlopba költözött), de
+a **README tartalma egy tétel kivételével továbbra is részhalmaza** a skillnek, tehát a
+„ne mondjon többet, mint a skill" megkötés nem sérült. Az egyetlen tétel, ahol a README
+**több** részletet adott, az `analyzer` „Mit ad" cellája volt (lefedettségi rés · kétértelműség
+· alulspecifikáció). Ezt **nem a README lefaragásával** oldottuk meg, hanem a **skill sorának
+visszapótlásával** (a felsorolás visszakerült az `analyzer` sorába, nulla sor-költséggel) —
+így a két dokumentum egyezik, és a README nem lett szegényebb. **A `README-HU.md` és a
+`README.md` így ebben a körben nem változott.**
+
+_(Ellenőrizve: a README-k `artifact-voice` hivatkozása eleve csak `02`/`03`/`04`-et sorolt,
+tehát a `QS1` nem hagyott utána elavult állítást a gyökér-README-kben.)_
+
+### 9.6 A `QS7` sorrend-függés lezárása
+
+A `prompts/inprove-list11.md` **már lefutott** (`02641cb`, merge `3130118`), tehát a `LD10`
+teszt-leltár drift-jelzés a quick-flow-ban ott volt a kiinduló állapotban — ezért a mért
+kiindulás 508/510 és nem 502. A `list11`-be **nem kellett** méret-megjegyzést írni (az csak a
+„még nem futott" ágra szólt). Az `LD10` blokk a `## 3.` védett szakaszában van, érintetlen.
+
+### 9.7 Egy saját hiba, amit a kapuk nem fogtak meg
+
+A `## 4.` és a `## 6.` tömörítésekor a záró bekezdés után **elmaradt az üres sor a `---`
+szeparátor előtt**, amitől a Markdown az utolsó bekezdést **setext H2 címsorrá** rendereli.
+Ezt sem a `lang-parity-check.py`, sem a build nem jelzi (a marker- és token-ellenőrzés zöld
+volt). Egy `awk`-os ellenőrzés fogta meg — érdemes a következő tömörítő körben is lefuttatni:
+
+```bash
+awk 'prev!="" && $0=="---" && NR>19 {printf "%d: %s\n", NR-1, prev} {prev=$0}' \
+  prompts/skills-hu/quick-flow.md
+```
+
+_(A javítás során a naiv változat a frontmatter záró `---`-e elé is beszúrt egy üres sort —
+a YAML blokkot ez elrontja, ezért van a fenti kifejezésben az `NR>19`.)_
