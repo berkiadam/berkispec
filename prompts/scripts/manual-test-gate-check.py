@@ -427,7 +427,7 @@ def not_manual_dods(lines, f):
     return accepted
 
 
-def check_dod_coverage(lines, spec_text, groups, f):
+def check_dod_coverage(lines, spec_text, groups, f, spec_name="spec.md"):
     """MG5 — kétirányú DoD-lefedettség."""
     for g in groups:
         if not g["dods"]:
@@ -436,13 +436,13 @@ def check_dod_coverage(lines, spec_text, groups, f):
                               f"`DoD-NN`-re vagy egy spec-tesztesetre")
     covered = {d for g in groups for d in g["dods"]} | not_manual_dods(lines, f)
     if spec_text is None:
-        return "nincs spec.md — a visszirány kimarad"
+        return f"nincs {spec_name} — a visszirány kimarad"
     ids = [f"DoD-{n}" for n in dod_ids(spec_text)]
     if not ids:
-        return f"a spec.md `{sec('definition_of_done')}` szekciójában nincs `DoD-NN` — a visszirány kimarad"
+        return f"a {spec_name} `{sec('definition_of_done')}` szekciójában nincs `DoD-NN` — a visszirány kimarad"
     missing = [d for d in ids if d not in covered]
     for d in missing:
-        f.add("MG5", "—", f"a spec.md `{d}` pontja lefedetlen: nem szerepel egyetlen "
+        f.add("MG5", "—", f"a {spec_name} `{d}` pontja lefedetlen: nem szerepel egyetlen "
                           f"tesztcsoport fejlécében sem, és a `{sec('mt_not_manual')}` táblában "
                           f"sincs indoklással")
     return f"{len(ids) - len(missing)}/{len(ids)} `DoD-NN` lefedve"
@@ -633,7 +633,12 @@ def main():
         return 2
     mode = {"planned": planned, "as-built": as_built}.get(args.mode, status)
 
-    spec_text = read(cycle / "spec.md")
+    # Teljes flow: `spec.md`. Quick-flow: a spec+terv összevont `spec-plan.md`
+    # (az átnevezés előtt indult ciklusokban még `spec.md`) — mindkettőt elfogadjuk.
+    spec_path = cycle / "spec.md"
+    if not spec_path.is_file() and (cycle / "spec-plan.md").is_file():
+        spec_path = cycle / "spec-plan.md"
+    spec_text = read(spec_path)
     plan_text = read(cycle / "plan.md")
 
     f = Findings()
@@ -660,10 +665,10 @@ def main():
           f"ellenőrizve: {len(f.items) - before} találat")
 
     before = len(f.items)
-    note = check_dod_coverage(lines, spec_text, groups, f)
+    note = check_dod_coverage(lines, spec_text, groups, f, spec_path.name)
     print(f"  {'✓' if len(f.items) == before else '✗'} MG5 — DoD-lefedettség: {note}")
     if spec_text is None:
-        print("    · nincs spec.md a ciklus mappájában — a visszirány nem ellenőrizhető")
+        print("    · nincs spec.md / spec-plan.md a ciklus mappájában — a visszirány nem ellenőrizhető")
 
     before = len(f.items)
     note = check_startup_commands(lines, f)

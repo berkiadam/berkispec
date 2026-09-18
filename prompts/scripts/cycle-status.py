@@ -50,8 +50,10 @@ def get_cycles():
     return cycles
 
 def get_cycle_title_and_desc(cycle_path):
-    # Próbáljuk a spec.md-ből beolvasni
+    # Próbáljuk a spec.md-ből beolvasni (quick-flow ciklusban: spec-plan.md)
     spec_file = cycle_path / "spec.md"
+    if not spec_file.exists():
+        spec_file = cycle_path / "spec-plan.md"
     if spec_file.exists():
         try:
             with open(spec_file, 'r', encoding='utf-8') as f:
@@ -210,6 +212,13 @@ def analyze_cycle(cycle_path):
     phases = []
     
     spec_file = cycle_path / "spec.md"
+    # A quick-flow spec+terv összevont artefaktuma a `spec-plan.md`; a régi,
+    # átnevezés előtt indult ciklusokban `spec.md` — mindkettőt elfogadjuk
+    # (ugyanaz a visszafelé kompatibilitás, mint a `task.md` → `tasks.md` esetén).
+    if not is_full_flow:
+        quick_spec_file = cycle_path / "spec-plan.md"
+        if quick_spec_file.exists() or not spec_file.exists():
+            spec_file = quick_spec_file
     tasks_file = cycle_path / "tasks.md"
     # az aktuális hely a ciklus analyze/ almappája; a régi (ciklus-gyökér) hely
     # visszafelé kompatibilitásból marad
@@ -375,22 +384,23 @@ def analyze_cycle(cycle_path):
             if legacy_tasks_file.exists():
                 tasks_file = legacy_tasks_file
         tasks_label = f"Feladatlista ({tasks_file.name})"
+        spec_label = f"Specifikáció + terv ({spec_file.name})"
         spec_status = get_status_from_file(spec_file)
         tasks_status = get_status_from_file(tasks_file)
 
         # 1. Spec
         if spec_status:
             if tasks_file.exists():
-                phases.append(("Specifikáció (spec.md)", "KÉSZ"))
+                phases.append((spec_label, "KÉSZ"))
             else:
-                phases.append(("Specifikáció (spec.md)", "FOLYAMATBAN"))
+                phases.append((spec_label, "FOLYAMATBAN"))
         elif spec_file.exists():
             # Státusz-mező nélküli (QF2 előtti) ciklus: a bizonyíték KÖZVETETT —
             # a spec megvan, és ha a feladatlista is elkészült belőle, a fázis lezárult.
-            phases.append(("Specifikáció (spec.md)",
+            phases.append((spec_label,
                            INDIRECT if tasks_file.exists() else "FOLYAMATBAN"))
         else:
-            phases.append(("Specifikáció (spec.md)", "MÉG NEM FUTOTT"))
+            phases.append((spec_label, "MÉG NEM FUTOTT"))
 
         # 2. Tasks
         if tasks_status:
