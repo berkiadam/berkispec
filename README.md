@@ -77,6 +77,8 @@
 
 **Berki-spec** is a **spec-driven development (SDD)** framework for developing software with AI agents. It breaks the work into independently testable **cycles**, and drives every cycle down the same disciplined path — from capturing the requirement (`spec`) through the technical design (`plan`) and the task list (`tasks`) to implementation, validation and merge. The process is built from two kinds of building block: **skills** (phase recipes run by the main agent) and **agents** (dedicated specialists invoked as `Task tool` subagents).
 
+> **Status: alpha — there is no stable release yet.** The prompt contracts are hardened round by round, so an update can bring **breaking changes** to an already-installed project (a renamed artifact or cycle folder, a new mandatory gate). If you need a fixed state, install from a tagged version or pin a commit instead of following `main`.
+
 **What makes it different from the SDD tools on the market?**
 
 Most SDD templates give you a single, rigid "spec → plan → code" thread. Berki-spec goes further — and the difference is not in the phases, but in **what happens when reality diverges from the plan**:

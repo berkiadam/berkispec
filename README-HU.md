@@ -79,6 +79,8 @@
 
 **Berki-spec** egy **spec-driven development (SDD)** keretrendszer AI-ágensekkel való szoftverfejlesztéshez. A munkát önállóan tesztelhető **ciklusokra** bontja, és minden ciklust ugyanazon a fegyelmezett úton vezet végig — a követelmény rögzítésétől (`spec`) a technikai terven (`plan`) és a feladatlistán (`tasks`) át az implementációig, a validálásig és a merge-ig. A folyamat két építőelemből áll: **skillek** (fázis-receptek, amelyeket a fő ágens futtat) és **ágensek** (dedikált, `Task tool` subagentként hívott specialisták).
 
+> **Státusz: alpha — még nincs stabil kiadás.** A prompt-kontraktusokat körönként keményítjük, ezért egy frissítés **töréses változást** hozhat egy már telepített projektben (átnevezett artefaktum vagy ciklusmappa, új kötelező kapu). Ha rögzített állapot kell, tagelt verzióról telepíts, vagy rögzíts egy commitot ahelyett, hogy a `main`-t követnéd.
+
 **Mitől más, mint a piacon lévő SDD eszközök?**
 
 A legtöbb SDD sablon egyetlen, merev „spec → terv → kód" fonalat ad. A Berki-spec ennél tovább megy — a különbség nem a fázisokban van, hanem abban, hogy **mi történik, amikor a valóság eltér a tervtől**:
