@@ -25,6 +25,6 @@
 python3 <platform-scripts-mappa>/analyze-gate-check.py specs/cycle-NN-<cycle-name> --paths-only
 ```
 
-The gate looks at the design documents **present** in the cycle folder (`spec.md`/`plan.md`/`tasks.md` — whichever already exists), so it runs at the closing of `02` as well, when the plan and the tasks do not exist yet. A non-`0` exit code → **fix** the paths found, and run it again; the phase does not close without a `PASS`. In phases `03`/`04` the full mechanical gate (`M`) runs this anyway — there this call is only needed if you want feedback earlier.
+The gate looks at the design documents **present** in the cycle folder (`spec.md`/`spec-plan.md`/`plan.md`/`tasks.md` — whichever already exists), so it runs at the closing of `02` as well, when the plan and the tasks do not exist yet. A non-`0` exit code → **fix** the paths found, and run it again; the phase does not close without a `PASS`. In phases `03`/`04` the full mechanical gate (`M`) runs this anyway — there this call is only needed if you want feedback earlier.
 
 _The mechanical gate of `05-analyze` checks the same mechanically (`R1` check): `file://`, machine-specific, placeholder and absolute repo paths in the design documents are `<status:must_fix>`._

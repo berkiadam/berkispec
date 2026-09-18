@@ -23,7 +23,7 @@
 _(Egyszerűsített [quick-flow] ciklus. A lezáráskor a címsor `✅` jelet kap.)_
 
 <!-- ANCHOR:BS-drift-sor -->
-- **<azonosító>** — Terv: <mit ír ma a `docs-generated/`>. As-built: <mit változtatott ez a ciklus>. Indok/státusz: egyszerűsített ciklus `cycle-NN-<cycle-name>`, a `docs-generated/` átvezetése a következő teljes ciklus `08-doc-sync` fázisára vár.
+- **<azonosító>** — Terv: <mit ír ma a `docs-generated/`>. As-built: <mit változtatott ez a ciklus>. Indok/státusz: egyszerűsített ciklus `cycle-NN_quick-flow_<cycle-name>`, a `docs-generated/` átvezetése a következő teljes ciklus `08-doc-sync` fázisára vár.
 
 <!-- ANCHOR:LD10-teszt-leltar-drift-sor -->
-- **teszt-leltár** — Terv: a `docs-generated/test-description.md` a `cycle-NN` előtti tesztkészletet írja le. As-built: ez a ciklus tesztet adott/módosított (`<mely tesztfájl(ok)>`). Indok/státusz: egyszerűsített ciklus `cycle-NN-<cycle-name>`, a leltár átvezetése a következő teljes ciklus `08-doc-sync` fázisára vár (a gazda a `08`, LD1).
+- **teszt-leltár** — Terv: a `docs-generated/test-description.md` a `cycle-NN` előtti tesztkészletet írja le. As-built: ez a ciklus tesztet adott/módosított (`<mely tesztfájl(ok)>`). Indok/státusz: egyszerűsített ciklus `cycle-NN_quick-flow_<cycle-name>`, a leltár átvezetése a következő teljes ciklus `08-doc-sync` fázisára vár (a gazda a `08`, LD1).

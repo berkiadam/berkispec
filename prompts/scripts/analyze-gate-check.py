@@ -2682,8 +2682,14 @@ def main():
     # előfeltétel-ellenőrzésen. Shift-left: az abszolút útvonal ott derüljön ki,
     # ahol keletkezett, ne két fázissal később.
     if args.paths_only:
+        # A quick-flow spec+terv összevont artefaktuma a `spec-plan.md` (a név mondja
+        # ki, hogy a két dokumentum ott egy) — a kapu ezért mindkét nevet elfogadja;
+        # a régi, átnevezés előtt indult ciklusokban a fájl `spec.md`.
+        quick_spec_path = cycle / "spec-plan.md"
         present = [(name, path, phase) for name, path, phase in
-                   (("spec.md", spec_path, "02"), ("plan.md", plan_path, "03"),
+                   (("spec.md", spec_path, "02"),
+                    ("spec-plan.md", quick_spec_path, "quick-flow 1. fázis"),
+                    ("plan.md", plan_path, "03"),
                     ("tasks.md", tasks_path, "04")) if path.is_file()]
         if not present:
             print(f"HIBA: {cycle} egyetlen tervezési dokumentumot sem tartalmaz", file=sys.stderr)

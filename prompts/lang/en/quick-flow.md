@@ -23,7 +23,7 @@
 _(Simplified [quick-flow] cycle. On closing, the heading gets a `✅` mark.)_
 
 <!-- ANCHOR:BS-drift-sor -->
-- **<identifier>** — Design: <what `docs-generated/` says today>. As-built: <what this cycle changed>. Reason/status: simplified cycle `cycle-NN-<cycle-name>`, carrying it over into `docs-generated/` awaits the `08-doc-sync` phase of the next full cycle.
+- **<identifier>** — Design: <what `docs-generated/` says today>. As-built: <what this cycle changed>. Reason/status: simplified cycle `cycle-NN_quick-flow_<cycle-name>`, carrying it over into `docs-generated/` awaits the `08-doc-sync` phase of the next full cycle.
 
 <!-- ANCHOR:LD10-teszt-leltar-drift-sor -->
-- **test inventory** — Design: `docs-generated/test-description.md` describes the test suite from before `cycle-NN`. As-built: this cycle added/changed a test (`<which test file(s)>`). Reason/status: simplified cycle `cycle-NN-<cycle-name>`, carrying the inventory over awaits the `08-doc-sync` phase of the next full cycle (the owner is `08`, LD1).
+- **test inventory** — Design: `docs-generated/test-description.md` describes the test suite from before `cycle-NN`. As-built: this cycle added/changed a test (`<which test file(s)>`). Reason/status: simplified cycle `cycle-NN_quick-flow_<cycle-name>`, carrying the inventory over awaits the `08-doc-sync` phase of the next full cycle (the owner is `08`, LD1).
