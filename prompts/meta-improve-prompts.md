@@ -314,6 +314,11 @@ A módszertan alapja a fázisonkénti `/clear`, tehát az ágens **rendszeresen 
 
 A rendszer aktívan használatban van: több tucat fejlesztési ciklus futott le ezekkel a promptokkal, és a fenti `7/*` tervezési elvek **mind egy-egy éles ciklus konkrét bukásából** származnak (a legutóbbiak a `cycle-28`–`cycle-30` körüli ciklusokból). A keményítő körök tételes terve és indoklása a `prompts/inprove-list*.md` fájlokban olvasható — ezek a **múltat rögzítik**, visszamenőleg nem írjuk át őket.
 
+**⚠ Egy kivétel a „múltat rögzítik" szabály alól: a `prompts/inprove-list13.md` MÉG NINCS VÉGREHAJTVA.** Ez a kör a ciklus utolsó fázisát (`09-merge`) bontja szét **izolált** és **központosított** SDD-re, és három bizonyítási pontot vezet be (`VP1` = a mai `07`; `VP2` = merge utáni, a fő branch-re juttatás **előtti** kapu; `VP3` = `bs-dev-test` az integrált dev-környezetben). **Huszonegy tervezési döntése lezárt** (`L13-D1`–`L13-D21`), a tételes végrehajtási terv viszont még hiányzik. Ebből két dolog következik egy új sessionre:
+
+1. **Ha a `09`/merge környékét, a `plan.md` gépi futtatási tábláját (`PH1`/`Fázis` oszlop), a `conventions.md` teszt- vagy merge-szekcióit, a `cycle-status.py`-t vagy a quick-flow lezárását módosítanád — előbb olvasd el a `list13` 8. szakaszát.** Több döntés már megszületett (pl. a `Fázis` oszlop kötelezővé és explicitté válik, a `mindkettő` érték megszűnik; a ciklus nem a `07` PASS-nál, hanem az utolsó engedélyezett verifikációnál zárul), és ezeket **ne döntsd el újra másképp**.
+2. **A README-k ábrái ezért részben elavultak**, és a `list13` 9.b szakasza tételesen leírja, mit kell bennük átírni — a `03a`/`03b` szétválás ábra-javítása azonnal esedékes, a ciklusvég két ága viszont csak a megvalósítással együtt.
+
 A skill fájlok a `prompts/skills-{hu,en}/`, a specialista ágensek a `prompts/agents-{hu,en}/`, a közös blokkok a `prompts/shared-{hu,en}/`, a projekt-nyelvi blokkok a `prompts/lang/{hu,en}/` mappában olvashatók.
 
 > **Mielőtt bármit módosítanál, két olvasnivaló:** a repó gyökerében a `README-HU.md` (a felhasználónak szánt leírás, flow-ábrákkal és a hurkok konvencióival) és a `berki-spec-directory-structure.md` (mi hova települ a célprojektben, és melyik fájl kinek a tulajdona).
