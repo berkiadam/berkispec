@@ -9,3 +9,7 @@ __pycache__/
 # A /bs-run-tests cikluson kívüli, kényelmi teszt-futtatásának eredmény-fája (D7/KT7).
 # Gépfüggő, újragenerálható, és SOHA nem ciklus-bizonyíték (D8) — nem verziókezeljük.
 test-runs/
+
+# A mermaid-filter (az export-doc.py pandoc-futtatása) a cwd-be írja ezt a
+# 0 bájtos hibanaplót. Melléktermék, nem verziókezeljük.
+mermaid-filter.err

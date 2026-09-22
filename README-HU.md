@@ -1084,7 +1084,7 @@ A lista a telepítő **mind az öt platformjának** célmappáját lefedi (`clau
 
 **Így néz ki a szerkesztőben.** A VS Code a megnyitott repó **linkelt worktree-jeit külön repository-ként** sorolja fel a Source Control panelen — a fő checkout `master`/`main` branch-en, alatta behúzva a worktree a ciklus feature branch-én:
 
-![A VS Code Source Control panelje párhuzamos ciklus alatt: a fő repó és a linkelt worktree külön bejegyzésként, külön commit-dobozzal](docs/worktree-vscode-source-control.png)
+![A VS Code Source Control panelje párhuzamos ciklus alatt: a fő repó és a linkelt worktree külön bejegyzésként, külön commit-dobozzal](docs/assets/worktree-vscode-source-control.png)
 
 Amit a képen érdemes észrevenni: a `CHANGES` alatt **két külön commit-doboz** van, és mindegyik a **saját branch-ére** commitol (`Commit on "master"` ↔ `Commit on "feature/c…"`). Ez két fizikailag külön munkafa, közös `.git`-tel — a doboz-tévesztés az egyetlen valódi kockázat ebben a felállásban: a fő dobozba írt commit a `main`-re megy, nem a ciklus ágára. A worktree-nél megjelenő `Publish Branch` gomb csak annyit jelent, hogy az új feature branch-nek még nincs upstreamje (`git push -u origin <branch>`).
 

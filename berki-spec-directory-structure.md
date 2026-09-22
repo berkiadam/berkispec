@@ -24,7 +24,7 @@ The framework consists of a single folder, `prompts/`, plus the installer in the
 | `berki-spec-directory-structure.md` | This file — the detailed folder/file reference. |
 | `install.sh` / `install.ps1` | The installer entry points (Linux/macOS and Windows PowerShell). They collect the target folder, the platform and the two languages interactively, or accept them as flags (`--platform`, `--prompt-lang`, `--project-lang`, `--path`, `--force`), then hand the work to `prompts/scripts/install-helper.py`. |
 | `history` | Machine-specific installer memory (`LAST_PROJECT_PATH`, `LAST_PLATFORM`, `LAST_INSTALL`) so that a reinstall can offer the previous target. Excluded by `.gitignore`. |
-| `docs/` | Hand-written illustrations for the documentation (e.g. `worktree-vscode-source-control.png`). Not generated. |
+| `docs/` | Hand-written illustrations for the documentation (e.g. `docs/assets/worktree-vscode-source-control.png`). Not generated. |
 | `fixtures/` | Development-time test beds that are **not part of the framework** and are never installed. Today: `testdino-smoke/` — the minimal Playwright project the test-manager adapter (`TM1`–`TM10` of `prompts/improve-list13.md`) is measured and developed against. Contains no credentials; `node_modules/` and the generated reports are gitignored. |
 | `prompts/` | Everything the framework consists of — see below. |
 

@@ -621,14 +621,14 @@ nem a task-listába.
 > Az `A0`–`A0d` **önálló commit**, még a szétvágás előtt (`L14-D10`) — a `git mv`-k diffje ne
 > keveredjen a tartalmi vágáséval.
 
-- [ ] `A0` — `git mv` a hat prezentáció-fájl `docs/talks/`-ba (`ai-transformation-in-enterprise-env.md`,
+- [x] `A0` — `git mv` a hat prezentáció-fájl `docs/talks/`-ba (`ai-transformation-in-enterprise-env.md`,
       `.pdf`, `ai-transformation-slides.md`, `ai_ugyek-adam.md`,
       `AI_ugyek_egyeztetes_tisztitott.odp`, `elerheto-modellek.png`)
-- [ ] `A0b` — `git mv docs/worktree-vscode-source-control.png docs/assets/`
-- [ ] `A0c` — `git rm docs/ai-transformation-in-enterprise-env.md.bak docs/mermaid-filter.err`,
+- [x] `A0b` — `git mv docs/worktree-vscode-source-control.png docs/assets/`
+- [x] `A0c` — `git rm docs/ai-transformation-in-enterprise-env.md.bak docs/mermaid-filter.err`,
       plusz egy `mermaid-filter.err` sor a `.gitignore`-ba (az `export-doc.py` a cwd-be írja,
       `export-doc.py:24`)
-- [ ] `A0d` — A `worktree-…png` **három** hivatkozásának átírása az új útvonalra: `README.md`,
+- [x] `A0d` — A `worktree-…png` **három** hivatkozásának átírása az új útvonalra: `README.md`,
       `README-HU.md`, `berki-spec-directory-structure.md:27`
 - [ ] `A1` — `docs/en/` és `docs/hu/` mappa létrehozása
 - [ ] `A2` — A 14 angol oldal kivágása a `README.md`-ből az 5.1 tábla szerint, **változatlan**

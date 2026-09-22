@@ -1076,7 +1076,7 @@ The list covers the target folder of **all five platforms** of the installer (`c
 
 **This is how it looks in the editor.** VS Code lists the **linked worktrees of the opened repo as separate repositories** in the Source Control panel — the main checkout on the `master`/`main` branch, and indented under it the worktree on the cycle's feature branch:
 
-![The Source Control panel of VS Code during a parallel cycle: the main repo and the linked worktree as separate entries, with separate commit boxes](docs/worktree-vscode-source-control.png)
+![The Source Control panel of VS Code during a parallel cycle: the main repo and the linked worktree as separate entries, with separate commit boxes](docs/assets/worktree-vscode-source-control.png)
 
 What is worth noticing in the picture: under `CHANGES` there are **two separate commit boxes**, and each one commits **to its own branch** (`Commit on "master"` ↔ `Commit on "feature/c…"`). These are two physically separate working trees with a shared `.git` — mistaking the box is the only real risk in this arrangement: a commit written into the main box goes to `main`, not to the cycle's branch. The `Publish Branch` button that appears at the worktree only means that the new feature branch has no upstream yet (`git push -u origin <branch>`).
 
