@@ -59,10 +59,36 @@ PHASES = ("implement", "validate", "post-merge", "dev-test", "ad-hoc")
 PROVIDERS = ("none", "testdino", "reportportal", "qase", "command")
 SHAPES = ("reporter", "import")
 
-# Az adapterek KIPRÓBÁLTSÁGA — a dokumentációban és a kimenetben is kimondva
+# Az adapterek ÉRETTSÉGE — a dokumentációban és a kimenetben is kimondva
 # (L13-D25): kipróbálatlan adaptert csendben beleírni nem szabad, mert a
 # felhasználó éles PR-en tudná meg, hogy nem megy.
-TRIED_OUT = {"testdino": True, "reportportal": False, "qase": False, "command": True}
+#
+#   "ready"             — éles fiókkal, végponttól végpontig mérve
+#   "under-development" — a kód megvan és a szerződést tartja, de SOHA nem
+#                         futott valódi szolgáltató ellen (nem volt hozzá fiók).
+#                         Használható, de a feltöltő hívást a szolgáltató
+#                         AKTUÁLIS CLI-jével validálni kell — addig a `command`
+#                         ág a becsületes választás.
+ADAPTER_STATUS = {"testdino": "ready", "reportportal": "under-development",
+                  "qase": "under-development", "command": "ready"}
+UNDER_DEVELOPMENT = "under-development"
+
+
+def adapter_status(provider):
+    return ADAPTER_STATUS.get(provider, UNDER_DEVELOPMENT)
+
+
+def warn_if_under_development(provider):
+    """Egyszeri, hangos figyelmeztetés — minden módban, nem csak a preflightban."""
+    if adapter_status(provider) != UNDER_DEVELOPMENT:
+        return False
+    print(f"  ⚠ UNDER DEVELOPMENT — a `{provider}` adapter fejlesztés alatt áll: a keret "
+          f"megvalósításakor nem volt hozzá fiók, ezért VALÓDI SZOLGÁLTATÓ ELLEN SOHA NEM "
+          f"FUTOTT. A szerződést (bemenet, exit kódok, `TEST_MANAGER_RUN_URL=`) tartja, de a "
+          f"feltöltő hívást a szolgáltató AKTUÁLIS CLI-jével validálni kell. Amíg ez nem "
+          f"történt meg, a `command` ág a becsületes választás — vagy próbáld ki egy "
+          f"eldobható körön, mielőtt kapunak használnád (`Test manager kötelező: igen`).")
+    return True
 
 # A `testdino` `reporter` ág felismerő-készlete (improve-list13 6.9 füstteszt)
 TESTDINO_RUN_URL_RE = re.compile(r"https://app\.testdino\.com/\S+/test-runs/\S+")
@@ -270,9 +296,11 @@ def adapter_testdino(mode, cfg, args, results, meta):
 def adapter_import(provider, mode, cfg, args, results, meta):
     """`import` alak: a kész artefaktumot egy parancs UTÓLAG tolja fel.
 
-    ⚠ A `reportportal` és a `qase` ág a végrehajtáskor KIPRÓBÁLATLAN volt (nem
-    volt hozzájuk fiók) — ezt a script kimondja, nem hallgatja el (L13-D25).
-    Kipróbálatlan adapter helyett a `command` ág a becsületes válasz."""
+    ⚠ A `reportportal` és a `qase` ág **UNDER DEVELOPMENT**: a keret
+    megvalósításakor nem volt hozzájuk fiók, tehát valódi szolgáltató ellen
+    soha nem futott — ezt a script minden módban kimondja, nem hallgatja el
+    (L13-D25). Fejlesztés alatt álló adapter helyett a `command` ág a
+    becsületes válasz."""
     token_env = cfg.get("token_env")
     if mode in ("preflight", "selftest"):
         if not token_env:
@@ -282,10 +310,7 @@ def adapter_import(provider, mode, cfg, args, results, meta):
         if not os.environ.get(token_env):
             print(f"  ✗ a(z) `{token_env}` env var nincs beállítva", file=sys.stderr)
             return 2
-        if not TRIED_OUT.get(provider, False):
-            print(f"  ⚠ a `{provider}` adapter KIPRÓBÁLATLAN (nem volt hozzá fiók a "
-                  f"megvalósításkor) — éles használat előtt próbáld ki, vagy használd a "
-                  f"`command` ágat a szolgáltató saját CLI-jével")
+        warn_if_under_development(provider)
         print(f"  ✓ preflight rendben: `{token_env}` beállítva")
         return 0
 
@@ -296,12 +321,8 @@ def adapter_import(provider, mode, cfg, args, results, meta):
               "az `import` alak enélkül nem tud mit feltölteni (a futtatási tábla "
               "`Eredményfájl`/`Formátum` cellája hiányzik?)", file=sys.stderr)
         return 4
-    print(f"  · {provider} ({provider in TRIED_OUT and 'import' or 'import'} alak) — "
-          f"{len(files)} eredményfájl: {', '.join(files)}")
-    if not TRIED_OUT.get(provider, False):
-        print(f"  ⚠ a `{provider}` adapter KIPRÓBÁLATLAN — a feltöltő hívást a szolgáltató "
-              f"aktuális CLI-jével kell validálni. Amíg ez nem történt meg, a `command` ág "
-              f"a becsületes választás.")
+    print(f"  · {provider} (`import` alak) — {len(files)} eredményfájl: {', '.join(files)}")
+    warn_if_under_development(provider)
     if args.dry_run:
         print("  · DRY-RUN: nem tölt fel.")
         emit_url = ""
@@ -390,7 +411,9 @@ def main():
         emit()
         return 2
 
-    print(f"test-manager.py — mód: {args.mode} · fázis: {args.phase} · provider: {provider}")
+    status = adapter_status(provider)
+    print(f"test-manager.py — mód: {args.mode} · fázis: {args.phase} · provider: {provider}"
+          + (f"  [{UNDER_DEVELOPMENT.upper()}]" if status == UNDER_DEVELOPMENT else ""))
 
     if provider == "none":
         print("  · a test manager ki van kapcsolva (`none`) — nulla új lépés, nulla "
@@ -447,6 +470,7 @@ def main():
                       f"`command` ág enélkül némán bukna", file=sys.stderr)
                 emit()
                 return 2
+            warn_if_under_development(provider)
             print("  ✓ preflight rendben (parancs elérhető, env var beállítva)")
             code = 0
         else:
