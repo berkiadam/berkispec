@@ -7,7 +7,7 @@
 >
 > **Státusz:** **KÉSZ** (2026-09-04) — a 4–11. szakasz végrehajtva, a kapuk zöldek.
 > A `10.7` szándékosan nyitva maradt (hatókörön kívül; a felhasználó nem kérte).
-> **Előzmény:** a `prompts/inprove-list9.md` (`EV8`–`EV10` · `RL1` · `RL2`) **elkészült**
+> **Előzmény:** a `prompts/improve-list9.md` (`EV8`–`EV10` · `RL1` · `RL2`) **elkészült**
 > (`be7e868`). Ez a terv nem a nagy flow-t keményíti tovább, hanem a **másik utat** hozza vissza
 > a nagy flow mellé: a `quick-flow` utolsó tartalmi köre a `7/f`–`7/n` keményítések, a `03a`/`03b`
 > hasítás és a közös shared-blokkok (RP1, GC1, AV1, phase-commit) **előtt** volt — az azóta
@@ -107,7 +107,7 @@ tudnod őket:**
 |---|---|
 | `prompts/meta-improve-prompts.md` „Tervezési elvek" (7/b–7/n) | minden keményítő kör indoklása és azonosítói |
 | `README-HU.md` | a felhasználónak szánt leírás, flow-ábrák, a hurkok konvenciói |
-| `prompts/inprove-list{7,8,9}.md` | a legutóbbi három kör tételes terve (`EV`, `RUN1`, `SK1`, `RL`) |
+| `prompts/improve-list{7,8,9}.md` | a legutóbbi három kör tételes terve (`EV`, `RUN1`, `SK1`, `RL`) |
 
 ---
 
@@ -118,7 +118,7 @@ tudnod őket:**
 A `quick-flow.md` utolsó **tartalmi** módosítása a 2026-08-25-i tokenizálás (`83397e9`) előtti kör.
 Azóta a nagy flow négy teszt-keményítő kört (`7/f`–`7/n`), egy fázishasítást (`03a`/`03b`) és öt
 közös shared-blokkot kapott — a quick-flow **egyikből sem**. Az elcsúszás nem véletlen: a
-`quick-flow` egyetlen `inprove-list` hatókörében sem szerepelt (a `list6` kifejezetten
+`quick-flow` egyetlen `improve-list` hatókörében sem szerepelt (a `list6` kifejezetten
 *„A `bs-quick-flow` változatlan"*-t rögzített), és a `meta-improve-prompts.md` fájl-táblája
 **ma sem sorolja** — vagyis a következő felülvizsgálat is átlépne rajta (10.3).
 
@@ -287,7 +287,7 @@ Mindegyik tétel **hu + en párban** megy, és a két fájl sorszintű igazodás
          (*„Végrehajtási szakasz: `task.md` teendőlista"*, az `implementation_plan.md` /
          `walkthrough.md` mellett). Ez az eszköz sajátja, **nem** a quick-flow artefaktuma —
          változatlan marad.
-      3. A `prompts/inprove-list*.md` és a `history/` **múltat rögzít** — visszamenőleg nem írjuk át. **A `cycle-status.py` visszafelé
+      3. A `prompts/improve-list*.md` és a `history/` **múltat rögzít** — visszamenőleg nem írjuk át. **A `cycle-status.py` visszafelé
       kompatibilis ágat kap:** a lightweight ág `tasks.md`-t keres, és ha az nincs, a régi
       `task.md`-t is megnézi (`:201` környéke, a `analyze_file` / `validate_file_*` mintája
       szerint, ahol a régi hely már ma is visszafelé kompatibilitásból marad).

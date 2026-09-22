@@ -29,7 +29,7 @@
     - [Alapvető parancsok (Slash Commands):](#alapvető-parancsok-slash-commands)
   - [4. Teljes berki spec flow (00–09)](#4-teljes-berki-spec-flow-0009)
     - [4.1 Magas szintű összefoglalás](#41-magas-szintű-összefoglalás)
-    - [4.2 Részletes folyamat](#42-részletes-folyamat)
+    - [4.2 Tesztelési pontok — hol tesztelünk, és mit bizonyít](#42-tesztelési-pontok--hol-tesztelünk-és-mit-bizonyít)
     - [4.3 Modellek és effort-szintek automatikus választása](#43-modellek-és-effort-szintek-automatikus-választása)
     - [4.4 Az 05-analyze önjavító hurok (részletes)](#44-az-05-analyze-önjavító-hurok-részletes)
     - [4.5 Az 07-validate önjavító hurok (részletes) — tesztek + kódreview](#45-az-07-validate-önjavító-hurok-részletes--tesztek--kódreview)
@@ -64,6 +64,7 @@
   - [16. Validációs riport (validation-report.md)](#16-validációs-riport-validation-reportmd)
   - [17. Reviewer agent (agents/reviewer.md)](#17-reviewer-agent-agentsreviewermd)
   - [18. Ágens-specifikus integráció](#18-ágens-specifikus-integráció)
+  - [Függelék — A részletes folyamatábra](#függelék--a-részletes-folyamatábra)
     - [18.0 Platform-korlát: parancs-futtatás a subagentekben (EX1)](#180-platform-korlát-parancs-futtatás-a-subagentekben-ex1)
     - [18.1 Antigravity CLI (Google DeepMind)](#181-antigravity-cli-google-deepmind)
       - [18.1.1 Tervezési és naplózási folyamat (Planning Mode)](#1811-tervezési-és-naplózási-folyamat-planning-mode)
@@ -143,6 +144,8 @@ A `01-add-cycles` a `## 6. Javasolt ciklus-vágás` szekciót a roadmap-javaslat
 ## 2. Installáció
 
 A BerkiSpec keretrendszer beállítása a célprojektben rendkívül egyszerű és automatizált a mellékelt telepítő script segítségével.
+
+> **⚠ Frissítés meglévő projektben — a ciklusvég családja NEM visszafelé kompatibilis.** A `09-merge` szétvált öt skillre (`bs-review-and-merge` · `bs-create-pr` · `bs-review` · `bs-merge` · `bs-dev-test`), és a keretnek **nincs verzió-fogalma**: nincs alias, nincs fallback a régi viselkedésre, nincs migrációs gépezet. A frissítés ezért **újratelepítés** (a telepítő a régi `bs-merge/` mappát is lecseréli), plusz a `conventions.md` új `## Review and merge` szekciójának felvétele — a `00-init-project` újrafuttatásával vagy kézzel (a sablon a `00` skillben áll). **Külön kérdés a projektben MÁR MEGLÉVŐ artefaktum-adat:** egy futó ciklus `plan.md`-jének `Fázis` oszlopában az üres cella és a `mindkettő` érték **olvasáskor továbbra is elfogadott** (a régi jelentéssel, WARN-nal) — de új plan már nem írhatja. Ezt az újratelepítés nem írja át.
 
 ### Telepítés lépései:
 1. Nyiss meg egy terminált a `berkispec` repository gyökerében.
@@ -264,7 +267,9 @@ A telepítés után a platform chat felületén a `/` karakter leütésével ér
 * **`/bs-implement`**: Tényleges kódfejlesztés a feladatlista alapján, a haladás rögzítésével a `tasks.md`-ben.
 * **`/bs-validate`**: Tesztek, lint, build **és kódreview** (reviewer agent) ellenőrzése egyetlen automatikus javító hurokban (sikeres futtatás után 'Kész' státusz).
 * **`/bs-doc-sync`**: Az élő dokumentáció (`docs-generated/`) és README-k szinkronizálása a kódváltozásokkal, valamint a `specs/test-conventions.md` (visszatérő teszt-elvárások és receptek) karbantartása.
-* **`/bs-merge`**: A ciklus branch beolvasztása (lokális squash vagy PR), kötelező felhasználói megerősítéssel. A kódreview már a `/bs-validate`-ben lefutott.
+* **`/bs-review-and-merge`**: A ciklus lezárása **egy lépésben**, ha nincs PR feladás (`PR submission: no`): a fő branch behozása a ciklus ágába → **post-merge teszt-kör** (`VP2`: tesztek + Sonar) → beolvasztás kötelező felhasználói megerősítéssel (RD8). A kódreview már a `/bs-validate`-ben lefutott.
+* **`/bs-create-pr` → `/bs-review` → `/bs-merge`**: ugyanez **három lépésben**, ha van PR feladás (`PR submission: yes`) — a PR megnyitása, a PR-en futó (központosított SDD-ben **gépi**) review, végül a beolvasztás a `VP2` kör után. A `VP2` mindkét úton a fő branch-re juttatás **előtti** kapu.
+* **`/bs-dev-test`** *(opcionális, csak központosított úton)*: a sikeres merge után telepít egy integrált teszt-környezetbe, és **valódi e2e teszteket** futtat rá (`VP3`). Ha be van kapcsolva, a ciklus ennek a körnek a zöldjével zárul.
 * **`/bs-cycle-status`**: Ciklusok státuszának ellenőrzése (interaktív TUI vagy parancssori státusz).
 * **`/bs-brainstorm`**: Feltáró ötletelés és közös tervezés **a spec előtt** — perzisztens munkafájllal (`.bs-brainstorm/`), olcsó `researcher` feltárással; a végén átad a `/bs-add-cycles`-nak vagy a `/bs-quick-flow`-nak.
 * **`/bs-quick-flow`**: Az egyszerűsített (lightweight) flow elindítása kis feladatokhoz (spec → task → implementáció).
@@ -305,13 +310,17 @@ flowchart TD
     0["<b>0. Project Setup</b><br/>(create conventions.md)"]:::setup
     1["<b>1. Init Cycles</b><br/>(create roadmap.md, cycle dir)"]:::setup
     2["<b>2. Create Spec</b><br/>(create spec.md)"]:::design
-    3["<b>3. Create Plan</b><br/>(create plan.md from spec.md)"]:::design
+    3["<b>3. Create Plan</b><br/>(two steps: 03a code plan + 03b test plan → plan.md)"]:::design
     4["<b>4. Create Tasks</b><br/>(create tasks.md from plan.md)"]:::design
     5["<b>5. Analyze</b><br/>(cross-phase consistency check)"]:::design
     6["<b>6. Implement</b><br/>(create code from plan.md and tasks.md)"]:::dev
     7["<b>7. Validate</b><br/>(regression, sonar and E2E check)"]:::dev
     8["<b>8. Doc-sync</b><br/>(docs-generated/ konzisztencia + objektív kapu)"]:::doc
-    9["<b>9. Review and Merge</b><br/>(reviewer agent and merge)"]:::review
+    9["<b>9. Review and Merge</b><br/>(isolated SDD — local review + merge)"]:::review
+    9a["<b>9a. Create PR</b><br/>(centralized SDD)"]:::review
+    9b["<b>9b. Review</b><br/>(machine-run on the CI)"]:::review
+    9c["<b>9c. Merge</b><br/>(+ post-merge tests, VP2)"]:::review
+    9d["<b>9d. Dev-test</b> — optional<br/>(deploy + real E2E, VP3)"]:::review
     End([Ciklus befejezve]):::start
 
     %% Tisztázó interjú csomópontok
@@ -370,168 +379,57 @@ flowchart TD
     %% Doc-sync (08): terv (doc-sync-planner) → mechanikus végrehajtás → objektív kapu (DS22).
     %% NEM önjavító subagent-hurok; kapu-bukásnál ember-vezérelt javítás (doc-sync-questions.md).
     8 <--> Int8d(["Felhasználói interjú<br/>(kapu-bukás / döntési pont → doc-sync-questions.md)"]):::userInput
-    8 -- "docs-generated/ konzisztens (objektív kapu zöld)" --> 9
+    %% A ciklusvég KÉT ÁGA — a `conventions.md` `## Review and merge` szekciója
+    %% dönti el, melyik fut (a PR MEGLÉTE, nem az üzemmód).
+    8 -- "isolated SDD (no PR)" --> 9
+    8 -- "centralized SDD (PR required)" --> 9a
 
     %% Merge (09): nincs hurok és nincs subagent — a review már a 07-ben lefutott.
     %% Ha a 08 óta változott kód, előbb újra-doc-sync (DS23.2), majd KÉZI megerősítésű merge (RD8).
     9 -. "változott kód a 08 óta → újra-doc-sync (DS23.2)" .-> 8
     9 -. "kódváltozás a hurokban → újra 08-doc-sync" .-> 8
-    9 -- "tiszta review + zöld validálás → merge (kézi megerősítés, RD8)" --> End
+    9 -- "green VP2 → merge (manual confirmation, RD8)" --> End
+
+    %% A központosított ág: a PR triggereli a CI/CD-t, a review és a merge gépi
+    %% futtatásban megy. A VP2 a fő branch-re juttatás ELŐTTI kapu (L13-D14).
+    9a --> 9b
+    9b --> 9c
+    9c -. "változott kód → újra 08-doc-sync" .-> 8
+    9c -- "optional" --> 9d
+    9c --> End
+    9d --> End
 ```
 
-### 4.2 Részletes folyamat
+### 4.2 Tesztelési pontok — hol tesztelünk, és mit bizonyít
 
-Az alábbi részletes ábra bemutatja az egyes fázisok közötti pontos átmeneteket, a bemeneti/kimeneti fájlokat, a felhasználói interakciós pontokat (User Input), valamint a hibák esetén fellépő visszacsatolási loopokat.
+A `bs` SDD-ben **három helyen tesztelünk, három különböző okból**. A három pont nem redundancia: mindegyik **mást** bizonyít, és a harmadikat a másik kettő nem tudja kiváltani.
+
+1. **`validate` (07)** — az ágens által készített implementációt validáljuk **a spec ellenében**, a fejlesztő **lokális gépén**. Tipikusan unit és lokálisan futó komponens tesztek.
+2. **post-merge teszt (`VP2`)** — a **fő branch-csel egyesítés után**. Hogy hol fut, az attól függ, milyen SDD-t használunk: lehet a **CI/CD folyamat része** és a **lokális gépen** is. CI/CD esetén unit tesztek, **Sonar**, és **konténerizált, mockolt** komponens tesztek. **A Sonar itt is kell — ugyanúgy, ahogy a `validate`-ben van:** az egyesítés olyan kódot hoz be, amit a `07` Sonar-köre sosem látott, és a statikus hibák ugyanúgy keletkezhetnek belőle, mint a futásidejűek. Ez nulla új gépezet: ugyanaz a `sonar-gate.py`, ugyanazokkal a `conventions.md` küszöbökkel.
+3. **dev-teszt (`VP3`)** — egy **automatikus deploy után**, egy **valódi teszt rendszerben**, e2e tesztek. Csak központosított úton értelmes (`/bs-dev-test`).
+
+**És mindhármat vissza kell csatornázni** — ez az ábra negyedik eleme, nem lábjegyzet: a riport a **ciklus útvonalára** kerül (`test-report/<fázis>/`, commitolva), megy az **értesítés**, és a bukás vagy a fejlesztőhöz megy vissza, vagy — ha be van kapcsolva — a CI **javító hurkába**.
 
 ```mermaid
-flowchart TD
-    %% Styling definitions
-    classDef setup fill:#e0f2fe,stroke:#2563eb,stroke-width:2px,color:#1e293b;
-    classDef design fill:#e0f2fe,stroke:#0d9488,stroke-width:2px,color:#1e293b;
+flowchart LR
     classDef dev fill:#e0f2fe,stroke:#16a34a,stroke-width:2px,color:#1e293b;
-    classDef decision fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1e293b;
-    classDef doc fill:#f3e8ff,stroke:#8b5cf6,stroke-width:2px,color:#1e293b;
-    classDef userInput fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
+    classDef review fill:#f3e8ff,stroke:#8b5cf6,stroke-width:2px,color:#1e293b;
+    classDef fb fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
 
-    subgraph Setup ["<b>⚙️ PROJEKT SETUP (EGYSZER)</b>"]
-        P00["00 — Projekt inicializálás"]:::setup
-        P00_Loop{"Vannak még kérdések?"}:::decision
-        DocConv["conventions.md"]:::doc
-        In00(["User Input: Projekt célok & válaszok"]):::userInput
+    VP1["<b>1. validate (07)</b><br/>local dev machine<br/>unit + local component tests<br/><i>proves: the implementation matches the spec</i>"]:::dev
+    VP2["<b>2. post-merge test</b><br/>local machine OR CI/CD — depends on the SDD mode<br/>unit + <b>Sonar</b> (as in validate) + containerized, mocked component tests<br/><i>proves: it still works merged with master</i>"]:::dev
+    VP3["<b>3. dev-test</b> — optional<br/>real test system, after an automatic deploy<br/>real E2E tests<br/><i>proves: it works in a real integrated environment</i>"]:::review
+    FB(["<b>back-channel</b><br/>report into the cycle folder + branch · notification · fix loop"]):::fb
 
-        P01["01 — Ciklusok kezelése"]:::setup
-        P01_Loop{"Vannak még nyitott kérdések?"}:::decision
-        DocRoadmap["specs/roadmap.md (Státusz: Kész)"]:::doc
-        In01(["User Input: HLD/LLD vagy leírás"]):::userInput
-    end
-
-    subgraph Design ["<b>📐 TERVEZÉSI FÁZIS (CIKLUSONKÉNT)</b>"]
-        P02["02 — Spec írás"]:::design
-        P02_Loop{"Vannak még kérdések? (spec-questions.md)"}:::decision
-        DocSpec["specs/cycle-NN-*/spec.md (Státusz: Tervezésre kész)"]:::doc
-        In02(["User Input: Ciklus választás & spec válaszok"]):::userInput
-
-        P03["03 — Plan írás"]:::design
-        P03_Loop{"Vannak még kérdések? (plan-questions.md)"}:::decision
-        DocPlan["specs/cycle-NN-*/plan.md (Státusz: Task írásra kész)"]:::doc
-        In03(["User Input: Tervezési válaszok"]):::userInput
-
-        P04["04 — Tasks írás"]:::design
-        DocTasks["specs/cycle-NN-*/tasks.md (Státusz: Implementálásra kész)"]:::doc
-
-        P05["05 — Analyze"]:::design
-        P05_Check{"Konzisztens? (analyze-report.md)"}:::decision
-        DocAnalyze["specs/cycle-NN-*/analyze/analyze-report.md (PASS/FAIL)"]:::doc
-    end
-
-    subgraph Development ["<b>💻 IMPLEMENTÁCIÓ & ELLENŐRZÉS (ITERATÍV)</b>"]
-        P06["06 — Implementálás"]:::dev
-        P06_Loop["Kód fejlesztése + tasks.md haladás rögzítése"]:::dev
-        DocTasksReady["specs/cycle-NN-*/tasks.md (Státusz: Validálásra kész)"]:::doc
-        In06(["User Input: Ciklus implementációs indítása"]):::userInput
-
-        P07["07 — Validálás és kódreview"]:::dev
-        P07_Run{"Tesztek & SonarQube futtatása<br/>(test-runner subagent)"}:::decision
-        P07_Review{"Zöld tesztek → kódreview<br/>(reviewer subagent, RV1)"}:::decision
-        DocReport["specs/cycle-NN-*/test-report/<br/>validation-report.md + code-review.md<br/>+ validate/round-NN/ (riportok, sonar)"]:::doc
-        P07_Check{"Sikeres? (PASS)<br/>zöld tesztek + tiszta review"}:::decision
-
-        P08["08 — Doc-sync"]:::dev
-        P08_Plan["doc-sync-planner subagent<br/>→ doc-sync-plan.md (per-fájl terv<br/>+ kész csereszöveg-patch)"]:::doc
-        DocGen["docs-generated/ (system-overview, architecture, CHANGELOG, design-drift, README)"]:::doc
-        P08_Gate{"Objektív konzisztencia-kapu zöld?<br/>(DS22 — ds22-gate-check.py<br/>+ TC8 — tc8-gate-check.py)"}:::decision
-
-        P09["09 — Merge"]:::dev
-        P09_DocCheck{"Változott kód a 08 óta?"}:::decision
-
-        Merge["Merge (lokális squash vagy PR, a conventions.md Merge stratégiája szerint)"]:::setup
-        In08(["User Input: Merge megerősítés"]):::userInput
-    end
-
-    %% Connections
-    Start([Kezdés]) --> P00
-
-    %% User Inputs
-    In00 --> P00
-    In01 --> P01
-    In02 --> P02
-    In03 --> P03
-    In06 --> P06
-    In08 --> Merge
-
-    P00 --> P00_Loop
-    P00_Loop -- "Igen" --> P00
-    P00_Loop -- "Nem (Lezárva)" --> DocConv
-    DocConv --> P01
-
-    P01 --> P01_Loop
-    P01_Loop -- "Igen" --> P01
-    P01_Loop -- "Nem (Kész)" --> DocRoadmap
-
-    DocRoadmap --> P02
-    P02 --> P02_Loop
-    P02_Loop -- "Igen" --> P02
-    P02_Loop -- "Nem" --> DocSpec
-
-    DocSpec --> P03
-    P03 --> P03_Loop
-    P03_Loop -- "Igen" --> P03
-    P03_Loop -- "Nem" --> DocPlan
-
-    DocPlan --> P04
-    P04 --> DocTasks
-
-    DocTasks --> P05
-    P05 --> DocAnalyze
-    DocAnalyze --> P05_Check
-
-    %% Analyze önjavító hurok (05)
-    P05_Check -- "FAIL" --> P05_Fixer["fixer-subagent<br/>(02/03/04 fix-mód, [analyze-loop])"]:::design
-    P05_Fixer -- "fixer nyitott kérdést gyűjt<br/>(*-questions.md)" --> P05_Q(["User Input: FÁZIS/Knn válasz<br/>(orchestrátor kérdezi)"]):::userInput
-    P05_Q --> P05_Fixer
-    P05_Fixer -- "downstream re-deriválás<br/>02→03→04 (reconciliation)" --> P05
-    P05_Check -- "max X=3 elérve PASS nélkül" --> P05_Stop["Hurok feladva → analyze-report FAIL<br/>(marker marad) + humán döntés"]:::doc
-    P05_Check -- "PASS (marker le, 1 commit)" --> P06
-
-    P06 --> P06_Loop
-    P06_Loop --> DocTasksReady
-
-    DocTasksReady --> P07
-    P07 --> P07_Run
-    P07_Run -- "zöld (teljes kör 1-3. lépés)" --> P07_Review
-    P07_Run -. "bukott teszt / Sonar / DoD<br/>(a review nem is fut)" .-> DocReport
-    P07_Review --> DocReport
-    DocReport --> P07_Check
-
-    %% Validate önjavító hurok (07) — tesztek ÉS review egy hurokban
-    P07_Check -- "FAIL: teszt / Sonar / DoD" --> P07_Fixer["implement-fixer subagent<br/>(06 fix-mód, [validate-loop])<br/>## Validációs javítások"]:::dev
-    P07_Check -- "FAIL: Must Fix finding (MF-NN)" --> P07_RFixer["review-fixer subagent<br/>(06 fix-mód, [validate-loop])<br/>## Review javítások"]:::dev
-    P07_Fixer -- "javítás kész → könnyű kör,<br/>majd teljes megerősítő kör" --> P07
-    P07_RFixer -- "javítás kész → könnyű kör,<br/>majd teljes megerősítő kör + re-review" --> P07
-    P07_Fixer -. "eszkalációs jelzés (VD5)" .-> P07_Esc
-    P07_RFixer -. "eszkalációs jelzés (VD5)" .-> P07_Esc
-    P07_Check -- "3-próba / 5 összes / 5 FAIL-futás<br/>megrekedt kód-bug" --> P07_Stop["Hurok megáll → STOP + humán<br/>([validate-loop] marker + javító-szekciók maradnak)"]:::doc
-    P07_Check -- "tervezési hiba (VD5):<br/>csak teszt/DoD/finding-módosítással lenne zöld" --> P07_Esc["Eszkaláció: státusz-visszafordítás<br/>03/02-re → tervezési fázis"]:::doc
-    P07_Esc --> P03
-
-    %% Validation Pass
-    P07_Check -- "PASS (Igen)" --> DocStatusKesz["spec.md, plan.md, tasks.md státusza: Kész"]:::doc
-    DocStatusKesz --> P08
-
-    %% Doc-sync (08): terv → mechanikus végrehajtás → objektív kapu (NEM önjavító subagent-hurok)
-    P08 --> P08_Plan
-    P08_Plan --> DocGen
-    DocGen --> P08_Gate
-    P08_Gate -. "kapu-bukás / döntési pont → doc-sync-questions.md<br/>(ember-vezérelt javítás, DS10)" .-> P08DS_Q(["User Input: doc-sync kérdés / javítás"]):::userInput
-    P08DS_Q --> P08_Plan
-    P08_Gate -- "kapu zöld → docs-generated/ konzisztens" --> P09
-
-    %% Merge (09) — nincs hurok, nincs subagent; a review már a 07-ben lefutott
-    P09 --> P09_DocCheck
-    P09_DocCheck -. "Igen → merge előtt újra-doc-sync (DS23.2)" .-> P08
-    P09_DocCheck -- "Nem → merge" --> Merge["Merge (kézi megerősítés, RD8)"]
-    Merge --> End([Ciklus befejezve])
+    VP1 --> VP2 --> VP3
+    VP1 -. "FAIL" .-> FB
+    VP2 -. "FAIL" .-> FB
+    VP3 -. "FAIL" .-> FB
 ```
+
+> **A ciklus akkor kész, ha az UTOLSÓ engedélyezett verifikáció zöld.** Melyik az utolsó, azt a `conventions.md` `## Review and merge` szekciója mondja meg (`Post-merge tests`, `Dev deployment test`). Addig a roadmap ciklus-sora `⏳ verifikációra vár` jelölést visel, és a generált `cycle-status.md` is ezt mutatja.
+
+> *A korábbi, teljes részletes folyamatábra a doksi végén, a [Függelék — A részletes folyamatábra](#függelék--a-részletes-folyamatábra) szekcióban él tovább.*
 
 ### 4.3 Modellek és effort-szintek automatikus választása
 
@@ -901,9 +799,10 @@ Futtasd a parancsot: `/bs-validate input: @specs/cycle-02-oidc-login`
 Futtasd a parancsot: `/bs-doc-sync input: @specs/cycle-02-oidc-login`
    → docs-generated/ frissítése + objektív kapu → konzisztens dokumentáció
 
-# ⑪  09 — Merge
-Futtasd a parancsot: `/bs-merge input: @specs/cycle-02-oidc-login`
-   → kapuk ellenőrzése (státusz + tiszta review + doc-sync) → merge (kézi megerősítéssel)
+# ⑪  09 — Review and merge  (PR nélküli út; PR esetén: /bs-create-pr → /bs-review → /bs-merge)
+Futtasd a parancsot: `/bs-review-and-merge input: @specs/cycle-02-oidc-login`
+   → kapuk (státusz + tiszta review + doc-sync) → main behozása → VP2 kör (tesztek + Sonar)
+   → merge (kézi megerősítéssel) → roadmap-lezárás + cycle-status.md
 ```
 
 A következő ciklus (`cycle-03-...`) ismét a `02`-vel indul — a `00`/`01` nem ismétlődik.
@@ -1048,7 +947,11 @@ Egy kis feladat végigvitele. Itt **egyetlen indító prompt** van; utána a flo
 | `/bs-implement` | Implementálás | `tasks.md` | kód + `tasks.md` (`Validálásra kész`) + `test-report/implement/check-log.md` (a `[CHECK]` futások append-only naplója), és ha a projekt az `implement`-et riport-fázisnak deklarálta (TR6), a `test-report/implement/` teljes riport-készlete is — a task listát **egy futásban** dolgozza fel (IM1): a task-commit nem fázis-vég |
 | `/bs-validate` | Validálás + kódreview | ciklus mappa | PASS/FAIL + `test-report/` (`validation-report.md`, `code-review.md`, `validate/round-NN/`); PASS → státuszok `Kész` — a tesztek/Sonar/E2E futtatását a `test-runner`, a diff átnézését a `reviewer` subagent végzi, a PASS/FAIL döntést és a DoD-ot az orchestrátor; FAIL esetén orchestrált önjavító hurok (`implement-fixer` / `review-fixer`, három leállási korlát, VD3a szerződés-kapu, VD5 eszkaláció) |
 | `/bs-doc-sync` | Doc-sync | ciklus mappa + `docs-generated/` + `specs/test-conventions.md` | konzisztens `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README mappa-index) + komponens README-k + `specs/test-conventions.md` (promóció / `Utolsó futás` bump / elavult tétel törlése, TC1–TC11) + `doc-sync-plan.md` — terv (`doc-sync-planner`) → mechanikus végrehajtás → objektív kapu (DS22, 3/4 pont a `ds22-gate-check.py` scripttel, LLM nélkül) + TC8 kapu a regiszterre (`tc8-gate-check.py`, teljesen szkriptelt); kapu-bukás → ember-vezérelt javítás (`doc-sync-questions.md`) |
-| `/bs-merge` | Merge | ciklus mappa, `conventions.md` | merged branch / PR + lezárt roadmap — nincs hurok és nincs subagent; a kapuk (státusz, tiszta review, doc-sync) bukása visszairányít a `07`-re vagy a `08`-ra; a merge kézi megerősítéssel (RD8) |
+| `/bs-review-and-merge` | Review and merge (09) | ciklus mappa, `conventions.md` | **PR nélküli út.** `main` behozása a ciklus ágába → `VP2` post-merge kör (`test-report/post-merge/`: tesztek + Sonar + riport-kapu) → merge kézi megerősítéssel (RD8) → ág-törlés **a verifikáció mögött** → lezárt roadmap + generált `cycle-status.md`. Nincs hurok és nincs subagent; a kapuk bukása visszairányít a `07`-re vagy a `08`-ra. `PR submission: yes` esetén **hibát ad** és a három lépéses láncra irányít |
+| `/bs-create-pr` | Create PR (09a) | ciklus mappa, `conventions.md` | felküldött ciklus-ág + megnyitott PR (a description a `code-review.md`), frissített `cycle-status.md`; a roadmap még **nem** zárul le (`⏳ verifikációra vár`). A PR-t **nem** merge-eli |
+| `/bs-review` | Review a PR-en (09b) | ciklus mappa + nyitott PR | `test-report/ci-code-review.md` — a `reviewer` subagent a **PR diffjén**, központosított SDD-ben gépi futtatásban; a `07` lokális `code-review.md`-jét **soha nem írja felül**. Nyitott `Must Fix` → értesítés, a PR nyitva marad; `auto-fix-loop` esetén a CI hurka indul a `07` korlátaival |
+| `/bs-merge` | Merge (09c) | ciklus mappa, nyitott + **elfogadott** PR | `test-report/post-merge/` (`VP2`) → csak zöld után a PR beolvasztása; belépő kapu a **PR-állapot** (ez veszi át az RD8 szerepét) és **mindkét** review-jelentés (`validate-gate-check.py --review-only --require-ci-review`) |
+| `/bs-dev-test` | Dev-teszt (09d, **opcionális**) | beolvasztott ciklus, `Dev deployment test: yes` | `test-report/dev-test/` (`VP3`) — deploy a `Dev deployment command`-dal egy integrált környezetbe, valódi e2e kör, test manager feltöltés (gyárilag ez a fázis tölt fel); zöld kör = a ciklus lezárása |
 | `/bs-quick-flow` | **Egyszerűsített flow** (külön út) | feladat leírása, vagy `brainstorm: NN` | `spec-plan.md` (`Task írásra kész`) + `tasks.md` (`Implementálásra kész` → `Kész`) + implementáció — háromfázisú, kis feladatokhoz; státusz-mezők + RP1 útvonal-kapu; opcionális `researcher`/`analyzer`/`reviewer`; túlnövéskor átirányít a `/bs-add-cycles`-ra |
 | `/bs-brainstorm` | **Ötletelés** (segédparancs, a flow előtt) | téma szabad szöveggel, vagy `folytassuk a NN-est` | `.bs-brainstorm/brainstorm-NN-<slug>.md` — perzisztens munkafájl (tények forrással, alternatívák trade-offokkal, döntések, nyitott kérdések, javasolt ciklus-vágás). Nem fázis, nem változtat státuszt; kódot és a mappán kívül semmit nem ír. Átadás: `/bs-add-cycles brainstorm: NN` (BS18) vagy `/bs-quick-flow`. |
 | `/bs-export-doc` | **PDF export** (segédparancs) | markdown fájl(ok), opcionális — üresen a `docs-generated/architecture.md` és `system-overview.md` | `export/<név>-v<N>.pdf` — fájlonként független verziószám (utolsó + 1, v1-től); pandoc + `mermaid-filter` + xelatex, a ciklus a címlapon (`Lefedve: cycle-NN-ig · vN`). Nem fázis: nincs előfeltétele, nem változtat státuszt. |
@@ -1114,7 +1017,7 @@ tools: ["Read", "Bash", "Grep"]
 
 A frontmatter egyébként **eszközfüggetlen** (saját séma, nem egy konkrét ágens-eszközhöz kötött); a telepítő fordítja a cél-platform natív formátumára (Claude/Cursor `.md`, Codex `.toml`, Copilot `.agent.md`, Antigravity `agent.json`).
 
-**A `05-analyze` `subagents:` mezője** a két read-only diagnoszta-definíció (`analyzer` — három hatókörrel, párhuzamosan indítva —, `analyzer-exec`) mellett a három fixer-wrappert is felsorolja: `agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`. **A `07-validate` `subagents:` mezője** az `agents/test-runner.md`-t (tesztek/Sonar/E2E mechanikus futtatása, `default` tier), az `agents/reviewer.md`-t (read-only kód-diagnózis a kör 2. lépéseként) és a két fixer-wrappert — `agents/implement-fixer.md` (teszt/Sonar/DoD) és `agents/review-fixer.md` (Must Fix findingok) — tartalmazza. **A `08-doc-sync` `subagents:` mezője** az `agents/doc-sync-planner.md` read-only tervkészítő diagnosztát tartalmazza (a per-fájl `doc-sync-plan.md` szerzője; a doksik tényleges írása a fő ágensé — nincs fixer-wrapper, mert ez nem önjavító hurok). **A `09-merge` fázisnak nincs `subagents:` mezője** — a review a 07-be került, a merge-fázis pedig csak kapukat ellenőriz és beolvaszt. **A `00-init-project`, `01-add-cycles`, `02-write-spec` és `06-implement` `subagents:` mezője** az `agents/researcher.md`-t tartalmazza ad-hoc kódbázis-kutatáshoz (Mód B) — ugyanaz az ágens, amit a `03a-write-code-plan` a rendszerezett forrásfájl-azonosításhoz (Mód A) használ. Fontos a skill/agent szétválasztás megőrzése: **a fix-mód viselkedése egyetlen helyen él**, és a wrapper-agent csak belépő — nincs logika-duplikáció. Ennek **két megvalósítása** van:
+**A `05-analyze` `subagents:` mezője** a két read-only diagnoszta-definíció (`analyzer` — három hatókörrel, párhuzamosan indítva —, `analyzer-exec`) mellett a három fixer-wrappert is felsorolja: `agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`. **A `07-validate` `subagents:` mezője** az `agents/test-runner.md`-t (tesztek/Sonar/E2E mechanikus futtatása, `default` tier), az `agents/reviewer.md`-t (read-only kód-diagnózis a kör 2. lépéseként) és a két fixer-wrappert — `agents/implement-fixer.md` (teszt/Sonar/DoD) és `agents/review-fixer.md` (Must Fix findingok) — tartalmazza. **A `08-doc-sync` `subagents:` mezője** az `agents/doc-sync-planner.md` read-only tervkészítő diagnosztát tartalmazza (a per-fájl `doc-sync-plan.md` szerzője; a doksik tényleges írása a fő ágensé — nincs fixer-wrapper, mert ez nem önjavító hurok). **A ciklusvég skilljei közül csak a `09b-review`-nak van `subagents:` mezője** (`agents/reviewer.md` — a PR diffjén futó, központosított úton gépi review, `test-report/ci-code-review.md`-be). A `09-review-and-merge` / `09a-create-pr` / `09c-merge` / `09d-dev-test` **subagent nélkül** fut: kapukat ellenőriznek, teszt-kört futtatnak és beolvasztanak — a lokális review továbbra is a `07` dolga (RV1). **A `00-init-project`, `01-add-cycles`, `02-write-spec` és `06-implement` `subagents:` mezője** az `agents/researcher.md`-t tartalmazza ad-hoc kódbázis-kutatáshoz (Mód B) — ugyanaz az ágens, amit a `03a-write-code-plan` a rendszerezett forrásfájl-azonosításhoz (Mód A) használ. Fontos a skill/agent szétválasztás megőrzése: **a fix-mód viselkedése egyetlen helyen él**, és a wrapper-agent csak belépő — nincs logika-duplikáció. Ennek **két megvalósítása** van:
 - **02/03/04 (analyze-hurok, D13):** a fix-mód és a fázis minőségi kapuja a `prompts/shared-hu/{fix-mode,quality-check}-*.md` fájlokban él, és **build-time beemelődik a skillbe ÉS a fixer-wrapperbe is**. A fixer így **nem olvas fázis-skillt** — a promptja önhordó (a `plan-fixer` ~80 sor a 584 soros `03a-write-code-plan.md` + 683 soros `03b-write-test-plan.md` beolvasása helyett). **A `03` minőségi kapuja a hasítás óta KÉT shared fájlban él** (`quality-check-plan-code.md` + `quality-check-plan-test.md`): a `03a` az elsőt, a `03b` a másodikat emeli be, a `plan-fixer` **mindkettőt** — mert a fixer a `plan.md` mindkét felét javíthatja.
 - **06 (a 07 önjavító hurka):** az `implement-fixer` és a `review-fixer` továbbra is a **`06-implement.md` „Fix-mód" szekciójának beolvasásával** delegál (`## Validációs javítások`, illetve `## Review javítások` bemeneti szekcióval, azonos mechanikával). Itt a kiemelés még nem történt meg — a 06 skill jóval rövidebb (294 sor), de a 07 hurka körönként hívja a fixert, tehát ugyanaz a megtakarítás elérhető, ha a szekció ugyanígy `shared/`-be kerül.
 
@@ -1134,7 +1037,9 @@ A frontmatter egyébként **eszközfüggetlen** (saját séma, nem egy konkrét 
 - **Tesztelési konvenciók:** tesztszintek és a hozzájuk **ajánlott default** keretrendszerek (a fejlesztő a 00-ban megerősíti vagy felülírja), futtatási parancsok.
 - **Sonar minőségellenőrzés (opcionális szekció):** a scanner-parancs mellett a **host URL** és a **token env-változójának neve** is ide kerül (a token maga **soha**) — ebből találja meg a `sonar-gate.py` a projektet. Alternatíva: `SONAR_HOST_URL` / `SONAR_PROJECT_KEY` / `SONAR_TOKEN` környezeti változók, vagy a repo `sonar-project.properties`-e.
 - **Teszt-riportolás (TR3 — kötelező szekció):** kategóriánként az eszköz, a **riport-generáló parancs** és az az **artefaktum-név**, aminek minden ciklus `test-report/` mappájába — azon belül a **validálási kör almappájába** (`validate/round-NN/`) — be kell kerülnie (Allure/Playwright HTML, pytest-html, JUnit XML, coverage). A tábla utolsó oszlopa **a kör-mappához képest relatív**. A 00 fázis a felhasználóval együtt tölti ki (kötelező kérdés, placeholder nem maradhat), a `07-validate` pedig **determinisztikus kapuval** (`report-gate-check.py`) kéri számon: hiányzó artefaktum → a validálás nem zárható PASS-ra. Ha a projekt tudatosan nem generál riportot, azt a `**Riport-generálás kötelező:** nem` + indoklás rögzíti. A `**Riport-fázisok:**` mező (TR6) mondja meg, **mely fázisok** kötelesek a készletet előállítani: `validate` (alapérték), `implement`, vagy mindkettő — az `implement` esetén a `06-implement` a státuszváltás előtt generál és ugyanezzel a kapuval zár. **Az alkalmazás-oldali bizonyíték is táblasor, nem próza:** a REST kérés/válasz audit-napló, a korrelációs nyom és az alkalmazás-log-kivonat ugyanúgy a táblába kerül, mint a teszt-eszköz riportja — amit a tábla nem kér, azt a kapu nem is keresi.
+- **Test manager integráció (`TM1`–`TM10`, opcionális, alapból KIKAPCSOLVA):** ugyanennek a szekciónak hat mezője (`Test manager` · `alak` · `token env var` · `fázisok` · `kötelező` · `parancs`) köt be egy külső test managert (TestDino, ReportPortal, Qase — vagy bármi mást a `command` ággal). **A feltöltés soha nem bizonyíték** (`TM7`): a ciklus bizonyítéka változatlanul a **commitolt** `test-report/<fázis>/` készlet, a futás-URL csak pointer a riportban, az értesítésben és a `cycle-status.md`-ben. Két integrációs alak van, mert a piac kétféle: a `reporter` alak a teszt-futtató **reporter-láncában** streamel (a keret nem tölt fel, csak a futás-URL-t nyeri ki), az `import` alak a kész `junit.xml`-t **utólag** tolja fel. **Gyárilag csak a `dev-test` fázis tölt fel** (`TM4`) — a `07` nem válhat token- és hálózatfüggővé, különben az izolált SDD üzemmód sérül, és egy offline fejlesztő nem tud ciklust zárni. A titok **kizárólag env varban** él, a `conventions.md`-be csak a változó NEVE kerül (`TM5`). A feltöltés bukása alapból **nem** buktatja a fázist (`Test manager kötelező: nem`), de sosem marad jelöletlen: `uploaded <url>` / `FAILED <ok>` / `skipped (<fázis> nincs a listán)` sor kerül a kör riportjába és a `results.json`-ba. **A feltöltés akkor és csak akkor számít megtörténtnek, ha a futás-URL megjelent** — mérve: rossz tokennel a futtató `exit 0`-val, zölden végez, miközben semmi nem töltődött fel.
 - **Merge stratégia:** szolgáltató (GitHub / Bitbucket / GitLab / Lokális), PR target branch, merge típus, access teszt parancs. **Egyetlen igazságforrás a visszaintegrálásra** (ciklus-branch a 09-ben, init-branch a 00-ban); ha nincs döntés/remote, a default a közvetlen merge `main`-be (BQ7).
+- **Review and merge (RM8 — a ciklusvég kapcsolótáblája, ANGOL literálokkal):** `PR submission` (egy skill vagy három) · `SDD mode` (`isolated` / `centralized`) · `Post-merge tests` + `Skip post-merge tests if master unchanged` (a `VP2` kör és a kihagyhatósága) · `Dev deployment test` + `Dev deployment command` (a `VP3` kör) · `Failure handling` (`notify` / `auto-fix-loop`) · `Notification channel` + `secret (env var)` + `command` · `CI agent` + `CI agent command`. **A mezőnevek és az értékek nyelvfüggetlenek**, mert gép olvassa őket — a magyarázó próza a projekt nyelvén marad. A `00-init-project` a beírás pillanatában **visszautasítja** az ellentmondó kombinációkat (`centralized` + `PR submission: no`; `Dev deployment test: yes` + `isolated`), és **ki is próbálja** a CI-ágenst (`ci-run-skill.sh --selftest`) és az értesítést — ugyanúgy, ahogy a merge-szolgáltató access-ét. No-VCS projektben az egész szekció `n/a`, és a ciklusvég egyetlen skillje sem fut.
 - **Sonar minőségellenőrzés:** szerver-indítási és scanner parancsok, Quality Gate elvárások.
 - **Git és branching konvenciók:** verziókezelő-flag (van git / „NINCS VCS"), fő branch, a **ciklus = branch** modell, branch-elnevezési stratégia, commit granularitás (lásd lent).
 - **Kockázatok és korlátok.**
@@ -1452,7 +1357,9 @@ A spec (02), plan (03) és tasks (04) fázisban az ágens nyitott kérdéseit k�
 
 ## 13. Egységes `Kész` státusz-lifecycle
 
-Minden dokumentum a saját fázis-specifikus záró-státuszát kapja a keletkezésekor (`spec.md` → `Tervezésre kész`, `plan.md` → `Teszt-tervezésre kész`, majd `Task írásra kész`, `tasks.md` → `Implementálásra kész`), majd **`Kész`-re lép, amint a validate (07) PASS lezárja a ciklust**. Így a 08-doc-sync és a 09-merge fázis a `spec.md`/`plan.md`/`tasks.md`-t már egységesen `Kész` státuszban várja.
+Minden dokumentum a saját fázis-specifikus záró-státuszát kapja a keletkezésekor (`spec.md` → `Tervezésre kész`, `plan.md` → `Teszt-tervezésre kész`, majd `Task írásra kész`, `tasks.md` → `Implementálásra kész`), majd **`Kész`-re lép, amint a validate (07) PASS lezárja a ciklust**. Így a 08-doc-sync és a ciklusvég merge-ága a `spec.md`/`plan.md`/`tasks.md`-t már egységesen `Kész` státuszban várja.
+
+> **A dokumentum-státusz és a CIKLUS állapota két különböző dolog.** A három dokumentum `Kész` marad a merge után is — azok tényleg elkészültek. Hogy a **ciklus** kész-e, azt az utolsó engedélyezett verifikációs pont dönti el (`VP1` = a `07`, `VP2` = post-merge kör, `VP3` = dev-teszt): amíg az hátravan, a roadmap ciklus-sora `⏳ verifikációra vár` jelölést visel, és a generált `cycle-status.md` mutatja, mi van hátra. Így egyetlen `Kész`-t váró kapu sem bővül tételesen.
 
 ---
 
@@ -1630,3 +1537,166 @@ Ha a **Codex CLI**-t használod, a telepítő két különböző helyre dolgozik
 2. **Skillek → `.agents/skills/bs-<név>/SKILL.md`.** A Codex a **projekt-szintű** skilleket a `.agents/skills/` mappából olvassa (a `.codex/skills` csak legacy, user-szintű hely — projekt-szinten nem található meg). A skillek slash-parancsként érhetők el (pl. `/bs-analyze`).
 
 > ⚠️ **Codex ↔ Antigravity kölcsönös kizárás.** A `.agents/skills/` mappát **a Codex ÉS az Antigravity is használja**, ezért egy projektbe a kettő közül gyakorlatilag csak az egyik telepíthető. A telepítő ezt figyeli: a platform kiválasztásakor előre figyelmeztet, és ha a másik platform már jelen van (`.codex/agents/` ↔ `.agents/agents/`), a telepítés előtt rákérdez, folytatod-e.
+
+---
+
+## Függelék — A részletes folyamatábra
+
+Az alábbi részletes ábra bemutatja az egyes fázisok közötti pontos átmeneteket, a bemeneti/kimeneti fájlokat, a felhasználói interakciós pontokat (User Input), valamint a hibák esetén fellépő visszacsatolási loopokat.
+
+```mermaid
+flowchart TD
+    %% Styling definitions
+    classDef setup fill:#e0f2fe,stroke:#2563eb,stroke-width:2px,color:#1e293b;
+    classDef design fill:#e0f2fe,stroke:#0d9488,stroke-width:2px,color:#1e293b;
+    classDef dev fill:#e0f2fe,stroke:#16a34a,stroke-width:2px,color:#1e293b;
+    classDef decision fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1e293b;
+    classDef doc fill:#f3e8ff,stroke:#8b5cf6,stroke-width:2px,color:#1e293b;
+    classDef userInput fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
+
+    subgraph Setup ["<b>⚙️ PROJEKT SETUP (EGYSZER)</b>"]
+        P00["00 — Projekt inicializálás"]:::setup
+        P00_Loop{"Vannak még kérdések?"}:::decision
+        DocConv["conventions.md"]:::doc
+        In00(["User Input: Projekt célok & válaszok"]):::userInput
+
+        P01["01 — Ciklusok kezelése"]:::setup
+        P01_Loop{"Vannak még nyitott kérdések?"}:::decision
+        DocRoadmap["specs/roadmap.md (Státusz: Kész)"]:::doc
+        In01(["User Input: HLD/LLD vagy leírás"]):::userInput
+    end
+
+    subgraph Design ["<b>📐 TERVEZÉSI FÁZIS (CIKLUSONKÉNT)</b>"]
+        P02["02 — Spec írás"]:::design
+        P02_Loop{"Vannak még kérdések? (spec-questions.md)"}:::decision
+        DocSpec["specs/cycle-NN-*/spec.md (Státusz: Tervezésre kész)"]:::doc
+        In02(["User Input: Ciklus választás & spec válaszok"]):::userInput
+
+        P03a["03a — Kód-terv írás"]:::design
+        P03b["03b — Teszt-terv írás"]:::design
+        P03_Loop{"Vannak még kérdések? (plan-questions.md)"}:::decision
+        DocPlan["specs/cycle-NN-*/plan.md (Státusz: Task írásra kész)"]:::doc
+        In03(["User Input: Tervezési válaszok"]):::userInput
+
+        P04["04 — Tasks írás"]:::design
+        DocTasks["specs/cycle-NN-*/tasks.md (Státusz: Implementálásra kész)"]:::doc
+
+        P05["05 — Analyze"]:::design
+        P05_Check{"Konzisztens? (analyze-report.md)"}:::decision
+        DocAnalyze["specs/cycle-NN-*/analyze/analyze-report.md (PASS/FAIL)"]:::doc
+    end
+
+    subgraph Development ["<b>💻 IMPLEMENTÁCIÓ & ELLENŐRZÉS (ITERATÍV)</b>"]
+        P06["06 — Implementálás"]:::dev
+        P06_Loop["Kód fejlesztése + tasks.md haladás rögzítése"]:::dev
+        DocTasksReady["specs/cycle-NN-*/tasks.md (Státusz: Validálásra kész)"]:::doc
+        In06(["User Input: Ciklus implementációs indítása"]):::userInput
+
+        P07["07 — Validálás és kódreview"]:::dev
+        P07_Run{"Tesztek & SonarQube futtatása<br/>(test-runner subagent)"}:::decision
+        P07_Review{"Zöld tesztek → kódreview<br/>(reviewer subagent, RV1)"}:::decision
+        DocReport["specs/cycle-NN-*/test-report/<br/>validation-report.md + code-review.md<br/>+ validate/round-NN/ (riportok, sonar)"]:::doc
+        P07_Check{"Sikeres? (PASS)<br/>zöld tesztek + tiszta review"}:::decision
+
+        P08["08 — Doc-sync"]:::dev
+        P08_Plan["doc-sync-planner subagent<br/>→ doc-sync-plan.md (per-fájl terv<br/>+ kész csereszöveg-patch)"]:::doc
+        DocGen["docs-generated/ (system-overview, architecture, CHANGELOG, design-drift, README)"]:::doc
+        P08_Gate{"Objektív konzisztencia-kapu zöld?<br/>(DS22 — ds22-gate-check.py<br/>+ TC8 — tc8-gate-check.py)"}:::decision
+
+        P09["09 — Merge"]:::dev
+        P09_DocCheck{"Változott kód a 08 óta?"}:::decision
+
+        Merge["Merge (lokális squash vagy PR, a conventions.md Merge stratégiája szerint)"]:::setup
+        In08(["User Input: Merge megerősítés"]):::userInput
+    end
+
+    %% Connections
+    Start([Kezdés]) --> P00
+
+    %% User Inputs
+    In00 --> P00
+    In01 --> P01
+    In02 --> P02
+    In03 --> P03a
+    In03 --> P03b
+    In06 --> P06
+    In08 --> Merge
+
+    P00 --> P00_Loop
+    P00_Loop -- "Igen" --> P00
+    P00_Loop -- "Nem (Lezárva)" --> DocConv
+    DocConv --> P01
+
+    P01 --> P01_Loop
+    P01_Loop -- "Igen" --> P01
+    P01_Loop -- "Nem (Kész)" --> DocRoadmap
+
+    DocRoadmap --> P02
+    P02 --> P02_Loop
+    P02_Loop -- "Igen" --> P02
+    P02_Loop -- "Nem" --> DocSpec
+
+    DocSpec --> P03a
+    P03a -- "kód-fél kész (Teszt-tervezésre kész)" --> P03b
+    P03b --> P03_Loop
+    P03_Loop -- "Igen" --> P03b
+    P03_Loop -- "Nem" --> DocPlan
+
+    DocPlan --> P04
+    P04 --> DocTasks
+
+    DocTasks --> P05
+    P05 --> DocAnalyze
+    DocAnalyze --> P05_Check
+
+    %% Analyze önjavító hurok (05)
+    P05_Check -- "FAIL" --> P05_Fixer["fixer-subagent<br/>(02/03/04 fix-mód, [analyze-loop])"]:::design
+    P05_Fixer -- "fixer nyitott kérdést gyűjt<br/>(*-questions.md)" --> P05_Q(["User Input: FÁZIS/Knn válasz<br/>(orchestrátor kérdezi)"]):::userInput
+    P05_Q --> P05_Fixer
+    P05_Fixer -- "downstream re-deriválás<br/>02→03→04 (reconciliation)" --> P05
+    P05_Check -- "max X=3 elérve PASS nélkül" --> P05_Stop["Hurok feladva → analyze-report FAIL<br/>(marker marad) + humán döntés"]:::doc
+    P05_Check -- "PASS (marker le, 1 commit)" --> P06
+
+    P06 --> P06_Loop
+    P06_Loop --> DocTasksReady
+
+    DocTasksReady --> P07
+    P07 --> P07_Run
+    P07_Run -- "zöld (teljes kör 1-3. lépés)" --> P07_Review
+    P07_Run -. "bukott teszt / Sonar / DoD<br/>(a review nem is fut)" .-> DocReport
+    P07_Review --> DocReport
+    DocReport --> P07_Check
+
+    %% Validate önjavító hurok (07) — tesztek ÉS review egy hurokban
+    P07_Check -- "FAIL: teszt / Sonar / DoD" --> P07_Fixer["implement-fixer subagent<br/>(06 fix-mód, [validate-loop])<br/>## Validációs javítások"]:::dev
+    P07_Check -- "FAIL: Must Fix finding (MF-NN)" --> P07_RFixer["review-fixer subagent<br/>(06 fix-mód, [validate-loop])<br/>## Review javítások"]:::dev
+    P07_Fixer -- "javítás kész → könnyű kör,<br/>majd teljes megerősítő kör" --> P07
+    P07_RFixer -- "javítás kész → könnyű kör,<br/>majd teljes megerősítő kör + re-review" --> P07
+    P07_Fixer -. "eszkalációs jelzés (VD5)" .-> P07_Esc
+    P07_RFixer -. "eszkalációs jelzés (VD5)" .-> P07_Esc
+    P07_Check -- "3-próba / 5 összes / 5 FAIL-futás<br/>megrekedt kód-bug" --> P07_Stop["Hurok megáll → STOP + humán<br/>([validate-loop] marker + javító-szekciók maradnak)"]:::doc
+    P07_Check -- "tervezési hiba (VD5):<br/>csak teszt/DoD/finding-módosítással lenne zöld" --> P07_Esc["Eszkaláció: státusz-visszafordítás<br/>03/02-re → tervezési fázis"]:::doc
+    P07_Esc --> P03a
+
+    %% Validation Pass
+    P07_Check -- "PASS (Igen)" --> DocStatusKesz["spec.md, plan.md, tasks.md státusza: Kész"]:::doc
+    DocStatusKesz --> P08
+
+    %% Doc-sync (08): terv → mechanikus végrehajtás → objektív kapu (NEM önjavító subagent-hurok)
+    P08 --> P08_Plan
+    P08_Plan --> DocGen
+    DocGen --> P08_Gate
+    P08_Gate -. "kapu-bukás / döntési pont → doc-sync-questions.md<br/>(ember-vezérelt javítás, DS10)" .-> P08DS_Q(["User Input: doc-sync kérdés / javítás"]):::userInput
+    P08DS_Q --> P08_Plan
+    P08_Gate -- "kapu zöld → docs-generated/ konzisztens" --> P09
+
+    %% Merge (09) — nincs hurok, nincs subagent; a review már a 07-ben lefutott
+    P09 --> P09_DocCheck
+    P09_DocCheck -. "Igen → merge előtt újra-doc-sync (DS23.2)" .-> P08
+    P09_DocCheck -- "Nem → a conventions.md `## Review and merge` szerint" --> Merge["09 — Review and merge (PR nélkül)<br/>main behozása → VP2 (tesztek + Sonar) → merge (RD8)"]
+    P09_DocCheck -- "PR submission: yes" --> MergePR["09a create-pr → 09b review → 09c merge<br/>a VP2 a push ELŐTTI kapu"]
+    MergePR -. "Dev deployment test: yes" .-> DevTest["09d — dev-test (VP3)<br/>deploy + valódi e2e az integrált környezetben"]
+    Merge --> End([Ciklus befejezve])
+    MergePR --> End
+    DevTest --> End
+```

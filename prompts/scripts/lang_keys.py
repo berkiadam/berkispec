@@ -97,3 +97,13 @@ def fld(key):
 def st(key):
     """Státusz-érték vagy egyéb rögzített szókészlet-elem."""
     return _get("status", key)
+
+
+def ui(key):
+    """MEGJELENÍTÉSI címke (nem artefaktum-tartalom): a `bs-cycle-status`
+    kiírásai és a generált `cycle-status.md` szövegei.
+
+    Miért külön csoport: ezek nem szekció-, mező- vagy státusz-értékek —
+    kapu nem joinol rájuk —, de az `L13-D15` óta COMMITOLT fájlba kerülnek,
+    tehát egy angol projekt repójába nem mehet magyar címke."""
+    return _get("ui", key)

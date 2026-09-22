@@ -65,7 +65,7 @@ Spec-driven development. Development is split into cycles. The workflow consists
 - `06` — implement (code + updating `tasks.md`)
 - `07` — validate (running the tests and checking the DoD)
 - `08` — doc-sync (updating `docs-generated/` and the consistency gate)
-- `09` — review & merge (review + merge according to the Merge strategy of conventions.md)
+- `09` — review & merge (according to the `## Review and merge` section: `09` in a single step — or `09a` create-pr → `09b` review → `09c` merge when a PR is submitted; optionally `09d` dev-test)
 
 The folder of every cycle: `specs/cycle-NN-<cycle-name>/`
 
@@ -111,6 +111,48 @@ _Access validation per provider (phase 00 runs it, a successful exit/HTTP 200 is
 - _GitLab: `glab auth status` + `glab repo view <repo>`_
 - _Local: there is no validation_
 
+## Review and merge
+
+_**This section drives the last phase of the cycle (RM8):** is there a PR, where the review and the merge run, is there a post-merge test round (`VP2`), is there a dev-deployment e2e round (`VP3`), what happens on a failure, and what the CI calls. **The section name, the field names and the values are English literals** — a machine reads them, so they are language-independent (the same rule as for the `[local]`/`[remote]` labels and the test category identifiers); the explanatory prose stays in the project language._
+
+- **PR submission:** yes | no
+- **SDD mode:** isolated | centralized
+- **Post-merge tests:** yes | no
+- **Skip post-merge tests if master unchanged:** yes | no
+- **Dev deployment test (bs-dev-test):** yes | no | n/a
+- **Dev deployment command:** _(only if `Dev deployment test` is `yes` — the verbatim command that performs the deployment)_
+- **Failure handling:** notify | auto-fix-loop
+- **Notification channel:** slack | teams | command | none
+- **Notification secret (env var):** BS_NOTIFY_WEBHOOK
+- **Notification command:** _(only if the channel is `command`)_
+- **CI agent:** claude-code | cursor | copilot | antigravity | command
+- **CI agent command:** _(only if `CI agent` is `command`)_
+
+_**Which skill runs — `PR submission` decides, not `SDD mode`:**_
+- _`no` → a **single** skill: `/bs-review-and-merge` (09)._
+- _`yes` → **three** skills: `/bs-create-pr` (09a) → `/bs-review` (09b) → `/bs-merge` (09c)._
+- _`Dev deployment test: yes` → one more phase after the merge: `/bs-dev-test` (09d)._
+
+_**Post-merge tests (`VP2`).** The round runs on the **cycle branch**: first we bring the main branch into the cycle branch, then the test round builds and runs on the code merged with the fresh `main`, and **only after a green result** comes the merge (isolated path) or the push (centralized path). **Which** tests run in it is stated by the `Phase` column of the machine run table of `plan.md` (the `post-merge` value) — in a quick-flow cycle by the `## Merge tests` section of `spec-plan.md`. The round also runs the **static layer** (Sonar, with the same thresholds as `07`), because the merge brings in code the Sonar round of `07` never saw. The evidence goes into the `test-report/post-merge/` folder of the cycle — on success and on failure alike._
+
+_**Skip post-merge tests if master unchanged.** If the main branch has not moved ahead since the cycle branched off, the `VP2` round would measure exactly what `07` has just measured. With `yes` the round may be skipped in that case (the fact and the reason of the skip go into the report); with `no` it always runs._
+
+_**Dev deployment test (`VP3`).** It only makes sense with `SDD mode: centralized`: after a successful merge an automation deploys the product into a fully integrated test environment (`Dev deployment command`), and real e2e tests run against it. Test selection is the `dev-test` value of the `Phase` column; the detailed environment recipe (compose, mocks, test data) belongs into `specs/test-conventions.md` (TC1/c). The evidence goes into the `test-report/dev-test/` folder of the cycle._
+
+_**Failure handling.** `notify` (the default): the report goes onto the path of the cycle, `notify.py` notifies the developer, and a **human** starts the fix. `auto-fix-loop`: a self-healing loop starts on the CI, with the unchanged stopping limits of the loop of `07` (per item 3 consecutive / 5 total failures, 5 consecutive FAIL runs, then escalation to a human)._
+
+_**Notification.** The secret lives **exclusively in an environment variable**, only the NAME of the variable goes into the section (the same rule as in the `Authentication: token (env var name)` field of `## Merge strategy`) — a webhook URL passed as a command-line argument would leak into the transcript, into `check-log.md` and into the CI log as well. `none` is a **legitimate, explicit answer** (a one-person PoC), but not one that follows from silence. Email gets no separate backend: the `command` value covers it (`msmtp`, `sendmail`, a company script), just as it covers Jira or PagerDuty._
+
+_**CI agent.** On the centralized path the CI calls the `ci-run-skill.sh <skill> <cycle-path>` adapter, which starts the agent named here in non-interactive mode. **The agent is clarified in advance and also tried out** (`ci-run-skill.sh --selftest`), exactly like the access of the merge provider: a non-interactive run that turns out not to work first on a live PR fails in the worst possible place._
+
+_**Validity rules** (00 checks them at write time, because a configuration error is cheaper to catch there than at the end of every cycle):_
+- _`SDD mode: centralized` + `PR submission: no` → **rejected** (the centralized path is PR-triggered by definition);_
+- _`Dev deployment test: yes` + `SDD mode: isolated` → **rejected** (`VP3` only makes sense on the centralized path);_
+- _with `Dev deployment test: yes` the `Dev deployment command` is **mandatory**;_
+- _with `Notification channel` ≠ `none` the `Notification secret (env var)` is **mandatory**;_
+- _with `Notification channel: command` the `Notification command`, with `CI agent: command` the `CI agent command` is **mandatory**;_
+- _**In a no-VCS project the whole section is `n/a`**, and the cycle closes after `08-doc-sync` — none of `bs-review-and-merge` / `bs-create-pr` / `bs-review` / `bs-merge` / `bs-dev-test` runs._
+
 ## Test structure
 
 ```
@@ -152,8 +194,14 @@ _**Where they go (TR5):** the reports do not go directly into the root of `test-
 **Report generation required:** yes
 **Artifact path base:** round-folder
 **Report phases:** validate
+**Test manager:** none
+**Test manager shape:** —
+**Test manager token env var:** —
+**Test manager phases:** dev-test
+**Test manager required:** no
+**Test manager command:** —
 
-_**Report phases (TR6).** The field lists WHICH phases are required to produce the artifact set above: `validate` (the full rounds of 07 — this is the default), `implement` (the closing state of 06), or both (`implement, validate`). If `implement` is also listed, 06-implement generates the set into the `test-report/implement/` phase folder before the status change, and the same `report-gate-check.py` closes it. If not, 06 only writes `check-log.md`, and the evidence comes from the first FULL round of 07. The behavior of an old project without the field is unchanged (`validate`). **When is `implement` worth it?** If the implementation run has evidence value of its own (browser screenshots, REST audit logs, long E2E runs) that the round of 07 no longer reproduces in the same state._
+_**Report phases (TR6).** The field lists WHICH phases are required to produce the artifact set above: `validate` (the full rounds of 07 — this is the default), `implement` (the closing state of 06), `post-merge` (the `VP2` round after the merge) and `dev-test` (the `VP3` round of `/bs-dev-test`) — as a comma-separated list (`implement, validate, post-merge`). If `implement` is also listed, 06-implement generates the set into the `test-report/implement/` phase folder before the status change, and the same `report-gate-check.py` closes it. If not, 06 only writes `check-log.md`, and the evidence comes from the first FULL round of 07. **The `post-merge` and `dev-test` phases are switched on by the `## Review and merge` section** (`Post-merge tests`, `Dev deployment test`); if they are on there, they have to be listed here too, otherwise `report-gate-check.py` does not look for the artifacts of the round. The behavior of an old project without the field is unchanged (`validate`). **When is `implement` worth it?** If the implementation run has evidence value of its own (browser screenshots, REST audit logs, long E2E runs) that the round of 07 no longer reproduces in the same state._
 
 _**The marker is mandatory (TR5/b).** The meaning of the last column changed on 2026-08-07 (`test-report/` root → **round folder**), but its format did not — an old table would therefore be silently misinterpreted. In the absence of the marker, `report-gate-check.py` **does not guess**: `exit 2` + the line to be added. Accepted values: `round-folder` (today's scheme) or `test-report` (the old, flat scheme — in which case the gate resolves the paths to the root of `test-report/`). Migration of an existing project: write in the marker with the real scheme, and if the cycle is switching to today's scheme now, rewriting `conventions.md` is **part of the cycle** (see the "The gate configuration moves together" rule of 03)._
 
@@ -173,6 +221,18 @@ _Rules for filling it in:_
 - **Application-side evidence is a TABLE ROW too, not prose.** Whatever is produced during the test run and can be opened afterwards — a REST request/response audit log, a correlation-id trace, an application log excerpt — put it into the table just like the report of the test tool. What the table does not ask for, `report-gate-check.py` **does not look for**: it is silently omitted, and its absence only surfaces months later. The file name and header convention is recorded in `specs/test-conventions.md` (TC1/c), but **whether it is mandatory** belongs here.
 - **If the project does not generate a test report at all**, set the flag above to `no`, **with a justification** (e.g. "there is only a manual smoke test"). This is a conscious, recorded decision — the gate is then skipped. Leaving it empty or leaving an unfilled table is **not** an option: the gate then reports a usage error.
 
+_**Test manager integration (TM1–TM10) — optional, OFF by default.** The framework does not prescribe an external test manager: with `Test manager: none` there are zero new steps and zero new network dependencies. The committed `test-report/` set remains **the only** cycle evidence; the test manager is the **other axis** — cross-cycle trends, flaky detection, grouping failures by cause — which git cannot preserve. **The upload is never evidence** (TM7): `report-gate-check.py` rejects a report set that contains a URL but not the requested artifact, exactly as it does today._
+
+_**What the fields mean:**_
+- _`Test manager`: `none` (default) · `testdino` · `reportportal` · `qase` · `command` — which adapter runs. With `none` the other fields may be left out._
+- _`Test manager shape`: `reporter` (the client runs in the reporter chain of the test runner and streams during the run — e.g. TestDino) or `import` (a command pushes the finished `junit.xml` afterwards — e.g. ReportPortal, Qase). The two shapes are not interchangeable._
+- _`Test manager token env var`: the **NAME** of the variable, never its value — a test manager API token is a shared platform credential (TC5) and must never go into `conventions.md`. `test-manager.py` reads it from the environment itself and **never receives a token on the command line**._
+- _`Test manager phases`: a comma-separated list — `implement` · `validate` · `post-merge` · `dev-test` · `ad-hoc`. **Default: `dev-test`**, because the `VP3` round produces the most valuable data, while `07` (`VP1`) must not become token- and network-dependent: that would break the isolated SDD mode. `ad-hoc` covers the out-of-cycle `/bs-run-tests` runs — their metadata carries `cycle=none`, so the `D8`/`KT6` evidence firewall is visible at the provider as well._
+- _`Test manager required`: `yes` · `no` (default) — should a failed upload fail the phase. By default **no**: if the evidence is already committed, a 502 from a SaaS must not invalidate a green test round. The result never stays unmarked though: an `uploaded <url>` / `FAILED <reason>` / `skipped (<phase> not listed)` line goes into the report of the round and into `results.json`._
+- _`Test manager command`: a verbatim command line, **only** for the `command` provider — this connects TestRail, Xray, Allure TestOps or anything else without modifying the framework._
+
+_**A filled example (TestDino, `reporter` shape):** `Test manager: testdino` · `Test manager shape: reporter` · `Test manager token env var: TESTDINO_TOKEN` · `Test manager phases: dev-test` · `Test manager required: no`. Writing the reporter block into the `playwright.config.ts` of the project is **the project's job** (the framework does not touch it), and the recipe belongs into `specs/test-conventions.md` (TC1/c). ⚠ The TestDino `reporter` package requires **Node ≥ 22.12**: on an older Node it does not even load, and it kills the whole test run with it — this is why `test-manager.py --mode preflight` probes the **loadability** of the reporter, not just the presence of the env var._
+
 ## Test execution
 
 _**Mandatory section (KT1).** This section is the single machine-readable source of truth for **out-of-cycle** test execution: the `/bs-run-tests` helper command reads from it which category to run with which command, and the test inventory of `08-doc-sync` (`docs-generated/test-description.md`) discovers from it which test files exist. **Cycle**-level execution is still given by the machine-readable run table of `plan.md` (TP4) — the two do not replace each other: this section is project-level and cycle-independent, while that one is about one round of one cycle._
@@ -191,7 +251,7 @@ _The column schema is **identical** to the machine-readable run table of `plan.m
 | rest-e2e | nehez | `<the reachability probe of the target>` | `<command with the target host>` | `<file>` | junit | `<teardown>` | `<remote — the name of the target environment>` | — |
 
 _Filling rules:_
-- **The `Phase` column is `—` here:** an out-of-cycle run has no phase, and an empty/`—` cell means "both" in `run-tests.py`, so the phase filter does not make the row disappear.
+- **The `Phase` column is `—` here:** this is an **explicit marker** ("not phase-bound"), not an empty cell and not a silent default — an out-of-cycle run has no phase. `/bs-run-tests` calls the script without a phase filter, so that branch of the filter does not even run. **In the machine table of `plan.md` an empty cell is an ERROR though** (PH1): there every row carries an explicit, comma-separated list (`implement`, `validate`, `post-merge`, `dev-test`).
 - **The `{round}` and `{phase}` placeholders work here too:** `/bs-run-tests` passes the `test-runs/…` run folder as `--round-dir`, so `{round}` resolves to that — not to a cycle folder.
 - **The EV rules apply:** the command of a `remote` environment row contains the target host **literally** (EV3), and there is a `Prerequisite` probe to the same target for it (EV4); `localhost` / `127.0.0.1` without a declared port-forward is **FORBIDDEN** (EV5). `run-tests.py` measures this at runtime as well (`exit 4`).
 
@@ -271,6 +331,21 @@ _Project-level technical limitations, accepted POC boundaries._
 
 <!-- ANCHOR:BD9-api-guideline-kerdes -->
 *"Is there an API design guideline / API policy to follow (REST conventions, versioning, error format, naming)? If yes, where is its document?"*
+
+<!-- ANCHOR:RM8-review-merge-kerdes -->
+*"How does a cycle close in this project? (a) **Is there a PR submission**, or does the cycle branch go back into the main branch directly, on your machine? (b) Do the review and the merge run **on your machine** (isolated SDD), or does the PR trigger the CI/CD and run there **without human intervention** (centralized SDD)? This decides whether a single skill runs at the end of the cycle (`/bs-review-and-merge`) or three (`/bs-create-pr` → `/bs-review` → `/bs-merge`)."*
+
+<!-- ANCHOR:VP2-post-merge-kerdes -->
+*"Should there be a **post-merge test round** (`VP2`)? It runs on the cycle branch after we bring in the fresh main branch, and **before the merge** it proves that the code also works according to the spec when merged with master (tests + Sonar). If yes: **may it be skipped** when the main branch has not moved ahead since the cycle branched off? And on the centralized path, should a **dev-deployment e2e round** follow (`/bs-dev-test`, `VP3`) — if yes, with which command do we deploy into the dev environment?"*
+
+<!-- ANCHOR:CS6-ertesites-kerdes -->
+*"If the post-merge or the dev-test round fails, **how should the developer be notified**? (`slack` / `teams` / a free `command` / `none`.) The secret never goes into `conventions.md` — only the NAME of the environment variable. `none` is a legitimate answer in a one-person project, but it has to be an **explicit** answer, not silence. And what should happen on a failure: `notify` (a human fixes it) or `auto-fix-loop` (a self-healing loop starts on the CI)?"*
+
+<!-- ANCHOR:CI-agent-kerdes -->
+*"On the centralized path, **which agent runs on the CI** (`claude-code` / `cursor` / `copilot` / `antigravity` / a free `command`)? All of them can be called in non-interactive mode, but authentication (API key, cost) and the permission model differ per platform — this is why we try it out right now."*
+
+<!-- ANCHOR:TM3-test-manager-kerdes -->
+*"Do you use an **external test manager** (TestDino, ReportPortal, Qase, TestRail, Xray …) where test results are collected across cycles? This is **optional and off by default** (`none`) — the evidence of the cycle remains the committed report, the test manager adds the trend and flaky data. If yes: which provider, and does its client go into the **reporter chain** of the test runner (`reporter`), or does a command **push the finished `junit.xml` afterwards** (`import`)?"*
 
 <!-- ANCHOR:zaro-uzenet -->
    *"The project conventions are recorded. Before starting the next phase, be sure to run a `/clear` command to empty the context, then cycle management can begin: `/bs-add-cycles`."*

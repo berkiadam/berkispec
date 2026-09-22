@@ -71,7 +71,7 @@ Implement the tasks in `tasks.md` in order, one by one.
 
 **Resuming after an interrupted run:** implementation can be interrupted at any time — even in the middle of the first task, before anything was checked off. Always verify the actual state of the code, not just the markings.
 
-**Two sources can send us back here — both from the 07-validate FAIL branch:** (a) test/Sonar/DoD failure (`## <sec:validation_fixes>` tasks at the end of `tasks.md`), or (b) a code review finding (`## <sec:review_fixes>` tasks + `test-report/code-review.md`). In both cases, the new tasks at the end of `tasks.md` are the ones to perform; on the review branch, also read `test-report/code-review.md` (see the Context loading rules and item 2 of the Execution rules). The decision tree below applies the same way — start from the actual state of the code.
+**Three sources can send us back here:** (a) a test/Sonar/DoD failure from the 07-validate FAIL branch (`## <sec:validation_fixes>` tasks at the end of `tasks.md`), (b) a code review finding from the same place (`## <sec:review_fixes>` tasks + `test-report/code-review.md`), or (c) a failure of the **post-merge verification** (`## <sec:post_merge_fixes>` tasks + the report in `test-report/post-merge/` or `test-report/dev-test/`). In all three cases, the new tasks at the end of `tasks.md` are the ones to perform; on the review branch, also read `test-report/code-review.md` (see the Context loading rules and item 2 of the Execution rules). Branch (c) is **not a new cycle** but the continuation of the still open cycle (L13-D8) — the same fix-mode machinery runs on it, and afterwards the merge branch of the cycle end continues, not `08`. The decision tree below applies the same way — start from the actual state of the code.
 
 Decision tree for resuming — **in this order**:
 
@@ -293,7 +293,7 @@ The README.md is part of the implementation — not after-the-fact documentation
 
 ## Implement-phase tests (PH1) — once, at the end of the phase
 
-The `<field:f_phase>` column of the machine-readable run table of `plan.md` says which categories have to run in **this** phase (`<status:phase_implement>` or `<status:phase_both>`; **an unmarked row belongs here too** — silence does not mean skipping). This does not replace the per-task `[CHECK]`: the `[CHECK]` proves the green of a group, this proves the **closing state of the phase**, with machine counts and evidence. After every task is `[x]`, but BEFORE the status change, **once**:
+The `<field:f_phase>` column of the machine-readable run table of `plan.md` says which categories have to run in **this** phase (the `<field:f_phase>` list contains `<status:phase_implement>`; **the cell is mandatory** — an empty cell is an error, not a default). This does not replace the per-task `[CHECK]`: the `[CHECK]` proves the green of a group, this proves the **closing state of the phase**, with machine counts and evidence. After every task is `[x]`, but BEFORE the status change, **once**:
 
 ```bash
 python3 <platform-scripts-mappa>/run-tests.py \
@@ -308,6 +308,18 @@ python3 <platform-scripts-mappa>/run-tests.py \
 - **A `MEGJEGYZÉS (PH1)` line saying there is nothing to run** → every row of the table is `<status:phase_validate>`-only. Move on.
 
 > **This is not a new stopping point (IM1).** The run is part of closing the phase, in the same turn — unlike the `[CHECK]`s it does **not** run per task.
+
+> **Test manager (optional, TM4) — the same two calls in every phase.** If the `**<field:f_test_manager_phases>:**` field of the `## <sec:cv_test_reporting>` section of `conventions.md` lists this phase, `--mode preflight` runs **before** and `--mode publish` **after** the test round:
+>
+> ```bash
+> python3 <platform-scripts-mappa>/test-manager.py --mode preflight --phase <status:phase_implement> \
+>   --round-dir specs/cycle-NN-<cycle-name>/test-report/implement
+> python3 <platform-scripts-mappa>/test-manager.py --mode publish --phase <status:phase_implement> \
+>   --round-dir specs/cycle-NN-<cycle-name>/test-report/implement
+> ```
+>
+> `exit 3` = the phase is not on the list (skipped, **not** an error) · `exit 4` = the upload failed, which by default does **not** fail the phase (`<field:f_test_manager_required>` is `no`). **The upload is never evidence** (TM7): the evidence is the committed report set, the run URL is only a pointer. By default only the `dev-test` phase uploads — `07` must not become token- and network-dependent, otherwise the **isolated** SDD mode breaks.
+
 
 > 🔴 **The `--round-dir` may NEVER point under the `test-runs/` tree (D8).** That is the place of the out-of-cycle, convenience run of `/bs-run-tests`, and the result produced there is **not cycle evidence**: `dod-check.py` and `report-gate-check.py` reject a path under `test-runs/` with `exit 2`. The evidence of the phase goes into the `test-report/<phase>/` folder of the cycle — where `07` looks for it.
 

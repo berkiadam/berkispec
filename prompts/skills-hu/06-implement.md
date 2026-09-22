@@ -71,7 +71,7 @@ Implementáld a `tasks.md` taskjait sorban, egyenként.
 
 **Folytatás megszakított futás után:** az implementáció bármikor félbeszakadhat — akár az első task közepén is, mielőtt bármit pipáltak volna. Mindig ellenőrizd a tényleges kód állapotát, ne csak a jelöléseket.
 
-**Két forrásból érkezhet visszalépés ide — mindkettő a 07-validate FAIL ágáról:** (a) teszt-/Sonar-/DoD-hiba (`## <sec:validation_fixes>` taskok a `tasks.md` végén), vagy (b) kódreview-finding (`## <sec:review_fixes>` taskok + `test-report/code-review.md`). Mindkét esetben a `tasks.md` végén lévő új taskok az elvégzendők; a review-ágon olvasd be a `test-report/code-review.md`-t is (lásd a Kontextus betöltési szabályok és a Végrehajtási szabályok 2. pontját). Az alábbi döntési fa ugyanúgy érvényes — a kód tényleges állapotából indulj ki.
+**Három forrásból érkezhet visszalépés ide:** (a) teszt-/Sonar-/DoD-hiba a 07-validate FAIL ágáról (`## <sec:validation_fixes>` taskok a `tasks.md` végén), (b) kódreview-finding ugyanonnan (`## <sec:review_fixes>` taskok + `test-report/code-review.md`), vagy (c) a **merge utáni verifikáció** bukása (`## <sec:post_merge_fixes>` taskok + `test-report/post-merge/` ill. `test-report/dev-test/` riportja). Mindhárom esetben a `tasks.md` végén lévő új taskok az elvégzendők; a review-ágon olvasd be a `test-report/code-review.md`-t is (lásd a Kontextus betöltési szabályok és a Végrehajtási szabályok 2. pontját). A (c) ág **nem új ciklus**, hanem a még nyitott ciklus folytatása (L13-D8) — ugyanaz a fix-mód gépezet fut rá, és utána a ciklusvég merge-ága folytatódik, nem a `08`. Az alábbi döntési fa ugyanúgy érvényes — a kód tényleges állapotából indulj ki.
 
 Döntési fa a folytatáshoz — **ebben a sorrendben**:
 
@@ -293,7 +293,7 @@ A README.md az implementáció része — nem utólagos dokumentáció. Akkor ke
 
 ## Implement-fázisú tesztek (PH1) — a fázis végén, egyszer
 
-A `plan.md` gépi futtatási táblájának `<field:f_phase>` oszlopa megmondja, mely kategóriákat kell **ebben** a fázisban futtatni (`<status:phase_implement>` vagy `<status:phase_both>`; **a jelöletlen sor is ide tartozik** — a hallgatás nem jelent kihagyást). Ez nem a taskonkénti `[CHECK]` helyett van: a `[CHECK]` a csoport zöldjét igazolja, ez pedig a **fázis záró állapotát**, gépi darabszámokkal és bizonyítékkal. Miután minden task `[x]`, de a státuszváltás ELŐTT, **egyszer**:
+A `plan.md` gépi futtatási táblájának `<field:f_phase>` oszlopa megmondja, mely kategóriákat kell **ebben** a fázisban futtatni (a `<field:f_phase>` felsorolásában szerepel az `<status:phase_implement>`; **a cella kötelezően kitöltött** — az üres cella hiba, nem alapértelmezés). Ez nem a taskonkénti `[CHECK]` helyett van: a `[CHECK]` a csoport zöldjét igazolja, ez pedig a **fázis záró állapotát**, gépi darabszámokkal és bizonyítékkal. Miután minden task `[x]`, de a státuszváltás ELŐTT, **egyszer**:
 
 ```bash
 python3 <platform-scripts-mappa>/run-tests.py \
@@ -308,6 +308,18 @@ python3 <platform-scripts-mappa>/run-tests.py \
 - **`MEGJEGYZÉS (PH1)` sor „nincs mit futtatni"** → a tábla minden sora `<status:phase_validate>`-only. Menj tovább.
 
 > **Ez nem új megállási pont (IM1).** A futtatás a fázis lezárásának része, ugyanabban a körben — a `[CHECK]`-ekkel ellentétben taskonként **nem** fut.
+
+> **Test manager (opcionális, TM4) — ugyanaz a két hívás minden fázisban.** Ha a `conventions.md` `## <sec:cv_test_reporting>` szekciójának `**<field:f_test_manager_phases>:**` mezője felsorolja ezt a fázist, a teszt-kör **előtt** `--mode preflight`, **után** `--mode publish` fut:
+>
+> ```bash
+> python3 <platform-scripts-mappa>/test-manager.py --mode preflight --phase <status:phase_implement> \
+>   --round-dir specs/cycle-NN-<cycle-name>/test-report/implement
+> python3 <platform-scripts-mappa>/test-manager.py --mode publish --phase <status:phase_implement> \
+>   --round-dir specs/cycle-NN-<cycle-name>/test-report/implement
+> ```
+>
+> `exit 3` = a fázis nincs a listán (kihagyva, **nem** hiba) · `exit 4` = a feltöltés bukott, ami alapból **nem** buktatja a fázist (`<field:f_test_manager_required>` `nem`). **A feltöltés soha nem bizonyíték** (TM7): a bizonyíték a commitolt riport-készlet, a futás-URL csak pointer. Gyárilag csak a `dev-test` fázis tölt fel — a `07` nem válhat token- és hálózatfüggővé, különben az **izolált** SDD üzemmód sérül.
+
 
 > 🔴 **A `--round-dir` SOHA nem mutathat a `test-runs/` fa alá (D8).** Az a `/bs-run-tests` cikluson kívüli, kényelmi futtatásának helye, és az ott keletkező eredmény **nem ciklus-bizonyíték**: a `dod-check.py` és a `report-gate-check.py` a `test-runs/` alatti útvonalat `exit 2`-vel visszautasítja. A fázis bizonyítéka a ciklus `test-report/<fázis>/` mappájába megy — oda, ahol a `07` keresi.
 

@@ -49,6 +49,11 @@ For the sections below you **must actively ask** (it is not enough to just pre-f
 - **Test reporting (TR3 — MANDATORY question, after the test stack):** <!-- INCLUDE:lang/00-init-project.md#TR3-riport-kerdes --> Enter the answer into the **table** of the `## <sec:cv_test_reporting>` section (category / tool / command / artifact). **This section may not be left with a pre-filled default** — either real commands go into it, or the user explicitly states that there is no report generation, in which case the `**<field:f_report_required>:**` field is `no` + justification. If the tool can produce multiple formats, **recommend a single-file HTML** (the report goes into the cycle's git diff).
 - **Test execution (KT1 — MANDATORY question, after the test reporting):** <!-- INCLUDE:lang/00-init-project.md#KT1-futtatas-kerdes --> Enter the answer into the `## <sec:cv_test_execution>` section: the category dictionary into the `**<field:f_test_categories>:**` field, the per-category commands into the **project-level run table** (the column schema is **identical** to the machine-readable run table of `plan.md` — TP4/b), and the per-category globs into the **Test file locations** table. This section serves **two consumers**: the out-of-cycle execution of the `/bs-run-tests` helper command and the discovery of the test inventory of `08-doc-sync` (LD5). **Do not leave it with a pre-filled default**, and for a `remote` category the EV3–EV5 rules apply (literal target host, probe, `localhost` ban).
 - **Merge strategy + back-integration (BD7/BD15):** ask about the git provider (GitHub / Bitbucket Cloud / Bitbucket Server / GitLab / Local), then **try out access** with the appropriate command (see the Merge strategy section). If the access test fails, **do not close `conventions.md`** — ask for the token / URL / permissions to be fixed, or for an alternative provider / local merge to be chosen. This is the **single source of truth** for how a finished branch gets back into `main` (PR or direct merge) — this is used by 09 (cycle merge), the 01/00 branch warning, and the back-integration of the 00 init branch too. If there is no decision/remote, the default is **direct merge** (BQ7). _(Only fill in the `## <sec:cv_merge_strategy>` section — do not introduce a new field.)_
+- **Review and merge (RM8 — MANDATORY question, after the Merge strategy):** <!-- INCLUDE:lang/00-init-project.md#RM8-review-merge-kerdes --> Write the answer into the `PR submission` and `SDD mode` fields of the `## <sec:cv_review_and_merge>` section. **The field names and the values are English literals** (L13-D2) — do not translate them, because the cycle-closing skills match on them.
+- **Post-merge verification (VP2/VP3 — after Review and merge):** <!-- INCLUDE:lang/00-init-project.md#VP2-post-merge-kerdes --> Where the answers go: `Post-merge tests`, `Skip post-merge tests if master unchanged`, `Dev deployment test (bs-dev-test)`, `Dev deployment command`. If `Post-merge tests` is `yes`, add the `post-merge` value to the **<field:f_report_phases>** field of `## <sec:cv_test_reporting>` as well (and `dev-test` with `Dev deployment test: yes`) — otherwise `report-gate-check.py` does not look for the artifacts of the round.
+- **Notification and failure handling (CS6/CS7):** <!-- INCLUDE:lang/00-init-project.md#CS6-ertesites-kerdes --> Where the answers go: `Failure handling`, `Notification channel`, `Notification secret (env var)`, `Notification command`. **NEVER write the value of the secret into `conventions.md`** — only the name of the environment variable (the same rule as for the `SONAR_TOKEN` of Sonar).
+- **CI agent (only with `SDD mode: centralized`):** <!-- INCLUDE:lang/00-init-project.md#CI-agent-kerdes --> Where the answer goes: `CI agent` (+ `CI agent command` if it is `command`).
+- **Test manager (TM3 — after Test reporting):** <!-- INCLUDE:lang/00-init-project.md#TM3-test-manager-kerdes --> Write the answers into the six test manager fields of the `## <sec:cv_test_reporting>` section (**<field:f_test_manager>**, **<field:f_test_manager_shape>**, **<field:f_test_manager_token_env>**, **<field:f_test_manager_phases>**, **<field:f_test_manager_required>**, **<field:f_test_manager_command>**). `none` is an **explicit, legitimate answer** — in that case the other fields stay `—`. **Never** write in the token, only the name of the variable (TM5).
 - **Branch naming strategy (BD8 — only if there is VCS):** ask:
   - Does the branch name need to start with a **Jira ticket number**? (if yes: in what format)
   - Do feature branches start with a **`feature/` prefix**?
@@ -132,6 +137,36 @@ Before closing, check:
 6. **Is the VCS flag of `## <sec:cv_git_conventions>` set (BD11):** either git, or explicit "NO version control …"?
 7. **Alongside VCS: is the Branch naming strategy field filled in (BD8)** (default `feature/cycle-NN-<name>`, or the organizational rule/pointer)?
 8. **If the user pointed to an API design guideline / large policy (BD9/BD10):** is the pointer there in `## <sec:cv_references>`, and for a large document, the compact rule checklist produced with the `researcher`?
+
+9. **Is the `## <sec:cv_review_and_merge>` section filled in and free of contradictions (RM8)?** **Reject the following combinations at write time** — a configuration error is cheaper to catch here than at the end of every cycle:
+   - `SDD mode: centralized` + `PR submission: no` → **rejected** (the centralized path is PR-triggered by definition);
+   - `Dev deployment test: yes` + `SDD mode: isolated` → **rejected** (`VP3` only makes sense on the centralized path);
+   - `Dev deployment test: yes` with an empty `Dev deployment command` → **missing mandatory field**;
+   - `Notification channel` ≠ `none` with an empty `Notification secret (env var)` → **missing mandatory field**;
+   - `Notification channel: command` with an empty `Notification command` — and likewise `CI agent: command` + an empty `CI agent command`.
+
+   **In a no-VCS project (BD11) the whole section is `n/a`**, and the cycle closes after `08-doc-sync`: none of `bs-review-and-merge` / `bs-create-pr` / `bs-review` / `bs-merge` / `bs-dev-test` runs.
+10. **Have the CI agent and the notification been tried out?** The same rule as for the access of the merge provider: a non-interactive run that turns out not to work first on a live PR fails in the worst possible place.
+
+    <!-- INCLUDE:shared/python-cmd.md -->
+
+    ```bash
+    # only with `SDD mode: centralized` — trying out the `CI agent` field
+    bash <platform-scripts-mappa>/ci-run-skill.sh --selftest
+
+    # if `Notification channel` is not `none` — a trial notification, without really sending it
+    python3 <platform-scripts-mappa>/notify.py --channel <channel> --dry-run \
+      --title "berkispec init" --body "Trial notification from phase 00"
+    ```
+
+    If the selftest reports an error (missing CLI, an obsolete switch, a missing env var), **do not close `conventions.md`** — either fix it, or the user chooses another agent / the `command` branch / `Notification channel: none`. A missing env var is a **speaking error**, not a silent skip: a silent notifier is worse than none.
+11. **Has the test manager been tried out (TM5/TM6)?** If the `**<field:f_test_manager>:**` field is not `none`:
+
+    ```bash
+    python3 <platform-scripts-mappa>/test-manager.py --mode selftest
+    ```
+
+    The selftest probes **loadability**, not just the presence of the env var (on a wrong runtime version a `reporter`-shaped client can kill the whole test run). If it fails: fix the environment, or the `command` branch / `none` is the honest answer — **do not write an untried adapter** into `conventions.md`.
 
 If any of these is not, complete it before closing.
 

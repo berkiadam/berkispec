@@ -20,6 +20,11 @@
 
 1. **No-VCS kapu:** ha a `conventions.md` `## <sec:cv_git_conventions>` szekciója szerint **nincs verziókezelő**, a 2–5. lépés kimarad — a fázis a státuszírással zárul. Egyébként folytasd.
 2. **<field:f_status> átírása** az artefaktumban (a fázis záró státuszára). **Hurok-fázisban (05, 07)** ide tartozik a jelentés/napló státuszának beírása és a `[analyze-loop]` / `[validate-loop]` marker rendezése is, az adott lezáró ág szabálya szerint.
+2.b **A `cycle-status.md` regenerálása (L13-D15) — a commit ELŐTT:**
+   ```bash
+   python3 <platform-scripts-mappa>/cycle-status.py specs/cycle-NN-<cycle-name> --write
+   ```
+   A fájl **generált** (rendering a bizonyítékból, sosem forrás — kapu nem olvassa), és a fázis-záró commit **része**: így sosem áll elavultan, és a PR-en, illetve a központosított úton ez az egyetlen hely, ahol az ember gépi futtatás mellett is látja, hol tart a ciklus. Ütközésnél nem kell feloldani: újragenerálható. Ha a script hiányzik (régi telepítés), ez a lépés kimarad, a commit viszont **nem**.
 3. **Stage + commit** — a ciklus mappájára, a fázis tagjével:
    ```bash
    git add specs/cycle-NN-<cycle-name>/

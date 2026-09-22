@@ -12,7 +12,8 @@ A `conventions.md` a **projekt** szintű igazságforrás, és a `00-init-project
 | `## <sec:cv_test_reporting>` (artefaktumok, útvonal-alap, riport-fázisok, riport-parancsok) | `report-gate-check.py` (TR3/TR6, 06 + 07) | a kapu a régi útvonalon keresi a riportot, vagy rossz fázisban kéri számon → FAIL |
 | `## Sonar` (projekt-kulcs, küszöbök, riport helye) | `sonar-gate.py` (07) | Quality Gate-ellenőrzés hibás projektre/küszöbre fut |
 | `## <sec:cv_test_tools>` / teszt-parancsok | `run-tests.py`, `test-runner` (07) | nem létező parancsot futtat |
-| `## <sec:cv_merge_strategy>` | `09-merge` | a merge-ág rossz úton próbálkozik |
+| `## <sec:cv_merge_strategy>` | a ciklusvég merge-ága (`09`/`09a`–`09c`) | a merge-ág rossz úton próbálkozik |
+| `## <sec:cv_review_and_merge>` | a ciklusvég skill-családja (`09`/`09a`–`09d`) | rossz topológia: a PR megkerülése vagy felesleges PR; a `VP2`/`VP3` kör kimarad vagy fölöslegesen fut |
 | `## <sec:cv_ports>`, `## <sec:cv_env_vars_short>` | 06/07 futtatás | a teszt más konfigurációval fut, mint a fejlesztés |
 
 **Hogyan módosít egy ciklus konvenciót — a négy feltétel:**

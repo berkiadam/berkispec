@@ -15,6 +15,8 @@ hurok minden körének megmaradjon a saját bizonyítéka:
   ├── validation-report.md            (a 07 naplója — nem a kapu dolga)
   ├── implement/check-log.md          (a 06 [CHECK]-naplója — nem a kapu dolga)
   ├── validate/round-01/ round-02/    (a 07 validálási körei)
+  ├── post-merge/                     (a VP2 kör — merge előtti, master-egyesített)
+  ├── dev-test/                       (a VP3 kör — bs-dev-test, integrált környezet)
 
 A vizsgált mappát a hívó adja meg a `--report-subdir` kapcsolóval, pl.
 `--report-subdir test-report/validate/round-02`. Az alapérték (`test-report`)
@@ -62,7 +64,8 @@ projekt a migráció előtt sem kap hamis bukást.
 
 RIPORT-FÁZISOK (TR6) — a `**Riport-fázisok:**` mező sorolja fel, MELY fázisok
 kötelesek a teljes artefaktum-készletet előállítani. Elfogadott értékek:
-`implement` (a 06-implement záró állapota) és `validate` (a 07 teljes körei).
+`implement` (a 06-implement záró állapota), `validate` (a 07 teljes körei),
+`post-merge` (a VP2 kör) és `dev-test` (a VP3 kör).
 A mező hiányában az alapérték `validate` — ez a korábbi viselkedés. Ha a kapu
 olyan fázis-mappára fut, amit a mező nem sorol fel, a kapu **kihagyja magát**
 (exit 0, magyarázó sorral): így a hívó fázis feltétel nélkül meghívhatja.
@@ -81,7 +84,8 @@ a `--report-subdir`-ben, és normalizál:
   validate/round-02                                     (test-report bázis)
 
 LAYOUT-ŐR (TR5/c) — a kapu ellenőrzi a ciklus `test-report/` mappájának felső
-szintjét is: ott csak `implement/`, `validate/`, (legacy) `review/` mappa lehet,
+szintjét is: ott csak `implement/`, `validate/`, `post-merge/`, `dev-test/`,
+(legacy) `review/` mappa lehet,
 a `validate/` alatt pedig csak `round-NN/`. Bármi más útvonal-hiba (elrontott
 bázis), nem megőrzendő bizonyíték → exit 1, a mappa nevéből következtetett okkal.
 
@@ -118,11 +122,16 @@ BASE_FLAT = {"test-report", "testreport", "flat", "gyökér", "gyoker"}
 EMPTY_VALUES = {"", "-", "–", "—", "n/a", "na", "nincs", "none"}
 PHASES_RE = re.compile(r"\*\*" + re.escape(_F_PHASES) + r":\*\*\s*(.+)")
 DEFAULT_PHASES = ("validate",)
-KNOWN_PHASES = {"implement", "validate"}
+# L13-D4/L13-D7 — a `VP2` (merge utáni) és a `VP3` (dev-teszt) kör bizonyítéka
+# UGYANEZZEL a gépezettel, a ciklus `test-report/post-merge/` ill.
+# `test-report/dev-test/` fázis-mappájába kerül: siker és bukás egyaránt nyomot
+# hagy. A `D8`/`KT6` tűzfal érintetlen — ez nem a `test-runs/` fából jön.
+KNOWN_PHASES = {"implement", "validate", "post-merge", "dev-test"}
 
 # TR5/c — a `test-report/` felső szintjén megengedett mappák, és a `validate/`
 # alatt megengedett mappanév. A `review/` legacy: régi ciklusok 09-review köre.
-ALLOWED_ROOT_DIRS = {"implement", "validate", "review"}
+# A `post-merge/` és a `dev-test/` a ciklusvég két verifikációs pontja (VP2/VP3).
+ALLOWED_ROOT_DIRS = {"implement", "validate", "post-merge", "dev-test", "review"}
 ROUND_DIR_RE = re.compile(r"^round-\d{2,}$")
 
 
@@ -190,7 +199,8 @@ def normalize_subdir(raw, cycle):
 
 
 def phase_of(report_subdir):
-    """A normalizált ciklus-relatív útvonalból a fázis neve (`implement`/`validate`)."""
+    """A normalizált ciklus-relatív útvonalból a fázis neve
+    (`implement` / `validate` / `post-merge` / `dev-test`)."""
     parts = report_subdir.split("/")
     return parts[1] if len(parts) > 1 else None
 

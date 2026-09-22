@@ -139,7 +139,7 @@ A tanulságokat **kategória szerint külön útvonalra** kell vinni:
 - [ ] **B2.3 — Index.** Központi index-fájl (egy soros pointer / tanulság), amely betölthető a releváns fázisokba.
 - [ ] **B2.4 — Dedup-before-add.** Hozzáadás előtt ellenőrizze, lefedi-e már egy meglévő bejegyzés → frissítés, ne duplázás.
 - [ ] **B2.5 — Konszolidáció.** Időnkénti összevonás/karbantartás a bloat ellen (elavult/téves tanulság törlése).
-- [ ] **B2.6 — Migráció.** A ma szétszórt tanulságok beemelése: `sdd-lightweight-flow.md` §5 „Lessons Learned" + a releváns `inprove-list.md` pontok → a központi tárba (vagy hivatkozás rá).
+- [ ] **B2.6 — Migráció.** A ma szétszórt tanulságok beemelése: `sdd-lightweight-flow.md` §5 „Lessons Learned" + a releváns `improve-list.md` pontok → a központi tárba (vagy hivatkozás rá).
 
 ### B3. A retrospec skill — `prompts/skills/<NN>-retrospective.md`
 

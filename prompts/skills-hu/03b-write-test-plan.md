@@ -291,8 +291,8 @@ X-Correlation-Id: 11111111-1111-1111-1111-111111111111
 
 | Kategória | Típus | Előfeltétel | Parancs | Eredményfájl | Formátum | Takarítás | <field:f_environment> | <field:f_phase> |
 |---|---|---|---|---|---|---|---|---|
-| unit | gyors | — | `<szó szerinti parancs, gépi riporterrel>` | `junit.xml` | junit | — | lokális | <status:phase_both> |
-| integrációs | gyors | — | `<parancs>` | `<fájl>` | junit | — | lokális | <status:phase_both> |
+| unit | gyors | — | `<szó szerinti parancs, gépi riporterrel>` | `junit.xml` | junit | — | lokális | <status:phase_implement>, <status:phase_validate> |
+| integrációs | gyors | — | `<parancs>` | `<fájl>` | junit | — | lokális | <status:phase_implement>, <status:phase_validate> |
 | e2e | nehéz | `<a cél elérhetőségi probe-ja; stack indítása>` | `<parancs a cél-hosttal>` | `<fájl>` | junit | `<lebontás>` | `<remote — a cél-környezet neve>` | <status:phase_validate> |
 
 **Kitöltési szabályok:**
@@ -310,10 +310,13 @@ X-Correlation-Id: 11111111-1111-1111-1111-111111111111
   - a **`Parancs` cellának literálisan tartalmaznia kell a cél-hostot** (env-változóval vagy kapcsolóval, pl. `PLAYWRIGHT_BASE_URL=https://app.remote.example npx playwright test`) — **a célpont nem rejtőzhet konfigfájlban** (EV3). Egy `test:playwright:remote-e2e` nevű script configjában simán állhat `localhost`: **a parancs neve nem bizonyíték, a cím az**;
   - az **`Előfeltétel` cellába kötelező egy elérhetőségi probe** ugyanarra a hostra (`curl -fsS https://app.remote.example/health`) — a `run-tests.py` az előfeltételt futtatja, és bukásakor a kategória FAIL, tehát **egy le sem futó deploy nem tud zöldre pipálódni** (EV4);
   - `localhost` / `127.0.0.1` a parancsban vagy az előfeltételben **tilos** (EV5) — a `run-tests.py` ilyenkor `exit 4`-gyel megáll, futtatás nélkül.
-- **<field:f_phase> — melyik FÁZIS futtatja (PH1).** Három érték: `<status:phase_implement>` (csak a 06 fázis dev-hurka futtatja), `<status:phase_validate>` (csak a 07-validate), `<status:phase_both>` (mindkettő). **Az üres cella `<status:phase_both>`-t jelent** — a hallgatás soha nem jelent kihagyást, tehát a jelöletlen kategória mindenhol lefut. A `run-tests.py` a `--phase` kapcsolóval szűr: a `06` `--phase <status:phase_implement>`-tel, a `07` `--phase <status:phase_validate>`-tel hívja.
+- **🔴 <field:f_phase> — melyik FÁZIS futtatja (PH1). KÖTELEZŐ és EXPLICIT: semmi nem implicit.** A cella **négy** érték **vesszős felsorolása** lehet, tetszőleges kombinációban: `<status:phase_implement>` (a 06 dev-hurka), `<status:phase_validate>` (a 07-validate), `<status:phase_post_merge>` (a merge utáni `VP2` kör), `<status:phase_dev_test>` (a `bs-dev-test` `VP3` köre). **Az üres cella HIBA, nem alapértelmezés**, és a `mindkettő`/`both` érték megszűnt — négy fázis mellett eleve kétértelmű lenne. A `run-tests.py` a `--phase` kapcsolóval szűr: a `06` `--phase <status:phase_implement>`-tel, a `07` `--phase <status:phase_validate>`-tel, a merge-ág `--phase <status:phase_post_merge>`-dzsel, a `bs-dev-test` `--phase <status:phase_dev_test>`-tel hívja.
   - **Mikor `<status:phase_implement>`:** olcsó, gyors dev-hurok ellenőrzés, amit a validálásban egy bővebb kategória úgyis lefed (pl. külön `lint` vagy `typecheck` sor a teljes unit-készlet mellett).
   - **Mikor `<status:phase_validate>`:** drága vagy telepített környezetet igénylő kategória (E2E, regresszió, dev-deployra futó teszt), amit a 06 dev-hurkában nem érdemes vagy nem lehet futtatni.
-  - **🔴 `DoD-NN`-t bizonyító teszt sosem lehet `<status:phase_implement>`-only.** A `07` a `dod-check.py`-jal a **validálási kör** bizonyítékaiból joinol: ami csak a 06-ban futott, arról a DoD-nak nincs bizonyítéka, és a pont `?`-lel marad. Ha egy kategória a DoD-hoz kell, `<status:phase_validate>` vagy `<status:phase_both>` a helyes érték.
+  - **Mikor `<status:phase_post_merge>`:** amit a friss fő branch-csel **egyesített** kódon is le kell mérni, mielőtt a ciklus ága beolvad (`VP2`). **Központosított SDD-ben ez a kör a CI teszt-node-ján fut, ezért tipikusan teljesen konténerizálhatónak kell lennie** — ne jelölj ide olyan kategóriát, amihez a fejlesztő gépén kézzel felhúzott környezet kell.
+  - **Mikor `<status:phase_dev_test>`:** a telepített, integrált dev-környezetre futó valódi e2e kör (`VP3`, `bs-dev-test`) — csak központosított úton értelmes.
+  - **🔴 `DoD-NN`-t bizonyító teszt sosem lehet `<status:phase_implement>`-only.** A `07` a `dod-check.py`-jal a **validálási kör** bizonyítékaiból joinol: ami csak a 06-ban futott, arról a DoD-nak nincs bizonyítéka, és a pont `?`-lel marad. Ha egy kategória a DoD-hoz kell, a felsorolásban szerepeljen a `<status:phase_validate>` is.
+  - **Miért lett kötelező a cella:** a hallgatás korábban „mindenhol fut"-ot jelentett. A `<status:phase_post_merge>` bevezetésével ez veszélyessé vált: egy jelöletlen teszt csendben beleesett volna a merge utáni körbe, és ezzel **minden** tesztre ráterhelődött volna a konténerizált környezet követelménye. Régi plan-ekben az üres cella / `mindkettő` **olvasáskor** még elfogadott a régi jelentéssel, WARN-nal — **új plan már nem írhatja** (a lezáró kapu `--plan-only` módban FAIL-lel áll meg).
 - **Üres cella:** `—`.
 - Ha egy kategória **szándékosan nem létezik** ebben a projektben, ne vedd fel a táblába, és a prózában írd le, miért.
 

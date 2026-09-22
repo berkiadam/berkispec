@@ -30,6 +30,8 @@
 
 **Teszt kritérium:** Hogyan ellenőrizhető, hogy the ciklus kész? (konkrét, eldönthető állítás)
 
+_A ciklus **állapotát a címsor jelölése** hordozza, és a ciklusvég skilljei írják (L13-D8): `⏳ verifikációra vár` — a ciklus be van olvasztva, de a **merge utáni** verifikáció (`VP2`/`VP3`) még hátravan; `✅` — az **utolsó engedélyezett** verifikációs pont zöld volt, a ciklus lezárult. Jelölés nélkül a ciklus még folyamatban van._
+
 ---
 
 ## Cycle 02 — <cím>

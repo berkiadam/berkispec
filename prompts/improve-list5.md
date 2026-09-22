@@ -906,6 +906,6 @@ Mintaként a `ds22-gate-check.py` és a `report-gate-check.py` szolgál (kisebbe
            prompts/lang/hu/descriptions.json prompts/lang/en/descriptions.json \
            prompts/lang/status-keys.json \
            prompts/scripts/manual-test-gate-check.py prompts/scripts/cycle-status.py \
-           README.md prompts/meta-improve-prompts.md prompts/inprove-list5.md
+           README.md prompts/meta-improve-prompts.md prompts/improve-list5.md
    git status --short   # a jegyzet.md és minden más NEM stage-elt marad
    ```

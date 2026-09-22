@@ -1734,22 +1734,41 @@ def check_ts_http_blocks(plan_text, f):
 
 # ── PH1 — melyik FÁZIS futtatja a kategóriát ─────────────────────────────────
 # Miért kell: a gépi tábla eddig csak a kör TÍPUSÁT mondta meg (gyors/nehéz),
-# azt nem, hogy melyik FÁZIS futtatja. A `Fázis` oszlop ezt adja meg
-# (`implement` / `validate` / `mindkettő`; az üres cella mindkettő — a hallgatás
-# soha nem jelent kihagyást). A veszélyes eset az `implement`-only jelölés: a
-# `dod-check.py` a VALIDÁLÁSI kör bizonyítékaiból joinol, tehát ami csak a
-# 06-ban futott, arról a DoD-nak nincs bizonyítéka.
+# azt nem, hogy melyik FÁZIS futtatja. A `Fázis` oszlop ezt adja meg. A
+# veszélyes eset az `implement`-only jelölés: a `dod-check.py` a VALIDÁLÁSI kör
+# bizonyítékaiból joinol, tehát ami csak a 06-ban futott, arról a DoD-nak nincs
+# bizonyítéka.
+#
+# L13-D3 — SEMMI NEM IMPLICIT. A cella kötelezően kitöltött, az érték explicit,
+# vesszős felsorolás a négy fázisból (`implement` · `validate` · `post-merge` ·
+# `dev-test`); a `mindkettő`/`both` érték és az „üres cella = mindkettő" szabály
+# kivezetve. Miért épp a `post-merge`-nél lett volna a legveszélyesebb az
+# implicit ág: a központosított úton a merge utáni teszteknek teljesen
+# konténerizálhatónak kell lenniük — egy jelöletlen teszt csendben beleeshetett
+# volna a körbe, és ezzel MINDEN tesztre ráterhelődött volna a compose-os
+# környezet követelménye.
+#
+# L13-D18 — a legacy értékek (üres cella, `mindkettő`) OLVASÁSKOR a régi
+# jelentéssel elfogadottak, WARN-nal; ÍRÁSKOR (`--plan-only`, a `03b` lezáró
+# kapuja és a `04` EG1 belépője) FAIL. A WARN így lejáró: az írási oldal
+# szigorúsága miatt a legacy értékek a ciklusok haladtával maguktól elfogynak.
 
 PH1_IMPLEMENT_WORDS = {"implement", "implementáció", "implementacio", "06"}
 PH1_VALIDATE_WORDS = {"validate", "validálás", "validalas", "07"}
-PH1_BOTH_WORDS = {"", "—", "-", "n/a", "na", "mindkettő", "mindketto", "both", "mind", "all"}
+PH1_POST_MERGE_WORDS = {"post-merge", "post_merge", "postmerge"}
+PH1_DEV_TEST_WORDS = {"dev-test", "dev_test", "devtest"}
+# Csak a LEGACY olvasásához tartjuk életben (L13-D18) — új plan nem írhatja.
+PH1_BOTH_WORDS = {"", "—", "-", "–", "n/a", "na", "mindkettő", "mindketto", "both",
+                  "mind", "all"}
 
 
 def _phase_set(value):
+    """(fázis-halmaz, ismert-e, legacy-e) — a `Fázis` cella feloldása."""
     raw = (value or "").strip().lower().strip("`*")
     if raw in PH1_BOTH_WORDS:
-        return {"implement", "validate"}, True
+        return {"implement", "validate"}, True, True
     out = set()
+    legacy = False
     for part in re.split(r"[,;/+ ]+", raw):
         if not part:
             continue
@@ -1757,11 +1776,18 @@ def _phase_set(value):
             out.add("implement")
         elif part in PH1_VALIDATE_WORDS:
             out.add("validate")
+        elif part in PH1_POST_MERGE_WORDS:
+            out.add("post-merge")
+        elif part in PH1_DEV_TEST_WORDS:
+            out.add("dev-test")
         elif part in PH1_BOTH_WORDS:
             out |= {"implement", "validate"}
+            legacy = True
         else:
-            return set(), False
-    return (out or {"implement", "validate"}), True
+            return set(), False, False
+    if not out:
+        return {"implement", "validate"}, True, True
+    return out, True, legacy
 
 
 # ── TP4/b — a gépi futtatási tábla SÉMÁJA ────────────────────────────────────
@@ -1938,22 +1964,39 @@ def check_run_table_categories(plan_text, conventions_path, f):
                 "MÁS kategória-néven gyűjt eredményt, és a `test-runs/` fa kettéhasad")
 
 
-def check_run_table_phase(plan_text, f):
-    """PH1 — a `Fázis` oszlop értékei érvényesek, és marad mit futtatni a 07-ben."""
+def check_run_table_phase(plan_text, f, plan_only=False):
+    """PH1 — a `Fázis` oszlop KÖTELEZŐ, explicit, és marad mit futtatni a 07-ben.
+
+    `plan_only=True` az ÍRÁSI oldal (a `03b` lezáró kapuja és a `04` EG1
+    belépője): ott a legacy cella FAIL. Olvasáskor (`05` hurok) WARN (L13-D18)."""
     rows = table_rows(plan_text, sec("machine_run_table"))
     if not rows:
         return
+    allowed = (f"`{st('phase_implement')}`, `{st('phase_validate')}`, "
+               f"`{st('phase_post_merge')}`, `{st('phase_dev_test')}`")
     validate_rows = []
     for row in rows:
         cat = row[0] if row else "(névtelen)"
         cell = row[8] if len(row) > 8 else ""
-        phases, ok = _phase_set(cell)
+        phases, ok, legacy = _phase_set(cell)
         if not ok:
             f.add("PH1", "03", f"a gépi futtatási tábla `{cat}` sorának `{fld('f_phase')}` "
-                  f"értéke ismeretlen (`{cell[:30]}`) — a három megengedett érték: "
-                  f"`{st('phase_implement')}`, `{st('phase_validate')}`, `{st('phase_both')}` "
-                  "(az üres cella mindkettőt jelenti)")
+                  f"értéke ismeretlen (`{cell[:30]}`) — a megengedett értékek: "
+                  f"{allowed}, vesszővel felsorolva")
             continue
+        if legacy:
+            msg = (f"a gépi futtatási tábla `{cat}` sorának `{fld('f_phase')}` cellája "
+                   f"{'ÜRES' if not cell.strip() else f'legacy értéket visel (`{cell.strip()[:20]}`)'} "
+                   f"— a `{fld('f_phase')}` oszlop KÖTELEZŐ és explicit (PH1/L13-D3): "
+                   f"a hallgatás nem alapértelmezés, hanem hiba. Írd ki tételesen, mely "
+                   f"fázisokban fut: {allowed} (pl. `{st('phase_implement')}, "
+                   f"{st('phase_validate')}`)")
+            if plan_only:
+                f.add("PH1", "03", msg)
+            else:
+                f.suggest("PH1", "03", msg + " — most a régi jelentéssel "
+                          f"(`{st('phase_implement')}` + `{st('phase_validate')}`) olvasom, "
+                          "de új plan már nem írhatja (L13-D18)")
         if "validate" in phases:
             validate_rows.append(cat)
         elif (row[1] if len(row) > 1 else "").lower().startswith("neh"):
@@ -1964,8 +2007,8 @@ def check_run_table_phase(plan_text, f):
         f.add("PH1", "03", f"a gépi futtatási tábla egyetlen kategóriája sem fut a "
               f"`{st('phase_validate')}` fázisban (PH1) — a `07` így nem futtat egyetlen tesztet "
               f"sem, és a `dod-check.py` a validálási kör bizonyítékaiból joinol: minden "
-              f"`DoD-NN` bizonyíték nélkül maradna. Legalább egy kategória legyen "
-              f"`{st('phase_validate')}` vagy `{st('phase_both')}`")
+              f"`DoD-NN` bizonyíték nélkül maradna. Legalább egy kategória sorolja fel a "
+              f"`{st('phase_validate')}` fázist")
 
 
 # ── EV1–EV5 — teszt-cél környezet (EV) ────────────────────────────────────────
@@ -2766,7 +2809,7 @@ def main():
         check_test_artifact_datasheet(plan_text, f)
         check_ts_http_blocks(plan_text, f)
         check_run_table_schema(plan_text, f)
-        check_run_table_phase(plan_text, f)
+        check_run_table_phase(plan_text, f, plan_only=args.plan_only)
         check_run_table_categories(plan_text, Path(args.conventions), f)
         check_test_ids(plan_text, f)
     if code_only:

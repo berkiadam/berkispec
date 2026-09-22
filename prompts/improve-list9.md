@@ -7,7 +7,7 @@
 >
 > **Státusz:** **ELKÉSZÜLT** (2026-09-03). A 4–10. szakasz minden tétele kipipálva; a
 > végrehajtás tapasztalatai és a két tervtől való eltérés a **12. szakaszban**.
-> **Előzmény:** a `prompts/inprove-list8.md` (`RUN1` · `TP4/b` · `EV7` · `SK1`) **elkészült**, és
+> **Előzmény:** a `prompts/improve-list8.md` (`RUN1` · `TP4/b` · `EV7` · `SK1`) **elkészült**, és
 > elkészült a `dev` → `remote` környezet-címke egységesítés is (`25bf354`). Ez a terv arra a résre
 > válaszol, amit a `list8` 11. szakasza nyitva hagyott: a bizonyíték ma **kategória-szintű**, és
 > semmi nem mondja meg, hogy egy KONKRÉT teszt hol futott.
@@ -84,7 +84,7 @@ Ez a terv sok meglévő kapu-azonosítót említ (`TR3`, `TR7`, `EV1`–`EV7`, `
 | maga a script docstringje (`prompts/scripts/*.py` eleje) | a pontos viselkedés és a kilépő kódok |
 
 A `list8`-ban született négy kapu (`RUN1` · `TP4/b` · `EV7` · `SK1`) leírása a
-`prompts/inprove-list8.md`-ben is ott van, a 11. szakaszában a végrehajtás tapasztalataival együtt.
+`prompts/improve-list8.md`-ben is ott van, a 11. szakaszában a végrehajtás tapasztalataival együtt.
 
 ### 1.5 Amit ez a terv NEM érint (kimondott nem-célok)
 

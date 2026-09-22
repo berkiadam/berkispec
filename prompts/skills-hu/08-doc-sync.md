@@ -14,7 +14,7 @@ output:
   - "specs/cycle-NN-<name>/doc-sync-plan.md (a végrehajtás és a folytatás horgonya)"
   - "specs/cycle-NN-<name>/doc-sync-questions.md (ha merül fel döntési pont / kapu-bukás)"
 prev: bs-validate
-next: bs-merge
+next: bs-review-and-merge
 subagents:
   - "agents/doc-sync-planner.md"
 ---
@@ -293,6 +293,8 @@ A `specs/test-conventions.md` a projekt **visszatérő teszt-elvárásainak és 
 > **🔴 TC1/a — Ez NEM futtatható forrás.** A regiszterből **semmi nem fut le automatikusan**. A `test-runner` subagent ezt a fájlt **nem olvassa** — kizárólag a `plan.md` <sec:testing_strategy> / <sec:regression_impact> szekcióit. Egy recept akkor és csak akkor hajtódik végre, ha a `02`/`03` fázis azt tudatosan **beemelte** az adott ciklus `spec.md`/`plan.md`-jébe (emberi jóváhagyással). A regiszter **memória**, a `plan.md` az **egyetlen futtatási igazság**.
 
 **Mi nem tartozik ide:** a `conventions.md` rögzíti, **hogyan** tesztelünk (eszközök, mappastruktúra, futtatási parancsok, elvek) — azt itt **nem ismételjük**. A `plan.md` rögzíti, mi az **<status:op_new>** az adott ciklusban. Ez a fájl azt rögzíti, **mit és mikor kötelező** tesztelni, komponensenként, as-built.
+
+> **A merge utáni körök környezet-receptje ide tartozik (CS4/TC1/c).** Központosított SDD-ben a `VP2` (post-merge) kör a CI teszt-node-ján, **konténerizáltan** fut: a `compose`-os, mockokkal ellátott teszt-környezet felhúzása, a teszt-userek és a teszt-adat **recept**, tehát ha egy ciklusban visszatérővé vált, promótáld ide. A `VP3` (`bs-dev-test`) **deploy-receptje** ugyanígy. A **be/ki kapcsoló** és a **deploy-parancs** viszont a `conventions.md` `## <sec:cv_review_and_merge>` szekciójáé — a gép azt olvassa.
 
 ### TC2 — Szerkezet: koordináta-blokk + pontosan három szekció
 

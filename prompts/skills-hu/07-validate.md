@@ -68,7 +68,7 @@ A prompt bemenete a ciklus mappája (pl. `specs/cycle-NN-<cycle-name>`). A valid
    - **`exit 1`** → a kiírt ✗ pontok szerint:
      - **`tasks.md` státusza nem `<status:ready_for_validate>`** → az implementáció még nem zárult le: jelezd, és térj vissza a `06` fázishoz;
      - **`plan.md` / `spec.md` státusza nem elfogadható** (elfogadható: `plan.md` → `<status:ready_for_tasks>` vagy `<status:done>`; `spec.md` → `<status:ready_for_plan>` vagy `<status:done>`) → ha valamelyik `<status:draft>`-ra van visszaállítva, jelezd a felhasználónak: valamelyik korábbi fázisban döntés született, amely szinkront igényel.
-   - A `<status:done>` mindkettőnél **normális**, ha a `08-doc-sync` (vagy a `09-merge` előtti doc-sync újrafuttatás) után tértünk vissza ide.
+   - A `<status:done>` mindkettőnél **normális**, ha a `08-doc-sync` (vagy a ciklusvégi merge-ág előtti doc-sync újrafuttatás) után tértünk vissza ide.
    - A szkript `·` sorai INFO-k (megszakadt hurok markere, nyitott `input-from-prev` tételek) — ezeket dolgozd fel, de nem állítanak meg.
 
 4. **Szelektor-kapu (TB2) — a kör ELEJÉN.** Egy elorphanodott `[CHECK]` szelektor (a `06` átnevezett egy teszt-függvényt, a task parancsa a régi nevet őrzi) a kör **elején** derüljön ki, ne a végén:
@@ -133,7 +133,7 @@ A validáció bármikor megszakadhat. Újraindítás (ismételt futtatás) eset�
 
 4. **Megszakadt önjavító hurok felismerése (`[validate-loop]` marker + <sec:validation_history>):** ha a `tasks.md` státusza `<status:ready_for_implement> [validate-loop]` markert visel, egy korábbi validate-hurok szakadt meg — **ne** kezdj tiszta lapról. Derítsd ki a hurok állapotát:
    - Kérdezd le a napló állapotát: `failure-counter.py <validation-report.md> --status` — ez adja meg az utolsó futást, a megrekedt itemeket és a számlálókat (hányadik próbánál tartott). Kézzel ne parse-old.
-   - Olvasd be a `tasks.md` `## <sec:validation_fixes>` **és** `## <sec:review_fixes>` szekcióját: vannak-e még elvégzetlen `[ ]` javító-taskok?
+   - Olvasd be a `tasks.md` `## <sec:validation_fixes>`, `## <sec:review_fixes>` **és** `## <sec:post_merge_fixes>` szekcióját: vannak-e még elvégzetlen `[ ]` javító-taskok? _(A harmadik a merge utáni verifikáció (`VP2`/`VP3`) bukásából jön, és ugyanúgy validálandó — L13-D8.)_
      - **Ha igen** (a fixer nem futott le vagy félbeszakadt): folytasd a hurkot a megfelelő fixer újraindításával ezekre a taskokra (validációs → `implement-fixer`, review → `review-fixer`), majd újra-validálj.
      - **Ha nincs** (a fixer befejezte, de az újra-validálás maradt el): futtasd újra a validálási lépéseket, és értékeld az eredményt a hurok szerint.
    - A számlálók a leállási korlátok alapja — a folytatáskor a szkript automatikusan onnan számol tovább (a napló a memória). **Ne nullázd, ne írd át kézzel a `# <sec:validation_history>`-t.**
@@ -293,6 +293,8 @@ python3 <platform-scripts-mappa>/run-tests.py \
 - **A kimenet kategóriánként kiírja a KÖRNYEZETET is** (`@ dev`, `@ lokális`), és a `results.json`-ba is bekerül. **Ezt vidd be a kör lépés-táblájába**: a riportból utólag látszania kell, hol volt zöld a teszt — egy zöld JUnit XML önmagában nem árulja el, melyik hostot szólította meg.
 - **`exit 3`** → a tábla **helyőrző-hibás**: a behelyettesítés dupla útvonal-prefixet ad (`test-report/test-report/…` vagy `test-report/specs/…`, TR5/c). **Ne futtass semmit, és NE ess vissza a `test-runner`-re** — a szkript kiírja, melyik sor és melyik mező hibás. Ez a `03` hiánya, nem kód-bug: javítsd a `plan.md` gépi tábláját a helyes helyőrzőre (`{round}` = teljes útvonal, `{phase}` = fázis-mappa — lásd 0/a), és futtasd újra. Ha a javítás nem egyértelmű, a VD5 szerint eszkalálj a `03`-ra.
 - Könnyű körben egyetlen bukott kategória visszaigazolásához: `--only <kategória>`.
+
+> **Test manager (opcionális, TM4) — ugyanaz a két hívás, mint minden más fázisban.** Ha a `conventions.md` `## <sec:cv_test_reporting>` szekciójának `**<field:f_test_manager_phases>:**` mezője felsorolja a `<status:phase_validate>` fázist, a kör **előtt** `--mode preflight`, **után** `--mode publish` fut (`test-manager.py`, `--round-dir` a kör-mappa). **Gyárilag ez a fázis NEM tölt fel** — a `07` nem válhat token- és hálózatfüggővé, különben egy offline fejlesztő nem tud ciklust zárni (TM1/TM4). `exit 3` = kihagyva, `exit 4` = a feltöltés bukott, ami alapból **nem** buktatja a kört: **a feltöltés soha nem bizonyíték** (TM7).
 
 > **🔴 `EV6` — forgalmi bizonyíték a futtatás UTÁN.** Az `EV1–EV5` a **célpontot** védi a futtatás **előtt** (host a parancsban, elérhetőségi probe, `localhost`-tilalom). Az `EV6` a **forgalmat** védi a futtatás **után**: *egy zöld teszt nem bizonyítja, hogy egyáltalán elindult kérés.* Egy éles ciklusban a dev környezetre szánt E2E tesztek **egyetlen dev kérést sem** indítottak (a teszt-törzsek üres vázak voltak), a kör `rest-logs` mappája mégis telinek látszott — 50 naplófájllal, amelyek mind korábbi körből örökölt, `127.0.0.1`-es bejegyzések voltak.
 >

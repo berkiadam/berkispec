@@ -182,18 +182,21 @@ def agents_src_dir(src_dir, gemini=False):
     base = Path(src_dir) / "prompts" / _lang_subdir("agents", PROMPT_LANG)
     return base / "gemini-agent" if gemini else base
 
-# Minden helper scriptet (prompts/scripts/*.py) átmásol a cél scripts_dest
-# mappába, kivéve saját magát (install-helper.py, ami csak a telepítő gépén
-# fut, a célprojektben nincs rá szükség). Így új helper script (pl.
-# ds22-gate-check.py) hozzáadásakor nem kell mindhárom process_* függvényt
-# külön bővíteni.
+# Minden helper scriptet (prompts/scripts/*.py és *.sh) átmásol a cél
+# scripts_dest mappába, kivéve saját magát (install-helper.py, ami csak a
+# telepítő gépén fut, a célprojektben nincs rá szükség). Így új helper script
+# (pl. ds22-gate-check.py, ci-run-skill.sh) hozzáadásakor nem kell mindhárom
+# process_* függvényt külön bővíteni.
 def copy_helper_scripts(src_dir, scripts_dest):
     scripts_dest.mkdir(parents=True, exist_ok=True)
     scripts_src_dir = Path(src_dir) / "prompts/scripts"
-    for script_src in sorted(scripts_src_dir.glob("*.py")):
+    sources = sorted(scripts_src_dir.glob("*.py")) + sorted(scripts_src_dir.glob("*.sh"))
+    for script_src in sources:
         # A repó-karbantartó szkriptek nem a célprojekt eszközei
         if script_src.name in ("install-helper.py", "sync-gemini-agents.py",
-                               "lang-parity-check.py"):
+                               "lang-parity-check.py",
+                               # repó-karbantartó / elavult (LG19) — nem a célprojekt eszközei
+                               "acceptance-check.sh", "init-project.sh"):
             continue
         script_dest = scripts_dest / script_src.name
         shutil.copy(script_src, script_dest)

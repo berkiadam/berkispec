@@ -96,8 +96,9 @@
        headers and body (the manual test plan assembles from this).
 [ ] 9. PH1 — RUN PHASE: the `<field:f_phase>` column of the machine-readable
        run table has a valid value in every row (`<status:phase_implement>` /
-       `<status:phase_validate>` / `<status:phase_both>`; an empty cell means
-       both), and at least one category runs in the `<status:phase_validate>`
+       `<status:phase_validate>` / `<status:phase_post_merge>` /
+       `<status:phase_dev_test>`; a comma-separated list, an EMPTY CELL IS AN ERROR),
+       and at least one category lists the `<status:phase_validate>`
        phase. No test proving a `DoD-NN` is `<status:phase_implement>`-only.
 [ ] 10. Every error branch states the HTTP status, the errorCode (where the error
        matrix of the spec defines it) and a sample of the response body.

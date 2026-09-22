@@ -12,7 +12,8 @@
 | `## <sec:cv_test_reporting>` (artifacts, path base, report phases, report commands) | `report-gate-check.py` (TR3/TR6, 06 + 07) | the gate looks for the report on the old path, or demands it in the wrong phase → FAIL |
 | `## Sonar` (project key, thresholds, location of the report) | `sonar-gate.py` (07) | the Quality Gate check runs for the wrong project/threshold |
 | `## <sec:cv_test_tools>` / test commands | `run-tests.py`, `test-runner` (07) | it runs a command that does not exist |
-| `## <sec:cv_merge_strategy>` | `09-merge` | the merge branch tries the wrong path |
+| `## <sec:cv_merge_strategy>` | the merge branch of the cycle end (`09`/`09a`–`09c`) | the merge branch tries the wrong path |
+| `## <sec:cv_review_and_merge>` | the cycle-closing skill family (`09`/`09a`–`09d`) | the wrong topology: bypassing the PR or a superfluous PR; the `VP2`/`VP3` round is skipped or runs needlessly |
 | `## <sec:cv_ports>`, `## <sec:cv_env_vars_short>` | 06/07 execution | the test runs with a different configuration than the development |
 
 **How a cycle modifies a convention — the four conditions:**

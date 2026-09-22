@@ -61,7 +61,7 @@ prompts/
 ├── scripts/      *.py          # kapuk, futtatók, telepítő-helper
 ├── models.json                 # platformonkénti modell/effort tierek (nyelvfüggetlen)
 ├── meta-improve-prompts.md     # a rendszer meta-leírása prompt-fejlesztéshez
-└── inprove-list*.md            # korábbi fejlesztési munkafájlok
+└── improve-list*.md            # korábbi fejlesztési munkafájlok
 install.sh / install.ps1        # telepítők (interaktív)
 README.md                       # a rendszer teljes dokumentációja (~1500 sor)
 src/index.mjs + berkispec       # ELHAGYOTT Node CLI — törlendő, lásd LG22
@@ -142,7 +142,7 @@ ls prompts/shared/*.md | wc -l          # 16 (a 7.6 után 17)
 ls prompts/agents/gemini-agent/*/agent.json | wc -l   # 11
 
 # útvonal-hivatkozások (bináris-mentes, git nélkül)
-grep -rIln "prompts/skills\|prompts/agents\|prompts/shared" . | grep -v "^./.git/" | grep -v inprove-list
+grep -rIln "prompts/skills\|prompts/agents\|prompts/shared" . | grep -v "^./.git/" | grep -v improve-list
 
 # INCLUDE markerek
 grep -rho "INCLUDE:[^ ]*" prompts/ | sort | uniq -c | sort -rn
@@ -578,7 +578,7 @@ eltűnik a félrevezető `prompts/<language>/` minta. Nem funkcionális változ�
   útvonalait **ne** javítsd, és **ne töröld** a fájlt.
 - [x] **6.5 — Ellenőrzés:**
   `grep -rIn "index.mjs\|prompts/templates\|specification.md\|berkispec plan" . | grep -v "^./.git/"`
-  → nulla találat (az `inprove-list*.md`-t leszámítva).
+  → nulla találat (az `improve-list*.md`-t leszámítva).
 
 ---
 
@@ -602,7 +602,7 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
   `prompts/shared-<PROMPT_LANG>/<f>`. **A 71 meglévő marker szövege NEM változik** — csak a
   feloldó. Egyúttal a `lang/<f>` prefix célja `prompts/lang/<PROJECT_LANG>/<f>` lesz (2.4).
 
-- [x] **7.4 — Útvonal-hivatkozások javítása.** Mért leltár (a `inprove-list*.md` nélkül):
+- [x] **7.4 — Útvonal-hivatkozások javítása.** Mért leltár (a `improve-list*.md` nélkül):
   - **`prompts/skills` — 64 találat, 19 fájlban:** `install.sh`, `install.ps1`,
     `prompts/scripts/init-project.sh`, `prompts/scripts/install-helper.py`,
     `prompts/meta-improve-prompts.md`, `README.md`, `.claude/settings.local.json` (**nem
@@ -648,7 +648,7 @@ együtt megy, különben a repó egy commitban törött állapotban áll.
 - [x] **7.8 — Verifikáció még a kétnyelvűsítés előtt:**
   ```bash
   grep -rIn "prompts/skills/\|prompts/agents/\|prompts/shared/" . \
-    | grep -v "^./.git/" | grep -v -- "-hu/\|-en/" | grep -v inprove-list | grep -v init-project.sh
+    | grep -v "^./.git/" | grep -v -- "-hu/\|-en/" | grep -v improve-list | grep -v init-project.sh
   ```
   → nulla találat *(a `.claude/settings.local.json` nem verziókezelt lokális engedély-lista,
   és az `init-project.sh` az LG19 miatt kivétel)*.

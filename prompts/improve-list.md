@@ -494,7 +494,7 @@ prompts/
 │   └── init-project.sh           # Ágens-integráció (placeholder, lásd 6.9)
 ├── README.md                     # Folyamat leírás + skill/agent index
 ├── meta-improve-prompts.md       # Marad
-└── inprove-list.md               # Marad (fejlesztési lista)
+└── improve-list.md               # Marad (fejlesztési lista)
 ```
 
 ### 6.3 Futtatási modell

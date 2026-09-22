@@ -49,6 +49,11 @@ Az alábbi szekcióknál **aktívan rá kell kérdezned** (nem elég csak pre-fi
 - **Teszt-riportolás (TR3 — KÖTELEZŐ kérdés, a teszt stack után):** <!-- INCLUDE:lang/00-init-project.md#TR3-riport-kerdes --> A választ a `## <sec:cv_test_reporting>` szekció **táblázatába** vezesd (kategória / eszköz / parancs / artefaktum). **Ezt a szekciót nem hagyhatod pre-fillelt default-tal** — vagy valós parancsok kerülnek bele, vagy a felhasználó explicit kimondja, hogy nincs riport-generálás, és akkor a `**<field:f_report_required>:**` mező `nem` + indoklás. Ha az eszköz többféle formátumot tud, **egyfájlos HTML-t javasolj** (a riport a ciklus git-diffjébe kerül).
 - **Teszt-futtatás (KT1 — KÖTELEZŐ kérdés, a teszt-riportolás után):** <!-- INCLUDE:lang/00-init-project.md#KT1-futtatas-kerdes --> A választ a `## <sec:cv_test_execution>` szekcióba vezesd: a `**<field:f_test_categories>:**` mezőbe a kategória-szótár, a **projekt-szintű futtatási táblába** a kategóriánkénti parancsok (az oszlop-séma **azonos** a `plan.md` gépi futtatási táblájával — TP4/b), a **Tesztfájl-helyek** táblába pedig a kategóriánkénti globok. Ez a szekció **két fogyasztót** szolgál: a `/bs-run-tests` segédparancs cikluson kívüli futtatását és a `08-doc-sync` teszt-leltárának felderítését (LD5). **Ne hagyd pre-fillelt default-tal**, és a `remote` kategóriánál az EV3–EV5 szabály él (literál cél-host, probe, `localhost`-tilalom).
 - **Merge stratégia + visszaintegrálás (BD7/BD15):** kérdezd meg a git szolgáltatót (GitHub / Bitbucket Cloud / Bitbucket Server / GitLab / Lokális), majd **próbáld ki az access-t** a megfelelő paranccsal (lásd a Merge stratégia szekciónál). Ha az access teszt sikertelen, **ne zárd le a `conventions.md`-t** — kérd a token / URL / permissions javítását, vagy alternatív szolgáltató / lokális merge választását. Ez az **egyetlen igazságforrás** arra, hogyan kerül vissza `main`-be egy elkészült branch (PR vagy közvetlen merge) — ezt használja a 09 (ciklus-merge), a 01/00 branch-figyelmeztetés, és a 00 init-branch visszaintegrálása is. Ha nincs döntés/remote, a default a **közvetlen merge** (BQ7). _(Csak a `## <sec:cv_merge_strategy>` szekciót töltsd — ne vezess be új mezőt.)_
+- **Review and merge (RM8 — KÖTELEZŐ kérdés, a Merge stratégia után):** <!-- INCLUDE:lang/00-init-project.md#RM8-review-merge-kerdes --> A választ a `## <sec:cv_review_and_merge>` szekció `PR submission` és `SDD mode` mezőjébe írd. **A mezőnevek és az értékek angol literálok** (L13-D2) — ne fordítsd le őket, mert a ciklusvégi skillek ezekre illesztenek.
+- **Merge utáni verifikáció (VP2/VP3 — a Review and merge után):** <!-- INCLUDE:lang/00-init-project.md#VP2-post-merge-kerdes --> A válaszok helye: `Post-merge tests`, `Skip post-merge tests if master unchanged`, `Dev deployment test (bs-dev-test)`, `Dev deployment command`. Ha a `Post-merge tests` értéke `yes`, a `## <sec:cv_test_reporting>` **<field:f_report_phases>** mezőjébe is vedd fel a `post-merge` értéket (`Dev deployment test: yes` esetén a `dev-test`-et is) — különben a `report-gate-check.py` nem keresi a kör artefaktumait.
+- **Értesítés és hibakezelés (CS6/CS7):** <!-- INCLUDE:lang/00-init-project.md#CS6-ertesites-kerdes --> A válaszok helye: `Failure handling`, `Notification channel`, `Notification secret (env var)`, `Notification command`. **A titok értékét SOHA ne írd a `conventions.md`-be** — csak a környezeti változó nevét (ugyanaz a szabály, mint a Sonar `SONAR_TOKEN`-jénél).
+- **CI ágens (csak `SDD mode: centralized` esetén):** <!-- INCLUDE:lang/00-init-project.md#CI-agent-kerdes --> A válasz helye: `CI agent` (+ `CI agent command`, ha `command`).
+- **Test manager (TM3 — a Teszt-riportolás után):** <!-- INCLUDE:lang/00-init-project.md#TM3-test-manager-kerdes --> A válaszokat a `## <sec:cv_test_reporting>` szekció hat test manager mezőjébe írd (**<field:f_test_manager>**, **<field:f_test_manager_shape>**, **<field:f_test_manager_token_env>**, **<field:f_test_manager_phases>**, **<field:f_test_manager_required>**, **<field:f_test_manager_command>**). A `none` **kimondott, legitim válasz** — ilyenkor a többi mező `—` marad. A tokent **soha** ne írd be, csak a változó nevét (TM5).
 - **Branch-elnevezési stratégia (BD8 — csak ha van VCS):** kérdezd meg:
   - Kell-e **Jira-jegyszámot** a branch nevének elejére? (ha igen: milyen formátumban)
   - A feature branch-ek **`feature/` prefixszel** kezdődnek-e?
@@ -132,6 +137,36 @@ Mielőtt lezárod, ellenőrizd:
 6. **A `## <sec:cv_git_conventions>` VCS-flagje beállítva (BD11):** vagy git, vagy explicit „NINCS verziókezelő …"?
 7. **VCS mellett: a Branch-elnevezési stratégia mező kitöltött (BD8)** (default `feature/cycle-NN-<name>`, vagy a szervezeti szabály/pointer)?
 8. **Ha a felhasználó API design guideline-t / nagy szabályzatot jelölt (BD9/BD10):** a `## <sec:cv_references>`-ban ott a pointer, és nagy doksinál a `researcher`-rel készített tömör szabály-checklist?
+
+9. **A `## <sec:cv_review_and_merge>` szekció kitöltött és ellentmondásmentes (RM8)?** Az alábbi kombinációkat **a beírás pillanatában utasítsd vissza** — konfigurációs hibát itt olcsóbb elkapni, mint minden ciklus végén:
+   - `SDD mode: centralized` + `PR submission: no` → **elutasítva** (a központosított út definíció szerint PR-triggerelt);
+   - `Dev deployment test: yes` + `SDD mode: isolated` → **elutasítva** (a `VP3` csak központosított úton értelmes);
+   - `Dev deployment test: yes`, de üres `Dev deployment command` → **hiányzó kötelező mező**;
+   - `Notification channel` ≠ `none`, de üres `Notification secret (env var)` → **hiányzó kötelező mező**;
+   - `Notification channel: command`, de üres `Notification command` — ugyanígy a `CI agent: command` + üres `CI agent command`.
+
+   **No-VCS projektben (BD11) az egész szekció `n/a`**, és a ciklus a `08-doc-sync` után lezárul: a `bs-review-and-merge` / `bs-create-pr` / `bs-review` / `bs-merge` / `bs-dev-test` egyike sem fut.
+10. **Ki lett próbálva a CI ágens és az értesítés?** Ugyanaz a szabály, mint a merge-szolgáltató access-énél: egy nem-interaktív futtatás, ami először éles PR-en derül ki, hogy nem megy, a legrosszabb helyen bukik el.
+
+    <!-- INCLUDE:shared/python-cmd.md -->
+
+    ```bash
+    # csak `SDD mode: centralized` esetén — a `CI agent` mező kipróbálása
+    bash <platform-scripts-mappa>/ci-run-skill.sh --selftest
+
+    # ha a `Notification channel` nem `none` — próba-értesítés, valós küldés nélkül
+    python3 <platform-scripts-mappa>/notify.py --channel <csatorna> --dry-run \
+      --title "berkispec init" --body "Teszt-értesítés a 00 fázisból"
+    ```
+
+    Ha a selftest hibát ad (hiányzó CLI, lejárt kapcsoló, hiányzó env var), **ne zárd le a `conventions.md`-t** — vagy javítsátok, vagy a felhasználó másik ágenst / `command` ágat / `Notification channel: none`-t választ. A hiányzó env var **beszédes hiba**, nem néma átlépés: a néma értesítő rosszabb, mint a semmi.
+11. **Ki lett próbálva a test manager (TM5/TM6)?** Ha a `**<field:f_test_manager>:**` mező nem `none`:
+
+    ```bash
+    python3 <platform-scripts-mappa>/test-manager.py --mode selftest
+    ```
+
+    A selftest a **betölthetőséget** próbálja, nem csak az env var meglétét (a `reporter` alakú kliensek rossz runtime-verzión az egész teszt-futást meg tudják ölni). Ha bukik: javítsátok a környezetet, vagy a `command` ág / `none` a becsületes válasz — **kipróbálatlan adaptert ne írj be** a `conventions.md`-be.
 
 Ha bármelyikre nem, egészítsd ki, mielőtt lezárod.
 

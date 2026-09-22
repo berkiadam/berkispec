@@ -6,7 +6,7 @@
 > **Semmit nem kell kikövetkeztetni** — ha valami mégis hiányzik, az a terv hibája; írd bele.
 >
 > **Státusz:** VÉGREHAJTVA (2026-09-03). A 3. szakasz döntései **lezártak** — nem kell rákérdezned.
-> **Előzmény:** a `prompts/inprove-list6.md` **B része** (CK1 · RED1 · TB1–TB3 · EV6 · TR7 · RV-FB1)
+> **Előzmény:** a `prompts/improve-list6.md` **B része** (CK1 · RED1 · TB1–TB3 · EV6 · TR7 · RV-FB1)
 > **elkészült**; ez a terv az ott maradt rést zárja. A `list6` **A része** (a `03` hasítása
 > `03a`/`03b`-re) szintén elkészült — ez a terv **a hasítás utáni fájlneveket használja**.
 

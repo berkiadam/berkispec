@@ -241,7 +241,8 @@ _The items are grouped **per category** (following the category dictionary of `c
 - `<file name>` — <one-line description: what it is, who writes it and when>
 
 <!-- ANCHOR:zaro-uzenet -->
-   > *"The documentation is in sync with the implemented system, the consistency gate is green. We can continue with step 9: review & merge (09). Before starting the new phase, be sure to run a `/clear` command to empty the context, then use this command:*
+   > *"The documentation is in sync with the implemented system, the consistency gate is green. We can continue with step 9: review & merge (09). Which command to use is decided by the `PR submission` field of the `## Review and merge` section of `conventions.md`. Before starting the new phase, be sure to run a `/clear` command to empty the context, then:*
    > ```
-   > /bs-merge input: @specs/cycle-NN-<cycle-name>
+   > /bs-review-and-merge input: @specs/cycle-NN-<cycle-name>   # PR submission: no
+   > /bs-create-pr        input: @specs/cycle-NN-<cycle-name>   # PR submission: yes
    > ```"*

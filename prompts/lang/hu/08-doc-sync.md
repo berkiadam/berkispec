@@ -241,7 +241,8 @@ _A tételek **kategóriánként** csoportosulnak (a `conventions.md` kategória-
 - `<fájlnév>` — <egysoros leírás: mi ez, ki/mikor írja>
 
 <!-- ANCHOR:zaro-uzenet -->
-   > *"A dokumentáció szinkronban van a megvalósult rendszerrel, a konzisztencia-kapu zöld. Folytathatjuk a 9. lépéssel: review & merge (09). Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd használd ezt a parancsot:*
+   > *"A dokumentáció szinkronban van a megvalósult rendszerrel, a konzisztencia-kapu zöld. Folytathatjuk a 9. lépéssel: review & merge (09). Hogy melyik paranccsal, azt a `conventions.md` `## Review and merge` szekciójának `PR submission` mezője dönti el. Az új fázis megkezdése előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd:*
    > ```
-   > /bs-merge input: @specs/cycle-NN-<cycle-name>
+   > /bs-review-and-merge input: @specs/cycle-NN-<cycle-name>   # PR submission: no
+   > /bs-create-pr        input: @specs/cycle-NN-<cycle-name>   # PR submission: yes
    > ```"*

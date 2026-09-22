@@ -155,19 +155,41 @@ PHASE_ALIASES = {
     "implement": "implement", "implementáció": "implement", "implementacio": "implement",
     "06": "implement",
     "validate": "validate", "validálás": "validate", "validalas": "validate", "07": "validate",
+    "post-merge": "post-merge", "post_merge": "post-merge", "postmerge": "post-merge",
+    "dev-test": "dev-test", "dev_test": "dev-test", "devtest": "dev-test",
 }
-PHASE_BOTH_WORDS = {"", "—", "-", "n/a", "na", "mindkettő", "mindketto", "both", "mind", "all",
-                    "implement+validate", "implement, validate", "implement/validate"}
+ALL_PHASES = {"implement", "validate", "post-merge", "dev-test"}
+
+# LEGACY értékek (PH1 → L13-D3/L13-D18): az üres cella és a `mindkettő`/`both`
+# a régi séma szerint `implement + validate`-et jelentett. Olvasáskor ezt még
+# elfogadjuk — de WARN-nal, mert egy futó ciklus közepén nem buktatunk el
+# valamit, ami a régi szabály szerint helyes volt. ÍRÁSKOR (a `03b` lezáró
+# kapuja, `analyze-gate-check.py --plan-only`) viszont már tiltott: így a WARN
+# lejáró, nem örök.
+PHASE_LEGACY_WORDS = {"", "mindkettő", "mindketto", "both", "mind", "all",
+                      "implement+validate", "implement, validate", "implement/validate"}
+# KIMONDOTT jelölés (nem legacy): „nem fázis-kötött". A `conventions.md`
+# projekt-szintű táblájának minden sora ilyen — a cikluson kívüli futásnak
+# nincs fázisa —, ezért a fázis-szűrő nem tüntetheti el.
+PHASE_ANY_WORDS = {"—", "-", "–", "n/a", "na"}
+
+_LEGACY_PHASE_CELLS = set()
 
 
 def row_phases(row):
     """A sor FÁZIS cellája → a fázisok halmaza, amelyekben a kategória fut.
 
-    Jelöletlen sor MINDEN fázisban fut (PH1): a hallgatás soha nem jelenthet
-    kihagyást — egy véletlenül üresen hagyott cella nem tüntethet el tesztet a
-    validálásból. Több érték `,` / `/` / `+` jellel is felsorolható."""
+    Négy érvényes érték (PH1/L13-D3): `implement` · `validate` · `post-merge` ·
+    `dev-test`, tetszőleges kombinációban, `,` / `/` / `+` elválasztóval.
+    A `—` a „nem fázis-kötött" KIMONDOTT jelölése (a projekt-szintű tábla),
+    az üres cella és a `mindkettő`/`both` pedig LEGACY: a régi jelentéssel
+    (`implement` + `validate`) fogadjuk el, WARN-nal (L13-D18)."""
     raw = (row.get("fazis") or "").strip().lower()
-    if raw in PHASE_BOTH_WORDS:
+    if raw in PHASE_ANY_WORDS:
+        return set(ALL_PHASES)
+    if raw in PHASE_LEGACY_WORDS:
+        _LEGACY_PHASE_CELLS.add(f'{row.get("kategoria") or "?"}: '
+                                f'{"<üres>" if not raw else raw}')
         return {"implement", "validate"}
     out = set()
     for part in re.split(r"[,;/+ ]+", raw):
@@ -176,7 +198,22 @@ def row_phases(row):
         mapped = PHASE_ALIASES.get(part)
         if mapped:
             out.add(mapped)
-    return out or {"implement", "validate"}
+    if not out:
+        _LEGACY_PHASE_CELLS.add(f'{row.get("kategoria") or "?"}: {raw}')
+        return {"implement", "validate"}
+    return out
+
+
+def warn_legacy_phases():
+    """Egyszeri WARN a legacy `Fázis` cellákról (L13-D18)."""
+    if not _LEGACY_PHASE_CELLS:
+        return
+    print("WARN (PH1/L13-D18): legacy `Fázis` cella a táblában — a régi jelentéssel "
+          "(`implement` + `validate`) futtatom: "
+          + "; ".join(sorted(_LEGACY_PHASE_CELLS))
+          + ". Új plan-ben az érték KÖTELEZŐ és explicit "
+            "(`implement` / `validate` / `post-merge` / `dev-test`, vesszős felsorolásban) — "
+            "a `03b` lezáró kapuja már nem engedi át az üres cellát.", file=sys.stderr)
 
 
 def is_empty(value):
@@ -616,11 +653,15 @@ def main():
                              "`test-report/validate/round-NN` vagy `validate/round-NN`")
     parser.add_argument("--type", default="all", choices=["gyors", "nehez", "all"],
                         help="mely típusú kategóriák fussanak (VD10 kör-típus)")
-    parser.add_argument("--phase", default="all", choices=["implement", "validate", "all"],
+    parser.add_argument("--phase", default="all",
+                        choices=["implement", "validate", "post-merge", "dev-test", "all"],
                         help="mely FÁZIS kategóriái fussanak (PH1) — a tábla `Fázis` oszlopa "
-                             "alapján. A jelöletlen (üres) sor MINDEN fázisban fut, tehát a "
-                             "hallgatás sosem jelent kihagyást. A 06 `--phase implement`-tel, "
-                             "a 07 `--phase validate`-tel hívja")
+                             "alapján. A `06` `--phase implement`-tel, a `07` "
+                             "`--phase validate`-tel, a merge-ág (`VP2`) "
+                             "`--phase post-merge`-dzsel, a `bs-dev-test` (`VP3`) "
+                             "`--phase dev-test`-tel hívja. A `—` cella a nem fázis-kötött sor jelölése "
+                             "(projekt-szintű tábla): MINDEN fázisra illeszkedik. Az üres "
+                             "cella LEGACY (régi jelentés + WARN, L13-D18)")
     parser.add_argument("--only", action="append", default=[],
                         help="csak ezek a kategóriák fussanak (könnyű körben a bukott item)")
     parser.add_argument("--repo", default=".", help="a parancsok futtatási könyvtára")
@@ -670,6 +711,11 @@ def main():
         return 2
 
     matrix_all = matrix
+    # A legacy `Fázis` cellák felderítése a WARN-hoz MINDEN soron megtörténik —
+    # a fázis-szűrő ugyanis kiejtené azokat a sorokat, amelyekről épp szólni kell.
+    for _row in matrix:
+        row_phases(_row)
+    warn_legacy_phases()
     if args.phase != "all":
         matrix = [r for r in matrix if args.phase in row_phases(r)]
         if not matrix:

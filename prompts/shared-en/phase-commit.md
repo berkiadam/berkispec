@@ -20,6 +20,11 @@
 
 1. **No-VCS gate:** if, according to the `## <sec:cv_git_conventions>` section of `conventions.md`, there is **no version control**, steps 2–5 are skipped — the phase closes with writing the status. Otherwise continue.
 2. **Rewriting the <field:f_status>** in the artifact (to the closing status of the phase). **In a loop phase (05, 07)** this also includes writing the status of the report/log and arranging the `[analyze-loop]` / `[validate-loop]` marker, according to the rule of the given closing branch.
+2.b **Regenerating `cycle-status.md` (L13-D15) — BEFORE the commit:**
+   ```bash
+   python3 <platform-scripts-mappa>/cycle-status.py specs/cycle-NN-<cycle-name> --write
+   ```
+   The file is **generated** (a rendering of the evidence, never a source — no gate reads it), and it is **part** of the phase-closing commit: this way it never stands stale, and on the PR and on the centralized path it is the only place where a human sees where the cycle stands even next to a machine run. On a conflict it does not have to be resolved: it can simply be regenerated. If the script is missing (an old installation), this step is skipped, but the commit is **not**.
 3. **Stage + commit** — for the folder of the cycle, with the tag of the phase:
    ```bash
    git add specs/cycle-NN-<cycle-name>/

@@ -12,16 +12,16 @@
 > engedte. Az 5. szakasz saját szabálya szerint („a **célszám** engedjen, ne a szabály") ez a
 > helyes kimenet; a részletes indoklás és a `7/q`-ba írt új korlát (`≤ 445`) a 9. szakaszban.
 >
-> **⚠ Ez egy ELTÁVOLÍTÓ kör.** Minden más `inprove-list` szabályt **adott**; ez **elvesz**. A
+> **⚠ Ez egy ELTÁVOLÍTÓ kör.** Minden más `improve-list` szabályt **adott**; ez **elvesz**. A
 > kör legnagyobb kockázata ezért nem a hiányos végrehajtás, hanem a **túlvágás** — ezért van
 > 5. szakasz (anti-lista) és 7. szakaszban **regresszió-kapu**, ami azonosító-szinten
 > ellenőrzi, hogy csak az eshetett ki, amit a `D3` engedélyez.
 >
 > **Előzmény és sorrend-függés:**
-> - `prompts/inprove-list10.md` (`QF1`–`QF20`, `QT1`–`QT6`) — **elkészült** (`3132cd9`). **Ez a
+> - `prompts/improve-list10.md` (`QF1`–`QF20`, `QT1`–`QT6`) — **elkészült** (`3132cd9`). **Ez a
 >   kör okozta a felhízást**: húsz tételt tett a quick-flow-ba, és a hosszt egyetlen döntés sem
 >   mérte. Ez a terv nem vonja vissza a `list10` szándékát, csak az **árát** csökkenti.
-> - `prompts/inprove-list11.md` (teszt-leltár + központi futtatás) — **megírva, nem
+> - `prompts/improve-list11.md` (teszt-leltár + központi futtatás) — **megírva, nem
 >   végrehajtva**. **Interakció:** a `list11` `LD10` tétele ~4 sort **ad** a quick-flow-hoz
 >   (leltár-drift jelzés). Lásd `QS7`.
 
@@ -101,7 +101,7 @@ python3 prompts/scripts/sync-gemini-agents.py --check   # agent.json tükrök  �
 
 | hol | mit ad |
 |---|---|
-| `prompts/inprove-list10.md` | **ennek a körnek a párja**: a `QF1`–`QF20` / `QT1`–`QT6` tételek eredeti indoklása. Vágás előtt **olvasd el az érintett tételt** |
+| `prompts/improve-list10.md` | **ennek a körnek a párja**: a `QF1`–`QF20` / `QT1`–`QT6` tételek eredeti indoklása. Vágás előtt **olvasd el az érintett tételt** |
 | `prompts/meta-improve-prompts.md` „Tervezési elvek" + shared-tábla | melyik shared blokk mit rögzít és ki emeli be (`7/b`–`7/o`) |
 | `README-HU.md` „5. Egyszerűsített flow" | a felhasználónak szánt leírás (5.1 ábra … 5.6 példa) |
 
@@ -247,7 +247,7 @@ nem csak vág, hanem **rögzíti a korlátot** (`D6` → `7/q`): különben a k�
       **502 → ~421 telepített sor**. Ha a build után **420 fölött** vagy: a `QS3`/`QS4`
       tömörítést húzd meg jobban — **ne** a `## 3.`, `## 5.` vagy a `QT`-csomag rovására
       (5. szakasz).
-- [x] **QS7 — Sorrend-függés a `list11`-hez.** Ha a `prompts/inprove-list11.md` **már
+- [x] **QS7 — Sorrend-függés a `list11`-hez.** Ha a `prompts/improve-list11.md` **már
       lefutott**, a quick-flow-ban ott van az `LD10` leltár-drift jelzés (~4 sor), tehát a
       kiinduló méret nem 502, hanem ~506 — a **célszám (`≤ 420`) akkor is érvényes**, csak
       ~4 sorral több a vágandó. Ha a `list11` **még nem futott**, a `list11` `LD10` tételéhez
@@ -291,7 +291,7 @@ teljesülne, akkor a **célszám** engedjen, ne a szabály:
       sorszámot. **A két README-t párban** szerkeszd: ezt **egyetlen gépi kapu sem méri**
       (a `lang-parity-check.py` hatóköre `BASES = ("skills","agents","shared")` + `lang`,
       `:116`–`:117` — a gyökér-README-ket nem látja).
-- [x] **6.3 — `prompts/inprove-list10.md`: NEM írjuk át.** A `list*` fájlok a **múltat
+- [x] **6.3 — `prompts/improve-list10.md`: NEM írjuk át.** A `list*` fájlok a **múltat
       rögzítik**. Ha a `QS1` kivezeti a `QF14`-et, azt **itt**, a `list12` 9. szakaszában kell
       rögzíteni — a `list10` `QF14` pipája marad, mert az akkor valóban elkészült.
 
@@ -452,7 +452,7 @@ tehát a `QS1` nem hagyott utána elavult állítást a gyökér-README-kben.)_
 
 ### 9.6 A `QS7` sorrend-függés lezárása
 
-A `prompts/inprove-list11.md` **már lefutott** (`02641cb`, merge `3130118`), tehát a `LD10`
+A `prompts/improve-list11.md` **már lefutott** (`02641cb`, merge `3130118`), tehát a `LD10`
 teszt-leltár drift-jelzés a quick-flow-ban ott volt a kiinduló állapotban — ezért a mért
 kiindulás 508/510 és nem 502. A `list11`-be **nem kellett** méret-megjegyzést írni (az csak a
 „még nem futott" ágra szólt). Az `LD10` blokk a `## 3.` védett szakaszában van, érintetlen.

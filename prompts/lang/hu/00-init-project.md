@@ -65,7 +65,7 @@ Spec-driven development. A fejlesztés ciklusokra van bontva. A workflow két eg
 - `06` — implement (kód + `tasks.md` frissítése)
 - `07` — validate (tesztek futtatása és DoD ellenőrzés)
 - `08` — doc-sync (`docs-generated/` frissítése és konzisztencia-kapu)
-- `09` — review & merge (review + merge a conventions.md Merge stratégiája szerint)
+- `09` — review & merge (a `## Review and merge` szekció szerint: `09` egyetlen lépésben — vagy `09a` create-pr → `09b` review → `09c` merge, PR feladása esetén; opcionálisan `09d` dev-test)
 
 Minden ciklus mappája: `specs/cycle-NN-<cycle-name>/`
 
@@ -111,6 +111,48 @@ _Access validáció szolgáltatónként (a 00 fázis futtatja, sikeres exit/HTTP
 - _GitLab: `glab auth status` + `glab repo view <repo>`_
 - _Lokális: nincs validáció_
 
+## Review and merge
+
+_**A ciklus utolsó fázisát ez a szekció vezérli (RM8):** van-e PR, hol fut a review és a merge, van-e merge utáni teszt-kör (`VP2`), van-e dev-telepítéses e2e kör (`VP3`), mi történik bukásnál, és mit hív a CI. **A szekciónév, a mezőnevek és az értékek angol literálok** — ezeket gép olvassa, ezért nyelvfüggetlenek (ugyanaz a szabály, mint a `[local]`/`[remote]` jelöléseknél és a teszt-kategória-azonosítóknál); a magyarázó próza a projekt nyelvén marad._
+
+- **PR submission:** yes | no
+- **SDD mode:** isolated | centralized
+- **Post-merge tests:** yes | no
+- **Skip post-merge tests if master unchanged:** yes | no
+- **Dev deployment test (bs-dev-test):** yes | no | n/a
+- **Dev deployment command:** _(csak ha a `Dev deployment test` értéke `yes` — a telepítést végző, szó szerinti parancs)_
+- **Failure handling:** notify | auto-fix-loop
+- **Notification channel:** slack | teams | command | none
+- **Notification secret (env var):** BS_NOTIFY_WEBHOOK
+- **Notification command:** _(csak ha a csatorna `command`)_
+- **CI agent:** claude-code | cursor | copilot | antigravity | command
+- **CI agent command:** _(csak ha a `CI agent` értéke `command`)_
+
+_**Melyik skill fut — a `PR submission` dönti el, nem az `SDD mode`:**_
+- _`no` → **egyetlen** skill: `/bs-review-and-merge` (09)._
+- _`yes` → **három** skill: `/bs-create-pr` (09a) → `/bs-review` (09b) → `/bs-merge` (09c)._
+- _`Dev deployment test: yes` → a merge után még egy fázis: `/bs-dev-test` (09d)._
+
+_**Post-merge tests (`VP2`).** A kör a **ciklus ágán** fut: előbb behozzuk a fő branch-et a ciklus ágába, utána épül és fut a teszt-kör a friss `main`-nel egyesített kódon, és **csak zöld eredmény után** történik a beolvasztás (izolált úton), illetve a push (központosított úton). Hogy **mely** tesztek futnak benne, azt a `plan.md` gépi futtatási táblájának `Fázis` oszlopa mondja meg (`post-merge` érték) — quick-flow ciklusban a `spec-plan.md` `## Merge tesztek` szekciója. A kör a **statikus réteget is** futtatja (Sonar, ugyanazokkal a küszöbökkel, mint a `07`), mert az egyesítés olyan kódot hoz be, amit a `07` Sonar-köre sosem látott. A bizonyíték a ciklus `test-report/post-merge/` mappájába kerül — sikernél és bukásnál egyaránt._
+
+_**Skip post-merge tests if master unchanged.** Ha a fő branch nem ment előre a ciklus ága óta, a `VP2` kör ugyanazt mérné, amit a `07` az imént lemért. `yes` esetén ilyenkor a kör kihagyható (a kihagyás ténye és oka a riportba kerül); `no` esetén mindig lefut._
+
+_**Dev deployment test (`VP3`).** Csak `SDD mode: centralized` mellett értelmes: a sikeres merge után egy automatizmus telepíti a terméket egy teljesen integrált teszt-környezetbe (`Dev deployment command`), és valódi e2e tesztek futnak rá. A teszt-válogatás a `Fázis` oszlop `dev-test` értéke; a részletes környezet-recept (compose, mockok, tesztadat) a `specs/test-conventions.md`-be tartozik (TC1/c). A bizonyíték a ciklus `test-report/dev-test/` mappájába kerül._
+
+_**Failure handling.** `notify` (alapértelmezés): a riport a ciklus útvonalára kerül, a fejlesztőt a `notify.py` értesíti, a javítást **ember** indítja. `auto-fix-loop`: a CI-n önjavító hurok indul, a `07` hurkának változatlan leállási korlátaival (per-item 3 egymást követő / 5 összes bukás, 5 egymást követő FAIL-futás, majd eszkaláció emberhez)._
+
+_**Notification.** A titok **kizárólag környezeti változóban** él, a szekcióba csak a változó NEVE kerül (ugyanaz a szabály, mint a `## Merge stratégia` `Authentication: token (env var név)` mezőjénél) — egy webhook-URL parancssori argumentumként a transzkriptbe, a `check-log.md`-be és a CI-naplóba is beszivárogna. A `none` **legitim, kimondott válasz** (egyszemélyes PoC), de nem az, ami hallgatásból következik. Az e-mail külön backendet nem kap: a `command` érték lefedi (`msmtp`, `sendmail`, céges script), ahogy a Jirát vagy a PagerDutyt is._
+
+_**CI agent.** A központosított úton a CI a `ci-run-skill.sh <skill> <ciklus-útvonal>` adaptert hívja, az pedig a itt megnevezett ágenst indítja nem-interaktív módban. **Az ágenst előre tisztázzuk és ki is próbáljuk** (`ci-run-skill.sh --selftest`), ugyanúgy, ahogy a merge-szolgáltató access-ét: egy nem-interaktív futtatás, ami először éles PR-en derül ki, hogy nem megy, a legrosszabb helyen bukik el._
+
+_**Érvényességi szabályok** (a `00` a beíráskor ellenőrzi, mert konfigurációs hibát ott olcsóbb elkapni, mint minden ciklus végén):_
+- _`SDD mode: centralized` + `PR submission: no` → **elutasítva** (a központosított út definíció szerint PR-triggerelt);_
+- _`Dev deployment test: yes` + `SDD mode: isolated` → **elutasítva** (a `VP3` csak központosított úton értelmes);_
+- _`Dev deployment test: yes` esetén a `Dev deployment command` **kötelező**;_
+- _`Notification channel` ≠ `none` esetén a `Notification secret (env var)` **kötelező**;_
+- _`Notification channel: command` esetén a `Notification command`, `CI agent: command` esetén a `CI agent command` **kötelező**;_
+- _**No-VCS projektben az egész szekció `n/a`**, és a ciklus a `08-doc-sync` után lezárul — a `bs-review-and-merge` / `bs-create-pr` / `bs-review` / `bs-merge` / `bs-dev-test` egyike sem fut._
+
 ## Teszt struktúra
 
 ```
@@ -152,8 +194,14 @@ _**Hova kerülnek (TR5):** a riportok nem közvetlenül a `test-report/` gyöker
 **Riport-generálás kötelező:** igen
 **Artefaktum-útvonal alapja:** kör-mappa
 **Riport-fázisok:** validate
+**Test manager:** none
+**Test manager alak:** —
+**Test manager token env var:** —
+**Test manager fázisok:** dev-test
+**Test manager kötelező:** nem
+**Test manager parancs:** —
 
-_**Riport-fázisok (TR6).** A mező sorolja fel, MELY fázisok kötelesek a fenti artefaktum-készletet előállítani: `validate` (a 07 teljes körei — ez az alapérték), `implement` (a 06 záró állapota), vagy mindkettő (`implement, validate`). Ha az `implement` is szerepel, a 06-implement a státuszváltás előtt legenerálja a készletet a `test-report/implement/` fázis-mappába, és ugyanaz a `report-gate-check.py` zárja. Ha nem, a 06 csak a `check-log.md`-t írja, és a bizonyítékot a 07 első TELJES köre adja. A mező nélküli, régi projekt viselkedése változatlan (`validate`). **Mikor éri meg az `implement`?** Ha az implementációs futásnak önálló bizonyíték-értéke van (böngészős képernyőképek, REST audit-naplók, hosszú E2E), amit a 07 köre már nem reprodukál ugyanabban az állapotban._
+_**Riport-fázisok (TR6).** A mező sorolja fel, MELY fázisok kötelesek a fenti artefaktum-készletet előállítani: `validate` (a 07 teljes körei — ez az alapérték), `implement` (a 06 záró állapota), `post-merge` (a merge utáni `VP2` kör) és `dev-test` (a `/bs-dev-test` `VP3` köre) — vesszős felsorolásban (`implement, validate, post-merge`). Ha az `implement` is szerepel, a 06-implement a státuszváltás előtt legenerálja a készletet a `test-report/implement/` fázis-mappába, és ugyanaz a `report-gate-check.py` zárja. Ha nem, a 06 csak a `check-log.md`-t írja, és a bizonyítékot a 07 első TELJES köre adja. **A `post-merge` és a `dev-test` fázist a `## Review and merge` szekció kapcsolja be** (`Post-merge tests`, `Dev deployment test`); ha ott be van kapcsolva, ide is fel kell venni, különben a `report-gate-check.py` nem keresi a kör artefaktumait. A mező nélküli, régi projekt viselkedése változatlan (`validate`). **Mikor éri meg az `implement`?** Ha az implementációs futásnak önálló bizonyíték-értéke van (böngészős képernyőképek, REST audit-naplók, hosszú E2E), amit a 07 köre már nem reprodukál ugyanabban az állapotban._
 
 _**A jelölő kötelező (TR5/b).** Az utolsó oszlop jelentése 2026-08-07-én megváltozott (`test-report/` gyökér → **kör-mappa**), a formátuma viszont nem — egy régi tábla ezért csendben félreértelmeződne. A `report-gate-check.py` a jelölő hiányában **nem találgat**: `exit 2` + a pótlandó sor. Elfogadott érték: `kör-mappa` (mai séma) vagy `test-report` (régi, flat séma — ilyenkor a kapu a `test-report/` gyökérhez oldja fel az útvonalakat). Meglévő projekt migrációja: írd be a jelölőt a valós sémával, és ha a ciklus most tér át a mai sémára, a `conventions.md` átírása **a ciklus része** (lásd a 03 „Kapu-konfiguráció együtt mozog" szabályát)._
 
@@ -173,6 +221,18 @@ _Kitöltési szabályok:_
 - **Az alkalmazás-oldali bizonyíték is TÁBLASOR, nem próza.** Ami a teszt-futás alatt keletkezik és utólag megnyitható — REST kérés/válasz audit-napló, korrelációs-azonosító nyom, alkalmazás-log-kivonat —, azt ugyanúgy vedd fel a táblába, mint a teszt-eszköz riportját. Amit a tábla nem kér, azt a `report-gate-check.py` **nem is keresi**: csendben elmarad, és a hiánya csak hónapokkal később derül ki. A fájlnév- és fejléc-konvenciót a `specs/test-conventions.md` rögzíti (TC1/c), a **kötelezőség** viszont ide tartozik.
 - **Ha a projekt egyáltalán nem generál teszt-riportot**, a fenti flaget írd `nem`-re, **indoklással** (pl. „csak manuális smoke-teszt van"). Ez tudatos, rögzített döntés — a kapu ilyenkor kihagyódik. Üresen hagyni vagy kitöltetlen táblázatot hagyni **nem** opció: a kapu ilyenkor használati hibát jelez.
 
+_**Test manager integráció (TM1–TM10) — opcionális, alapból KIKAPCSOLVA.** A keret nem ír elő külső test managert: `Test manager: none` mellett nulla új lépés és nulla új hálózati függés van. A commitolt `test-report/` készlet marad **az egyetlen** ciklus-bizonyíték; a test manager a **másik tengely** — cikluson átnyúló trend, flaky-detektálás, hibák ok szerinti csoportosítása —, amit a git nem tud megőrizni. **A feltöltés soha nem bizonyíték** (TM7): a `report-gate-check.py` egy URL-t tartalmazó, artefaktum nélküli riport-készletet ugyanúgy elutasít, mint ma._
+
+_**A mezők jelentése:**_
+- _`Test manager`: `none` (alap) · `testdino` · `reportportal` · `qase` · `command` — melyik adapter fut. `none` esetén a többi mező elhagyható._
+- _`Test manager alak`: `reporter` (a kliens a teszt-futtató reporter-láncában fut és futás közben streamel — pl. TestDino) vagy `import` (a kész `junit.xml`-t egy parancs utólag tolja fel — pl. ReportPortal, Qase). A két alak nem helyettesíthető egymással._
+- _`Test manager token env var`: a változó **NEVE**, sosem az értéke — egy test manager API-token osztott platform credential (TC5), a `conventions.md`-be soha nem kerülhet. A `test-manager.py` maga olvassa ki a környezetből, és **soha nem kap tokent parancssorban**._
+- _`Test manager fázisok`: vesszős felsorolás — `implement` · `validate` · `post-merge` · `dev-test` · `ad-hoc`. **Alapérték: `dev-test`**, mert a `VP3` kör termeli a legtöbbet érő adatot, a `07` (`VP1`) pedig nem válhat token- és hálózatfüggővé: az sértené az izolált SDD üzemmódot. Az `ad-hoc` a cikluson kívüli `/bs-run-tests` futásokra vonatkozik — ezek metaadata `cycle=none`, tehát a `D8`/`KT6` bizonyíték-tűzfal a szolgáltatónál is látszik._
+- _`Test manager kötelező`: `igen` · `nem` (alap) — buktassa-e a fázist a feltöltés bukása. Alapból **nem**: ha a bizonyíték már commitolva van, egy 502-es SaaS nem érvényteleníthet egy zöld tesztkört. Az eredmény viszont sosem marad jelöletlen: a kör riportjába és a `results.json`-ba `uploaded <url>` / `FAILED <ok>` / `skipped (<fázis> nincs a listán)` sor kerül._
+- _`Test manager parancs`: szó szerinti parancssor, **csak** `command` providernél — ezzel TestRail, Xray, Allure TestOps vagy bármi más beköthető a keret módosítása nélkül._
+
+_**Kitöltött példa (TestDino, `reporter` alak):** `Test manager: testdino` · `Test manager alak: reporter` · `Test manager token env var: TESTDINO_TOKEN` · `Test manager fázisok: dev-test` · `Test manager kötelező: nem`. A riporter-blokk beírása a projekt `playwright.config.ts`-ébe **a projekt dolga** (a keret ehhez nem nyúl), a recept helye a `specs/test-conventions.md` (TC1/c). ⚠ A TestDino `reporter` csomagja **Node ≥ 22.12**-t követel: régebbi Node-on be sem töltődik, és ezzel az egész teszt-futást megöli — ezért próbálja a `test-manager.py --mode preflight` a riporter **betölthetőségét**, nem csak az env var meglétét._
+
 ## Teszt-futtatás
 
 _**Kötelező szekció (KT1).** Ez a szekció a **cikluson kívüli** teszt-futtatás egyetlen gépi igazságforrása: a `/bs-run-tests` segédparancs ebből olvassa ki, mely kategóriát milyen paranccsal futtasson, és a `08-doc-sync` teszt-leltára (`docs-generated/test-description.md`) ebből deríti fel, milyen tesztfájlok léteznek. A **ciklus**-szintű futtatást továbbra is a `plan.md` gépi futtatási táblája adja (TP4) — a kettő nem helyettesíti egymást: ez a szekció projekt-szintű és ciklus-független, az pedig egy ciklus egy körére szól._
@@ -191,7 +251,7 @@ _Az oszlop-séma **azonos** a `plan.md` gépi futtatási táblájával (TP4/b) �
 | rest-e2e | nehéz | `<a cél elérhetőségi probe-ja>` | `<parancs a cél-hosttal>` | `<fájl>` | junit | `<lebontás>` | `<remote — a cél-környezet neve>` | — |
 
 _Kitöltési szabályok:_
-- **A `Fázis` oszlop itt `—`:** a cikluson kívüli futásnak nincs fázisa, és az üres/`—` cella a `run-tests.py`-ban „mindkettő"-t jelent, tehát a fázis-szűrés nem tünteti el a sort.
+- **A `Fázis` oszlop itt `—`:** ez **kimondott jelölés** („nem fázis-kötött"), nem üres cella és nem hallgatólagos alapértelmezés — a cikluson kívüli futásnak nincs fázisa. A `/bs-run-tests` fázis-szűrő nélkül hívja a szkriptet, tehát a szűrő ága le sem fut. **A `plan.md` gépi táblájában viszont az üres cella HIBA** (PH1): ott minden sor explicit, vesszős felsorolást visel (`implement`, `validate`, `post-merge`, `dev-test`).
 - **A `{round}` és a `{phase}` helyőrző itt is működik:** a `/bs-run-tests` a `test-runs/…` futás-mappát adja át `--round-dir`-ként, tehát a `{round}` arra oldódik fel — nem ciklus-mappára.
 - **EV-szabályok érvényesek:** a `remote` környezetű sor parancsa **literálisan** tartalmazza a cél-hostot (EV3), és van hozzá `Előfeltétel`-probe ugyanarra a célra (EV4); `localhost` / `127.0.0.1` deklarált port-forward nélkül **TILOS** (EV5). A `run-tests.py` ezt futásidőben is méri (`exit 4`).
 
@@ -271,6 +331,21 @@ _Projekt szintű technikai korlátok, elfogadott POC határok._
 
 <!-- ANCHOR:BD9-api-guideline-kerdes -->
 *„Van követendő API design guideline / API-szabályzat (REST konvenciók, verziózás, hibaformátum, elnevezés)? Ha igen, hol a dokumentuma?"*
+
+<!-- ANCHOR:RM8-review-merge-kerdes -->
+*„Hogyan zárul a ciklus ebben a projektben? (a) **Van-e PR feladás**, vagy a ciklus ága közvetlenül, a te gépeden kerül vissza a fő branch-re? (b) A review és a merge a **te gépeden** fut (izolált SDD), vagy a PR triggereli a CI/CD-t, és ott, **emberi beavatkozás nélkül** megy (központosított SDD)? Ez dönti el, hogy a ciklus végén egyetlen skill fut (`/bs-review-and-merge`), vagy három (`/bs-create-pr` → `/bs-review` → `/bs-merge`)."*
+
+<!-- ANCHOR:VP2-post-merge-kerdes -->
+*„Legyen-e **merge utáni teszt-kör** (`VP2`)? Ez a ciklus ágán fut, miután behoztuk a friss fő branch-et, és **a beolvasztás előtt** bizonyítja, hogy a kód a masterrel egyesítve is a spec szerint működik (tesztek + Sonar). Ha igen: **kihagyható-e**, amikor a fő branch nem ment előre a ciklus ága óta? És központosított úton legyen-e utána **dev-telepítéses e2e kör** (`/bs-dev-test`, `VP3`) — ha igen, milyen paranccsal telepítünk dev-környezetbe?"*
+
+<!-- ANCHOR:CS6-ertesites-kerdes -->
+*„Ha a merge utáni vagy a dev-teszt kör bukik, **hogyan értesüljön róla a fejlesztő**? (`slack` / `teams` / szabad `command` / `none`.) A titok soha nem kerül a `conventions.md`-be — csak a környezeti változó NEVE. A `none` legitim válasz egyszemélyes projektben, de **kimondott** válasz legyen, ne hallgatás. És bukásnál mi történjen: `notify` (ember javít) vagy `auto-fix-loop` (a CI önjavító hurka indul)?"*
+
+<!-- ANCHOR:CI-agent-kerdes -->
+*„Központosított úton **melyik ágens fut a CI-ben** (`claude-code` / `cursor` / `copilot` / `antigravity` / szabad `command`)? Mindegyik hívható nem-interaktív módban, de a hitelesítés (API-kulcs, költség) és az engedély-modell platformonként más — ezért most ki is próbáljuk."*
+
+<!-- ANCHOR:TM3-test-manager-kerdes -->
+*„Használtok **külső test managert** (TestDino, ReportPortal, Qase, TestRail, Xray …), ahova a teszteredmények cikluson átnyúlóan felkerülnek? Ez **opcionális, alapból kikapcsolva** (`none`) — a ciklus bizonyítéka a commitolt riport marad, a test manager a trend- és flaky-adatot adja hozzá. Ha igen: melyik szolgáltató, és a kliense a teszt-futtató **reporter-láncába** kerül (`reporter`), vagy a kész `junit.xml`-t **utólag tolja fel** egy parancs (`import`)?"*
 
 <!-- ANCHOR:zaro-uzenet -->
    *"A projekt konvenciók rögzítve. A következő fázis indítása előtt mindenképpen futtass egy `/clear` parancsot a kontextus kiürítéséhez, majd megkezdhető a ciklusok kezelése: `/bs-add-cycles`."*

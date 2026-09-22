@@ -50,5 +50,22 @@ The command can be used in two ways:
      python3 <platform-script-path>
      ```
 
+   - **If the user asks for the generated status file (`--write`)**:
+     ```bash
+     python3 <platform-script-path> specs/cycle-NN-<cycle-name> --write
+     ```
+     The script writes `cycle-status.md` into the root of the folder of the cycle, and prints the usual output as well.
+
 3. **Displaying the output**:
    - Show the result of the run to the user in the chat.
+
+---
+
+## The generated `cycle-status.md` (`--write`)
+
+The `--write` mode generates the `specs/cycle-NN-<cycle-name>/cycle-status.md` file into the root of the folder of the cycle: what has run, what is left, and an overall status.
+
+- **🔴 A generated file, not hand-written.** A rendering of the evidence, **never a source** — and **no gate ever reads it**. The framework keeps two things strictly apart: a **decision** has to be persisted (it cannot be derived), while a **fact** has to be derived from the evidence, never from self-reporting. "What has run" is the second category: if the agent wrote `VP2: PASS` into it by hand, a self-reporting evidence channel would open next to `report-gate-check.py`. **A lying status file is worse than none** — so do not edit it by hand, and do not "fix" reality into it.
+- **When it refreshes by itself:** at every **phase-closing commit** (it is part of the shared `phase-commit` procedure), so it never stands stale. Beyond that, the manual `--write` call works at any time.
+- **It is committed:** on the PR and on the centralized path this is the only place where a human sees where the cycle stands **even next to a machine run**. On a conflict it does not have to be resolved: it can simply be regenerated.
+- **What else it shows:** based on the `## <sec:cv_review_and_merge>` section of `conventions.md`, the post-merge verification points as well (`VP2` post-merge, `VP3` dev test) — only those the project has switched on — and, if the report of the round carries it, the test manager run URL as a pointer.

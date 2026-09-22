@@ -8,7 +8,7 @@
 > **Státusz:** **ELKÉSZÜLT** (2026-09-07) — a 3. szakasz döntései a felhasználóval **lezárva**,
 > a végrehajtás **befejeződött**, minden kapu zöld. A tervtől való négy eltérés és a
 > végrehajtás tapasztalatai a **10. szakaszban**.
-> **Előzmény:** a `prompts/inprove-list10.md` (`QF1`–`QF20` · `QT1`–`QT6`) **elkészült**
+> **Előzmény:** a `prompts/improve-list10.md` (`QF1`–`QF20` · `QT1`–`QT6`) **elkészült**
 > (`3132cd9`, review-utómunka `e9244f1`). Ez a kör nem egy meglévő fázist keményít, hanem
 > **két új képességet** ad a kerethez: (a) egy **projekt-szintű teszt-leltárt**, amit a
 > `08-doc-sync` tart karban és determinisztikus kapu véd, és (b) a tesztek **cikluson kívüli,
@@ -122,7 +122,7 @@ python3 prompts/scripts/sync-gemini-agents.py --check    # agent.json tükrök  
 | `prompts/skills-hu/08-doc-sync.md` | a `docs-generated/` fájlkészlet (`:103`–`:107`), a DS21 mappa-index (`:273`), a TC1–TC11 regiszter (`:283`), példa recept (`:698`) |
 | `prompts/lang/hu/00-init-project.md:146`–`:170` | a `conventions.md` `## Teszt-riportolás` szekció sablonja (TR3/TR5/TR6) — az új futtatási tábla ennek a **szomszédja** |
 | `README-HU.md` | a felhasználónak szánt leírás, flow-ábrák, a hurkok konvenciói |
-| `prompts/inprove-list{9,10}.md` | a legutóbbi két kör tételes terve (`EV8`–`EV10`, `RL1`/`RL2`, `QF`/`QT`) |
+| `prompts/improve-list{9,10}.md` | a legutóbbi két kör tételes terve (`EV8`–`EV10`, `RL1`/`RL2`, `QF`/`QT`) |
 
 Konkrétan hivatkozott, **meglévő** azonosítók: `TC1`–`TC11` (teszt-elvárás regiszter),
 `TC10/b` (részletező blokk), `TR3`/`TR5`/`TR6` (riport-tábla, kör-mappa, riport-fázisok),
@@ -735,5 +735,5 @@ ugyanezeket a kérdéseket fogja feltenni:
   a `latest.json` aggregálása a skill dolga. Indok ugyanaz: a `run-tests.py` nem tudja,
   hogy központi futásról van-e szó **azon túl**, amit a `--round-dir`-ből kiolvas, és a
   `latest.json` séma projekt-szintű aggregátum, nem futás-eredmény.
-- **A `16.6` éles próba** (a `prompts/inprove-list10.md` és a kétnyelvűsítési terv nyitott
+- **A `16.6` éles próba** (a `prompts/improve-list10.md` és a kétnyelvűsítési terv nyitott
   tétele) továbbra is nyitott — ez a kör nem érintette.

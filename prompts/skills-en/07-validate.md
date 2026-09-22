@@ -68,7 +68,7 @@ The input of the prompt is the folder of the cycle (e.g. `specs/cycle-NN-<cycle-
    - **`exit 1`** → according to the ✗ points printed:
      - **the status of `tasks.md` is not `<status:ready_for_validate>`** → the implementation is not closed yet: report it, and return to phase `06`;
      - **the status of `plan.md` / `spec.md` is not acceptable** (acceptable: `plan.md` → `<status:ready_for_tasks>` or `<status:done>`; `spec.md` → `<status:ready_for_plan>` or `<status:done>`) → if either is reset to `<status:draft>`, tell the user: a decision was made in an earlier phase that requires a sync.
-   - `<status:done>` is **normal** for both of them if we came back here after `08-doc-sync` (or the doc-sync re-run before `09-merge`).
+   - `<status:done>` is **normal** for both of them if we came back here after `08-doc-sync` (or the doc-sync re-run before the cycle-closing merge branch).
    - The `·` lines of the script are INFO (the marker of an interrupted loop, open `input-from-prev` items) — process these, but they do not stop you.
 
 4. **Selector gate (TB2) — at the START of the round.** An orphaned `[CHECK]` selector (`06` renamed a test function, the task's command still carries the old name) should surface at the **start** of the round, not at the end:
@@ -135,7 +135,7 @@ The validation may be interrupted at any time. At a restart (a repeated run):
 
 4. **Recognizing an interrupted self-healing loop (the `[validate-loop]` marker + <sec:validation_history>):** if the status of `tasks.md` bears a `<status:ready_for_implement> [validate-loop]` marker, an earlier validate loop was interrupted — do **not** start with a clean slate. Find out the state of the loop:
    - Query the state of the log: `failure-counter.py <validation-report.md> --status` — this gives the last run, the stuck items and the counters (which attempt it was at). Do not parse it by hand.
-   - Read the `## <sec:validation_fixes>` **and** the `## <sec:review_fixes>` section of `tasks.md`: are there still unfinished `[ ]` fixing tasks?
+   - Read the `## <sec:validation_fixes>`, the `## <sec:review_fixes>` **and** the `## <sec:post_merge_fixes>` section of `tasks.md`: are there still unfinished `[ ]` fixing tasks? _(The third one comes from a failure of the post-merge verification (`VP2`/`VP3`) and has to be validated the same way — L13-D8.)_
      - **If yes** (the fixer did not run or was interrupted): continue the loop by restarting the appropriate fixer on these tasks (validation → `implement-fixer`, review → `review-fixer`), then re-validate.
      - **If not** (the fixer finished, but the re-validation was left out): run the validation steps again, and evaluate the result according to the loop.
    - The counters are the basis of the stopping limits — at a continuation the script automatically counts on from there (the log is the memory). **Do not zero it, do not rewrite the `# <sec:validation_history>` by hand.**
@@ -295,6 +295,8 @@ python3 <platform-scripts-mappa>/run-tests.py \
 - **The output also prints the ENVIRONMENT per category** (`@ dev`, `@ local`), and it goes into `results.json` too. **Carry this into the step table of the round**: it must be visible afterwards from the report where the test was green — a green JUnit XML on its own does not reveal which host it addressed.
 - **`exit 3`** → the table has a **placeholder error**: the substitution produces a double path prefix (`test-report/test-report/…` or `test-report/specs/…`, TR5/c). **Do not run anything, and do NOT fall back to the `test-runner`** — the script prints which row and which field is wrong. This is a gap of `03`, not a code bug: fix the machine table of `plan.md` to the correct placeholder (`{round}` = the full path, `{phase}` = the phase folder — see 0/a), and re-run. If the fix is not unambiguous, escalate to `03` according to VD5.
 - To confirm a single failed category in a light round: `--only <category>`.
+
+> **Test manager (optional, TM4) — the same two calls as in every other phase.** If the `**<field:f_test_manager_phases>:**` field of the `## <sec:cv_test_reporting>` section of `conventions.md` lists the `<status:phase_validate>` phase, `--mode preflight` runs **before** and `--mode publish` **after** the round (`test-manager.py`, with the round folder as `--round-dir`). **By default this phase does NOT upload** — `07` must not become token- and network-dependent, otherwise an offline developer cannot close a cycle (TM1/TM4). `exit 3` = skipped, `exit 4` = the upload failed, which by default does **not** fail the round: **the upload is never evidence** (TM7).
 
 > **🔴 `EV6` — traffic evidence AFTER the run.** `EV1–EV5` protect the **target** **before** the run (host in the command, a reachability probe, the `localhost` ban). `EV6` protects the **traffic** **after** the run: *a green test does not prove that any request was even issued.* In a real cycle the E2E tests meant for the dev environment issued **not a single dev request** (the test bodies were empty shells), yet the round's `rest-logs` folder looked full — with 50 log files that were all `127.0.0.1` entries inherited from an earlier round.
 >

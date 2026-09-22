@@ -25,6 +25,7 @@ The framework consists of a single folder, `prompts/`, plus the installer in the
 | `install.sh` / `install.ps1` | The installer entry points (Linux/macOS and Windows PowerShell). They collect the target folder, the platform and the two languages interactively, or accept them as flags (`--platform`, `--prompt-lang`, `--project-lang`, `--path`, `--force`), then hand the work to `prompts/scripts/install-helper.py`. |
 | `history` | Machine-specific installer memory (`LAST_PROJECT_PATH`, `LAST_PLATFORM`, `LAST_INSTALL`) so that a reinstall can offer the previous target. Excluded by `.gitignore`. |
 | `docs/` | Hand-written illustrations for the documentation (e.g. `worktree-vscode-source-control.png`). Not generated. |
+| `fixtures/` | Development-time test beds that are **not part of the framework** and are never installed. Today: `testdino-smoke/` — the minimal Playwright project the test-manager adapter (`TM1`–`TM10` of `prompts/improve-list13.md`) is measured and developed against. Contains no credentials; `node_modules/` and the generated reports are gitignored. |
 | `prompts/` | Everything the framework consists of — see below. |
 
 ### 1.2 `prompts/skills-<lang>/` — the phase skills
@@ -43,7 +44,11 @@ A **skill is a recipe**: a static methodology that the **main agent** runs. The 
 | `06-implement.md` | Implementation: it works through the task list **in a single run** (IM1), ticks the tasks, writes `check-log.md`, and commits per task. Its **Fix mode** section is the delegation target of `implement-fixer`/`review-fixer`. |
 | `07-validate.md` | Validation + code review in one loop: fast tests → the static layer (Sonar + reviewer) → heavy tests → the DoD/gates. The most script-driven phase (VD11/b). |
 | `08-doc-sync.md` | Keeps `docs-generated/` and `specs/test-conventions.md` up to date: plan → mechanical execution → an objective gate. Not a self-healing subagent loop. |
-| `09-merge.md` | Merges the cycle branch (local squash or PR), with the status/review/doc-sync gates and mandatory manual confirmation (RD8). |
+| `09-review-and-merge.md` | **The PR-less path (09).** Brings `main` into the cycle branch, runs the `VP2` post-merge round (tests + Sonar + the report gate, into `test-report/post-merge/`), and only then merges — with mandatory manual confirmation (RD8). The cycle branch is deleted **behind** the verification (L13-D7). With `PR submission: yes` it stops with an error. |
+| `09a-create-pr.md` | **The PR path, step 1 (09a).** Pushes the cycle branch and opens the PR according to the merge strategy of `conventions.md`; the PR description is `code-review.md`. It does not merge, and it does not close the roadmap (`⏳ waiting for verification`). |
+| `09b-review.md` | **Step 2 (09b).** Runs the `reviewer` subagent on the **diff of the PR** — in centralized SDD as a machine run on the CI — and writes into `test-report/ci-code-review.md`. It never overwrites the local `code-review.md` of `07`. |
+| `09c-merge.md` | **Step 3 (09c).** Checks the state of the PR (approved — this takes over the role of RD8) and **both** review reports, runs the `VP2` round on the cycle branch, and gets the code onto the main branch only after a green result. |
+| `09d-dev-test.md` | *(Optional, centralized only — 09d.)* Deploys into a fully integrated test environment with the `Dev deployment command`, runs real e2e tests (`VP3`) into `test-report/dev-test/`, and — as the last enabled verification — closes the cycle. |
 | `brainstorm.md` | *(Not a phase.)* Exploratory ideation **before** the flow, with a persistent working file in `.bs-brainstorm/`. It writes nothing outside that folder (BS1). |
 | `quick-flow.md` | *(A separate route.)* The simplified three-phase flow (`spec-plan.md` → `tasks.md` → implementation) for small tasks, in a cycle folder named `specs/cycle-NN_quick-flow_<cycle-name>/` (QF22); the spec and the plan are merged into one artifact, which is what the file name says (QF21). Both artifacts carry a status field, and the shared `path-format` / `dereferencing` / `conventions-change` blocks are inlined into it (`artifact-voice` is not — see 7/q of the meta-prompt). |
 | `cycle-status.md` | *(Helper command.)* Reports the status of the cycles; it runs `cycle-status.py`. |
@@ -105,7 +110,7 @@ This is the **only** place where the two language axes meet. The **prompt langua
 
 ### 1.6 `prompts/scripts/` — automation and the deterministic gates
 
-The installer copies **every `*.py`** into the target project's platform scripts folder, except the three maintainer tools marked below. The point of these scripts is that a machine-decidable question is answered by a script and not by an LLM: it is cheaper, it produces no false alarm, and its result is an exit code rather than an opinion.
+The installer copies **every `*.py` and `*.sh`** into the target project's platform scripts folder, except the maintainer tools marked below (`install-helper.py`, `sync-gemini-agents.py`, `lang-parity-check.py`, `acceptance-check.sh`, and the deprecated `init-project.sh`). The point of these scripts is that a machine-decidable question is answered by a script and not by an LLM: it is cheaper, it produces no false alarm, and its result is an exit code rather than an opinion.
 
 | Script | Phase | What it decides / does | Copied into the project |
 |---|---|---|---|
@@ -127,7 +132,10 @@ The installer copies **every `*.py`** into the target project's platform scripts
 | `tc8-gate-check.py` | 08 | The TC8 gate on `specs/test-conventions.md`: path existence, dangling reference, secret check, `Last run` marker. Returns `0` with "skipped" if the file does not exist. | yes |
 | `manual-test-gate-check.py` | — | The gate of `bs-manual-test-plan` (MG1–MG10): header status, mandatory sections, test group completeness, bidirectional DoD coverage, `curl` ↔ ```http symmetry, `TG-NN` identifiers. | yes |
 | `worktree-setup.py` | — | PW4: copies the missing agentic tool folders into a worktree opened for a parallel cycle. It never overwrites an existing file and never copies a git-tracked one. | yes |
-| `cycle-status.py` | — | The runner of the `bs-cycle-status` skill (interactive TUI or direct output). | yes |
+| `cycle-status.py` | — / every phase | The runner of the `bs-cycle-status` skill (interactive TUI or direct output), **and the generator of `cycle-status.md`** (`--write`, L13-D9/L13-D15): it renders from the evidence what has run and what is left, reading the `## Review and merge` section of `conventions.md` for the enabled verification points (`VP2`/`VP3`). The file is a rendering, never a source — no gate reads it —, and the shared phase-closing commit procedure regenerates it. | yes |
+| `ci-run-skill.sh` | 09a–09d | The adapter of the centralized path (L13-D12/L13-D13): `ci-run-skill.sh <skill> <cycle-path>` → `exit 0` green / `1` failure / `2` a human decision is needed. One script, four platform branches (Claude Code · Cursor · Copilot · Antigravity) + a `command` escape hatch, chosen by the `CI agent:` field of `conventions.md`. **The verdict comes from the deterministic gates, not from the agent** (most CLIs exit with `0` even when the work went wrong). `--selftest` is run by `00-init-project` so that an obsolete switch surfaces when the project starts, not on a live PR. | yes |
+| `notify.py` | 09b–09d | The standardized notification of failures (CS6/L13-D11): `--channel slack\|teams\|command\|none`. **The secret lives in an environment variable and the script reads it itself** — never as a command-line argument, because the text of the command ends up in the transcript, in `check-log.md` and in the CI log. A missing env var is a speaking error (`exit 2`): a silent notifier is worse than none. | yes |
+| `test-manager.py` | every phase (optional) | The test manager integration with a fixed contract (`TM6`): `--mode preflight\|publish\|selftest`, four adapters (`testdino` `reporter` shape · `reportportal` · `qase` `import` shape · `command`), `TEST_MANAGER_RUN_URL=` on the last stdout line, exit `0`/`2`/`3`/`4`. **The upload is never evidence** (TM7), and by default only the `dev-test` phase uploads (TM4). Development bed: `fixtures/testdino-smoke/`. | yes |
 | `export-doc.py` | — | The runner of the `bs-export-doc` skill: pandoc + `mermaid-filter` + xelatex → a versioned PDF. | yes |
 
 ### 1.7 The remaining files under `prompts/`
@@ -136,7 +144,7 @@ The installer copies **every `*.py`** into the target project's platform scripts
 |---|---|
 | `models.json` | The model + effort configuration per platform: the three tiers (`deep_reasoning_agent` / `default` / `research_agent`) as `{model, effort}`, plus the agents that differ from the default as rows named after themselves. The installer bakes the values into the agent files. |
 | `meta-improve-prompts.md` | The meta template for prompt development: it describes the workflow, the design principles and the mandatory manual gates for a session whose job is to improve the prompts. |
-| `inprove-list*.md` | The historical prompt-development lists (what was changed and why). Reference material, not run by anything. |
+| `improve-list*.md` | The historical prompt-development lists (what was changed and why). Reference material, not run by anything. |
 
 ---
 
@@ -229,14 +237,18 @@ specs/cycle-NN-<cycle-name>/
 ├── doc-sync-plan.md
 ├── doc-sync-questions.md
 ├── manual-test-plan.md
+├── cycle-status.md
 └── test-report/
     ├── validation-report.md
     ├── code-review.md
+    ├── ci-code-review.md
     ├── implement/
     │   └── check-log.md
-    └── validate/
-        ├── round-01/
-        └── round-02/
+    ├── validate/
+    │   ├── round-01/
+    │   └── round-02/
+    ├── post-merge/
+    └── dev-test/
 ```
 
 | File / folder | Phase | What it is for |
@@ -257,14 +269,18 @@ specs/cycle-NN-<cycle-name>/
 | `manual-test-plan.md` | *(not a phase)* | The manual test plan produced by `bs-manual-test-plan`: startup, test data, `TG-NN` manual test groups, bidirectional DoD coverage. Zero feedback into the flow. |
 | `test-report/validation-report.md` | `07` | The run journal: one `## Round N` block per round (written by `round-log.py`) plus the `# Validation History` (written by `failure-counter.py`). After a `/clear` this is the only place the validation can be reconstructed from. |
 | `test-report/code-review.md` | `07` | The `reviewer`'s findings: `MF-NN` Must Fix (blocking) + `S-NN` Suggestions (non-blocking). |
+| `test-report/ci-code-review.md` | `09b` | The findings of the review run on the **diff of the PR** (in centralized SDD a machine run). A separate file so that the evidence of `07` is never overwritten; the entry gate of `09c` reads **both**. |
 | `test-report/implement/check-log.md` | `06` | The append-only log of the `[CHECK]` runs: time, task, attempt, the command actually issued and the counts — including the failed attempts. |
 | `test-report/implement/` | `06` | An official phase folder (TR6). Beyond `check-log.md` it holds the full report set of the closing state as well, if `conventions.md` lists `implement` among the report phases. |
 | `test-report/validate/round-NN/` | `07` | One folder per validation round with every test artifact of that round (per the report table) plus `sonar-report.md`/`.html`. Its number matches the `## Round N`; earlier rounds are never overwritten. |
+| `test-report/post-merge/` | `09` / `09c` | The evidence of the `VP2` round: the code merged with the fresh main branch, tests + Sonar, **on success and on failure alike** (L13-D4). A deliberate skip (`Skip post-merge tests if master unchanged`) leaves a `skipped.md` here. |
+| `test-report/dev-test/` | `09d` | The evidence of the `VP3` round: real e2e tests after an automatic deploy, in the integrated environment. This is the phase that uploads to the test manager by default (TM4) — but the upload is **never** evidence (TM7). |
+| `cycle-status.md` | generated, every phase | What has run, what is left, and an overall status — written by `cycle-status.py --write`, regenerated at every phase-closing commit and committed (L13-D9/L13-D15). A **rendering, never a source**: no gate reads it, and it must not be edited by hand. |
 
 **Three things worth knowing about this folder:**
 
 1. **The folder name never carries a branch prefix.** The branch may be `feature/cycle-07-oidc-login` (or something the naming strategy of `conventions.md` prescribes), but the folder is always plain `cycle-NN-<name>`.
-2. **The `test-report/` top level is a closed list** (TR5/c): `validation-report.md`, `code-review.md`, `implement/`, `validate/`. Anything else there is a **path defect** (a wrong base pasted into a parameter expecting a different one), to be deleted — the cleanup prohibition covers only the `round-NN/` folders, whose evidence is never overwritten or deleted.
+2. **The `test-report/` top level is a closed list** (TR5/c): `validation-report.md`, `code-review.md`, `ci-code-review.md`, `implement/`, `validate/`, `post-merge/`, `dev-test/`. Anything else there is a **path defect** (a wrong base pasted into a parameter expecting a different one), to be deleted — the cleanup prohibition covers only the `round-NN/` folders, whose evidence is never overwritten or deleted.
 3. **The question files are never pruned.** A closed question stays as `[x]` with the decision next to it; the same applies to the `*-input-from-prev.md` items (`→ incorporated: …` / `→ rejected: …`).
 
 ---

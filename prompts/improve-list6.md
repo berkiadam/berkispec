@@ -1018,10 +1018,10 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
   ami megmaradt:
   ```bash
   grep -rn "03-write-plan\|bs-write-plan\b" --include=*.md --include=*.py --include=*.json \
-       --include=*.sh --include=*.ps1 . | grep -v inprove-list
-  grep -rn "03-plan" --include=*.md --include=*.py --include=*.json . | grep -v inprove-list
+       --include=*.sh --include=*.ps1 . | grep -v improve-list
+  grep -rn "03-plan" --include=*.md --include=*.py --include=*.json . | grep -v improve-list
   ```
-  **Elvárás az első mintára:** nulla találat (az `inprove-list*.md` munkafájlok kivételével —
+  **Elvárás az első mintára:** nulla találat (az `improve-list*.md` munkafájlok kivételével —
   azok a múltat rögzítik, ne írd át őket).
 
   **A második minta (`03-plan`) elvárása NEM nulla.** Amit **át kell** vezetni:
@@ -1171,7 +1171,7 @@ megnevezi, **kik emelik be** (egy helyen szerkeszd).
 - [x] **16.1** A `prompts/skills-hu/` és `prompts/skills-en/` mappában **nincs** `03-write-plan.md`,
   van `03a-write-code-plan.md` és `03b-write-test-plan.md`.
 - [x] **16.2** A 12.8 két grep-mintája lefutott: a `03-write-plan|bs-write-plan` mintára **nulla**
-  találat (az `inprove-list*.md` kivételével), a `03-plan` mintára pedig **csak** a 12.8-ban
+  találat (az `improve-list*.md` kivételével), a `03-plan` mintára pedig **csak** a 12.8-ban
   tételesen felsorolt, szándékosan megtartott helyek maradtak (`05` célfázis-jelölés + a kapu
   `f.add/f.suggest` `"03"` argumentumai).
 - [x] **16.3** `analyze-gate-check.py --plan-code-only` egy valódi (vagy gyártott) ciklus-mappán

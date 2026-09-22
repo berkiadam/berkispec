@@ -29,7 +29,7 @@
     - [Basic commands (slash commands):](#basic-commands-slash-commands)
   - [4. The full berki spec flow (00–09)](#4-the-full-berki-spec-flow-0009)
     - [4.1 High-level summary](#41-high-level-summary)
-    - [4.2 The detailed process](#42-the-detailed-process)
+    - [4.2 Test points — where we test, and what it proves](#42-test-points--where-we-test-and-what-it-proves)
     - [4.3 Automatic selection of models and effort levels](#43-automatic-selection-of-models-and-effort-levels)
     - [4.4 The 05-analyze self-healing loop (in detail)](#44-the-05-analyze-self-healing-loop-in-detail)
     - [4.5 The 07-validate self-healing loop (in detail) — tests + code review](#45-the-07-validate-self-healing-loop-in-detail--tests--code-review)
@@ -64,6 +64,7 @@
   - [16. The validation report (validation-report.md)](#16-the-validation-report-validation-reportmd)
   - [17. The reviewer agent (agents/reviewer.md)](#17-the-reviewer-agent-agentsreviewermd)
   - [18. Agent-specific integration](#18-agent-specific-integration)
+  - [Appendix — The detailed process diagram](#appendix--the-detailed-process-diagram)
     - [18.0 A platform limitation: running commands in the subagents (EX1)](#180-a-platform-limitation-running-commands-in-the-subagents-ex1)
     - [18.1 Antigravity CLI (Google DeepMind)](#181-antigravity-cli-google-deepmind)
       - [18.1.1 The planning and logging process (Planning Mode)](#1811-the-planning-and-logging-process-planning-mode)
@@ -141,6 +142,8 @@ The **shared antechamber** of the two routes is the `/bs-brainstorm` helper comm
 ## 2. Installation
 
 Setting up the BerkiSpec framework in the target project is extremely simple and automated with the help of the bundled installer script.
+
+> **⚠ Updating an existing project — the family of the cycle end is NOT backwards compatible.** `09-merge` split into five skills (`bs-review-and-merge` · `bs-create-pr` · `bs-review` · `bs-merge` · `bs-dev-test`), and the framework has **no notion of versions**: there is no alias, no fallback to the old behaviour, no migration machinery. The update is therefore a **re-installation** (the installer replaces the old `bs-merge/` folder as well), plus adding the new `## Review and merge` section to `conventions.md` — by re-running `00-init-project` or by hand (the template lives in the `00` skill). **The artifact data ALREADY PRESENT in the project is a separate question:** in the `Phase` column of the `plan.md` of a running cycle, an empty cell and the `both` value are **still accepted on read** (with the old meaning and a WARN) — but a new plan can no longer write them. The re-installation does not rewrite these.
 
 ### Installation steps:
 1. Open a terminal in the root of the `berkispec` repository.
@@ -261,7 +264,9 @@ After installation you can reach the skills in the platform's chat interface by 
 * **`/bs-implement`**: actual code development based on the task list, recording the progress in `tasks.md`.
 * **`/bs-validate`**: checking tests, lint, build **and code review** (reviewer agent) in a single automatic fixing loop (after a successful run, the 'Done' status).
 * **`/bs-doc-sync`**: synchronising the living documentation (`docs-generated/`) and the READMEs with the code changes, and maintaining `specs/test-conventions.md` (recurring test expectations and recipes).
-* **`/bs-merge`**: merging the cycle branch (local squash or PR), with mandatory user confirmation. The code review has already run in `/bs-validate`.
+* **`/bs-review-and-merge`**: closing the cycle **in one step** when there is no PR submission (`PR submission: no`): bringing the main branch into the cycle branch → **post-merge test round** (`VP2`: tests + Sonar) → merge with mandatory user confirmation (RD8). The code review has already run in `/bs-validate`.
+* **`/bs-create-pr` → `/bs-review` → `/bs-merge`**: the same **in three steps** when there is a PR submission (`PR submission: yes`) — opening the PR, the review running on the PR (a **machine run** in centralized SDD), and finally the merge after the `VP2` round. On both paths `VP2` is the gate **before** the code reaches the main branch.
+* **`/bs-dev-test`** *(optional, only on the centralized path)*: after a successful merge it deploys into an integrated test environment and runs **real e2e tests** against it (`VP3`). When it is switched on, the cycle closes with the green result of this round.
 * **`/bs-cycle-status`**: checking the status of the cycles (interactive TUI or command-line status).
 * **`/bs-brainstorm`**: exploratory ideation and joint design **before the spec** — with a persistent working file (`.bs-brainstorm/`) and cheap `researcher` exploration; at the end it hands over to `/bs-add-cycles` or `/bs-quick-flow`.
 * **`/bs-quick-flow`**: starting the simplified (lightweight) flow for small tasks (spec → task → implementation).
@@ -299,13 +304,17 @@ flowchart TD
     0["<b>0. Project Setup</b><br/>(create conventions.md)"]:::setup
     1["<b>1. Init Cycles</b><br/>(create roadmap.md, cycle dir)"]:::setup
     2["<b>2. Create Spec</b><br/>(create spec.md)"]:::design
-    3["<b>3. Create Plan</b><br/>(create plan.md from spec.md)"]:::design
+    3["<b>3. Create Plan</b><br/>(two steps: 03a code plan + 03b test plan → plan.md)"]:::design
     4["<b>4. Create Tasks</b><br/>(create tasks.md from plan.md)"]:::design
     5["<b>5. Analyze</b><br/>(cross-phase consistency check)"]:::design
     6["<b>6. Implement</b><br/>(create code from plan.md and tasks.md)"]:::dev
     7["<b>7. Validate</b><br/>(regression, sonar and E2E check)"]:::dev
     8["<b>8. Doc-sync</b><br/>(docs-generated/ consistency + objective gate)"]:::doc
-    9["<b>9. Review and Merge</b><br/>(reviewer agent and merge)"]:::review
+    9["<b>9. Review and Merge</b><br/>(isolated SDD — local review + merge)"]:::review
+    9a["<b>9a. Create PR</b><br/>(centralized SDD)"]:::review
+    9b["<b>9b. Review</b><br/>(machine-run on the CI)"]:::review
+    9c["<b>9c. Merge</b><br/>(+ post-merge tests, VP2)"]:::review
+    9d["<b>9d. Dev-test</b> — optional<br/>(deploy + real E2E, VP3)"]:::review
     End([Cycle finished]):::start
 
     %% Clarifying interview nodes
@@ -364,167 +373,58 @@ flowchart TD
     %% Doc-sync (08): plan (doc-sync-planner) → mechanical execution → objective gate (DS22).
     %% NOT a self-healing subagent loop; on a gate failure, human-driven correction (doc-sync-questions.md).
     8 <--> Int8d(["User interview<br/>(gate failure / decision point → doc-sync-questions.md)"]):::userInput
-    8 -- "docs-generated/ consistent (objective gate green)" --> 9
+    %% The TWO BRANCHES of the cycle end — the `## Review and merge` section of
+    %% `conventions.md` decides which one runs (the PRESENCE OF A PR, not the mode).
+    8 -- "isolated SDD (no PR)" --> 9
+    8 -- "centralized SDD (PR required)" --> 9a
 
     %% Merge (09): no loop and no subagent — the review has already run in 07.
     %% If code changed since 08, doc-sync runs again first (DS23.2), then a MANUALLY confirmed merge (RD8).
     9 -. "code changed since 08 → doc-sync again (DS23.2)" .-> 8
     9 -. "code change in the loop → 08-doc-sync again" .-> 8
-    9 -- "clean review + green validation → merge (manual confirmation, RD8)" --> End
+    9 -- "green VP2 → merge (manual confirmation, RD8)" --> End
+
+    %% The centralized branch: the PR triggers the CI/CD, the review and the merge
+    %% run as machine runs. VP2 is the gate BEFORE the code reaches main (L13-D14).
+    9a --> 9b
+    9b --> 9c
+    9c -. "code changed → 08-doc-sync again" .-> 8
+    9c -- "optional" --> 9d
+    9c --> End
+    9d --> End
 ```
 
-### 4.2 The detailed process
-The detailed diagram below shows the exact transitions between the individual phases, the input/output files, the points of user interaction (User Input), and the feedback loops that kick in when something fails.
+### 4.2 Test points — where we test, and what it proves
+
+In the `bs` SDD we **test in three places, for three different reasons**. The three points are not redundancy: each one proves something **different**, and the other two cannot replace the third.
+
+1. **`validate` (07)** — we validate the implementation produced by the agent **against the spec**, on the developer's **local machine**. Typically unit and locally running component tests.
+2. **post-merge test (`VP2`)** — **after merging with the main branch**. Where it runs depends on which SDD we use: it can be **part of the CI/CD process** and it can run on the **local machine**. With CI/CD: unit tests, **Sonar**, and **containerized, mocked** component tests. **Sonar is needed here too — exactly as it is in `validate`:** the merge brings in code that the Sonar round of `07` never saw, and static defects can arise from it just as runtime ones can. This is zero new machinery: the same `sonar-gate.py`, with the same `conventions.md` thresholds.
+3. **dev test (`VP3`)** — after an **automatic deploy**, in a **real test system**, with e2e tests. It only makes sense on the centralized path (`/bs-dev-test`).
+
+**And all three have to be channeled back** — this is the fourth element of the diagram, not a footnote: the report goes onto the **path of the cycle** (`test-report/<phase>/`, committed), the **notification** goes out, and the failure either goes back to the developer or — if it is switched on — into the **fix loop** of the CI.
 
 ```mermaid
-flowchart TD
-    %% Styling definitions
-    classDef setup fill:#e0f2fe,stroke:#2563eb,stroke-width:2px,color:#1e293b;
-    classDef design fill:#e0f2fe,stroke:#0d9488,stroke-width:2px,color:#1e293b;
+flowchart LR
     classDef dev fill:#e0f2fe,stroke:#16a34a,stroke-width:2px,color:#1e293b;
-    classDef decision fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1e293b;
-    classDef doc fill:#f3e8ff,stroke:#8b5cf6,stroke-width:2px,color:#1e293b;
-    classDef userInput fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
+    classDef review fill:#f3e8ff,stroke:#8b5cf6,stroke-width:2px,color:#1e293b;
+    classDef fb fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
 
-    subgraph Setup ["<b>⚙️ PROJECT SETUP (ONCE)</b>"]
-        P00["00 — Project initialisation"]:::setup
-        P00_Loop{"Any questions left?"}:::decision
-        DocConv["conventions.md"]:::doc
-        In00(["User Input: project goals & answers"]):::userInput
+    VP1["<b>1. validate (07)</b><br/>local dev machine<br/>unit + local component tests<br/><i>proves: the implementation matches the spec</i>"]:::dev
+    VP2["<b>2. post-merge test</b><br/>local machine OR CI/CD — depends on the SDD mode<br/>unit + <b>Sonar</b> (as in validate) + containerized, mocked component tests<br/><i>proves: it still works merged with master</i>"]:::dev
+    VP3["<b>3. dev-test</b> — optional<br/>real test system, after an automatic deploy<br/>real E2E tests<br/><i>proves: it works in a real integrated environment</i>"]:::review
+    FB(["<b>back-channel</b><br/>report into the cycle folder + branch · notification · fix loop"]):::fb
 
-        P01["01 — Managing cycles"]:::setup
-        P01_Loop{"Any open questions left?"}:::decision
-        DocRoadmap["specs/roadmap.md (Status: Done)"]:::doc
-        In01(["User Input: HLD/LLD or description"]):::userInput
-    end
-
-    subgraph Design ["<b>📐 DESIGN PHASE (PER CYCLE)</b>"]
-        P02["02 — Writing the spec"]:::design
-        P02_Loop{"Any questions left? (spec-questions.md)"}:::decision
-        DocSpec["specs/cycle-NN-*/spec.md (Status: Ready for planning)"]:::doc
-        In02(["User Input: cycle selection & spec answers"]):::userInput
-
-        P03["03 — Writing the plan"]:::design
-        P03_Loop{"Any questions left? (plan-questions.md)"}:::decision
-        DocPlan["specs/cycle-NN-*/plan.md (Status: Ready for tasks)"]:::doc
-        In03(["User Input: design answers"]):::userInput
-
-        P04["04 — Writing the tasks"]:::design
-        DocTasks["specs/cycle-NN-*/tasks.md (Status: Ready for implementation)"]:::doc
-
-        P05["05 — Analyze"]:::design
-        P05_Check{"Consistent? (analyze-report.md)"}:::decision
-        DocAnalyze["specs/cycle-NN-*/analyze/analyze-report.md (PASS/FAIL)"]:::doc
-    end
-
-    subgraph Development ["<b>💻 IMPLEMENTATION & VERIFICATION (ITERATIVE)</b>"]
-        P06["06 — Implementation"]:::dev
-        P06_Loop["Developing the code + recording progress in tasks.md"]:::dev
-        DocTasksReady["specs/cycle-NN-*/tasks.md (Status: Ready for validation)"]:::doc
-        In06(["User Input: starting the implementation of the cycle"]):::userInput
-
-        P07["07 — Validation and code review"]:::dev
-        P07_Run{"Running the tests & SonarQube<br/>(test-runner subagent)"}:::decision
-        P07_Review{"Green tests → code review<br/>(reviewer subagent, RV1)"}:::decision
-        DocReport["specs/cycle-NN-*/test-report/<br/>validation-report.md + code-review.md<br/>+ validate/round-NN/ (reports, sonar)"]:::doc
-        P07_Check{"Successful? (PASS)<br/>green tests + clean review"}:::decision
-
-        P08["08 — Doc-sync"]:::dev
-        P08_Plan["doc-sync-planner subagent<br/>→ doc-sync-plan.md (per-file plan<br/>+ finished replacement-text patch)"]:::doc
-        DocGen["docs-generated/ (system-overview, architecture, CHANGELOG, design-drift, README)"]:::doc
-        P08_Gate{"Objective consistency gate green?<br/>(DS22 — ds22-gate-check.py<br/>+ TC8 — tc8-gate-check.py)"}:::decision
-
-        P09["09 — Merge"]:::dev
-        P09_DocCheck{"Code changed since 08?"}:::decision
-
-        Merge["Merge (local squash or PR, per the Merge strategy of conventions.md)"]:::setup
-        In08(["User Input: merge confirmation"]):::userInput
-    end
-
-    %% Connections
-    Start([Start]) --> P00
-
-    %% User Inputs
-    In00 --> P00
-    In01 --> P01
-    In02 --> P02
-    In03 --> P03
-    In06 --> P06
-    In08 --> Merge
-
-    P00 --> P00_Loop
-    P00_Loop -- "Yes" --> P00
-    P00_Loop -- "No (Closed)" --> DocConv
-    DocConv --> P01
-
-    P01 --> P01_Loop
-    P01_Loop -- "Yes" --> P01
-    P01_Loop -- "No (Done)" --> DocRoadmap
-
-    DocRoadmap --> P02
-    P02 --> P02_Loop
-    P02_Loop -- "Yes" --> P02
-    P02_Loop -- "No" --> DocSpec
-
-    DocSpec --> P03
-    P03 --> P03_Loop
-    P03_Loop -- "Yes" --> P03
-    P03_Loop -- "No" --> DocPlan
-
-    DocPlan --> P04
-    P04 --> DocTasks
-
-    DocTasks --> P05
-    P05 --> DocAnalyze
-    DocAnalyze --> P05_Check
-
-    %% The analyze self-healing loop (05)
-    P05_Check -- "FAIL" --> P05_Fixer["fixer subagent<br/>(02/03/04 fix mode, [analyze-loop])"]:::design
-    P05_Fixer -- "the fixer collects open questions<br/>(*-questions.md)" --> P05_Q(["User Input: PHASE/Knn answer<br/>(asked by the orchestrator)"]):::userInput
-    P05_Q --> P05_Fixer
-    P05_Fixer -- "downstream re-derivation<br/>02→03→04 (reconciliation)" --> P05
-    P05_Check -- "max X=3 reached without PASS" --> P05_Stop["Loop abandoned → analyze-report FAIL<br/>(the marker stays) + human decision"]:::doc
-    P05_Check -- "PASS (marker removed, 1 commit)" --> P06
-
-    P06 --> P06_Loop
-    P06_Loop --> DocTasksReady
-
-    DocTasksReady --> P07
-    P07 --> P07_Run
-    P07_Run -- "green (steps 1-3 of the full round)" --> P07_Review
-    P07_Run -. "failed test / Sonar / DoD<br/>(the review does not even run)" .-> DocReport
-    P07_Review --> DocReport
-    DocReport --> P07_Check
-
-    %% The validate self-healing loop (07) — tests AND review in one loop
-    P07_Check -- "FAIL: test / Sonar / DoD" --> P07_Fixer["implement-fixer subagent<br/>(06 fix mode, [validate-loop])<br/>## Validation fixes"]:::dev
-    P07_Check -- "FAIL: Must Fix finding (MF-NN)" --> P07_RFixer["review-fixer subagent<br/>(06 fix mode, [validate-loop])<br/>## Review fixes"]:::dev
-    P07_Fixer -- "fix done → light round,<br/>then a full confirming round" --> P07
-    P07_RFixer -- "fix done → light round,<br/>then a full confirming round + re-review" --> P07
-    P07_Fixer -. "escalation signal (VD5)" .-> P07_Esc
-    P07_RFixer -. "escalation signal (VD5)" .-> P07_Esc
-    P07_Check -- "3 attempts / 5 total / 5 FAIL runs<br/>stuck code bug" --> P07_Stop["Loop stops → STOP + human<br/>(the [validate-loop] marker + fix sections stay)"]:::doc
-    P07_Check -- "design defect (VD5):<br/>it would only be green by changing a test/DoD/finding" --> P07_Esc["Escalation: status rollback<br/>to 03/02 → design phase"]:::doc
-    P07_Esc --> P03
-
-    %% Validation Pass
-    P07_Check -- "PASS (Yes)" --> DocStatusKesz["status of spec.md, plan.md, tasks.md: Done"]:::doc
-    DocStatusKesz --> P08
-
-    %% Doc-sync (08): plan → mechanical execution → objective gate (NOT a self-healing subagent loop)
-    P08 --> P08_Plan
-    P08_Plan --> DocGen
-    DocGen --> P08_Gate
-    P08_Gate -. "gate failure / decision point → doc-sync-questions.md<br/>(human-driven correction, DS10)" .-> P08DS_Q(["User Input: doc-sync question / correction"]):::userInput
-    P08DS_Q --> P08_Plan
-    P08_Gate -- "gate green → docs-generated/ consistent" --> P09
-
-    %% Merge (09) — no loop, no subagent; the review has already run in 07
-    P09 --> P09_DocCheck
-    P09_DocCheck -. "Yes → doc-sync again before the merge (DS23.2)" .-> P08
-    P09_DocCheck -- "No → merge" --> Merge["Merge (manual confirmation, RD8)"]
-    Merge --> End([Cycle finished])
+    VP1 --> VP2 --> VP3
+    VP1 -. "FAIL" .-> FB
+    VP2 -. "FAIL" .-> FB
+    VP3 -. "FAIL" .-> FB
 ```
+
+> **The cycle is done when the LAST enabled verification is green.** Which one is the last is stated by the `## Review and merge` section of `conventions.md` (`Post-merge tests`, `Dev deployment test`). Until then the cycle row of the roadmap carries the `⏳ waiting for verification` mark, and the generated `cycle-status.md` shows the same.
+
+> *The earlier, full detailed process diagram lives on at the end of the document, in the [Appendix — The detailed process diagram](#appendix--the-detailed-process-diagram) section.*
+
 ### 4.3 Automatic selection of models and effort levels
 
 > **Principle: maximum token saving.** Every step runs on the **cheapest agent sufficient for it**; we spend the expensive model and deep reasoning only where it is indispensable. Quality does not come from the strength of the model, but from the **strict contracts** (mandatory checklists, "summary only", deterministic scripts).
@@ -892,9 +792,10 @@ Run the command: `/bs-validate input: @specs/cycle-02-oidc-login`
 Run the command: `/bs-doc-sync input: @specs/cycle-02-oidc-login`
    → updating docs-generated/ + the objective gate → consistent documentation
 
-# ⑪  09 — Merge
-Run the command: `/bs-merge input: @specs/cycle-02-oidc-login`
-   → checking the gates (status + clean review + doc-sync) → merge (with manual confirmation)
+# ⑪  09 — Review and merge  (the PR-less path; with a PR: /bs-create-pr → /bs-review → /bs-merge)
+Run the command: `/bs-review-and-merge input: @specs/cycle-02-oidc-login`
+   → gates (status + clean review + doc-sync) → bring in main → VP2 round (tests + Sonar)
+   → merge (with manual confirmation) → closing the roadmap + cycle-status.md
 ```
 
 The next cycle (`cycle-03-...`) starts with `02` again — `00`/`01` do not repeat.
@@ -1038,7 +939,11 @@ Walking through a small task. There is **a single starting prompt** here; after 
 | `/bs-implement` | Implementation | `tasks.md` | code + `tasks.md` (`Ready for validation`) + `test-report/implement/check-log.md` (the append-only log of the `[CHECK]` runs), and if the project has declared `implement` a report phase (TR6), the full report set of `test-report/implement/` too — it processes the task list **in a single run** (IM1): a task commit is not the end of the phase |
 | `/bs-validate` | Validation + code review | the cycle folder | PASS/FAIL + `test-report/` (`validation-report.md`, `code-review.md`, `validate/round-NN/`); PASS → statuses become `Done` — the tests/Sonar/E2E are run by the `test-runner` and the diff is reviewed by the `reviewer` subagent, while the PASS/FAIL decision and the DoD are the orchestrator's; on FAIL, an orchestrated self-healing loop (`implement-fixer` / `review-fixer`, three stopping limits, the VD3a contract gate, VD5 escalation) |
 | `/bs-doc-sync` | Doc-sync | the cycle folder + `docs-generated/` + `specs/test-conventions.md` | a consistent `docs-generated/` (system-overview, architecture, CHANGELOG, design-drift, README folder index) + component READMEs + `specs/test-conventions.md` (promotion / `Last run` bump / deletion of a stale item, TC1–TC11) + `doc-sync-plan.md` — plan (`doc-sync-planner`) → mechanical execution → the objective gate (DS22, 3 of 4 points with the `ds22-gate-check.py` script, without an LLM) + the TC8 gate on the register (`tc8-gate-check.py`, fully scripted); on a gate failure → human-driven correction (`doc-sync-questions.md`) |
-| `/bs-merge` | Merge | the cycle folder, `conventions.md` | a merged branch / PR + a closed roadmap — there is no loop and no subagent; a failure of the gates (status, clean review, doc-sync) redirects back to `07` or `08`; the merge happens with manual confirmation (RD8) |
+| `/bs-review-and-merge` | Review and merge (09) | the cycle folder, `conventions.md` | **The PR-less path.** Bringing `main` into the cycle branch → `VP2` post-merge round (`test-report/post-merge/`: tests + Sonar + report gate) → merge with manual confirmation (RD8) → deleting the branch **behind the verification** → a closed roadmap + a generated `cycle-status.md`. No loop and no subagent; a gate failure redirects to `07` or `08`. With `PR submission: yes` it **errors out** and redirects to the three-step chain |
+| `/bs-create-pr` | Create PR (09a) | the cycle folder, `conventions.md` | a pushed cycle branch + an opened PR (the description is `code-review.md`), an updated `cycle-status.md`; the roadmap is **not** closed yet (`⏳ waiting for verification`). It does **not** merge the PR |
+| `/bs-review` | Review on the PR (09b) | the cycle folder + an open PR | `test-report/ci-code-review.md` — the `reviewer` subagent on the **diff of the PR**, as a machine run in centralized SDD; it **never overwrites** the local `code-review.md` of `07`. An open `Must Fix` → a notification, the PR stays open; with `auto-fix-loop` the loop of the CI starts with the limits of `07` |
+| `/bs-merge` | Merge (09c) | the cycle folder, an open + **approved** PR | `test-report/post-merge/` (`VP2`) → the PR is merged only after a green result; the entry gate is the **state of the PR** (this takes over the role of RD8) and **both** review reports (`validate-gate-check.py --review-only --require-ci-review`) |
+| `/bs-dev-test` | Dev test (09d, **optional**) | a merged cycle, `Dev deployment test: yes` | `test-report/dev-test/` (`VP3`) — deployment with the `Dev deployment command` into an integrated environment, a real e2e round, a test manager upload (by default this is the phase that uploads); a green round = closing the cycle |
 | `/bs-quick-flow` | **Simplified flow** (a separate route) | a description of the task, or `brainstorm: NN` | `spec-plan.md` (`Ready for tasks`) + `tasks.md` (`Ready for implementation` → `Done`) + implementation — three-phase, for small tasks; status fields + the RP1 path gate; optional `researcher`/`analyzer`/`reviewer`; on outgrowing it, it redirects to `/bs-add-cycles` |
 | `/bs-brainstorm` | **Ideation** (a helper command, before the flow) | a topic in free text, or `let's continue number NN` | `.bs-brainstorm/brainstorm-NN-<slug>.md` — a persistent working file (facts with sources, alternatives with trade-offs, decisions, open questions, a proposed cycle split). Not a phase, it changes no status; it writes no code and nothing outside the folder. Handover: `/bs-add-cycles brainstorm: NN` (BS18) or `/bs-quick-flow`. |
 | `/bs-export-doc` | **PDF export** (a helper command) | markdown file(s), optional — empty means `docs-generated/architecture.md` and `system-overview.md` | `export/<name>-v<N>.pdf` — an independent version number per file (the last one + 1, from v1); pandoc + `mermaid-filter` + xelatex, with the cycle on the title page (`Covered: up to cycle-NN · vN`). Not a phase: it has no prerequisite and changes no status. |
@@ -1104,7 +1009,7 @@ tools: ["Read", "Bash", "Grep"]
 
 The frontmatter is otherwise **tool-independent** (its own schema, not tied to a concrete agent tool); the installer translates it into the native format of the target platform (Claude/Cursor `.md`, Codex `.toml`, Copilot `.agent.md`, Antigravity `agent.json`).
 
-**The `subagents:` field of `05-analyze`** lists, besides the two read-only diagnostician definitions (`analyzer` — with three scopes, started in parallel — and `analyzer-exec`), the three fixer wrappers too: `agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`. **The `subagents:` field of `07-validate`** contains `agents/test-runner.md` (the mechanical execution of tests/Sonar/E2E, `default` tier), `agents/reviewer.md` (read-only code diagnosis as step 2 of the round) and the two fixer wrappers — `agents/implement-fixer.md` (test/Sonar/DoD) and `agents/review-fixer.md` (Must Fix findings). **The `subagents:` field of `08-doc-sync`** contains the `agents/doc-sync-planner.md` read-only planning diagnostician (the author of the per-file `doc-sync-plan.md`; the actual writing of the docs belongs to the main agent — there is no fixer wrapper, because this is not a self-healing loop). **Phase `09-merge` has no `subagents:` field** — the review moved into 07, and the merge phase only checks gates and merges. **The `subagents:` field of `00-init-project`, `01-add-cycles`, `02-write-spec` and `06-implement`** contains `agents/researcher.md` for ad-hoc codebase research (Mode B) — the same agent that `03a-write-code-plan` uses for the systematic identification of source files (Mode A). Preserving the skill/agent separation matters: **the behaviour of the fix mode lives in a single place**, and the wrapper agent is only an entry point — there is no logic duplication. This has **two implementations**:
+**The `subagents:` field of `05-analyze`** lists, besides the two read-only diagnostician definitions (`analyzer` — with three scopes, started in parallel — and `analyzer-exec`), the three fixer wrappers too: `agents/spec-fixer.md`, `agents/plan-fixer.md`, `agents/tasks-fixer.md`. **The `subagents:` field of `07-validate`** contains `agents/test-runner.md` (the mechanical execution of tests/Sonar/E2E, `default` tier), `agents/reviewer.md` (read-only code diagnosis as step 2 of the round) and the two fixer wrappers — `agents/implement-fixer.md` (test/Sonar/DoD) and `agents/review-fixer.md` (Must Fix findings). **The `subagents:` field of `08-doc-sync`** contains the `agents/doc-sync-planner.md` read-only planning diagnostician (the author of the per-file `doc-sync-plan.md`; the actual writing of the docs belongs to the main agent — there is no fixer wrapper, because this is not a self-healing loop). **Among the skills of the cycle end only `09b-review` has a `subagents:` field** (`agents/reviewer.md` — the review running on the diff of the PR, as a machine run on the centralized path, writing into `test-report/ci-code-review.md`). `09-review-and-merge` / `09a-create-pr` / `09c-merge` / `09d-dev-test` run **without a subagent**: they check gates, run a test round and merge — the local review remains the job of `07` (RV1). **The `subagents:` field of `00-init-project`, `01-add-cycles`, `02-write-spec` and `06-implement`** contains `agents/researcher.md` for ad-hoc codebase research (Mode B) — the same agent that `03a-write-code-plan` uses for the systematic identification of source files (Mode A). Preserving the skill/agent separation matters: **the behaviour of the fix mode lives in a single place**, and the wrapper agent is only an entry point — there is no logic duplication. This has **two implementations**:
 - **02/03/04 (the analyze loop, D13):** the fix mode and the phase's quality gate live in the `prompts/shared-hu/{fix-mode,quality-check}-*.md` files, and are **included at build time into the skill AND into the fixer wrapper**. The fixer thus **does not read a phase skill** — its prompt is self-contained (the `plan-fixer` is ~80 lines instead of reading the 584-line `03a-write-code-plan.md` + the 683-line `03b-write-test-plan.md`). **Since the split, the quality gate of `03` lives in TWO shared files** (`quality-check-plan-code.md` + `quality-check-plan-test.md`): `03a` includes the first, `03b` the second, and the `plan-fixer` **both** — because the fixer may correct both halves of `plan.md`.
 - **06 (the self-healing loop of 07):** the `implement-fixer` and the `review-fixer` still delegate **by reading the "Fix mode" section of `06-implement.md`** (with a `## Validation fixes` or a `## Review fixes` input section respectively, on identical mechanics). Here the extraction has not happened yet — the 06 skill is considerably shorter (294 lines), but the 07 loop calls the fixer once per round, so the same saving is available if the section is moved into `shared/` the same way.
 
@@ -1124,7 +1029,9 @@ The frontmatter is otherwise **tool-independent** (its own schema, not tied to a
 - **Testing conventions:** the test levels and the frameworks **recommended as defaults** for them (the developer confirms or overrides them in 00), and the run commands.
 - **Sonar quality check (an optional section):** besides the scanner command, the **host URL** and the **name of the token's env variable** go here as well (the token itself **never**) — this is how `sonar-gate.py` finds the project. Alternatives: the `SONAR_HOST_URL` / `SONAR_PROJECT_KEY` / `SONAR_TOKEN` environment variables, or the repo's `sonar-project.properties`.
 - **Test reporting (TR3 — a mandatory section):** per category, the tool, the **report-generating command** and the **artifact name** that has to end up in every cycle's `test-report/` folder — and within that, in the **subfolder of the validation round** (`validate/round-NN/`) — (Allure/Playwright HTML, pytest-html, JUnit XML, coverage). The last column of the table is **relative to the round folder**. Phase 00 fills it in together with the user (a mandatory question, no placeholder may remain), and `07-validate` holds it to account with a **deterministic gate** (`report-gate-check.py`): a missing artifact → the validation cannot be closed with a PASS. If the project deliberately generates no report, that is recorded by `**Report generation required:** no` + a justification. The `**Report phases:**` field (TR6) says **which phases** are obliged to produce the set: `validate` (the default value), `implement`, or both — in the case of `implement`, `06-implement` generates before the status change and closes with the same gate. **Application-side evidence is a table row too, not prose:** the REST request/response audit log, the correlation trace and the application log excerpt go into the table just like the report of a test tool — what the table does not ask for, the gate does not look for either.
+- **Test manager integration (`TM1`–`TM10`, optional, OFF by default):** six fields of the same section (`Test manager` · `shape` · `token env var` · `phases` · `required` · `command`) connect an external test manager (TestDino, ReportPortal, Qase — or anything else through the `command` branch). **The upload is never evidence** (`TM7`): the evidence of the cycle remains the **committed** `test-report/<phase>/` set, and the run URL is only a pointer in the report, in the notification and in `cycle-status.md`. There are two integration shapes, because the market has two: the `reporter` shape streams from the **reporter chain** of the test runner (the framework does not upload, it only extracts the run URL), while the `import` shape pushes the finished `junit.xml` **afterwards**. **By default only the `dev-test` phase uploads** (`TM4`) — `07` must not become token- and network-dependent, otherwise the isolated SDD mode breaks and an offline developer cannot close a cycle. The secret lives **exclusively in an env var**, and only the NAME of the variable goes into `conventions.md` (`TM5`). A failed upload does **not** fail the phase by default (`Test manager required: no`), but it never stays unmarked: an `uploaded <url>` / `FAILED <reason>` / `skipped (<phase> not listed)` line goes into the report of the round and into `results.json`. **The upload counts as done if and only if the run URL has appeared** — measured: with a wrong token the runner finishes green, with `exit 0`, while nothing has been uploaded.
 - **Merge strategy:** provider (GitHub / Bitbucket / GitLab / Local), PR target branch, merge type, access test command. **The single source of truth for re-integration** (the cycle branch in 09, the init branch in 00); if there is no decision/remote, the default is a direct merge into `main` (BQ7).
+- **Review and merge (RM8 — the switchboard of the cycle end, with ENGLISH literals):** `PR submission` (one skill or three) · `SDD mode` (`isolated` / `centralized`) · `Post-merge tests` + `Skip post-merge tests if master unchanged` (the `VP2` round and whether it may be skipped) · `Dev deployment test` + `Dev deployment command` (the `VP3` round) · `Failure handling` (`notify` / `auto-fix-loop`) · `Notification channel` + `secret (env var)` + `command` · `CI agent` + `CI agent command`. **The field names and the values are language-independent**, because a machine reads them — the explanatory prose stays in the language of the project. `00-init-project` **rejects** contradictory combinations at write time (`centralized` + `PR submission: no`; `Dev deployment test: yes` + `isolated`), and it also **tries out** the CI agent (`ci-run-skill.sh --selftest`) and the notification — exactly as it does with the access of the merge provider. In a no-VCS project the whole section is `n/a`, and none of the skills of the cycle end runs.
 - **Sonar quality check:** server startup and scanner commands, Quality Gate expectations.
 - **Git and branching conventions:** the version-control flag (git present / "NO VCS"), the main branch, the **cycle = branch** model, the branch naming strategy, commit granularity (see below).
 - **Risks and limitations.**
@@ -1441,7 +1348,9 @@ In the spec (02), plan (03) and tasks (04) phases the agent keeps its open quest
 
 ## 13. A uniform `Done` status lifecycle
 
-Every document gets its own phase-specific closing status when it is created (`spec.md` → `Ready for planning`, `plan.md` → `Ready for test planning`, then `Ready for tasks`, `tasks.md` → `Ready for implementation`), and then **moves to `Done` as soon as the validate (07) closes the cycle with a PASS**. This way the 08-doc-sync and 09-merge phases expect `spec.md`/`plan.md`/`tasks.md` uniformly in the `Done` status.
+Every document gets its own phase-specific closing status when it is created (`spec.md` → `Ready for planning`, `plan.md` → `Ready for test planning`, then `Ready for tasks`, `tasks.md` → `Ready for implementation`), and then **moves to `Done` as soon as the validate (07) closes the cycle with a PASS**. This way the 08-doc-sync and the merge branch of the cycle end expect `spec.md`/`plan.md`/`tasks.md` uniformly in the `Done` status.
+
+> **The status of a document and the state of the CYCLE are two different things.** The three documents stay `Done` after the merge as well — they really are finished. Whether the **cycle** is done is decided by the last enabled verification point (`VP1` = `07`, `VP2` = the post-merge round, `VP3` = the dev test): while that is still ahead, the cycle row of the roadmap carries the `⏳ waiting for verification` mark, and the generated `cycle-status.md` shows what is left. This way no gate waiting for a `Done` has to be extended item by item.
 
 ---
 
@@ -1618,3 +1527,166 @@ If you use the **Codex CLI**, the installer works into two different places, bec
 2. **Skills → `.agents/skills/bs-<name>/SKILL.md`.** Codex reads the **project-level** skills from the `.agents/skills/` folder (`.codex/skills` is only a legacy, user-level location — it is not found at project level). The skills are available as slash commands (e.g. `/bs-analyze`).
 
 > ⚠️ **Codex ↔ Antigravity mutual exclusion.** The `.agents/skills/` folder is used by **both Codex AND Antigravity**, so in practice only one of the two can be installed into a given project. The installer watches for this: it warns you in advance when the platform is selected, and if the other platform is already present (`.codex/agents/` ↔ `.agents/agents/`), it asks before the installation whether you want to continue.
+
+---
+
+## Appendix — The detailed process diagram
+
+The detailed diagram below shows the exact transitions between the individual phases, the input/output files, the points of user interaction (User Input), and the feedback loops that kick in when something fails.
+
+```mermaid
+flowchart TD
+    %% Styling definitions
+    classDef setup fill:#e0f2fe,stroke:#2563eb,stroke-width:2px,color:#1e293b;
+    classDef design fill:#e0f2fe,stroke:#0d9488,stroke-width:2px,color:#1e293b;
+    classDef dev fill:#e0f2fe,stroke:#16a34a,stroke-width:2px,color:#1e293b;
+    classDef decision fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1e293b;
+    classDef doc fill:#f3e8ff,stroke:#8b5cf6,stroke-width:2px,color:#1e293b;
+    classDef userInput fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
+
+    subgraph Setup ["<b>⚙️ PROJECT SETUP (ONCE)</b>"]
+        P00["00 — Project initialisation"]:::setup
+        P00_Loop{"Any questions left?"}:::decision
+        DocConv["conventions.md"]:::doc
+        In00(["User Input: project goals & answers"]):::userInput
+
+        P01["01 — Managing cycles"]:::setup
+        P01_Loop{"Any open questions left?"}:::decision
+        DocRoadmap["specs/roadmap.md (Status: Done)"]:::doc
+        In01(["User Input: HLD/LLD or description"]):::userInput
+    end
+
+    subgraph Design ["<b>📐 DESIGN PHASE (PER CYCLE)</b>"]
+        P02["02 — Writing the spec"]:::design
+        P02_Loop{"Any questions left? (spec-questions.md)"}:::decision
+        DocSpec["specs/cycle-NN-*/spec.md (Status: Ready for planning)"]:::doc
+        In02(["User Input: cycle selection & spec answers"]):::userInput
+
+        P03a["03a — Writing the code plan"]:::design
+        P03b["03b — Writing the test plan"]:::design
+        P03_Loop{"Any questions left? (plan-questions.md)"}:::decision
+        DocPlan["specs/cycle-NN-*/plan.md (Status: Ready for tasks)"]:::doc
+        In03(["User Input: design answers"]):::userInput
+
+        P04["04 — Writing the tasks"]:::design
+        DocTasks["specs/cycle-NN-*/tasks.md (Status: Ready for implementation)"]:::doc
+
+        P05["05 — Analyze"]:::design
+        P05_Check{"Consistent? (analyze-report.md)"}:::decision
+        DocAnalyze["specs/cycle-NN-*/analyze/analyze-report.md (PASS/FAIL)"]:::doc
+    end
+
+    subgraph Development ["<b>💻 IMPLEMENTATION & VERIFICATION (ITERATIVE)</b>"]
+        P06["06 — Implementation"]:::dev
+        P06_Loop["Developing the code + recording progress in tasks.md"]:::dev
+        DocTasksReady["specs/cycle-NN-*/tasks.md (Status: Ready for validation)"]:::doc
+        In06(["User Input: starting the implementation of the cycle"]):::userInput
+
+        P07["07 — Validation and code review"]:::dev
+        P07_Run{"Running the tests & SonarQube<br/>(test-runner subagent)"}:::decision
+        P07_Review{"Green tests → code review<br/>(reviewer subagent, RV1)"}:::decision
+        DocReport["specs/cycle-NN-*/test-report/<br/>validation-report.md + code-review.md<br/>+ validate/round-NN/ (reports, sonar)"]:::doc
+        P07_Check{"Successful? (PASS)<br/>green tests + clean review"}:::decision
+
+        P08["08 — Doc-sync"]:::dev
+        P08_Plan["doc-sync-planner subagent<br/>→ doc-sync-plan.md (per-file plan<br/>+ finished replacement-text patch)"]:::doc
+        DocGen["docs-generated/ (system-overview, architecture, CHANGELOG, design-drift, README)"]:::doc
+        P08_Gate{"Objective consistency gate green?<br/>(DS22 — ds22-gate-check.py<br/>+ TC8 — tc8-gate-check.py)"}:::decision
+
+        P09["09 — Merge"]:::dev
+        P09_DocCheck{"Code changed since 08?"}:::decision
+
+        Merge["Merge (local squash or PR, per the Merge strategy of conventions.md)"]:::setup
+        In08(["User Input: merge confirmation"]):::userInput
+    end
+
+    %% Connections
+    Start([Start]) --> P00
+
+    %% User Inputs
+    In00 --> P00
+    In01 --> P01
+    In02 --> P02
+    In03 --> P03a
+    In03 --> P03b
+    In06 --> P06
+    In08 --> Merge
+
+    P00 --> P00_Loop
+    P00_Loop -- "Yes" --> P00
+    P00_Loop -- "No (Closed)" --> DocConv
+    DocConv --> P01
+
+    P01 --> P01_Loop
+    P01_Loop -- "Yes" --> P01
+    P01_Loop -- "No (Done)" --> DocRoadmap
+
+    DocRoadmap --> P02
+    P02 --> P02_Loop
+    P02_Loop -- "Yes" --> P02
+    P02_Loop -- "No" --> DocSpec
+
+    DocSpec --> P03a
+    P03a -- "code half done (Ready for test planning)" --> P03b
+    P03b --> P03_Loop
+    P03_Loop -- "Yes" --> P03b
+    P03_Loop -- "No" --> DocPlan
+
+    DocPlan --> P04
+    P04 --> DocTasks
+
+    DocTasks --> P05
+    P05 --> DocAnalyze
+    DocAnalyze --> P05_Check
+
+    %% The analyze self-healing loop (05)
+    P05_Check -- "FAIL" --> P05_Fixer["fixer subagent<br/>(02/03/04 fix mode, [analyze-loop])"]:::design
+    P05_Fixer -- "the fixer collects open questions<br/>(*-questions.md)" --> P05_Q(["User Input: PHASE/Knn answer<br/>(asked by the orchestrator)"]):::userInput
+    P05_Q --> P05_Fixer
+    P05_Fixer -- "downstream re-derivation<br/>02→03→04 (reconciliation)" --> P05
+    P05_Check -- "max X=3 reached without PASS" --> P05_Stop["Loop abandoned → analyze-report FAIL<br/>(the marker stays) + human decision"]:::doc
+    P05_Check -- "PASS (marker removed, 1 commit)" --> P06
+
+    P06 --> P06_Loop
+    P06_Loop --> DocTasksReady
+
+    DocTasksReady --> P07
+    P07 --> P07_Run
+    P07_Run -- "green (steps 1-3 of the full round)" --> P07_Review
+    P07_Run -. "failed test / Sonar / DoD<br/>(the review does not even run)" .-> DocReport
+    P07_Review --> DocReport
+    DocReport --> P07_Check
+
+    %% The validate self-healing loop (07) — tests AND review in one loop
+    P07_Check -- "FAIL: test / Sonar / DoD" --> P07_Fixer["implement-fixer subagent<br/>(06 fix mode, [validate-loop])<br/>## Validation fixes"]:::dev
+    P07_Check -- "FAIL: Must Fix finding (MF-NN)" --> P07_RFixer["review-fixer subagent<br/>(06 fix mode, [validate-loop])<br/>## Review fixes"]:::dev
+    P07_Fixer -- "fix done → light round,<br/>then a full confirming round" --> P07
+    P07_RFixer -- "fix done → light round,<br/>then a full confirming round + re-review" --> P07
+    P07_Fixer -. "escalation signal (VD5)" .-> P07_Esc
+    P07_RFixer -. "escalation signal (VD5)" .-> P07_Esc
+    P07_Check -- "3 attempts / 5 total / 5 FAIL runs<br/>stuck code bug" --> P07_Stop["Loop stops → STOP + human<br/>(the [validate-loop] marker + fix sections stay)"]:::doc
+    P07_Check -- "design defect (VD5):<br/>it would only be green by changing a test/DoD/finding" --> P07_Esc["Escalation: status rollback<br/>to 03/02 → design phase"]:::doc
+    P07_Esc --> P03a
+
+    %% Validation Pass
+    P07_Check -- "PASS (Yes)" --> DocStatusKesz["status of spec.md, plan.md, tasks.md: Done"]:::doc
+    DocStatusKesz --> P08
+
+    %% Doc-sync (08): plan → mechanical execution → objective gate (NOT a self-healing subagent loop)
+    P08 --> P08_Plan
+    P08_Plan --> DocGen
+    DocGen --> P08_Gate
+    P08_Gate -. "gate failure / decision point → doc-sync-questions.md<br/>(human-driven correction, DS10)" .-> P08DS_Q(["User Input: doc-sync question / correction"]):::userInput
+    P08DS_Q --> P08_Plan
+    P08_Gate -- "gate green → docs-generated/ consistent" --> P09
+
+    %% Merge (09) — no loop, no subagent; the review has already run in 07
+    P09 --> P09_DocCheck
+    P09_DocCheck -. "Yes → doc-sync again before the merge (DS23.2)" .-> P08
+    P09_DocCheck -- "No → according to `## Review and merge` in conventions.md" --> Merge["09 — Review and merge (no PR)<br/>bring in main → VP2 (tests + Sonar) → merge (RD8)"]
+    P09_DocCheck -- "PR submission: yes" --> MergePR["09a create-pr → 09b review → 09c merge<br/>VP2 is the gate BEFORE the push"]
+    MergePR -. "Dev deployment test: yes" .-> DevTest["09d — dev-test (VP3)<br/>deploy + real e2e in the integrated environment"]
+    Merge --> End([Cycle finished])
+    MergePR --> End
+    DevTest --> End
+```

@@ -30,6 +30,8 @@
 
 **Test criterion:** How can it be verified that the cycle is done? (a concrete, decidable statement)
 
+_The **state of the cycle is carried by the mark in the heading**, written by the cycle-closing skills (L13-D8): `⏳ waiting for verification` — the cycle is merged, but the **post-merge** verification (`VP2`/`VP3`) is still ahead; `✅` — the **last enabled** verification point was green, the cycle is closed. Without a mark the cycle is still in progress._
+
 ---
 
 ## Cycle 02 — <title>

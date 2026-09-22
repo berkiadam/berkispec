@@ -93,9 +93,10 @@
        body-val (a kézi tesztterv ebből szerel össze).
 [ ] 9. PH1 — FUTTATÁSI FÁZIS: a gépi futtatási tábla `<field:f_phase>` oszlopa
        minden sorban érvényes érték (`<status:phase_implement>` /
-       `<status:phase_validate>` / `<status:phase_both>`; az üres cella
-       mindkettő), és legalább egy kategória fut a `<status:phase_validate>`
-       fázisban. `DoD-NN`-t bizonyító teszt nincs `<status:phase_implement>`-only.
+       `<status:phase_validate>` / `<status:phase_post_merge>` /
+       `<status:phase_dev_test>`; vesszős felsorolás, az ÜRES CELLA HIBA),
+       és legalább egy kategória felsorolja a `<status:phase_validate>`
+       fázist. `DoD-NN`-t bizonyító teszt nincs `<status:phase_implement>`-only.
 [ ] 10. Minden hibaághoz szerepel a HTTP státusz, az errorCode (ahol a spec
        hibamátrixa definiálja) és a response body mintája.
 [ ] 11. Nincs a teszt-szekcióban hivatkozás a lépések HELYÉN: „a cycle-XX mintájára",

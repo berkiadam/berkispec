@@ -50,5 +50,22 @@ A parancs kétféleképpen használható:
      python3 <platform-script-path>
      ```
 
+   - **Ha a felhasználó a generált státuszfájlt kéri (`--write`)**:
+     ```bash
+     python3 <platform-script-path> specs/cycle-NN-<cycle-name> --write
+     ```
+     A script a ciklus mappájának gyökerébe írja a `cycle-status.md`-t, és a szokásos kimenetet is kiírja.
+
 3. **Kimenet megjelenítése**:
    - Mutasd meg a futás eredményét a felhasználónak a chatedben.
+
+---
+
+## A generált `cycle-status.md` (`--write`)
+
+A `--write` mód a ciklus mappájának gyökerébe generálja a `specs/cycle-NN-<cycle-name>/cycle-status.md` fájlt: mi futott le, mi van hátra, és egy összesített státusz.
+
+- **🔴 Generált fájl, nem kézzel írt.** Rendering a bizonyítékból, **sosem forrás** — és **kapu soha nem olvassa**. A keret két dolgot kezel élesen külön: a **döntést** perzisztálni kell (nem levezethető), a **tényt** viszont levezetni a bizonyítékból, sosem önbevallásból. A „mi futott le" a második kategória: ha az ágens kézzel írná bele, hogy `VP2: PASS`, azzal egy önbevalló bizonyíték-csatorna nyílna a `report-gate-check.py` mellett. **Egy hazudó státuszfájl rosszabb, mint a semmi** — ezért ne szerkeszd kézzel, és ne javítsd „bele" a valóságot.
+- **Mikor frissül magától:** minden **fázis-záró commitnál** (a közös `phase-commit` eljárás része), tehát sosem áll elavultan. A kézi `--write` hívás emellett bármikor működik.
+- **Commitolva van:** a PR-en és a központosított úton ez az egyetlen hely, ahol az ember **gépi futtatás mellett is** látja, hol tart a ciklus. Ütközésnél nem kell feloldani: újragenerálható.
+- **Mit mutat még:** a `conventions.md` `## <sec:cv_review_and_merge>` szekciója alapján a merge utáni verifikációs pontokat is (`VP2` post-merge, `VP3` dev-teszt) — csak azokat, amelyeket a projekt bekapcsolt —, és ha a kör riportja tartalmazza, a test manager futás-URL-jét pointerként.

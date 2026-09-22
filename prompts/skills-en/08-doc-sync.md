@@ -14,7 +14,7 @@ output:
   - "specs/cycle-NN-<name>/doc-sync-plan.md (the anchor of the execution and of the continuation)"
   - "specs/cycle-NN-<name>/doc-sync-questions.md (if a decision point / a gate failure comes up)"
 prev: bs-validate
-next: bs-merge
+next: bs-review-and-merge
 subagents:
   - "agents/doc-sync-planner.md"
 ---
@@ -293,6 +293,8 @@ At the **creation** of the folder (the bootstrap) the index is created as well. 
 > **🔴 TC1/a — This is NOT a runnable source.** **Nothing runs automatically** from the register. The `test-runner` subagent does **not read** this file — only the <sec:testing_strategy> / <sec:regression_impact> sections of `plan.md`. A recipe is executed if and only if phase `02`/`03` deliberately **inlined** it into the `spec.md`/`plan.md` of the given cycle (with human approval). The register is **memory**, `plan.md` is the **only runtime truth**.
 
 **What does not belong here:** `conventions.md` records **how** we test (tools, folder structure, run commands, principles) — we do **not repeat** that here. `plan.md` records what is **<status:op_new>** in the given cycle. This file records **what and when it is mandatory** to test, per component, as-built.
+
+> **The environment recipe of the post-merge rounds belongs here (CS4/TC1/c).** In centralized SDD the `VP2` (post-merge) round runs **containerized**, on the test node of the CI: bringing up the `compose`-based test environment with mocks, the test users and the test data are a **recipe**, so promote them here once they became recurring in a cycle. The **deployment recipe** of `VP3` (`bs-dev-test`) likewise. The **on/off switch** and the **deployment command**, on the other hand, belong to the `## <sec:cv_review_and_merge>` section of `conventions.md` — that is what the machine reads.
 
 ### TC2 — Structure: a coordinate block + exactly three sections
 

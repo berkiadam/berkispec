@@ -1,17 +1,19 @@
 # „A ciklus utolsó fázisa nem csak merge" — izolált és központosított SDD
 
-> **Státusz: VÉGREHAJTÁSRA KÉSZ (2026-09-21) — a végrehajtás még nem indult el.**
-> A követelmények (3–5. szakasz), a **huszonegy** tervezési döntés (`L13-D1`–`L13-D21`,
-> 8. szakasz) és a **pipálható task-lista** (9.c) megvannak; **tervezési** kérdés nincs nyitva.
-> A végrehajtás közben eldöntendő, **nem tervezési** kérdések a 8.b szakaszban állnak (`Q19`–`Q22`),
-> és a 9.c-ben `⛔` jelöli az ezekre váró tételeket.
+> **Státusz: VÉGREHAJTVA (2026-09-22).** A 9.c task-lista **minden tétele kész** (A–G csomag),
+> a `Q19`–`Q22` végrehajtási kérdések lezárva (`L13-D27`–`L13-D30`, 8.b szakasz), a kötelező
+> kapuk zöldek (nyelvi paritás default + `--strict`, gemini-tükrök, telepítés-próba öt platformra,
+> mindkét nyelven). A követelmények (3–5. szakasz), a **huszonhat** tervezési döntés
+> (`L13-D1`–`L13-D26`, 8. szakasz) és a **pipálható task-lista** (9.c) a megvalósítás
+> igazságforrása maradt — innentől ez a fájl is **a múltat rögzíti**.
 >
 > **Amit ez a fájl tartalmaz:** (1) a Felhasználó követelményei tételesen — `VP1`–`VP3` (a három
-> teszt-kör), `RM-NN` (a közös review-and-merge gépezet), `CS-NN` (a központosított út);
+> teszt-kör), `RM-NN` (a közös review-and-merge gépezet), `CS-NN` (a központosított út),
+> `TM-NN` (a test manager integráció, 5.b);
 > (2) a repó mért állapota, ami ezeket érinti (6. szakasz); (3) a **lezárt döntések** (8. szakasz),
 > amelyek a követelmények egy részét **felülírják** — ütközésnél **a döntés nyer**.
 >
-> **Előzmény:** `prompts/inprove-list12.md` (a quick-flow visszarövidítése) — végrehajtva.
+> **Előzmény:** `prompts/improve-list12.md` (a quick-flow visszarövidítése) — végrehajtva.
 > Ez a kör **ad**, nem vesz el; a quick-flow méret-korlátja (`7/q`, ≤ 445 telepített sor)
 > ezért közvetlen korlát, ha a `7/o` kérdésre („igaz-e a másik útra is?") igen a válasz.
 
@@ -55,7 +57,7 @@
 | `RD8` · `W1` · `W2` · `W3` | a mai merge-fázis szabályai | `prompts/skills-{hu,en}/09-merge.md` |
 | `PE1` | a fázis-záró commit és a fázishatár | `prompts/shared-{hu,en}/phase-commit.md` |
 | `BQ2`–`BQ7` · `BD*` · `PW1`–`PW5` | ciklusszám, branch-preflight, párhuzamos worktree | `prompts/skills-{hu,en}/01-add-cycles.md` + `shared-*/git-preflight.md`, `parallel-cycles.md` |
-| `QF1`–`QF22` · `QT1`–`QT6` | a quick-flow szabályai | `prompts/skills-{hu,en}/quick-flow.md` + `prompts/inprove-list10.md`, `inprove-list12.md` |
+| `QF1`–`QF22` · `QT1`–`QT6` | a quick-flow szabályai | `prompts/skills-{hu,en}/quick-flow.md` + `prompts/improve-list10.md`, `improve-list12.md` |
 | `RP1` · `GC1` · `AV1` · `IM1` · `IP1` | közös shared-blokkok | `prompts/shared-{hu,en}/` (a meta-prompt shared-táblája mondja meg, melyik fájl) |
 | `TS` (túlélés-szabály) · `AF-NN`/`AX-NN` | az `05` analyze-hurok eszkalációja | `prompts/skills-{hu,en}/05-analyze.md` |
 
@@ -97,6 +99,8 @@ A `bs` SDD-ben **három helyen tesztelünk, három különböző okból**:
 - **`VP1` ma is létezik:** ez a `07-validate` (és a `06` dev-hurka). Nem változik.
 - **`VP2` új.** Ez az, amit az első kör `RM6`-ként írt le.
 - **`VP3` új**, és **csak a központosított úton** értelmes: a `bs-dev-test` (`CS5`).
+- **Test manager (5.b):** a `VP3` körének eredménye **gyárilag** egy külső test managerbe is
+  felkerül (`TM1`–`TM10`, `L13-D22`); a `VP1`/`VP2` ugyanazon a szerződésen **kapcsolható**.
 
 ### 2.2 Két üzemmód
 
@@ -283,6 +287,160 @@ kapcsolható a `Failure handling` mezővel — és bekapcsolva örökli a `07` h
 
 ---
 
+## 5.b Test manager integráció (`TM1`–`TM10`)
+
+> **Ez a szakasz a `CS5` (`VP3`) kiegészítése**, de a gépezete **fázis-agnosztikus**: a
+> `conventions.md` mezője mondja meg, mely körök töltenek fel, és **gyárilag csak a `dev-test`**
+> (`L13-D22`). A szakasz `TM-NN` tételei a Felhasználó igényéből származnak; a hozzájuk tartozó
+> döntések az `L13-D22`–`L13-D25`.
+
+**A kiváltó igény.** A `VP3` az a pont, ahol a legtöbbet érő teszt-információ keletkezik — valódi,
+integrált környezetben futó e2e kör —, és pont ez az, amit a git **nem tud megőrizni**: a
+commitolt HTML-riport arra válaszol, hogy *ebben a ciklusban mi futott le*, nem arra, hogy *ez a
+teszt az elmúlt harminc futásból hányszor bukott, és milyen okból*. A flaky-detektálás, a
+stabilitás-trend és a hibák ok szerinti csoportosítása **cikluson átnyúló** adat; a ciklusmappa
+definíció szerint nem az. Ez nem a `test-report/` kiváltása, hanem a **másik tengely**.
+
+**`TM1` — Opcionális, alapból kikapcsolva.** A keret **nem ír elő** test managert. Ha a
+`Test manager:` mező `none` (ez az alapérték), a keret pontosan úgy viselkedik, mint ma — nulla
+új lépés, nulla új hálózati függés. Egy külső SaaS sosem válhat a ciklus futásának előfeltételévé.
+
+**`TM2` — Két integrációs alak, mert a piac kétféle.** A mérés (6.9) szerint a szolgáltatók két,
+egymással nem helyettesíthető módon csatlakoznak:
+
+| alak | hogyan | tipikus szolgáltató | a keret dolga |
+|---|---|---|---|
+| **`reporter`** | a kliens a teszt-futtató **reporter-láncába** kerül, és **futás közben streamel** | **TestDino** (`@testdino/playwright`), Allure TestOps, Currents | **nincs feltöltő lépés** — a futás ELŐTT a token meglétének ellenőrzése, a futás UTÁN a futás-URL kinyerése |
+| **`import`** | a kész artefaktumot (`junit.xml`, riport-mappa) egy paranccsal **utólag tolja fel** | **ReportPortal** (JUnit importer), **Qase** CLI, TestRail / Xray API | a futás után egy **feltöltő lépés**, a futtatási tábla `Eredményfájl` + `Formátum` cellájából |
+
+**🔴 A `reporter` alak NEM veszi el a commitolt bizonyítékot.** Ez volt a tétel legnagyobb
+kockázata: ha a test manager riportere **kiváltaná** a futtató JUnit-riporterét, akkor a
+`run-tests.py` eredményfájl-oszlopa üresen maradna, és a `TM7` (a commitolt riport az egyetlen
+bizonyíték) megvalósíthatatlan lenne. A TestDino saját telepítő oldala szó szerint azt írja a
+csomagról: *„One package, alongside any reporters you already run"* — a Playwright
+`reporter:` listája többelemű, tehát a JUnit-riporter és a test manager riportere **ugyanabban a
+futásban, egymás mellett** dolgozik. A `reporter` alak tehát **hozzáad**, nem helyettesít.
+
+**🔴 Ez a kettősség nem elméleti.** A TestDino mai ajánlott útja a `reporter` alak (a régi
+`npx tdpw upload ./playwright-report --token=…` CLI-t a gyártó **deprecated**-nek jelöli), és a
+termék **csak Playwright**-et támogat. Egy pytest-es unit-kategória ugyanabban a projektben tehát
+`import` alakban, más szolgáltatóhoz megy — vagy sehova. Aki csak az `import` alakot építi meg,
+az a TestDino-t nem tudja bekötni; aki csak a `reporter` alakot, az a TestRail/Xray-világot zárja ki.
+
+**`TM3` — A konfiguráció a `conventions.md` meglévő `## Teszt-riportolás` szekciójában él**
+(`L13-D23`). Nem új szekció: ez a szekció ma is a **riport-artefaktumok, útvonal-alapok és
+riport-generáló parancsok** regisztere, amit a `TR3` kapu olvas, és a `TC1/c` határvonal
+kifejezetten ide sorolja a riportolást. A **kanonikus mezőblokk** — ezt kell a sablonba tenni:
+
+```markdown
+**Test manager:** testdino
+**Test manager alak:** reporter
+**Test manager token env var:** TESTDINO_TOKEN
+**Test manager fázisok:** dev-test
+**Test manager kötelező:** nem
+**Test manager parancs:** —
+```
+
+| mező | elfogadott érték | jelentés |
+|---|---|---|
+| `Test manager` | `none` (alap) · `testdino` · `reportportal` · `qase` · `command` | melyik adapter fut; `none` esetén a többi mező elhagyható |
+| `Test manager alak` | `reporter` · `import` | `TM2` |
+| `Test manager token env var` | a **változó NEVE**, sosem az értéke | `TM5` |
+| `Test manager fázisok` | vesszős felsorolás: `implement` · `validate` · `post-merge` · `dev-test` · `ad-hoc` | `TM4`; alapérték: `dev-test` |
+| `Test manager kötelező` | `igen` · `nem` (alap) | a feltöltés bukása buktassa-e a fázist (`TM8`) |
+| `Test manager parancs` | szó szerinti parancssor, csak `command` providernél | a menekülő út (`TM9`) |
+
+**A mezőnevek lokalizáltak, `<field:…>` kulccsal** — a szekció összes többi mezője is az
+(`**Riport-generálás kötelező:**`, `**Artefaktum-útvonal alapja:**`, `**Riport-fázisok:**`).
+**Ez a `L13-D23` ára, és ki kell mondani:** az `L13-D2` „gépi rész angol literál, nincs
+mezőnkénti kulcs" megoldása **itt nem alkalmazható**, mert nem új szekciót nyitunk, hanem egy
+meglévő, lokalizált szekciót bővítünk. Hat új kulcs kell a `status-keys.json` **mindkét**
+szeletébe. Az **értékek** viszont nyelvfüggetlen literálok (`testdino`, `reporter`, `dev-test`) —
+a `junit` / `local` / `remote` / kategória-azonosítók mintájára, tehát nem fordítjuk őket.
+
+**`TM4` — Fázisonként kapcsolható, alapértelmezés `dev-test`** (`L13-D22`). A `VP1` lokális,
+gyakran offline kör: a `07` nem válhat tokenfüggővé, különben az **izolált SDD** üzemmód sérül.
+A `VP2` és a `VP1` bekapcsolása viszont egyetlen mező-érték, ha a projekt kéri. Az `ad-hoc` érték
+a cikluson kívüli `/bs-run-tests` futásokra vonatkozik — trend-adatnak épp ez a legértékesebb
+forrás, és **a `D8`/`KT6` tűzfalat nem sérti**, mert nem a repóba ír (lásd `TM7`).
+
+**`TM5` — A titok kizárólag env varban, a regiszterben csak a NEVE.** Egy test manager API-token
+a `TC5` osztályozása szerint **osztott platform credential** → a `conventions.md`-be **soha** nem
+kerülhet, csak pointer. A script maga olvassa ki a környezetből, és **soha nem kap tokent
+parancssorban** — ez az `L13-D11` már meghozott indoklása: a parancs szövege transzkriptbe,
+`check-log.md`-be és CI-naplóba kerül. Hiányzó env var → beszédes hiba, nem néma átlépés.
+
+**`TM6` — Fix szerződés; a szolgáltató csak adapter.** A vendor-semlegességet **nem a
+szolgáltató-lista** adja, hanem ez a szerződés:
+
+```bash
+python3 prompts/scripts/test-manager.py \
+    --mode preflight|publish|selftest \
+    --phase <implement|validate|post-merge|dev-test|ad-hoc> \
+    --round-dir <a kör-mappa> \
+    [--category <kategória>] [--dry-run]
+```
+
+- **Bemenet:** a kör-mappa, a futtatási tábla sora (`Eredményfájl`, `Formátum`) és a
+  `run-tests.py` `results.json`-ja. **Új bemenetet nem vezetünk be**, és a plan futtatási
+  táblája **nem kap új oszlopot** (7. szakasz).
+- **Metaadat, amit minden adapter felküld:** `cycle` · `phase` · `branch` · `commit` ·
+  `category` · `env` (`local`/`remote`). Cikluson kívüli (`ad-hoc`) futásnál `cycle=none` —
+  így a `D8`/`KT6` tűzfal **a szolgáltatónál is látszik**, és egy kényelmi futás dashboard-linkje
+  utólag sem téveszthető össze ciklus-bizonyítékkal.
+- **Kimenet:** a stdout **utolsó sora** gépiesen olvasható: `TEST_MANAGER_RUN_URL=<url>`
+  (ha az adapter nem ad URL-t, az érték üres — ez nem hiba).
+- **Exit kódok:** `0` feltöltve · `2` konfigurációs/használati hiba (ismeretlen provider, hiányzó
+  mező, hiányzó env var) · `3` **kihagyva** (a fázis nincs a listán, vagy `Test manager: none`) ·
+  `4` a feltöltés lefutott, de bukott (hálózat, 401, 5xx).
+- **A `preflight` a BETÖLTHETŐSÉGET próbálja, nem csak az env var meglétét.** A füstteszt (6.9/6.
+  pont) megmutatta, hogy a veszély nem a hitelesítés — az szépen degradál —, hanem a
+  modul-betöltés: rossz Node-verzión a TestDino riporter `ERR_REQUIRE_ESM`-mel **az egész
+  teszt-futást megöli**, nulla lefutott teszttel. Egy env-var-check ezt nem fogja meg.
+- A `3` **külön kód, nem `0`**: a „nem volt bekapcsolva" és a „feltöltve" nem moshatók össze —
+  ugyanaz a logika, mint az `L13-D3`-ban és az `L13-D4`-ben.
+
+**`TM7` — 🔴 A feltöltés NEM bizonyíték** (`L13-D24`). A ciklus egyetlen bizonyítéka továbbra is a
+**commitolt** `test-report/<fázis>/` készlet (`L13-D4`). A test manager futás-URL-je **pointer**,
+nem kapu-bemenet: a `report-gate-check.py` egy URL-t tartalmazó, artefaktum nélküli riport-készletet
+**ugyanúgy elutasít**, mint ma. Ez az `L13-D7` már kimondott elutasításának („csak PR-komment vagy
+CI-artefaktum — nem verziózott") a folytatása.
+
+**`TM8` — A feltöltés bukása alapból nem buktatja a fázist, de nyomot hagy** (`L13-D24`). Ha a
+bizonyíték már commitolva van, egy 502-es SaaS nem érvénytelenítheti a zöld tesztkört. Az eredmény
+viszont **nem maradhat jelöletlen** — és a füstteszt megmutatta, hogy ez **nem elméleti**:
+rossz tokennel a Playwright `exit 0`-val, zölden végez, miközben **semmi nem töltődött fel**.
+Az „uploaded" tényét tehát **pozitívan kell bizonyítani** (megjelent-e a futás-URL), nem a hiány
+hiányából következtetni. A `results.json`-ba és a kör riportjába egy sor kerül —
+`test manager: uploaded <url>` vagy `test manager: FAILED <ok>` vagy `test manager: skipped
+(<fázis> nincs a listán)`. A `Test manager kötelező: igen` mező ezt kemény kapuvá teszi
+azoknak a projekteknek, ahol a test manager az auditált igazságforrás.
+
+**`TM9` — Négy adapter: három nevesített + egy menekülő út** (`L13-D25`). `testdino` ·
+`reportportal` · `qase` · `command`. A `command` ág a `Test manager parancs:` mezőt futtatja a
+`TM6` metaadataival környezeti változóként — ezzel TestRail, Xray, Allure TestOps, Currents vagy
+bármi más bekötése **a keret módosítása nélkül** megy. Ez az `L13-D13` (`ci-run-skill.sh`) és az
+`L13-D11` (`notify.py`) már bevált mintája.
+
+**`TM10` — A futás-URL a visszacsatolás része.** A `CS6` értesítésébe (`notify.py --run-url`) és a
+generált `cycle-status.md`-be (`L13-D9`) is bekerül. Egy bukott `VP3`-nál a fejlesztő így egy
+kattintással a trace-nél van — ez a test manager valódi haszna a napi munkában, nem a dashboard.
+
+**Melyik task valósítja meg** *(a tételek a 9.c-ben, a saját csomagjukban állnak, hogy a
+végrehajtási sorrend ne törjön meg)*:
+
+| tétel | task |
+|---|---|
+| `TM3` · `TM5` (konfig, kulcsok, init-interjú) | `A6`, `A7` |
+| `TM4` (fázis-szűrés, `dev-test` érték) | `B9` |
+| `TM6` · `TM9` (a script és a négy adapter) | `E8`, `E9` |
+| `TM1` · `TM2` · `TM8` (bekötés a `bs-dev-test`-be és a többi fázisba) | `E10`, `E12` |
+| `TM10` (értesítés, `cycle-status.md`) | `E11`, `D2/b` |
+| `TM7` (az anti-szabály mérése) | `G7` |
+| dokumentáció | `F12` |
+
+---
+
 ## 6. Mérés — a repó mai állapota, ami ezeket a tételeket érinti
 
 ### 6.1 A mai `09-merge` felépítése
@@ -378,6 +536,10 @@ tisztázandó: melyik CLI/ágens fut a CI-ben, milyen **nem-interaktív** módba
 | `README-HU.md` · `README.md` | parancs-lista (`:267` / `:264`), mermaid 9-es csomópont (`:314` / `:308`), fájl-tábla (`:1051` / `:1041`), `subagents:` bekezdés (`:1117` / `:1107`), státusz-szekció (`:1455` / `:1444`), példa (`:905` / `:896`) |
 | `berki-spec-directory-structure.md` | a telepített skill-mappák nevei |
 | `prompts/meta-improve-prompts.md` | fázis-felsorolás, fájl-tábla, script-tábla, `7/*` |
+| **ÚJ:** `prompts/scripts/test-manager.py` | négy adapter + `command`, `--selftest` (`TM6`, `L13-D25`) |
+| **ÚJ:** `fixtures/testdino-smoke/` | a `testdino` adapter próbapadja — **már létezik és fut** (6.9); a `berki-spec-directory-structure.md`-be fel kell venni (`F12`) |
+| `prompts/lang/{hu,en}/00-init-project.md` | a `## Teszt-riportolás` szekció hat új test manager mezője (`TM3`, `L13-D23`) |
+| `prompts/lang/status-keys.json` | hat új `<field:…>` kulcs + a `phase_dev_test` érték (`A6`, `B9`) |
 | **telepített projektek** | a `.claude/skills/bs-merge/` mappa neve megváltozik → **nincs** visszafelé kompatibilitás, a frissítés újratelepítés (`L13-D19`) |
 
 ### 6.8 A másik út (`7/o`) — a quick-flow ma egyáltalán nem merge-el
@@ -391,6 +553,144 @@ teszt-válogatás a `spec-plan.md`-ből jön.
 
 ---
 
+### 6.9 Test manager — a mai állapot és a csatlakozási pontok
+
+**A keretben ma nulla test manager fogalom van.**
+
+```bash
+grep -rIni "testdino\|reportportal\|testrail\|xray\|qase\|test manager" prompts/ | grep -v improve-list
+```
+→ **nulla találat** (2026-09-21). Tehát nem bővítünk valamit, hanem **újat vezetünk be** — annál
+fontosabb, hogy a meglévő gépezetre üljön rá, és ne mellé.
+
+**A csatlakozási pontok viszont már megvannak — mind a négy:**
+
+| mi kell hozzá | hol van ma | kell-e változtatni |
+|---|---|---|
+| feltölthető artefaktum és a formátuma | a futtatási tábla `Eredményfájl` + `Formátum` oszlopa (`junit`), `03b-write-test-plan.md` / `00-init-project.md` | **nem** — a `TM6` ebből dolgozik, új oszlop nincs |
+| a futás gépi eredménye | `run-tests.py` → `results.json` a kör-mappában | **nem** — egy sorral bővül (`TM8`) |
+| mezős konfigurációs regiszter riporthoz | `conventions.md` `## <sec:cv_test_reporting>` (`**Riport-generálás kötelező:**`, `**Artefaktum-útvonal alapja:**`, `**Riport-fázisok:**`) | **igen** — hat új mező (`TM3`) |
+| titok-kezelés | `TC5` osztályozás (osztott platform credential → pointer) + az `L13-D11` env-var mintája | **nem** — készen átvehető (`TM5`) |
+
+**🔴 Egy hézag a meglévő tervben, amit ez a tétel hozott felszínre.** Az `L13-D4` és a `B7` task
+már **`test-report/dev-test/`** riport-fázist említ, a `B2` task viszont a `run-tests.py --phase`
+választékát **csak `post-merge`-dzsel** bővíti. Ha a `VP3` körét is a `run-tests.py` hajtja (márpedig
+a `TM4` alapértelmezett fázisa ez), akkor a `dev-test` **fázis-értéknek is léteznie kell** — a
+`Fázis` oszlopban, a `--phase` választékban és az `analyze-gate-check.py` `PH1` checkjében.
+Ez a `Q22` hatókörébe tartozik (honnan tudja a `bs-dev-test`, mely teszteket futtassa) — a `TM4`
+**feltételezi** a `dev-test` fázis-értéket, és ha a `Q22` más mechanizmust választ, a fázis-szűrés
+arra áll rá. → **task: `B9` (`⛔Q22`).**
+
+**Mérés a TestDinóról** (2026-09-21: `testdino.com` + `docs.testdino.com`; **2026-09-22: a
+projekt saját „Connect this project" oldala**, tehát az alábbi recept nem dokumentációból
+kikövetkeztetett, hanem a szolgáltatás által kiadott szó szerinti lépéssor), mert a `TM2`
+kettőssége ebből a mérésből származik, nem feltételezésből:
+
+- **Playwright-only.** Nincs pytest/JUnit-általános út — egy vegyes projekt unit-kategóriája
+  nem mehet ide.
+- **A mai ajánlott integráció `reporter` alak**, négy lépésben:
+
+  ```bash
+  # 1. telepítés — „One package, alongside any reporters you already run"
+  npm install @testdino/playwright
+  ```
+  ```ts
+  // 2. playwright.config.ts — a kulcs a környezetből jön, a fájlba nem kerül titok
+  export default defineConfig({
+    reporter: [
+      ['@testdino/playwright', { token: process.env.TESTDINO_TOKEN }],
+    ],
+  });
+  ```
+  ```bash
+  # 3. futtatás — az eredmény tesztenként, futás közben streamel
+  export TESTDINO_TOKEN=…
+  npx playwright test
+  ```
+  ```yaml
+  # 4. CI — a kulcs secretként, a teszt-lépésnek átadva
+  - name: Run tests with TestDino
+    env:
+      TESTDINO_TOKEN: ${{ secrets.TESTDINO_TOKEN }}
+    run: npx playwright test
+  ```
+  A gyártó dokumentációja kifejezetten azt írja, hogy **ne** tegyünk mögé post-run feltöltő
+  lépést. A telepítő oldalon van egy *„Prefer not to edit your config?"* ág is (config-módosítás
+  nélküli út) — **nem mértük fel**, az `E9` során meg kell nézni, mert ha működik, a keret a
+  projekt `playwright.config.ts`-éhez egyáltalán nem nyúlna.
+- **Amit a felület visszaad:** Analytics (trend), Flaky tests, **Pull requests — „a verdict per
+  branch"**, csapat-megosztás. ⚠ A **branch-verdikt csábító, de nem vehető át**: az `L13-D13` már
+  kimondta, hogy a verdikt a determinisztikus kapuktól jön, nem külső eszköztől — a TestDino
+  PR-verdiktje **információ**, nem kapu (`TM7`).
+- **A `tdpw upload ./playwright-report --token=…` CLI létezik, de deprecated** — tehát a keret
+  nem építhet rá, de egy meglévő projekt még használhatja: ezt a `command` ág fedi (`TM9`).
+- **Titok:** egyetlen `TESTDINO_TOKEN`. **API:** `https://api.testdino.com/api/v1/public`.
+  On-prem / self-hosted változat nincs dokumentálva — ez a `Test manager: none` alapértelmezés
+  egyik indoka (zárt hálózatú projekt nem tud hova feltölteni).
+- **A reporter-blokk a projekt `playwright.config.ts`-ébe tartozik, nem a keretbe** — a keret
+  ehhez nem nyúl (7. szakasz), a **recept** pedig a `test-conventions.md`-é a `TC1/c` szerint.
+
+**Amivel szembeállítható:** a ReportPortal és a Qase alapértelmezett útja ezzel szemben
+**futás utáni JUnit XML import** — ezért nem lehet egyetlen alakot megépíteni.
+
+**A próba-fiók megvan (2026-09-22).** Létezik egy TestDino projekt a `testdino` adapter éles
+kipróbálásához (`E9`), tehát ez az egy adapter **nem marad kipróbálatlan**.
+
+| | |
+|---|---|
+| env var | `TESTDINO_TOKEN` |
+| a kulcs helye | **pointer:** `~/.config/berkispec/testdino.env` (mód `600`, a repón kívül) — `source`-olni kell a próba előtt |
+| CI-ben | repo secret `TESTDINO_TOKEN` néven, a teszt-lépésnek env-ként átadva |
+
+**Füstteszt — lefutott (2026-09-22).** Egy eldobható, 5 tesztes Playwright projekt (3 zöld ·
+1 bukó · 1 skipped), a `reporter:` láncban **egyszerre** `list` + `junit` + `html` +
+`@testdino/playwright@2.6.2`. Amit mért:
+
+| # | megfigyelés | mit dönt el |
+|---|---|---|
+| 1 | **Az együttélés IGAZ.** A `test-report/junit.xml` (5 testcase, 1 failure, 1 skipped) és a `test-report/html/` **elkészült**, a TestDino riporterrel egy futásban. | a `TM2` állítása már nem a gyártó marketing-mondatán áll, hanem mérésen |
+| 2 | **A futás-URL a stdout UTOLSÓ nem üres sora:** `  View run  https://app.testdino.com/org_…/projects/project_…/test-runs/test_run_…` — plusz egy UUID a `Run` sorban és egy `✓ run:end delivered` visszaigazolás. | **`Q23`** → `L13-D26` |
+| 3 | **A riporter NEM változtatja a futtató exit kódját.** A bukó teszt miatt `exit 1` jött, de ez a Playwrighté. | a `TM6` verdikt-függetlensége |
+| 4 | **Hiányzó token:** beszédes hibablokk a kimeneten, **a tesztek lefutnak, `exit 0`**. | a `TM1` teljesül — a SaaS nem előfeltétel |
+| 5 | **Rossz token:** ugyanaz, `Authentication failed — invalid or expired token`, **a tesztek lefutnak, `exit 0`**. 🔴 A futás tehát **zöldnek látszik, miközben semmi nem töltődött fel.** | ez a `TM8` valódi kockázata → detektálni kell (`L13-D26`) |
+| 6 | 🔴 **Node ≥ 22.12 KÖTELEZŐ.** Node 20.11-en a reporter be sem töltődik (`ERR_REQUIRE_ESM`: a csomag CommonJS, de `chalk@^5`-öt `require`-öl), és ez **az egész futást megöli** — nulla teszt fut le, `exit 1`. A `commander@^15` függősége is `node >=22.12`-t kér. | **ez a `TM1` egyetlen valódi sérülési pontja**, és a `preflight` dolga |
+| 7 | Két külön végpont: a riporter a `https://reporter.testdino.com`-ra ír, a publikus API a `https://api.testdino.com/api/v1/public`. | hálózati engedélyezés zárt környezetben |
+| 8 | **A git-metaadatot MAGÁTÓL felismeri**, ha a futás git-repóban történik: az összegző tábla `Git` sora ág + rövid hash + commit-üzenet (`terv/improve-list13 @ e005844 …`). A repón kívül futtatva ez a sor **nincs**. | a `TM6` metaadat-listája szűkül: `branch`/`commit` a `reporter` alaknál **nem a keret dolga** — a `cycle` és a `phase` viszont igen, azt a szolgáltató nem tudhatja |
+
+**🔬 A próbapad a repóban van: `fixtures/testdino-smoke/`.** Az `E8`/`E9` megírásakor **ne
+kelljen újra felderíteni a szolgáltatót** — a fenti mérések ebből a projektből származnak és
+ott reprodukálhatók. Tartalma: `package.json` + **`package-lock.json`** (pinnelt verziók:
+`@playwright/test@1.63.0`, `@testdino/playwright@2.6.2`, `chalk@5.6.2`, `commander@15.0.0`),
+a **négy riportert egyszerre** fűző `playwright.config.ts`, öt vegyes teszt (3 zöld · 1 bukó ·
+1 skipped) és egy `README.md` a futtatással. Kulcs **nincs** benne (`TM5`), a `node_modules/` és
+a `test-report/` gitignorált.
+
+```bash
+nvm use 22 && npm ci && source ~/.config/berkispec/testdino.env && npx playwright test
+```
+
+**Amit az adapter írásához innen lehet átvenni** (a `reporter` ág teljes felismerő-készlete):
+
+```python
+RUN_URL_RE = re.compile(r"https://app\.testdino\.com/\S+/test-runs/\S+")  # az utolsó nem üres sorban
+DELIVERED  = "run:end delivered"                    # a sikeres feltöltés visszaigazolása
+AUTH_FAIL  = "Authentication failed"                # néma bukás — a futtató exit kódja 0 marad
+NO_TOKEN   = "Token is required but not provided"   # ugyanaz, hiányzó env var esetén
+```
+
+**A 6. pont a legfontosabb tanulság.** Nem a hitelesítés a veszélyes — az szépen degradál —, hanem a
+**modul-betöltés**: egy rossz Node-verzió vagy egy törött függőségi fa a test managerből a
+teszt-futás blokkolóját csinálja. Ezért a `TM6` `--mode preflight` ága **nem elég, ha csak az env
+var meglétét nézi**: a riporter **betölthetőségét** kell próbálnia.
+
+**🔴 A kulcs ÉRTÉKE szándékosan nincs itt.** A `TC5` osztályozása szerint ez osztott platform
+credential, és ez a fájl a `github.com/berkiadam/berkispec` repóban él — egy push nyilvánossá
+tenné. Ugyanez a szabály, amit a `TM5` a felhasználó projektjeire kimond, **erre a repóra is
+érvényes**: a regiszterben pointer áll, az érték env varban. A `reportportal` és a `qase`
+adapterhez ma **nincs** fiók — rájuk az `E9` „kipróbálatlanként kell jelölni" ága vonatkozik.
+
+---
+
 ## 7. Amit ez a kör NEM érint (előzetes anti-lista)
 
 - A `07-validate` review-hurka és a `reviewer` subagent **szerződése** (`RV1`, `RV-INC`) — a
@@ -401,6 +701,14 @@ teszt-válogatás a `spec-plan.md`-ből jön.
   lazítja: a `VP2`/`VP3` bizonyítéka nem a `test-runs/` fából jön.
 - A `conventions.md` mai `## Merge stratégia` mezői (szolgáltató, auth, target, merge típus) —
   ezek maradnak; a `## Review and merge` szekció **melléjük** kerül, nem helyettük.
+- **A `TR3` kapu és a `D8`/`KT6` tűzfal bemenete** — a test manager feltöltése **nem** kapu-bemenet
+  és nem vált ki commitolt artefaktumot (`TM7`); a `report-gate-check.py` ezen a ponton
+  **változatlan marad**, a tétel csak **méri**, hogy tényleg elutasít (`G7`).
+- **A plan és a projekt-szintű futtatási tábla oszlopsémája** — a test manager **nem kap új
+  oszlopot** (`TM6`): a `Fázis` oszlop és a `conventions.md` mezői együtt már eldöntik, mi töltődik fel.
+- **A projekt teszt-futtatójának konfigurációja** — a `reporter`-blokk beírása a
+  `playwright.config.ts`-be (vagy megfelelőjébe) **a projekt dolga**; a keret ehhez nem nyúl, a
+  recept helye a `test-conventions.md` (`TC1/c`).
 
 ---
 
@@ -1012,32 +1320,177 @@ A részletes, fájl- és sorszintű teendők a 9.b szakaszban.
 
 ---
 
+### `L13-D22` — A test manager fázisonként kapcsolható; az alapértelmezés a `dev-test` (2026-09-21)
+
+A gépezet **fázis-agnosztikus** (`implement` · `validate` · `post-merge` · `dev-test` · `ad-hoc`),
+de a `conventions.md` `Test manager fázisok:` mezője dönti el, mely körök töltenek fel — és
+**gyárilag csak a `dev-test`** (`VP3`).
+
+**Miért nem csak a `VP3`, kódba zárva:** a `7/o` kérdés („igaz-e ez a másik útra is?") itt
+egyértelműen igen — a `VP1` és a `VP2` ugyanolyan JUnit-ot termel, ugyanabba a kör-mappába, és a
+flaky-trendhez épp a sok futás kell. Ha a mechanizmus a `bs-dev-test`-be van beépítve, ugyanazt a
+kódot kell másodszor is megírni, amikor valaki a `VP2`-t is fel akarja tölteni.
+
+**Miért nem mindhárom kör kötelezően:** a `VP1` a **lokális, izolált** kör — a `07` nem válhat
+hálózat- és tokenfüggővé, különben az izolált SDD üzemmód (`RM2`) sérül, és egy offline fejlesztő
+nem tud ciklust zárni. Egy külső SaaS sosem lehet a ciklus futásának előfeltétele (`TM1`).
+
+**Az `ad-hoc` érték** a cikluson kívüli `/bs-run-tests` futásokra vonatkozik. Ez **nem** kerüli meg a
+`D8`/`KT6` tűzfalat: a feltöltés metaadata `cycle=none`, tehát a szolgáltatónál is megkülönböztethető
+marad a kényelmi futás a ciklus-bizonyítéktól (`TM6`).
+
+---
+
+### `L13-D23` — A konfiguráció a meglévő `## Teszt-riportolás` szekcióba kerül (2026-09-21)
+
+Nem új `## Test management` szekció, hanem a `conventions.md` `## <sec:cv_test_reporting>`
+szekciójának hat új mezője (a kanonikus blokk az 5.b-ben).
+
+**Miért:** ez a szekció ma is pontosan ezt a fogalmat birtokolja — riport-artefaktumok, útvonal-alapok
+és riport-generáló parancsok —, és a `TC1/c` határvonal kimondottan ide sorolja a riportolást.
+A `TR3` kapu már olvassa, tehát a parse-oló, az érvényesítés és az init-interjú **meglévő** helyre
+kerül. Egy új szekció új `<sec:…>` kulcsot, új init-lépést és egy újabb „mi hova tartozik" határvonalat
+követelt volna — a `RP1` (egy fogalom, egy hely) szerint ez rossz irány.
+
+**⚠ Az ára, kimondva:** a `## Teszt-riportolás` **lokalizált** szekció, mezőnkénti `<field:…>`
+kulcsokkal. Az `L13-D2` megoldása (gépi rész angol literál, nincs mezőnkénti kulcs) **itt nem
+alkalmazható** — hat új kulcs kell a `status-keys.json` mindkét szeletébe. Az **értékek** viszont
+nyelvfüggetlen literálok maradnak (`testdino`, `reporter`, `dev-test`), a `junit` / `local` /
+`remote` mintájára.
+
+---
+
+### `L13-D24` — A feltöltés nem bizonyíték, és a bukása alapból nem buktat (2026-09-21)
+
+| | |
+|---|---|
+| **a ciklus bizonyítéka** | a **commitolt** `test-report/<fázis>/` készlet (`L13-D4`) — változatlanul |
+| **a test manager futás-URL-je** | **pointer**: a riportban, az értesítésben és a `cycle-status.md`-ben |
+| **feltöltési hiba** | `WARN` + rögzített sor, a fázis **zöld marad** (alapértelmezés) |
+| **`Test manager kötelező: igen`** | a feltöltési hiba **kemény kapu** lesz — azoknak, akiknél a test manager az auditált igazságforrás |
+
+**Miért nem bizonyíték:** ugyanaz az érv, amivel az `L13-D7` a PR-kommentet és a CI-artefaktumot
+elvetette — **nem verziózott**. Egy SaaS-link a szolgáltató retenciós politikájáig él, a
+ciklusmappa a repó élettartamáig. Ha a URL bizonyíték lehetne, a `CS6` „commitolni kell"
+követelménye kiüresedne.
+
+**Miért nem buktat alapból:** ha a bizonyíték **már commitolva van**, akkor egy 502-es SaaS
+visszamenőleg nem érvényteleníthet egy zöld tesztkört — az hamis negatív lenne, és épp a
+központosított úton, ahol nincs ember a hurokban, ez blokkolná a merge-öt.
+
+**De nem is maradhat jelöletlen** (`L13-D4` logikája): a `results.json`-ba és a kör riportjába
+**mindhárom** kimenet külön sort ír — `uploaded <url>` · `FAILED <ok>` · `skipped (<fázis> nincs a
+listán)`. A `TM6` ezért ad `3`-as exit kódot a kihagyásra, `0` helyett.
+
+---
+
+### `L13-D25` — Négy adapter fix szerződéssel: `testdino` · `reportportal` · `qase` · `command` (2026-09-21)
+
+Egy script (`prompts/scripts/test-manager.py`), három nevesített adapter és egy `command` menekülő út
+— az `L13-D13` (`ci-run-skill.sh`, négy platform + `command`) és az `L13-D11` (`notify.py`) mintájára.
+
+**A vendor-semlegességet a szerződés adja, nem a lista** (`TM6`): fix bemenet (kör-mappa +
+futtatási tábla sor + `results.json`), fix metaadat-készlet, `TEST_MANAGER_RUN_URL=` az utolsó
+stdout-soron, és négy exit kód. Aki ötödik szolgáltatót akar, a `command` ággal **a keret
+módosítása nélkül** beköti; aki ötödik *adaptert* ír, annak ez a szerződés a specifikációja.
+
+**A két alak (`TM2`) az adapter tulajdonsága, nem a scripté:** a `reporter` alakú adapter
+`--mode publish`-ra **nem tölt fel** (a futás már streamelt), hanem a futás-URL-t nyeri ki a kör
+naplójából; a `--mode preflight` viszont neki a **fontosabb**, mert token nélkül az egész e2e kör
+kárba vész. Az `import` alaknál fordítva.
+
+**⚠ Végrehajtási kockázat, előre kimondva** (az `E2` tanulsága): a három nevesített adaptert
+**élesben ki kell próbálni**, és ehhez három fiók és három token kell. Amelyikhez a végrehajtáskor
+nincs hozzáférés, az **kimarad a körből** — ki kell mondani a tervben és a dokumentációban, hogy
+az adapter kipróbálatlan, nem pedig csendben beleírni. Kipróbálatlan adapter helyett a `command`
+ág a becsületes válasz.
+
+### `L13-D26` — A futás-URL a stdout utolsó sorából; a hiánya a feltöltés-hiba detektora (2026-09-22)
+
+**`Q23` lezárása, méréssel** (6.9 füstteszt), nem mérlegeléssel.
+
+**A kinyerés módja:** adapterenkénti regex a futtató **saját kimenetén**, amit a `run-tests.py`
+amúgy is megőriz. A TestDinónál a futás-URL a stdout **utolsó nem üres sora**:
+
+```
+  View run  https://app.testdino.com/org_<id>/projects/project_<id>/test-runs/test_run_<id>
+```
+
+**Miért nem a (b) API-lekérdezés commit-hash alapján:** második hitelesítési út, második
+hibaforrás, és shardolt vagy ismételt futásnál a commit nem azonosít egyértelmű futást.
+**Miért nem a (c) „hagyjuk üresen":** mert a URL kinyerése **ingyen jár** — a sor ott van a
+kimeneten —, és a `TM10` (kattintható értesítés) épp ettől ér valamit.
+
+**🔴 És ez egyben a `TM8` detektora — ez a döntés valódi hozadéka.** A füstteszt megmutatta, hogy
+**rossz tokennel a Playwright `exit 0`-val, zölden végez**, miközben semmi nem töltődött fel: a
+riporter csak kiír egy hibablokkot. A „zöld és feltöltve" tehát **exit kódból nem
+megkülönböztethető** a „zöld és néma bukás"-tól. A szabály ezért:
+
+> **A feltöltés akkor és csak akkor számít megtörténtnek, ha a futás-URL megjelent.**
+> Ha nincs URL → `test manager: FAILED (nincs futás-URL a kimeneten)` kerül a riportba, és a
+> `test-manager.py` `4`-es exit kóddal tér vissza — függetlenül attól, hogy a teszt-futás zöld volt.
+
+Ez ugyanaz a logika, mint az `L13-D3` és az `L13-D4`: **semmi nem implicit**, és a hallgatás
+soha nem jelent sikert.
+
+**Az `import` alakú adapterekre** ugyanez a szerződés áll, csak ott a saját feltöltő parancsuk
+kimenetéből jön a URL — a `TM6` `TEST_MANAGER_RUN_URL=` sora mindkét alaknál azonos.
+
+---
+
 ## 8.b Nyitott kérdések
 
-**Tervezési kérdés nincs nyitva.** A `Q1`–`Q18` mind lezárult; a válaszok az `L13-D1`–`L13-D21`
-döntésekben olvashatók a 8. szakaszban.
+**Tervezési kérdés nincs nyitva.** A `Q1`–`Q18` mind lezárult; a válaszok az `L13-D1`–`L13-D25`
+döntésekben olvashatók a 8. szakaszban (a `L13-D22`–`L13-D25` a test manager integrációé, 5.b).
 
-**Végrehajtás közben eldöntendő, nem tervezési kérdések.** Ezekre a tervezési döntések nem
-adnak választ, mert a keret belső szerkezetéhez tartoznak — a tételes terv írásakor kell
-eldőlniük, és **ne találgasson** rájuk az, aki végrehajt:
+**Nyitott kérdés nincs.** A `Q1`–`Q18` a tervezéskor zárult le (`L13-D1`–`L13-D25`), a `Q23` a
+füstteszttel (`L13-D26`), a `Q19`–`Q22` pedig a **végrehajtás első lépéseként**, a Felhasználó
+döntésével (`L13-D27`–`L13-D30`, 2026-09-22):
 
-- **`Q19` — A négy új skill fázis-száma és frontmatter-lánca.** Ma a `09` egyetlen fázis
-  (`phase: 09`, `prev: bs-doc-sync`, `next: bs-write-spec`). Négy skill mellett: mind a négy
-  `09`-es alfázis (`09a`–`09c`), vagy új számok? És a `bs-dev-test` **fázis** vagy
-  **segédparancs** (mint a `bs-run-tests`)? Ettől függ a `cycle-status.py`, a README fázis-táblái
-  és a `berki-spec-directory-structure.md`.
-- **`Q20` — A `cycle-status.py` fázis-sorai.** A mai egyetlen `Merge` sor helyére hány sor kerül,
-  és **mi a bizonyítékuk**? (Ma: roadmap-lezárás vagy beolvasztott ciklus-ág, `:361`–`:375`.)
-  A `VP2`/`VP3` bizonyítéka az `L13-D4` riport-fázis-mappája lehet.
-- **`Q21` — A `bs-review` viszonya a `07` review-jához.** A `07` már lefuttatta a `reviewer`
-  subagentet lokálisan, és megírta a `code-review.md`-t; a központosított `bs-review` **újra**
-  lefuttatja a PR-en. Ugyanaz az agent fut? Ugyanoda ír — és akkor **felülírja** a `07` riportját,
-  vagy külön fájlba/szekcióba kerül? Az `L13-D1` `bs-merge`-kapuja a `code-review.md`-t olvassa,
-  tehát ez nem kozmetikai kérdés.
-- **`Q22` — A `bs-dev-test` bemenete.** Honnan tudja, **mely** e2e teszteket futtassa a telepített
-  rendszeren, és hol él a **deploy-automatizmus** definíciója (`conventions.md` új mező, vagy
-  `test-conventions.md` recept a `TC1/c` határvonal szerint)? A `VP2`-re ezt az `L13-D3`/`L13-D17`
-  megválaszolja, a `VP3`-ra **nem**.
+- **`Q19` — ✅ LEZÁRVA (`L13-D27`, 2026-09-22).** A négy-öt új skill **alfázisként** kapott számot,
+  a `03a`/`03b` hasítás precedense szerint, és a `bs-dev-test` **fázis** lett (nem segédparancs):
+
+  | skill | `phase:` | `prev:` | `next:` |
+  |---|---|---|---|
+  | `bs-review-and-merge` | `09` | `bs-doc-sync` | `bs-write-spec` |
+  | `bs-create-pr` | `09a` | `bs-doc-sync` | `bs-review` |
+  | `bs-review` | `09b` | `bs-create-pr` | `bs-merge` |
+  | `bs-merge` | `09c` | `bs-review` | `bs-dev-test` |
+  | `bs-dev-test` | `09d` | `bs-merge` | `bs-write-spec` |
+
+  A flow megfogalmazása **marad „0–9"** (a 9.b.3 ábra-vázlat is így rajzolta), a telepített
+  mappanevek pedig a fájlnévből jönnek (`bs-09c-merge/`), a skill **neve** viszont `bs-merge` —
+  ez a keret meglévő konvenciója (`bs-07-validate/` ↔ `bs-validate`).
+- **`Q20` — ✅ LEZÁRVA (`L13-D28`, 2026-09-22).** A `cycle-status.py` **konfig-vezérelt 1+2 sort**
+  ad: mindig van egy `Merge` sor (bizonyíték a mai: roadmap-lezárás vagy beolvasztott ciklus-ág),
+  és **csak akkor** kerül mellé `Post-merge tesztek (VP2)` / `Dev-teszt (VP3)` sor, ha a
+  `## Review and merge` szekció bekapcsolta — bizonyítékuk a `test-report/post-merge/`, ill.
+  `test-report/dev-test/` `results.json`-ja (a kimondott kihagyásé a `skipped.md`). A PR és a
+  CI-review **nem kap sort**: nincs saját commitolt bizonyítékuk. A `⏳` jelölés a roadmapen
+  **nem** lezárás (`is_roadmap_cycle_closed()` explicit `False`-ot ad rá).
+- **`Q21` — ✅ LEZÁRVA (`L13-D29`, 2026-09-22).** A `bs-review` **külön fájlba** ír:
+  `test-report/ci-code-review.md`. A `07` lokális `code-review.md`-jét **soha nem írja felül** —
+  a két kör nem ugyanazt a diffet nézi (ciklus-ág a régi alapon ↔ a PR a fő branch-csel szemben).
+  A `bs-merge` belépő kapuja **mindkettőt** olvassa: `validate-gate-check.py --review-only
+  --require-ci-review` (új mód; a `--require-ci-review` teszi a CI-review hiányát is bukássá,
+  mert a központosított úton nincs ember a hurokban).
+- **`Q22` — ✅ LEZÁRVA (`L13-D30`, 2026-09-22).** A `bs-dev-test` teszt-válogatása a `Fázis`
+  oszlop **ötödik értéke** (`dev-test`) — ugyanaz a gépezet, mint a `post-merge`-nél, tehát a `B9`
+  task feltételezése helyesnek bizonyult, és a `TM4` alapértelmezett fázisa is erre áll rá.
+  A **deploy-automatizmus** gépi része a `## Review and merge` szekció új
+  `Dev deployment command:` mezője (egy sor, a `00` érvényességi szabálya kéri számon, ha a
+  `Dev deployment test: yes`); a **részletes recept** (compose, mockok, tesztadat, visszaállás)
+  a `specs/test-conventions.md`-be tartozik a `TC1/c` határvonal szerint — a `08-doc-sync` TC1
+  szekciója ezt ki is mondja.
+- **`Q23` — ✅ LEZÁRVA (`L13-D26`, 2026-09-22), méréssel.** *(Az eredeti kérdés:)*
+  **A `reporter` alakú adapter futás-URL-jének kinyerése.** A `TM2` `reporter` ága a futás
+  **közben** streamel, az URL-t pedig a futtató stdoutjára írja. Honnan olvassa ki a
+  `test-manager.py`: (a) adapterenkénti regex a `run-tests.py` által megőrzött kör-naplón,
+  (b) a szolgáltató API-jának lekérdezése a commit-hash alapján, vagy (c) egyik sem, és a
+  `reporter` alaknál a futás-URL egyszerűen **üres marad** (`TM6` ezt megengedi)? A (c) a
+  legolcsóbb és sosem hazudik; az (a) a leghasznosabb, de adapterenként törékeny.
+  → **Az (a) nyert**, mert a füstteszt (6.9) szerint nem törékeny: a URL a stdout **utolsó nem
+  üres sora**. Részletek az `L13-D26`-ban.
 
 ---
 
@@ -1046,7 +1499,7 @@ eldőlniük, és **ne találgasson** rájuk az, aki végrehajt:
 > A tervezési döntések lezárultak, tehát ez a szakasz **kibontható**. Az alábbi bontás a csomagok
 > **határát** adja meg; a **pipálható, fájlonkénti task-lista a 9.c szakaszban** áll.
 >
-> **⚠ A tételes terv első dolga a `Q19`–`Q22` eldöntése** (8.b) — a skillek fázis-száma és
+> **⚠ A tételes terv első dolga a `Q19`–`Q23` eldöntése** (8.b) — a skillek fázis-száma és
 > frontmatter-lánca, a `cycle-status.py` sorai, a `bs-review` viszonya a `07` review-jához, és a
 > `bs-dev-test` bemenete. Ezek nélkül a C/D/E csomag nem írható meg találgatás nélkül.
 
@@ -1077,6 +1530,11 @@ roadmap `⏳ verifikációra vár`.
 `CS1`–`CS7`, `bs-dev-test` (`VP3`), `ci-run-skill.sh` négy platformra + `--selftest`
 (`L13-D12`/`L13-D13` — **a négy recept parancssorát élesben kell kipróbálni**), `notify.py`
 (`L13-D11`), `L13-D10` hibakezelés.
+
+**Test manager (`TM1`–`TM10`, 5.b).** A tételei **nem külön csomag**, hanem abban a csomagban
+állnak, ahol a fájljaik élnek: konfiguráció és init az **A**-ban (`A6`, `A7`), a `dev-test`
+fázis-érték a **B**-ben (`B9`), a script és a bekötés az **E**-ben (`E8`–`E12`), a láthatóság a
+**D**-ben (`D2/b`), a dokumentáció az **F**-ben (`F12`), a mérés a **G**-ben (`G7`).
 
 **F csomag — a másik út és a peremesetek.**
 `L13-D16` (quick-flow → kötelező merge-ág), `L13-D17` (`spec-plan.md` `## Merge tesztek`),
@@ -1262,150 +1720,210 @@ flowchart LR
 
 ## 9.c Pipálható implementációs task-lista
 
-> **Ez a végrehajtás munkalistája.** Minden elvégzett tétel után **pipálj ebben a fájlban**.
-> Minden prompt-fájl teendő **`hu` ÉS `en` párban** értendő. A `⛔` jelölésű tételek egy nyitott
-> végrehajtási kérdésre (`Q19`–`Q22`, 8.b) várnak — **azokat előbb döntsd el**, ne találgass.
-> A csomagok sorrendje kötött: **A → B → (C, D) → E → F → G**.
+> **Ez volt a végrehajtás munkalistája — 2026-09-22-én minden tétele elkészült.** Minden
+> prompt-fájl teendő **`hu` ÉS `en` párban** értendő volt; a korábban `⛔`-vel jelölt tételek a
+> `Q19`–`Q22` lezárásával (`L13-D27`–`L13-D30`, 8.b) oldódtak fel. A csomagok sorrendje kötött
+> volt: **A → B → (C, D) → E → F → G**.
 
 ### A csomag — a közös kapcsolótábla *(minden más előfeltétele)*
 
-- [ ] **A1** — `prompts/lang/status-keys.json`: új `<sec:…>` kulcs a `## Review and merge`
+- [x] **A1** — `prompts/lang/status-keys.json`: új `<sec:…>` kulcs a `## Review and merge`
       szekciónévhez, **mindkét nyelvi szeletben ugyanazzal az angol literállal** (`L13-D2`).
-- [ ] **A2** — `prompts/lang/{hu,en}/00-init-project.md`: a **3.1 kanonikus blokk** beillesztése
+- [x] **A2** — `prompts/lang/{hu,en}/00-init-project.md`: a **3.1 kanonikus blokk** beillesztése
       sablonként + a kitöltési szabályok dőlt, projekt-nyelvű prózában.
-- [ ] **A3** — `prompts/skills-{hu,en}/00-init-project.md`: a szekció kitöltésének interjú-lépése
+- [x] **A3** — `prompts/skills-{hu,en}/00-init-project.md`: a szekció kitöltésének interjú-lépése
       (egy kérdés egyszerre, 3. elv), a `none` / `n/a` **kimondott** válaszként.
-- [ ] **A4** — a `00` érvényességi szabályai (3.1 alsó lista): `centralized` + `PR submission: no`
+- [x] **A4** — a `00` érvényességi szabályai (3.1 alsó lista): `centralized` + `PR submission: no`
       → elutasítás; `Dev deployment test: yes` + `isolated` → elutasítás; `Notification channel`
       ≠ `none` esetén a secret env var neve kötelező; No-VCS → az egész szekció `n/a` (`L13-D20`).
-- [ ] **A5** — a `00` **kipróbálja** a konfigurációt: `ci-run-skill.sh --selftest` és egy
+- [x] **A5** — a `00` **kipróbálja** a konfigurációt: `ci-run-skill.sh --selftest` és egy
       próba-értesítés, a merge-szolgáltató access-tesztjének mintájára (`L13-D12`).
+
+- [x] **A6** — a **test manager mezők** (`TM3`, `L13-D23`): hat új `<field:…>` kulcs a
+      `prompts/lang/status-keys.json` **mindkét** szeletébe (`f_test_manager`,
+      `f_test_manager_shape`, `f_test_manager_token_env`, `f_test_manager_phases`,
+      `f_test_manager_required`, `f_test_manager_command`), az 5.b **kanonikus blokk** beillesztése
+      a `prompts/lang/{hu,en}/00-init-project.md` `## <sec:cv_test_reporting>` szekciójába, és a
+      `00` interjú-lépése. Érvényességi szabályok: `none` → a többi mező elhagyható ·
+      `command` → a `Test manager parancs:` **kötelező** · `Test manager fázisok:` üresen nem
+      hagyható, ha a provider nem `none` (az `L13-D3` „semmi nem implicit" szabálya).
+- [x] **A7** — a `00` **kipróbálja** a konfigurációt: `test-manager.py --selftest` (az `A5`
+      `ci-run-skill.sh --selftest` mintájára). Hiányzó env var → beszédes hiba, nem néma átlépés (`TM5`).
 
 ### B csomag — a teszt-fázis gépezete
 
-- [ ] **B1** — `status-keys.json`: `+ phase_post_merge` = `post-merge` **mindkét szeletben**
+- [x] **B1** — `status-keys.json`: `+ phase_post_merge` = `post-merge` **mindkét szeletben**
       (nyelvfüggetlen literál); a `phase_both` kivezetésének jelölése (`L13-D3`).
-- [ ] **B2** — `prompts/scripts/run-tests.py`: `--phase` choices `+ post-merge` (`:619`);
+- [x] **B2** — `prompts/scripts/run-tests.py`: `--phase` choices `+ post-merge` (`:619`);
       `row_phases()` (`:163`) — üres cella/`mindkettő` **olvasáskor** legacy + WARN (`L13-D18`),
       nem alapértelmezés; a `{phase}` helyőrző feloldása `post-merge`-re és `dev-test`-re.
-- [ ] **B3** — `prompts/scripts/analyze-gate-check.py`: a `PH1` check „üres = rendben" ága
+- [x] **B3** — `prompts/scripts/analyze-gate-check.py`: a `PH1` check „üres = rendben" ága
       **FAIL**-re az **írási** oldalon (`--plan-only`), olvasáskor WARN (`L13-D3`, `L13-D18`).
-- [ ] **B4** — `prompts/skills-{hu,en}/03b-write-test-plan.md` (`:313` körül): a `<field:f_phase>`
+- [x] **B4** — `prompts/skills-{hu,en}/03b-write-test-plan.md` (`:313` körül): a `<field:f_phase>`
       leírása — kötelező, explicit, vesszős felsorolás; a `mindkettő` és az „üres = mindkettő"
       kivezetve; a `post-merge` **sosem implicit**.
-- [ ] **B5** — `prompts/shared-{hu,en}/quality-check-plan-test.md`: a `03b` lezáró kapuja
+- [x] **B5** — `prompts/shared-{hu,en}/quality-check-plan-test.md`: a `03b` lezáró kapuja
       ellenőrizze a `Fázis` oszlop kitöltöttségét.
-- [ ] **B6** — `prompts/lang/{hu,en}/00-init-project.md`: (a) a projekt-szintű futtatási tábla
+- [x] **B6** — `prompts/lang/{hu,en}/00-init-project.md`: (a) a projekt-szintű futtatási tábla
       `Fázis` = `—` szabályának pontosítása („nem fázis-kötött", **explicit** jelölés, `L13-D3`);
       (b) a TR6 `**Riport-fázisok:**` mező harmadik elfogadott értéke: `post-merge` (`L13-D4`).
-- [ ] **B7** — `prompts/scripts/report-gate-check.py`: a `post-merge` és a `dev-test` fázis-mappa
+- [x] **B7** — `prompts/scripts/report-gate-check.py`: a `post-merge` és a `dev-test` fázis-mappa
       elfogadása (`L13-D4`, `L13-D7`).
-- [ ] **B8** — a `VP2` kör **Sonar-lépése**: a `sonar-gate.py` hívása változatlan küszöbökkel, a
+- [x] **B8** — a `VP2` kör **Sonar-lépése**: a `sonar-gate.py` hívása változatlan küszöbökkel, a
       `07` statikus rétegének mintájára — a skill-oldali lépéssor része (C csomag).
+
+- [x] **B9 ✅`L13-D30`** — a **`dev-test` fázis-érték** (6.9 hézag): a `Fázis` oszlop negyedik/ötödik
+      értéke, a `run-tests.py --phase` választéka (a `B2` `post-merge`-e **mellé**), az
+      `analyze-gate-check.py` `PH1` checkje és a `status-keys.json` `phase_dev_test` kulcsa.
+      A `TM4` alapértelmezett fázisa ez; ha a `Q22` más mechanizmust választ a `bs-dev-test`
+      teszt-válogatására, a `TM4` fázis-szűrése arra áll rá.
 
 ### C csomag — izolált út és a skill-szétvágás
 
-- [ ] **C1 ⛔`Q19`** — a négy (öt) skill **fázis-száma és frontmatter-lánca** (`phase:`,
+- [x] **C1 ✅`L13-D27`** — a négy (öt) skill **fázis-száma és frontmatter-lánca** (`phase:`,
       `prev`/`next`); a `bs-dev-test` fázis-e vagy segédparancs. Ezt előbb döntsd el.
-- [ ] **C2** — `prompts/skills-{hu,en}/09-merge.md` → **`bs-review-and-merge`**: átnevezés, és a
+- [x] **C2** — `prompts/skills-{hu,en}/09-merge.md` → **`bs-review-and-merge`**: átnevezés, és a
       lépéssor átrendezése az `L13-D14` sorrendjére (`main` behozása → build + `VP2` → beolvasztás
       → ág törlése).
-- [ ] **C3** — az új **`bs-create-pr`**, **`bs-review`**, **`bs-merge`** skillek (a mai `09`
+- [x] **C3** — az új **`bs-create-pr`**, **`bs-review`**, **`bs-merge`** skillek (a mai `09`
       előfeltétel-listájának szétosztásával, 6.1 tábla).
-- [ ] **C4** — `prompts/lang/{hu,en}/09-merge.md`: a horgonyok (`#RD8-merge-megerosites`,
+- [x] **C4** — `prompts/lang/{hu,en}/09-merge.md`: a horgonyok (`#RD8-merge-megerosites`,
       `#zaro-uzenet`) szétosztása az új skillek közé.
-- [ ] **C5** — `prompts/lang/{hu,en}/descriptions.json`: a `bs-merge` kulcs helyett az új
+- [x] **C5** — `prompts/lang/{hu,en}/descriptions.json`: a `bs-merge` kulcs helyett az új
       kulcsok, **mindkét nyelven**.
-- [ ] **C6** — az `L13-D1` **három kapuja**: `bs-review-and-merge` (PR kötelező → hiba),
+- [x] **C6** — az `L13-D1` **három kapuja**: `bs-review-and-merge` (PR kötelező → hiba),
       `bs-create-pr` (nincs PR előírva → kérdés), `bs-merge` (`RV1` review-kapu → hiba).
-- [ ] **C7** — az `L13-D5`: az `RD8` üzemmód-függővé tétele + a gépi ágon a **PR-állapot
+- [x] **C7** — az `L13-D5`: az `RD8` üzemmód-függővé tétele + a gépi ágon a **PR-állapot
       ellenőrzése** (elfogadott-e) belépő kapuként.
-- [ ] **C8** — az `L13-D7`: riport-útvonalak (`test-report/post-merge/`, `test-report/dev-test/`),
+- [x] **C8** — az `L13-D7`: riport-útvonalak (`test-report/post-merge/`, `test-report/dev-test/`),
       az ág-elnevezések (`-post-merge`, `-dev-test`), és a ciklus ágának törlése **a `VP2` mögé**.
-- [ ] **C9** — `prompts/skills-{hu,en}/08-doc-sync.md`: a `next:` frontmatter és a törzs-
+- [x] **C9** — `prompts/skills-{hu,en}/08-doc-sync.md`: a `next:` frontmatter és a törzs-
       hivatkozások az új skill-névre.
-- [ ] **C10** — `prompts/skills-{hu,en}/07-validate.md` és
+- [x] **C10** — `prompts/skills-{hu,en}/07-validate.md` és
       `prompts/shared-{hu,en}/conventions-change.md`: `09-merge` hivatkozások átvezetése.
-- [ ] **C11 ⛔`Q21`** — a `bs-review` viszonya a `07` `code-review.md`-jéhez (felülír / külön fájl
+- [x] **C11 ✅`L13-D29`** — a `bs-review` viszonya a `07` `code-review.md`-jéhez (felülír / külön fájl
       / szekció) — az `L13-D1` `bs-merge`-kapuja ezt a fájlt olvassa.
 
 ### D csomag — ciklus-lezárás és láthatóság
 
-- [ ] **D1 ⛔`Q20`** — a `cycle-status.py` fázis-sorai: a mai egyetlen `Merge` sor (`:361`–`:375`)
+- [x] **D1 ✅`L13-D28`** — a `cycle-status.py` fázis-sorai: a mai egyetlen `Merge` sor (`:361`–`:375`)
       helyére hány sor kerül, és mi a **bizonyítékuk**.
-- [ ] **D2** — `prompts/scripts/cycle-status.py`: **`--write` mód** (`L13-D9`), és a
+- [x] **D2** — `prompts/scripts/cycle-status.py`: **`--write` mód** (`L13-D9`), és a
       `## Review and merge` szekció olvasása (mi van bekapcsolva → mi van hátra).
-- [ ] **D3** — **🔴 a `cycle-status.py` megjelenítési címkéi ma bedrótozva magyarok**
+- [x] **D2/b** — `cycle-status.py`: a verifikációs pontok sorában a **test manager futás-URL-je**
+      pointerként (`TM10`), ha a kör riportja tartalmazza. Hiánya nem hiba (`L13-D24`).
+- [x] **D3** — **🔴 a `cycle-status.py` megjelenítési címkéi ma bedrótozva magyarok**
       (`"KÉSZ"`, `"FOLYAMATBAN"`, `"MÉG NEM FUTOTT"`, `"Specifikáció (spec.md)"` — `:245` és
       társai), miközben a státusz-**értékeket** a `lang_keys` (`fld`/`st`) oldja fel. Ma ez csak
       terminál-kimenet; az `L13-D15` után **commitolt fájlba** kerül, tehát egy angol
       projekt repójába magyar szöveg kerülne. A címkék nyelvi feloldása ennek a csomagnak a része.
-- [ ] **D4** — `prompts/shared-{hu,en}/phase-commit.md`: a `cycle-status.md` **regenerálása** a
+- [x] **D4** — `prompts/shared-{hu,en}/phase-commit.md`: a `cycle-status.md` **regenerálása** a
       fázis-záró commit részeként (`L13-D15`) — egy helyen, a `02`/`03a`/`03b`/`04`/`05`/`07`
       örökli.
-- [ ] **D5** — a roadmap `⏳ verifikációra vár` jelölése és a lezárás áthelyezése az **utolsó
+- [x] **D5** — a roadmap `⏳ verifikációra vár` jelölése és a lezárás áthelyezése az **utolsó
       engedélyezett verifikáció** mögé (`L13-D8`) — `01-add-cycles` + a merge-skillek + lang blokkok.
-- [ ] **D6** — a `tasks.md` **`## Post-merge javítások`** szekciója és a `06`/`07` belépő
+- [x] **D6** — a `tasks.md` **`## Post-merge javítások`** szekciója és a `06`/`07` belépő
       elfogadása (a `## Validációs javítások` / `## Review javítások` mintájára, `L13-D8`).
-- [ ] **D7** — `prompts/skills-{hu,en}/cycle-status.md`: a segédparancs `--write` módjának leírása.
+- [x] **D7** — `prompts/skills-{hu,en}/cycle-status.md`: a segédparancs `--write` módjának leírása.
 
 ### E csomag — központosított út
 
-- [ ] **E1** — **ÚJ:** `prompts/scripts/ci-run-skill.sh` — fix interfész
+- [x] **E1** — **ÚJ:** `prompts/scripts/ci-run-skill.sh` — fix interfész
       (`<skill> <ciklus-út>` → exit `0`/`1`/`2`), négy platform-ág + `command`, és a **verdikt a
       determinisztikus kapuktól** jön, nem az ágenstől (`L13-D13`).
-- [ ] **E2** — `ci-run-skill.sh --selftest`, és a **négy recept parancssorának éles kipróbálása**
+- [x] **E2** — `ci-run-skill.sh --selftest`, és a **négy recept parancssorának éles kipróbálása**
       platformonként (Claude Code · Cursor · Copilot · Antigravity) — ez **kísérlet, nem szövegírás**.
-- [ ] **E3** — **ÚJ:** `prompts/scripts/notify.py` — `--channel slack|teams|command`, a titok
+- [x] **E3** — **ÚJ:** `prompts/scripts/notify.py` — `--channel slack|teams|command`, a titok
       **env varból**, maszkolt hibaüzenetek, hiányzó env var → beszédes hiba (`L13-D11`).
-- [ ] **E4** — a **nem-interaktív szerződés** a merge-család skilljeiben: kérdés = STOP +
+- [x] **E4** — a **nem-interaktív szerződés** a merge-család skilljeiben: kérdés = STOP +
       `*-questions.md` a ciklusmappába + értesítés + `exit 2` (`L13-D12`).
-- [ ] **E5** — az `auto-fix-loop` ág (`L13-D10`): a `07` hurkának leállási korlátaival
+- [x] **E5** — az `auto-fix-loop` ág (`L13-D10`): a `07` hurkának leállási korlátaival
       (3 egymást követő / 5 összes per item, 5 egymást követő FAIL-futás, `VD5` eszkaláció).
-- [ ] **E6 ⛔`Q22`** — **`bs-dev-test`** skill (`VP3`): a bemenete (mely e2e tesztek) és a
+- [x] **E6 ✅`L13-D30`** — **`bs-dev-test`** skill (`VP3`): a bemenete (mely e2e tesztek) és a
       deploy-automatizmus definíciójának helye.
-- [ ] **E7** — a `CS4` **környezet-receptje** (compose, mockok, teszt-node) — a `TC1/c` határvonal
+- [x] **E7** — a `CS4` **környezet-receptje** (compose, mockok, teszt-node) — a `TC1/c` határvonal
       szerint a `specs/test-conventions.md`-be, ha a `08` promótálja.
+
+- [x] **E8** — **ÚJ:** `prompts/scripts/test-manager.py` — a `TM6` fix szerződése:
+      `--mode preflight|publish|selftest`, `--phase`, `--round-dir`, `--category`, `--dry-run`;
+      metaadat `cycle`/`phase`/`branch`/`commit`/`category`/`env` (`ad-hoc`-nál `cycle=none`);
+      `TEST_MANAGER_RUN_URL=<url>` az utolsó stdout-soron; exit `0`/`2`/`3`/`4`. A titok **csak**
+      env varból, soha parancssorban (`TM5`, az `L13-D11` indoklásával).
+      **A `preflight` a riporter BETÖLTHETŐSÉGÉT próbálja** (6.9/6.), nem csak az env var meglétét;
+      a `publish` pedig az `L13-D26` szerint **a futás-URL meglétéből** dönt, nem a futtató exit
+      kódjából. Fejlesztés és regresszió: `fixtures/testdino-smoke/` (6.9).
+- [x] **E9** — a **négy adapter** (`L13-D25`): `testdino` (`reporter` alak) · `reportportal`
+      (`import`, JUnit) · `qase` (`import`) · `command`. **Éles kipróbálás** az `E2` mintájára;
+      amelyik adapterhez nincs fiók/token, azt **kipróbálatlanként kell jelölni** a
+      dokumentációban — csendben beleírni nem szabad.
+      **A `testdino` adapter már LE VAN MÉRVE** (6.9 füstteszt, 2026-09-22): a kulcs a
+      `~/.config/berkispec/testdino.env`-ben, a recept és a hét megfigyelés a 6.9-ben, a
+      `Q23` ebből lezárva (`L13-D26`). **A próbapad a repóban:** `fixtures/testdino-smoke/`
+      (pinnelt verziók, négy riporter egy láncban, vegyes teszt-készlet, `README.md`) — itt már
+      csak az adapter **megírása** a feladat, nem a feltérképezése. ⚠ **Node ≥ 22.12 kötelező** a `testdino` ághoz — a `--selftest`-nek ezt
+      külön ellenőriznie kell, mert régebbi Node-on a riporter az egész teszt-futást megöli. A `reportportal` / `qase`
+      fiók hiánya ma ismert; ha a végrehajtásig sem lesz, a `command` ág a becsületes válasz.
+- [x] **E10** — bekötés a **`bs-dev-test`**-be (`E6`, `⛔Q22`): `--mode preflight` a deploy után,
+      **a teszt-kör előtt** (`reporter` alaknál különösen — token nélkül az egész e2e kör kárba vész);
+      `--mode publish` a kör után; a kimenet sora a `test-report/dev-test/` készletbe és a
+      `results.json`-ba (`TM8`).
+- [x] **E11** — `notify.py` (`E3`): `--run-url` kapcsoló, hogy a `CS6` értesítés **kattintható**
+      legyen a bukott körre (`TM10`).
+- [x] **E12** — a **többi fázis** bekötése ugyanazon a szerződésen (`implement` · `validate` ·
+      `post-merge` · `ad-hoc`), kizárólag akkor futva, ha a `Test manager fázisok:` felsorolja
+      őket (`TM4`). Érintett: `06`, `07`, a merge-család és a `/bs-run-tests` — mindenhol
+      **ugyanaz a két hívás**, nem fázisonkénti külön logika.
 
 ### F csomag — a másik út, peremesetek, dokumentáció
 
-- [ ] **F1** — `prompts/skills-{hu,en}/quick-flow.md`: a 3. fázis után **kötelező** merge-ág
+- [x] **F1** — `prompts/skills-{hu,en}/quick-flow.md`: a 3. fázis után **kötelező** merge-ág
       (`L13-D16`), a `conventions.md` `## Review and merge` szerint.
-- [ ] **F2** — a `spec-plan.md` **`## Merge tesztek`** szekciója (`Post-merge test categories`,
+- [x] **F2** — a `spec-plan.md` **`## Merge tesztek`** szekciója (`Post-merge test categories`,
       üresen nem hagyható) — a skill + a `prompts/lang/{hu,en}/quick-flow.md` sablon-horgonya
       (`L13-D17`).
-- [ ] **F3** — a merge-család belépő kapui **quick-flow ciklusban**: `plan.md` híján a `tasks.md`
+- [x] **F3** — a merge-család belépő kapui **quick-flow ciklusban**: `plan.md` híján a `tasks.md`
       státusza a belépő (a `QF8` kétbelépős mintája, `L13-D16`).
-- [ ] **F4** — **méret-kapu:** a telepített `bs-quick-flow` ≤ **445** sor mindkét nyelven (`7/q`)
+- [x] **F4** — **méret-kapu:** a telepített `bs-quick-flow` ≤ **445** sor mindkét nyelven (`7/q`)
       — build után `wc -l`.
-- [ ] **F5** — README `4.1` + `4.2` ábra: `03a`/`03b` szétválás (**9.b.1**, **9.b.2**) —
+- [x] **F5** — README `4.1` + `4.2` ábra: `03a`/`03b` szétválás (**9.b.1**, **9.b.2**) —
       *ez a tétel a többitől függetlenül, azonnal elvégezhető*.
-- [ ] **F6** — README `4.2` **függelékbe** mozgatása + tartalomjegyzék (**9.b.5** felső fele) —
+- [x] **F6** — README `4.2` **függelékbe** mozgatása + tartalomjegyzék (**9.b.5** felső fele) —
       *szintén azonnal elvégezhető*.
-- [ ] **F7** — README: a ciklusvég **két ága** (**9.b.3**) és az új **Tesztelési pontok** ábra
+- [x] **F7** — README: a ciklusvég **két ága** (**9.b.3**) és az új **Tesztelési pontok** ábra
       (**9.b.5**) — *csak a megvalósítással együtt*.
-- [ ] **F8** — README szöveges helyek: parancs-lista, fájl-tábla, `subagents:` bekezdés,
+- [x] **F8** — README szöveges helyek: parancs-lista, fájl-tábla, `subagents:` bekezdés,
       státusz-szekció, példa-futtatás (**9.b.4** sorszámai).
-- [ ] **F9** — `berki-spec-directory-structure.md`: az új skill-mappák és a `cycle-status.md`.
-- [ ] **F10** — `prompts/meta-improve-prompts.md`: fázis-felsorolás, fájl-tábla, script-tábla, a
+- [x] **F9** — `berki-spec-directory-structure.md`: az új skill-mappák és a `cycle-status.md`.
+- [x] **F10** — `prompts/meta-improve-prompts.md`: fázis-felsorolás, fájl-tábla, script-tábla, a
       shared-blokk tábla — és **a `list13` „még nincs végrehajtva" figyelmeztetés törlése**, amikor
       a végrehajtás kész.
-- [ ] **F11** — migrációs jegyzet a READMEbe: **nincs visszafelé kompatibilitás**, a frissítés
+- [x] **F11** — migrációs jegyzet a READMEbe: **nincs visszafelé kompatibilitás**, a frissítés
       újratelepítés + a `00` újrafuttatása (`L13-D19`).
+
+- [x] **F12** — test manager dokumentáció: `berki-spec-directory-structure.md` (az új script;
+      a `fixtures/` sor **már bekerült** 2026-09-22-én),
+      `prompts/meta-improve-prompts.md` script-táblája, és a README-k `## Teszt-riportolás`
+      leírása + a **Tesztelési pontok** ábra (9.b.5) `dev-test` doboza — **mindkét nyelven**.
+      Mondd ki benne, hogy a feltöltés **nem bizonyíték** (`TM7`), és hogy alapból ki van kapcsolva (`TM1`).
 
 ### G csomag — kapuk és zárás
 
-- [ ] **G1** — `python3 prompts/scripts/lang-parity-check.py` → 0
-- [ ] **G2** — `python3 prompts/scripts/lang-parity-check.py --strict` → 0
-- [ ] **G3** — `python3 prompts/scripts/sync-gemini-agents.py --check` → 0 *(ha agent-frontmatter
+- [x] **G1** — `python3 prompts/scripts/lang-parity-check.py` → 0
+- [x] **G2** — `python3 prompts/scripts/lang-parity-check.py --strict` → 0
+- [x] **G3** — `python3 prompts/scripts/sync-gemini-agents.py --check` → 0 *(ha agent-frontmatter
       változott, előbb **írás módban** futtasd)*
-- [ ] **G4** — telepítés-próba **mindkét nyelven** (`install-helper.py`, öt platform közül legalább
+- [x] **G4** — telepítés-próba **mindkét nyelven** (`install-helper.py`, öt platform közül legalább
       egy) → `Success`, és az új skillek megjelennek a telepített fában
-- [ ] **G5** — a `meta-improve-prompts.md` **öt kötelező ellenőrzése**: kétnyelvűség · van-e
+- [x] **G5** — a `meta-improve-prompts.md` **öt kötelező ellenőrzése**: kétnyelvűség · van-e
       script, ami méri · igaz-e a másik útra (`7/o`) · mi esett ki a quick-flow-ból (`7/q`) ·
       túléli-e a megszakadást (13. elv)
-- [ ] **G6** — commit; az üzenetben mondd ki, hogy a kör **nem visszafelé kompatibilis**
+- [x] **G6** — commit; az üzenetben mondd ki, hogy a kör **nem visszafelé kompatibilis**
       (`L13-D19`), mert azt a paritás-kapu nem látja
+
+- [x] **G7** — a `TM7` anti-szabály **mérése**: egy `test-report/` készlet, amiben csak test manager
+      URL van, de a táblában kért artefaktum hiányzik → a `report-gate-check.py` **elutasítja**
+      (nulla új gépezet, de bizonyítani kell, hogy tényleg így van). Plusz:
+      `test-manager.py --selftest` lefutott minden bekötött adapterre, vagy a kihagyás dokumentálva (`E9`).
 
 ---
 
@@ -1440,3 +1958,14 @@ flowchart LR
 | 2026-09-21 | **Teljes átfésülés.** Javítva: egy **valódi ellentmondás** (az `L13-D6` megjegyzése arról, hogy az izolált úton „nincs választás" — az `L13-D14` felülírta), egy **lógó azonosító** (`RM9`, ami sehol nem volt definiálva), és ~20 elavult `Q`-hivatkozás, amik nyitottnak mutattak lezárt kérdéseket. Hozzáadva: **3.1 kanonikus `## Review and merge` szekció** (a mezőkészlet eddig három döntés között volt szétszórva) érvényességi szabályokkal; a 2.3 tábla és az `RM5`/`RM6`/`RM8/b`/`RM10` sorrend-pontosítása az `L13-D14`-hez; a 6.7 ripple-tábla kiegészítése az új scriptekkel és a quick-flow / phase-commit érintettséggel; a 0. szakaszba belépő-útvonal üres kontextushoz és az „ütközésnél a döntés nyer" szabály. Új: **`Q19`–`Q22`** — végrehajtás közben eldöntendő, nem tervezési kérdések (skill fázis-számok, `cycle-status.py` sorai, `bs-review` ↔ `07` review viszonya, `bs-dev-test` bemenete). |
 | 2026-09-21 | **9.c — pipálható implementációs task-lista** hozzáadva (A–G csomag, ~50 tétel, minden prompt-tétel `hu`+`en` párban, `⛔` jelöli a `Q19`–`Q22`-re váró tételeket). Közben egy **új tétel derült ki** (`D3`): a `cycle-status.py` a státusz-értékeket a `lang_keys`-ből oldja fel, de a megjelenítési címkéket (`KÉSZ`, `Specifikáció (spec.md)`…) bedrótozva, magyarul tartalmazza — ma csak terminál-kimenet, de az `L13-D15` után commitolt fájlba kerülne, tehát angol projekt repójába magyar szöveg menne. |
 | 2026-09-21 | **Záró konzisztencia-kör.** Javítva: a **9.c a 9.b elé került** (szakasz-sorrend), és a státusz-sor még „a tételes végrehajtási terv még hiányzik"-ot mondott. Hozzáadva: **0.1 — a hivatkozott keret-azonosítók forrás-táblája** (`7/*`, `D8`, `PH1`, `RV1`, `TC1/c`, `RD8`, `PE1`, `QF*` …), mert a dokumentum ezekre hivatkozik, de eddig nem mondta meg, hol nézhetők meg — a `list12`-ben volt ilyen tábla, itt hiányzott. Gépi ellenőrzés: minden hivatkozott `L13-D<N>` definiált, `Nyitva marad` nulla, a `VP`/`RM`/`CS` azonosítók mind definiáltak (az `RM9` már csak a naplóban, a javítás leírásaként szerepel). |
+| 2026-09-21 | **Test manager integráció hozzáadva (5.b, `TM1`–`TM10`, `L13-D22`–`L13-D25`).** A `VP3` (`bs-dev-test`) köre gyárilag egy külső test managerbe is feltölt; a gépezet fázis-agnosztikus, a `conventions.md` `## Teszt-riportolás` szekciója kapcsolja (`L13-D22`/`L13-D23`). **A mérésből két dolog jött, ami a tervet érdemben alakította:** (a) a TestDino mai integrációja **runner-beli reporter** (`@testdino/playwright`, streamel futás közben, a `tdpw upload` CLI deprecated) és **Playwright-only**, míg a ReportPortal/Qase futás utáni JUnit-import — ezért két integrációs **alak** kell (`TM2`), nem egy; (b) a terv eddig `test-report/dev-test/` riport-fázist említett (`L13-D4`, `B7`), de a `run-tests.py --phase` választékát csak `post-merge`-dzsel bővítette (`B2`) — a hiányzó `dev-test` fázis-érték új task lett (`B9`, `⛔Q22`). Kimondva, hogy a feltöltés **nem bizonyíték** és a bukása alapból nem buktat (`L13-D24`), mert különben az `L13-D7` „nem verziózott" érve és a `D8`/`KT6` tűzfal sérülne. Új nyitott, nem tervezési kérdés: `Q23` (a `reporter` alak futás-URL-jének kinyerése). |
+| 2026-09-22 | **A TestDino recept élesből mérve, és van próba-fiók (6.9).** A szolgáltatás saját „Connect this project" oldaláról bekerült a szó szerinti négy lépés (telepítés · `playwright.config.ts` reporter-blokk · `TESTDINO_TOKEN` + `npx playwright test` · CI-secret). **A tétel legnagyobb kockázata ezzel megszűnt:** a csomag *„alongside any reporters you already run"*, tehát a JUnit-riporter és a test manager riportere egy futásban, egymás mellett dolgozik — a `reporter` alak **hozzáad**, nem helyettesít, így a `TM7` (a commitolt riport az egyetlen bizonyíték) megvalósítható. Két új megfigyelés: a felület *„a verdict per branch"* PR-verdiktet is ad — ez **információ, nem kapu** (`L13-D13`); és van egy fel nem mért *„Prefer not to edit your config?"* ág, amit az `E9`-nek meg kell néznie. A `testdino` adapter így **nem marad kipróbálatlan**; a kulcs a repón kívül (`~/.config/berkispec/testdino.env`), a dokumentumban a `TC5`/`TM5` szerint **csak pointer** áll. |
+| 2026-09-22 | **Füstteszt lefutott a TestDino ellen (6.9), a `Q23` lezárva (`L13-D26`).** Eldobható 5 tesztes Playwright projekt, `list`+`junit`+`html`+`@testdino/playwright` egy reporter-láncban. **Három dolog dőlt el méréssel:** (a) az együttélés igaz — a `junit.xml` és a `html/` elkészült a TestDino riporter mellett, tehát a `TM2`/`TM7` megvalósítható; (b) a futás-URL a stdout **utolsó nem üres sora** (`View run  https://app.testdino.com/…/test-runs/test_run_…`), tehát a `Q23`-ból a regex-változat nyert; (c) 🔴 **rossz tokennel a futás `exit 0`-val, zölden végez, miközben semmi nem töltődik fel** — ezért az `L13-D26` kimondja, hogy a feltöltés csak akkor számít megtörténtnek, ha a futás-URL megjelent. **Egy új, kemény előfeltétel:** a `testdino` ághoz **Node ≥ 22.12** kell — Node 20-on a riporter `ERR_REQUIRE_ESM`-mel **az egész teszt-futást megöli** (CommonJS csomag `chalk@^5` ESM-függőséggel), nulla lefutott teszttel. Ebből következik a `TM6` élesítése: a `preflight` a riporter **betölthetőségét** próbálja, nem az env var meglétét. |
+| 2026-09-22 | **A füstteszt próbapadja bekerült a repóba: `fixtures/testdino-smoke/`** — pinnelt verziókkal (`package-lock.json`), a négy riportert egyszerre fűző configgal, vegyes teszt-készlettel és `README.md`-vel; kulcs nélkül, gitignorált `node_modules/`-szal. Az új helyén **újrafuttatva is fut** (`npm ci` → 5 teszt → `junit.xml` + `html/` + feltöltés). Ezzel az `E8`/`E9` megírásához nem kell újra felderíteni a szolgáltatót. **Nyolcadik megfigyelés a repóbeli futásból:** a riporter a **git-metaadatot magától felismeri** (ág + hash + commit-üzenet az összegző `Git` sorában), ami a repón kívüli futásnál hiányzott — tehát a `TM6` metaadat-listájából a `branch`/`commit` a `reporter` alaknál **nem a keret dolga**, a `cycle` és a `phase` viszont igen. A `berki-spec-directory-structure.md` új `fixtures/` sort kapott. |
+| 2026-09-22 | **A `Q19`–`Q22` lezárva, a végrehajtás elindult (`L13-D27`–`L13-D30`).** A Felhasználó mind a négy ajánlott választ elfogadta: alfázis-számozás (`09` + `09a`–`09d`, a `bs-dev-test` **fázis**); konfig-vezérelt `cycle-status` sorok (mindig `Merge`, mellé csak a bekapcsolt `VP2`/`VP3`); a `bs-review` **külön fájlba** ír (`ci-code-review.md`), és a `bs-merge` kapuja mindkét jelentést olvassa; a `bs-dev-test` teszt-válogatása a `Fázis` oszlop `dev-test` értéke, a deploy-parancs a `## Review and merge` új `Dev deployment command` mezője. |
+| 2026-09-22 | **A–B csomag kész.** `status-keys.json`: `<sec:cv_review_and_merge>` (angol literál mindkét szeletben), hat test manager `<field:…>`, `phase_post_merge` + `phase_dev_test`, `post_merge_fixes`, `merge_tests`, `waiting_for_verification`, és egy **új `ui` csoport** a `cycle-status` megjelenítési címkéinek (`D3`); a `phase_both` **kivezetve**. A `00-init-project` megkapta a kanonikus `## Review and merge` szekciót, a hat test manager mezőt, öt interjú-horgonyt és három új lezáró ellenőrzést (érvényességi szabályok + `ci-run-skill.sh --selftest` + `notify.py --dry-run` + `test-manager.py --mode selftest`). A `run-tests.py` `--phase` választéka `post-merge`/`dev-test`-tel bővült, a legacy cella (üres / `mindkettő`) **olvasáskor WARN**, az `analyze-gate-check.py` PH1-checkje **írási oldalon (`--plan-only`) FAIL** — mindkettő méréssel visszaigazolva. |
+| 2026-09-22 | **C csomag kész — a `09-merge` szétvágva öt skillre.** `09-review-and-merge` (izolált, PR nélküli út, az `L13-D14` sorrendjével), `09a-create-pr`, `09b-review`, `09c-merge`, `09d-dev-test`; a `lang/{hu,en}/09-merge.md` hat új horgonnyal (`L13-D1` két ága + négy záró üzenet), a `descriptions.json` öt új kulccsal mindkét nyelven. A `validate-gate-check.py` kapott egy **`--review-only` módot** (`--require-ci-review`-val), ami a `07` `code-review.md`-jét ÉS a `09b` `ci-code-review.md`-jét együtt méri — ez a `Q21` gépi fele. Az `install-helper.py` mostantól a `*.sh` scripteket is telepíti (a repó-karbantartókat kizárva). |
+| 2026-09-22 | **D csomag kész.** A `cycle-status.py` belső állapotai **nyelvfüggetlen kódok** lettek, a megjelenítés a `lang_keys.ui()`-n át oldódik fel (`D3` — az `L13-D15` óta commitolt fájlba magyar címke nem mehet angol projektben), és megkapta a **`--write` módot**: a `cycle-status.md` a bizonyítékból generálódik, a `## Review and merge` szekcióból olvassa, mely verifikációs pont van bekapcsolva, és a `results.json` `test_manager` blokkjából a futás-URL-t pointerként (`TM10`). A `phase-commit.md` (közös blokk) mostantól **a commit ELŐTT regenerálja** a fájlt, a roadmap `⏳ verifikációra vár` jelölést kapott (a `cycle-status.py` explicit **nem** tekinti lezárásnak), a `tasks.md` pedig egy harmadik fix-szekciót (`## Post-merge javítások`), amit a `06` és a `07` belépője is ismer. |
+| 2026-09-22 | **E csomag kész — és három dolog MÉRÉSSEL dőlt el, nem feltételezésből.** (a) A `testdino` adapter **élesben lefutott** a `fixtures/testdino-smoke/` próbapadon: a `preflight` elkapja a hiányzó tokent és a Node 20-at (`≥ 22.12` kell), a `publish` kinyeri a valódi futás-URL-t a kör naplójából (`exit 0`), rossz tokennel pedig **`exit 4`-gyel** jelzi a néma bukást — az `L13-D26` így nem elmélet. (b) A `ci-run-skill.sh` négy ága **éles CLI-kkel** ellenőrizve: `claude -p` lefut és `exit 0`-t ad; a `cursor-agent -p --force` **hitelesítési hiba után is `exit 0`-val lép ki** — ez élőben igazolja, hogy az ágens exit kódja nem verdikt (`L13-D13`); a `copilot -p --allow-all-tools` dokumentált; 🔴 **az Antigravity 1.107.0-nak NINCS headless módja** (az `antigravity chat` GUI-session-t nyit), ezért a selftest ezt kimondja, és központosított úton a `command` ág a becsületes válasz. (c) A `notify.py` `--dry-run`-ja és a hiányzó env var beszédes hibája kipróbálva. A `reportportal` és a `qase` adapter **kipróbálatlanként van jelölve** a scriptben és a dokumentációban (nincs hozzájuk fiók) — csendben beleírni nem szabad. |
+| 2026-09-22 | **F csomag kész.** A quick-flow két sorral bővült (`QF23` merge-teszt szekció a `spec-plan.md`-ben, `QF24` kötelező merge-ág a lezárásban) — a telepített méret **440 (hu) / 442 (en)** sor, tehát a `7/q` korlát (≤ 445) tartható maradt, kivenni semmit nem kellett. A README-kben átvezetve: a `03a`/`03b` szétválás mindkét ábrán, a ciklusvég két ága a `4.1`-ben, a `4.2` **függelékbe** került és a helyére a **Tesztelési pontok** ábra (`VP1`–`VP3` + vissza-csatornázás) jött, plusz a parancs-lista, a skill-tábla, a `subagents:` bekezdés, a státusz-lifecycle, a példa-futtatás, a `conventions.md` szekció-leltára, a test manager leírása és a **migrációs jegyzet** (nincs visszafelé kompatibilitás). A `berki-spec-directory-structure.md` és a `meta-improve-prompts.md` (fázis-leírás, fájl-tábla, script-tábla, shared-tábla) szintén átvezetve — utóbbiban a „még nincs végrehajtva" figyelmeztetés helyére a lezárt döntések összefoglalója került. |
+| 2026-09-22 | **G csomag — a kapuk zöldek.** `lang-parity-check.py` (default **és** `--strict`) → 0 · `sync-gemini-agents.py --check` → 0 · telepítés-próba **öt platformra, mindkét nyelven** → `Success`, az öt új skill és a három új script megjelenik a telepített fában. **`G7` mérve:** egy csak test manager URL-t tartalmazó, artefaktum nélküli `test-report/post-merge/` készletet a `report-gate-check.py` **`exit 1`-gyel elutasít** — a `TM7` anti-szabály tehát nulla új gépezettel érvényes. Két hiba **a mérés miatt** derült ki és lett javítva: a `report-gate-check.py` pozicionális `conventions.md` argumentuma hiányzott az új skillek példáiból és a `ci-run-skill.sh`-ból, és a legacy `Fázis` WARN a fázis-szűrő után nem jutott el a kimenetre. |

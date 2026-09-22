@@ -394,35 +394,50 @@ def check_input_from_prev(cycle, rep, stage):
                 "PASS előtt mindet le kell zárni")
 
 
-def check_review(cycle, rep, stage, require_review):
-    if stage == "start":
-        return
-    path = cycle / "test-report" / "code-review.md"
-    legacy = cycle / "code-review.md"
-    if not path.exists() and legacy.exists():
-        path = legacy
+def _check_one_review(path, label, rep, required):
+    """Egy review-jelentés kapuja: létezés · befejezettség (RV-INC) · nyitott Must Fix."""
     text = read(path)
     if text is None:
-        if require_review:
-            rep.bad("test-report/code-review.md nem található — a review-kapu (RV1) nem futott le")
+        if required:
+            rep.bad(f"{label} nem található — a review-kapu (RV1) nem futott le")
         else:
-            rep.info("test-report/code-review.md: még nincs (a review nem futott ebben a körben)")
+            rep.info(f"{label}: még nincs (a review nem futott ebben a körben)")
         return
     status = get_status(path)
     if status is not None:
         head = status.split("|")[0].strip()
         if head == st("in_progress").lower():
-            rep.bad(f"code-review.md: a jelentés befejezetlen ({fld('f_status')}: "
+            rep.bad(f"{label}: a jelentés befejezetlen ({fld('f_status')}: "
                     f"{st('in_progress')}) — a reviewer futása megszakadt, a review-kapu "
                     "(RV1) nem zárható le vele; a kiírt findingok részlegesek (RV-INC)")
             return
     open_mf = re.findall(r"^\s*- \[ \].*$", text, re.MULTILINE)
     if open_mf:
         ids = [m.group(0) for l in open_mf for m in [re.search(r"MF-\d+", l)] if m]
-        label = ", ".join(ids) if ids else f"{len(open_mf)} db"
-        rep.bad(f"code-review.md: nyitott Must Fix — {label}")
+        marks = ", ".join(ids) if ids else f"{len(open_mf)} db"
+        rep.bad(f"{label}: nyitott Must Fix — {marks}")
     else:
-        rep.ok("code-review.md: nincs nyitott Must Fix (RV1)")
+        rep.ok(f"{label}: nincs nyitott Must Fix (RV1)")
+
+
+def check_review(cycle, rep, stage, require_review, require_ci_review=False):
+    """RV1 — a review-kapu. KÉT jelentés lehet, és egyik sem írja felül a másikat:
+
+    · `test-report/code-review.md`    — a `07` LOKÁLIS review-ja a ciklus ágán;
+    · `test-report/ci-code-review.md` — a `bs-review` köre a PR-en (Q21/L13-D1).
+
+    A `bs-merge` belépő kapuja MINDKETTŐT olvassa: a szétvágás különben elveszítené
+    azt a védelmet, ami ma a `09` egyetlen review-kapujában megvan."""
+    if stage == "start":
+        return
+    path = cycle / "test-report" / "code-review.md"
+    legacy = cycle / "code-review.md"
+    if not path.exists() and legacy.exists():
+        path = legacy
+    _check_one_review(path, "test-report/code-review.md", rep, require_review)
+    ci_path = cycle / "test-report" / "ci-code-review.md"
+    if require_ci_review or ci_path.exists():
+        _check_one_review(ci_path, "test-report/ci-code-review.md", rep, require_ci_review)
 
 
 def check_report(cycle, rep, stage):
@@ -1083,6 +1098,14 @@ def main():
     parser.add_argument("--stage", choices=["start", "close"], default="close")
     parser.add_argument("--require-review", action="store_true",
                         help="a code-review.md hiánya bukás (PASS előtt kötelező)")
+    parser.add_argument("--review-only", action="store_true",
+                        help="CSAK a review-kapu (RV1) fut — a `code-review.md` ÉS a "
+                             "`ci-code-review.md` —, a kör többi checkje nélkül. A "
+                             "`bs-review` és a `bs-merge` belépő kapuja hívja így")
+    parser.add_argument("--require-ci-review", action="store_true",
+                        help="a `ci-code-review.md` hiánya is bukás — a központosított "
+                             "`bs-merge` belépő kapuja (ott a PR-en futott review az "
+                             "egyetlen védelem, mert nincs ember a hurokban)")
     parser.add_argument("--conventions", default="conventions.md",
                         help="a projekt conventions.md-je — az RL1 port-forward felmentéséhez. "
                              "A `Környezetek és végpontok` táblát a kapu a "
@@ -1097,6 +1120,13 @@ def main():
         return 2
 
     rep = Report()
+    if args.review_only:
+        print(f"review-kapu (RV1) — {cycle}")
+        check_review(cycle, rep, "close", require_review=True,
+                     require_ci_review=args.require_ci_review)
+        print("EREDMÉNY: " + ("BUKOTT — a fenti ✗ pontokat rendezd" if rep.failed else "OK"))
+        return 1 if rep.failed else 0
+
     print(f"07-validate kapu — {cycle} — szakasz: {args.stage}")
     if args.stage == "start":
         check_start_statuses(cycle, rep)
@@ -1105,7 +1135,8 @@ def main():
     check_red_proof(cycle, rep, args.stage)
     check_dod(cycle, rep, args.stage)
     check_input_from_prev(cycle, rep, args.stage)
-    check_review(cycle, rep, args.stage, args.require_review)
+    check_review(cycle, rep, args.stage, args.require_review,
+                 require_ci_review=args.require_ci_review)
     check_report(cycle, rep, args.stage)
     check_run_coverage(cycle, rep, args.stage)
     check_skipped_evidence(cycle, rep, args.stage)

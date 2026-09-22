@@ -1,0 +1,12 @@
+{
+  "name": "testdino-smoke",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.63.0",
+    "@testdino/playwright": "^2.6.2"
+  }
+}
