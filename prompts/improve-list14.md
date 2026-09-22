@@ -630,23 +630,23 @@ nem a task-listába.
       `export-doc.py:24`)
 - [x] `A0d` — A `worktree-…png` **három** hivatkozásának átírása az új útvonalra: `README.md`,
       `README-HU.md`, `berki-spec-directory-structure.md:27`
-- [ ] `A1` — `docs/en/` és `docs/hu/` mappa létrehozása
-- [ ] `A2` — A 14 angol oldal kivágása a `README.md`-ből az 5.1 tábla szerint, **változatlan**
+- [x] `A1` — `docs/en/` és `docs/hu/` mappa létrehozása
+- [x] `A2` — A 14 angol oldal kivágása a `README.md`-ből az 5.1 tábla szerint, **változatlan**
       tartalommal. **A vágás fejléc szerint megy, nem sorszám szerint:** a `##` szakaszhatárokat
       kell megkeresni (kódblokk-tudatosan — a ```` ``` ```` fence-eken belüli `#` sorok NEM
       fejlécek — a mai README-ben mindkét nyelven 23 ilyen sor van). A 7.1 sorszámai **ellenőrzésre** valók: a
       kivágott oldal sorszáma ±2-n belül egyezzen a táblával
-- [ ] `A3` — A 14 magyar oldal kivágása a `README-HU.md`-ből, ugyanazokkal a fájlnevekkel
+- [x] `A3` — A 14 magyar oldal kivágása a `README-HU.md`-ből, ugyanazokkal a fájlnevekkel
       (`L14-D6`)
-- [ ] `A4` — Fejléc-szint igazítás minden oldalon: az oldal címe `#`, alatta a mai szintek egy
+- [x] `A4` — Fejléc-szint igazítás minden oldalon: az oldal címe `#`, alatta a mai szintek egy
       szinttel feljebb
-- [ ] `A5` — `SP-R` navigációs sor minden oldal tetejére (vissza a nyitólapra + oldalindex)
-- [ ] `A6` — A 3 horgony-hivatkozás átírása oldalközi relatív linkre, mindkét fában (7.2)
-- [ ] `A7` — A worktree-kép hivatkozásának javítása a `conventions.md` oldalon:
+- [x] `A5` — `SP-R` navigációs sor minden oldal tetejére (vissza a nyitólapra + oldalindex)
+- [x] `A6` — A 3 horgony-hivatkozás átírása oldalközi relatív linkre, mindkét fában (7.2)
+- [x] `A7` — A worktree-kép hivatkozásának javítása a `conventions.md` oldalon:
       `../assets/worktree-vscode-source-control.png` (az `A0b` utáni útvonal)
-- [ ] `A8` — `docs/en/README.md` és `docs/hu/README.md` oldalindex megírása (14 bejegyzés,
+- [x] `A8` — `docs/en/README.md` és `docs/hu/README.md` oldalindex megírása (14 bejegyzés,
       egysoros leírással)
-- [ ] `A9` — **Ellenőrzés:** a `docs/<lang>/*.md` összsora ≥ a mai README-törzs sorszáma mínusz
+- [x] `A9` — **Ellenőrzés:** a `docs/<lang>/*.md` összsora ≥ a mai README-törzs sorszáma mínusz
       a nyitólapon maradó szakaszok — semmi nem veszett el
 
 **B csomag — a nyitólapok**
