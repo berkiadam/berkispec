@@ -1107,6 +1107,16 @@ lehetséges **indítási mód**, amiből a Copilot mindkettőt tudja.
 Mind a négy hívható parancssorból, nem-interaktív (headless/print) módban — a Copilot is, tehát az
 `L13-D12`-ben vázolt „platform-esemény modell" nem a Copilot **egyetlen** útja, csak a másik.
 
+> **🔴 A VÉGREHAJTÁS (2026-09-22) EZT A FELTEVÉST RÉSZBEN MEGCÁFOLTA.** Éles méréssel: `claude -p`
+> ✓, `cursor-agent -p --force` ✓ (de CI-ben `CURSOR_API_KEY` kell, **és hitelesítési hiba után is
+> `exit 0`** — ami viszont épp az alábbi 3. pontot igazolja), `copilot -p --allow-all-tools` ✓ —
+> **az Antigravity CLI-nek (1.107.0) viszont NINCS headless módja**: az `antigravity chat` GUI
+> chat-session-t nyit, tehát display nélküli CI-futtatón nem fut le. A recept így is elkészült (egy
+> interaktív gépen használható), de a `--selftest` **kimondja a korlátot**, és a `CI agent: command`
+> ágra irányít. A `00-init-project` interjú-kérdése és a `conventions.md` sablon-prózája is ezt
+> mondja — kipróbálatlan vagy alkalmatlan ágenst csendben beleírni nem szabad (ugyanaz az elv, mint
+> az `L13-D25` kipróbálatlan adaptereinél).
+
 **Egy script, négy ág** (nem négy script), a `conventions.md` `CI agent:` mezője választ; ötödik
 lehetőségként `CI agent command:` — szabad parancs-sablon, ugyanaz a menekülő-út minta, mint a
 `Notification command`-nál (`L13-D11`).
