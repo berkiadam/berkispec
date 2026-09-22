@@ -189,6 +189,7 @@ A keretrendszer öt népszerű fejlesztő platformra képes beállítani a körn
 1. **Google Antigravity CLI:**
    * A projekt gyökerében létrehozza a `.agents/` konfigurációs mappát.
    * Az ágenseket a `.agents/agents/<név>/agent.json` mappaszerkezetbe, a skilleket pedig a `.agents/skills/bs-<név>/SKILL.md` könyvtárba linkeli be.
+   * ⚠️ **Csak interaktív használatra.** Mérve 2026-09-22-én, az 1.107.0-s CLI-vel: **nincs headless mód** (az `antigravity chat "<prompt>"` GUI chat-session-t nyit), ezért az Antigravity **nem tudja CI-futtatón végigvinni a ciklust**. Ez kizárólag a **központosított SDD-t** érinti, ahol a CI hajtja a `bs-review`/`bs-merge`-öt: ott válaszd a `CI agent: command` ágat (lásd a 9. szakasz `## Review and merge` leírását). Lokális, interaktív munkára az Antigravity teljes értékű.
 2. **Claude Code:**
    * A projekt gyökerében létrehozza a `.claude/` konfigurációs mappát.
    * Az ágenseket a `.claude/agents/<név>.md` (Markdown) formátumban linkeli be, a skilleket pedig a `.claude/skills/bs-<név>/SKILL.md` alá.
@@ -1504,6 +1505,8 @@ Az integrációk beállításához futtasd a [`install.sh`](install.sh) vagy a [
 Ha az **Antigravity** ágenst használod a fejlesztési ciklusok futtatására, a fenti script automatikusan előkészíti a lokális munkakörnyezetet:
 1. Létrehozza a `.agents/skills/` könyvtárat, és mindegyik fázishoz symlinkeli a `SKILL.md`-t.
 2. Létrehozza a `.agents/agents/` könyvtárat, és a markdown ágens-definíciókat automatikusan a CLI által elvárt `agent.json` formátumra fordítja.
+
+> **🔴 Az Antigravity nem lehet a központosított SDD CI-ágense.** Mérve 2026-09-22-én (CLI 1.107.0): az egyetlen prompt-fogadó belépő az `antigravity chat "<prompt>"`, ami **GUI chat-session-t nyit** — nincs `-p/--print`-szerű nem-interaktív mód, tehát display nélküli CI-futtatón nem fut le. A `ci-run-skill.sh --selftest` ezt kimondja, és `exit 2`-vel megáll. Ilyen projektben a `conventions.md` `## Review and merge` szekciójában `CI agent: command` a helyes érték (a platform saját, esemény-vezérelt PR-integrációja vagy bármely más parancs). **A lokális használatot ez nem érinti:** az interaktív Antigravity felületen a keret minden fázisa fut.
 
 #### 18.1.1 Tervezési és naplózási folyamat (Planning Mode)
 Az ágens a saját belső alkalmazásmappájában (`~/.gemini/antigravity-cli/brain/`) naplóz, így ezek a fájlok nem szennyezik a projekt Git repository-ját:

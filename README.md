@@ -186,6 +186,7 @@ The framework can set up the environment for five popular developer platforms:
 1. **Google Antigravity CLI:**
    * Creates the `.agents/` configuration folder in the project root.
    * Links the agents into the `.agents/agents/<name>/agent.json` folder structure, and the skills into the `.agents/skills/bs-<name>/SKILL.md` directory.
+   * ⚠️ **Interactive use only.** Measured on 2026-09-22 with CLI 1.107.0: there is **no headless mode** (`antigravity chat "<prompt>"` opens a GUI chat session), so Antigravity **cannot run the cycle on a CI runner**. This matters only for **centralized SDD**, where the CI drives `bs-review`/`bs-merge`: there choose `CI agent: command` (see section 9, `## Review and merge`). For local, interactive work Antigravity is fully supported.
 2. **Claude Code:**
    * Creates the `.claude/` configuration folder in the project root.
    * Links the agents in `.claude/agents/<name>.md` (Markdown) format, and the skills under `.claude/skills/bs-<name>/SKILL.md`.
@@ -1494,6 +1495,8 @@ To set up the integrations, run the [`install.sh`](install.sh) or the [`install.
 If you use the **Antigravity** agent to run the development cycles, the script above prepares the local working environment automatically:
 1. It creates the `.agents/skills/` directory and symlinks the `SKILL.md` for each phase.
 2. It creates the `.agents/agents/` directory and automatically translates the markdown agent definitions into the `agent.json` format expected by the CLI.
+
+> **🔴 Antigravity cannot be the CI agent of centralized SDD.** Measured on 2026-09-22 (CLI 1.107.0): the only prompt entry point is `antigravity chat "<prompt>"`, which opens a **GUI chat session** — there is no `-p/--print`-style non-interactive mode, so it does not run on a CI runner without a display. `ci-run-skill.sh --selftest` states this and stops with `exit 2`. In such a project set `CI agent: command` in the `## Review and merge` section of `conventions.md` (the platform's own event-driven PR integration, or any other command). **This does not affect local use:** in the interactive Antigravity interface every phase of the framework runs.
 
 #### 18.1.1 The planning and logging process (Planning Mode)
 The agent logs in its own internal application folder (`~/.gemini/antigravity-cli/brain/`), so these files do not pollute the project's Git repository:
