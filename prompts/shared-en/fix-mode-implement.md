@@ -22,13 +22,15 @@ Depending on the caller, the unfinished `[GREEN]`/`[CHECK]` tasks of the fixing 
   - `specs/cycle-NN-<cycle-name>/test-report/validation-report.md` (the `# <sec:validation_history>` with the details of the failures),
   - if Sonar failed: the Sonar report of **that round** — `specs/cycle-NN-<cycle-name>/test-report/validate/round-NN/sonar-report.md`. The concrete round number is given by the prerequisite reference of the section (TR5); **do not go rummaging in the folders of other rounds**, and not in the root of `test-report/` either — there is no Sonar report there.
 - **review branch:** `## <sec:review_fixes>` (added by 07 from the `<status:must_fix>` findings); prerequisite:
-  - `specs/cycle-NN-<cycle-name>/test-report/code-review.md` (the findings with their `MF-NN` identifier).
+  - `specs/cycle-NN-<cycle-name>/test-report/code-review.md` (the findings with their `MF-NN` identifier), and if a review also ran on the PR, `test-report/ci-code-review.md`.
+- **post-merge branch:** `## <sec:post_merge_fixes>` (added by the merge branch of the cycle end from a failure of the `VP2`/`VP3` round); prerequisite:
+  - the report in `specs/cycle-NN-<cycle-name>/test-report/post-merge/` or `test-report/dev-test/`. **This is not a new cycle but the continuation of the still open cycle** — after the fix, `07` re-validates and then the merge branch continues, not `08`.
 - The current state of `tasks.md` (the `<status:ready_for_implement> [validate-loop]` status).
 
 ### The boundary between fix mode and normal implement (2.2)
-- **Focus:** exclusively the tasks of the active fixing section (`## <sec:validation_fixes>` OR `## <sec:review_fixes>`) — correcting the concrete failed tests / Sonar failures / unfulfilled DoD items / `<status:must_fix>` findings.
+- **Focus:** exclusively the tasks of the active fixing section (`## <sec:validation_fixes>` OR `## <sec:review_fixes>` OR `## <sec:post_merge_fixes>`) — correcting the concrete failed tests / Sonar failures / unfulfilled DoD items / `<status:must_fix>` findings.
 - **Not a full re-implementation:** do not re-run and do not rewrite the tasks that are already green and closed (`[x]`). You work on the failure list only.
-- 06 already knows both entries (see "A step back can arrive here from two sources" — the `## <sec:validation_fixes>` and the `## <sec:review_fixes>` branch); the fix mode builds on that, it does not duplicate it.
+- 06 already knows all three entries (see "Three sources can send us back here" — the `## <sec:validation_fixes>`, the `## <sec:review_fixes>` and the `## <sec:post_merge_fixes>` branch); the fix mode builds on that, it does not duplicate it.
 
 ### <field:f_status> (auto, the `[validate-loop]` marker)
 The loop reopened the status of `tasks.md` with its marker (`<status:ready_for_implement> [validate-loop]`) — the same marker is used for the test fixes and for the review fixes. While the marker is present, you step the status **automatically**, without asking for confirmation (in contrast to the normal "confirmation before the status change" rule) — keeping the marker throughout:
@@ -56,4 +58,4 @@ At the end of your run, give a concise summary to the calling orchestrator (`07-
 - **Escalation signal (if any):** if one of the failures could only be turned green/clean by modifying the contract (test/DoD/spec) or by silencing the finding (forbidden by VD3/RD4) → state it unambiguously: *"ESCALATION: [item] appears to be a design/contract error — it would only be green by modifying the contract or by silencing the finding; I did not fix it."* State why.
 - **The current status of `tasks.md`** (with the `[validate-loop]` marker).
 
-You write the code and the active fixing section of `tasks.md` (`## <sec:validation_fixes>` / `## <sec:review_fixes>`); you do **not** write `validation-report.md` and `test-report/code-review.md` — those belong to the orchestrator.
+You write the code and the active fixing section of `tasks.md` (`## <sec:validation_fixes>` / `## <sec:review_fixes>` / `## <sec:post_merge_fixes>`); you do **not** write `validation-report.md` and `test-report/code-review.md` — those belong to the orchestrator.

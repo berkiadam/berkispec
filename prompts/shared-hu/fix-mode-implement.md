@@ -22,13 +22,15 @@ A hívótól függően a `tasks.md` végén lévő javító-szekció elvégzetle
   - `specs/cycle-NN-<cycle-name>/test-report/validation-report.md` (a `# <sec:validation_history>` a hibák részleteivel),
   - ha Sonar hibázott: **az adott kör** Sonar-riportja — `specs/cycle-NN-<cycle-name>/test-report/validate/round-NN/sonar-report.md`. A konkrét kör-számot a szekció prerequisite-hivatkozása adja meg (TR5); **ne keresgélj más körök mappájában**, és ne a `test-report/` gyökerében — ott nincs Sonar-riport.
 - **review-ág:** `## <sec:review_fixes>` (a 07 vette fel a `<status:must_fix>` findingokból); prerequisite:
-  - `specs/cycle-NN-<cycle-name>/test-report/code-review.md` (a findingok `MF-NN` azonosítóval).
+  - `specs/cycle-NN-<cycle-name>/test-report/code-review.md` (a findingok `MF-NN` azonosítóval), és ha a PR-en is futott review, a `test-report/ci-code-review.md`.
+- **post-merge ág:** `## <sec:post_merge_fixes>` (a ciklusvég merge-ága vette fel a `VP2`/`VP3` kör bukásából); prerequisite:
+  - `specs/cycle-NN-<cycle-name>/test-report/post-merge/` ill. `test-report/dev-test/` riportja. **Ez nem új ciklus, hanem a még nyitott ciklus folytatása** — a javítás után a `07` újravalidál, majd a merge-ág folytatódik, nem a `08`.
 - A `tasks.md` aktuális állapota (`<status:ready_for_implement> [validate-loop]` státusz).
 
 ### Fix-mód ↔ normál implement elhatárolása (2.2)
-- **Fókusz:** kizárólag az aktív javító-szekció taskjai (`## <sec:validation_fixes>` VAGY `## <sec:review_fixes>`) — a konkrét megbukott tesztek / Sonar-hibák / nem teljesült DoD-pontok / `<status:must_fix>` findingok javítása.
+- **Fókusz:** kizárólag az aktív javító-szekció taskjai (`## <sec:validation_fixes>` VAGY `## <sec:review_fixes>` VAGY `## <sec:post_merge_fixes>`) — a konkrét megbukott tesztek / Sonar-hibák / nem teljesült DoD-pontok / `<status:must_fix>` findingok javítása.
 - **Nem teljes újra-implementáció:** a már zöld, lezárt taskokat (`[x]`) ne futtasd újra és ne írd át. Csak a hibalistára dolgozol.
-- A 06 már ismeri mindkét belépést (lásd „Két forrásból érkezhet visszalépés ide" — a `## <sec:validation_fixes>` és a `## <sec:review_fixes>` ág); a fix-mód erre épül, nem duplikálja.
+- A 06 már ismeri mind a három belépést (lásd „Három forrásból érkezhet visszalépés ide" — a `## <sec:validation_fixes>`, a `## <sec:review_fixes>` és a `## <sec:post_merge_fixes>` ág); a fix-mód erre épül, nem duplikálja.
 
 ### <field:f_status> (auto, `[validate-loop]` marker)
 A hurok a `tasks.md` státuszát a markerével nyitotta vissza (`<status:ready_for_implement> [validate-loop]`) — ugyanez a marker a teszt- és a review-javításnál is. Amíg a marker jelen van, **automatikusan** lépteted a státuszt, megerősítés-kérés nélkül (eltérően a normál „megerősítés a státuszváltás előtt" szabálytól) — a markert végig megtartva:
@@ -56,4 +58,4 @@ A futásod végén adj tömör összefoglalót a hívó orchestrátornak (`07-va
 - **Eszkalációs jelzés (ha van):** ha valamelyik hibát csak a szerződés (teszt/DoD/spec) módosításával vagy a finding elnémításával lehetne zöldre/tisztára vinni (VD3/RD4 tiltja) → jelezd egyértelműen: *„ESZKALÁCIÓ: [item] tervezési/szerződés-hibának tűnik — csak a szerződés módosításával vagy a finding elnémításával lenne zöld; nem javítottam."* Add meg, miért.
 - **A `tasks.md` aktuális státusza** (a `[validate-loop]` markerrel).
 
-A kódot és a `tasks.md` aktív javító-szekcióját (`## <sec:validation_fixes>` / `## <sec:review_fixes>`) te írod; a `validation-report.md`-t és a `test-report/code-review.md`-t **nem** — azok az orchestrátoré.
+A kódot és a `tasks.md` aktív javító-szekcióját (`## <sec:validation_fixes>` / `## <sec:review_fixes>` / `## <sec:post_merge_fixes>`) te írod; a `validation-report.md`-t és a `test-report/code-review.md`-t **nem** — azok az orchestrátoré.
