@@ -651,22 +651,22 @@ nem a task-listába.
 
 **B csomag — a nyitólapok**
 
-- [ ] `B1` — A `<!-- TOC -->` … `<!-- /TOC -->` blokk **és a markerek** törlése mindkét
+- [x] `B1` — A `<!-- TOC -->` … `<!-- /TOC -->` blokk **és a markerek** törlése mindkét
       README-ből
-- [ ] `B2` — `LP2` (Mi ez) + `LP3` (alpha státusz) megírása mindkét nyelven
-- [ ] `B3` — `LP4` (Amiben más, nyolc alszakasz) megírása a **12.4** kulcsállításokból, a **12.5**
+- [x] `B2` — `LP2` (Mi ez) + `LP3` (alpha státusz) megírása mindkét nyelven
+- [x] `B3` — `LP4` (Amiben más, nyolc alszakasz) megírása a **12.4** kulcsállításokból, a **12.5**
       eltérés-lista **mind a négy** kötelező igazításával (script-szám, Antigravity CI-korlát,
       az `under development` adapterek, az alpha státusz)
-- [ ] `B4` — `LP5` (A folyamat: mermaid + fázistábla) — a fázistábla a `list13` topológiájával
+- [x] `B4` — `LP5` (A folyamat: mermaid + fázistábla) — a fázistábla a `list13` topológiájával
       (09 · 09a–09d)
-- [ ] `B5` — `LP6` (Hol tesztelünk: `VP1`/`VP2`/`VP3`)
-- [ ] `B6` — `LP7` (Két út, döntési tábla) + `LP8` (telepítés-quickstart) + `LP9` (parancstábla)
-- [ ] `B7` — `LP10` (Mit jelent a gyakorlatban)
-- [ ] `B8` — `LP11` — **a tartalomjegyzék**: 14 sor, egysoros leírásokkal, `docs/en/…` ill.
+- [x] `B5` — `LP6` (Hol tesztelünk: `VP1`/`VP2`/`VP3`)
+- [x] `B6` — `LP7` (Két út, döntési tábla) + `LP8` (telepítés-quickstart) + `LP9` (parancstábla)
+- [x] `B7` — `LP10` (Mit jelent a gyakorlatban)
+- [x] `B8` — `LP11` — **a tartalomjegyzék**: 14 sor, egysoros leírásokkal, `docs/en/…` ill.
       `docs/hu/…` relatív linkekkel (`DH2`)
-- [ ] `B9` — A `B` után a nyitólapon **nem marad** olyan szakasz, amit az `A` aloldalra vitt
+- [x] `B9` — A `B` után a nyitólapon **nem marad** olyan szakasz, amit az `A` aloldalra vitt
       (az `L14-D5` szerinti átmeneti átfedés feloldása)
-- [ ] `B10` — Mindkét nyitólap ≤ 400 sor
+- [x] `B10` — Mindkét nyitólap ≤ 400 sor
 
 **C csomag — a kapu**
 

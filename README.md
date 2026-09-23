@@ -13,95 +13,203 @@
 
 **HUN version → [README-HU.md](README-HU.md)**
 
-<!-- TOC -->
-
-- [Berki-spec](#berki-spec)
-  - [1. Two development routes — choose by the size of the task](#1-two-development-routes--choose-by-the-size-of-the-task)
-    - [1.1 Before either route (optional): /bs-brainstorm](#11-before-either-route-optional-bs-brainstorm)
-  - [2. Installation](#2-installation)
-    - [Installation steps:](#installation-steps)
-    - [Supported platforms and agents:](#supported-platforms-and-agents)
-    - [Language settings — two independent axes](#language-settings--two-independent-axes)
-    - [How can it be used?](#how-can-it-be-used)
-  - [3. Quick start](#3-quick-start)
-    - [The operating principle of the framework:](#the-operating-principle-of-the-framework)
-    - [Two development routes:](#two-development-routes)
-    - [Basic commands (slash commands):](#basic-commands-slash-commands)
-  - [4. The full berki spec flow (00–09)](#4-the-full-berki-spec-flow-0009)
-    - [4.1 High-level summary](#41-high-level-summary)
-    - [4.2 Test points — where we test, and what it proves](#42-test-points--where-we-test-and-what-it-proves)
-    - [4.3 Automatic selection of models and effort levels](docs/en/model-selection.md)
-    - [4.4 The 05-analyze self-healing loop (in detail)](#44-the-05-analyze-self-healing-loop-in-detail)
-    - [4.5 The 07-validate self-healing loop (in detail) — tests + code review](#45-the-07-validate-self-healing-loop-in-detail--tests--code-review)
-    - [4.6 Self-healing loops (analyze + validate) — shared conventions](#46-self-healing-loops-analyze--validate--shared-conventions)
-    - [4.7 Example prompt flow (walking through one cycle)](#47-example-prompt-flow-walking-through-one-cycle)
-  - [5. Simplified (lightweight) flow](#5-simplified-lightweight-flow)
-    - [5.1 Flowchart](#51-flowchart)
-    - [5.2 The three phases in brief](#52-the-three-phases-in-brief)
-    - [5.3 Two built-in loop breakers](#53-two-built-in-loop-breakers)
-    - [5.4 Optional agents (all read-only, none of them mandatory)](#54-optional-agents-all-read-only-none-of-them-mandatory)
-    - [5.5 Starter prompt (copy-paste)](#55-starter-prompt-copy-paste)
-    - [5.6 Example prompt](#56-example-prompt)
-  - [6. Skill index](#6-skill-index)
-  - [7. Agent index](#7-agent-index)
-  - [8. Frontmatter schema](#8-frontmatter-schema)
-  - [9. conventions.md — Project conventions](#9-conventionsmd--project-conventions)
-    - [Branching strategy — cycle = branch (in phase 01)](#branching-strategy--cycle--branch-in-phase-01)
-    - [Parallel cycles — a design window with a worktree (PW1/PW2, BD16)](#parallel-cycles--a-design-window-with-a-worktree-pw1pw2-bd16)
-    - [A fresh base before the analyze (BR1)](#a-fresh-base-before-the-analyze-br1)
-    - [An integration refresh before the merge (W2)](#an-integration-refresh-before-the-merge-w2)
-    - [The phase-closing commit (PC1)](#the-phase-closing-commit-pc1)
-  - [10. The artifact files of a cycle](#10-the-artifact-files-of-a-cycle)
-    - [10.1 The handover between phases (*-input-from-prev.md)](#101-the-handover-between-phases--input-from-prevmd)
-  - [11. docs-generated/ — living documentation (owned by 08-doc-sync)](#11-docs-generated--living-documentation-owned-by-08-doc-sync)
-    - [11.1 specs/test-conventions.md — recurring test expectations and recipes (TC1–TC11)](#111-specstest-conventionsmd--recurring-test-expectations-and-recipes-tc1tc11)
-    - [11.2 export/ — versioned PDF export (/bs-export-doc)](#112-export--versioned-pdf-export-bs-export-doc)
-    - [11.3 test-runs/ — running tests outside a cycle (/bs-run-tests)](#113-test-runs--running-tests-outside-a-cycle-bs-run-tests)
-  - [12. Question handling (spec-questions.md / plan-questions.md / tasks-questions.md / doc-sync-questions.md)](#12-question-handling-spec-questionsmd--plan-questionsmd--tasks-questionsmd--doc-sync-questionsmd)
-  - [13. A uniform Done status lifecycle](#13-a-uniform-done-status-lifecycle)
-  - [14. Sonar quality check](#14-sonar-quality-check)
-  - [15. The decision log (imp-decision.md)](#15-the-decision-log-imp-decisionmd)
-  - [16. The validation report (validation-report.md)](#16-the-validation-report-validation-reportmd)
-  - [17. The reviewer agent (agents/reviewer.md)](#17-the-reviewer-agent-agentsreviewermd)
-  - [18. Agent-specific integration](#18-agent-specific-integration)
-  - [Appendix — The detailed process diagram](#appendix--the-detailed-process-diagram)
-    - [18.0 A platform limitation: running commands in the subagents (EX1)](#180-a-platform-limitation-running-commands-in-the-subagents-ex1)
-    - [18.1 Antigravity CLI (Google DeepMind)](#181-antigravity-cli-google-deepmind)
-      - [18.1.1 The planning and logging process (Planning Mode)](#1811-the-planning-and-logging-process-planning-mode)
-      - [18.1.2 Handling permissions (Permissions)](#1812-handling-permissions-permissions)
-      - [18.1.3 Starting the skills and agents (using the TUI)](#1813-starting-the-skills-and-agents-using-the-tui)
-    - [18.2 Codex CLI (OpenAI)](#182-codex-cli-openai)
-
-<!-- /TOC -->
-
 # Berki-spec
 
-**Berki-spec** is a **spec-driven development (SDD)** framework for developing software with AI agents. It breaks the work into independently testable **cycles**, and drives every cycle down the same disciplined path — from capturing the requirement (`spec`) through the technical design (`plan`) and the task list (`tasks`) to implementation, validation and merge. The process is built from two kinds of building block: **skills** (phase recipes run by the main agent) and **agents** (dedicated specialists invoked as `Task tool` subagents).
+**Berki-spec** is a **spec-driven development (SDD)** framework for building software with AI agents. It breaks the work into independently testable **cycles**, and drives every cycle down the same disciplined path — from capturing the requirement (`spec`) through the technical design (`plan`) and the task list (`tasks`) to implementation, validation and merge.
+
+**The specification is the source, not the by-product.** A document is not written next to the code afterwards; it is the other way round: the description of the business behaviour is what the design, the task list, the tests and finally the code are derived from — and what every step is measured back against. The process is built from two kinds of building block: **skills** (phase recipes run by the main agent) and **agents** (dedicated specialists invoked as `Task tool` subagents).
+
+**A cycle leaves a production-ready unit behind it** — not a prototype. Tests written and executed, static analysis, code review, up-to-date system documentation and code integrated back into the main branch, all with committed evidence. The process does not end because the agent declares itself done; it ends because the **deterministic gates** are green.
 
 > **Status: alpha — there is no stable release yet.** The prompt contracts are hardened round by round, so an update can bring **breaking changes** to an already-installed project (a renamed artifact or cycle folder, a new mandatory gate). If you need a fixed state, install from a tagged version or pin a commit instead of following `main`.
 
-**What makes it different from the SDD tools on the market?**
+## 1. What makes it different
 
-Most SDD templates give you a single, rigid "spec → plan → code" thread. Berki-spec goes further — and the difference is not in the phases, but in **what happens when reality diverges from the plan**:
+Most SDD templates give you a single, rigid "spec → plan → code" thread. Berki-spec goes further on eight counts — and the difference is not in the phases, but in **what happens when reality diverges from the plan**.
 
-- **Adaptive, two-speed flow.** For a large task, the full (00–09) process with its quality gates; for a small, well-bounded task, a simplified three-phase route (`spec → task → implementation`). The two are **interchangeable mid-flight** — no needless ceremony for a configuration change, and no under-design for a complex feature.
-- **Self-healing quality loops, with anti-"cheating" discipline.** The `analyze`, `validate` and `review` phases do not merely *report* a defect, they **fix it automatically** in an orchestrated loop. The key rule: the **code adapts to the contract** (test / DoD / review finding), **never the other way round** — the loop does not weaken a test to make it green. If something could only be resolved by changing the contract, it **escalates upwards** into the design phase, in front of a human.
-- **Living, "as-built" documentation with drift tracking.** `docs-generated/` stays in sync with the code cycle by cycle, driven through an **objective consistency gate**, and separately records the **deviations of the implemented system from the HLD/LLD intent** (design drift). Documentation does not go stale silently.
-- **Interruption-safe, resumable anywhere.** Every phase keeps its state and its open questions in files (we **never delete** from the list, we only tick `[x]`), with status markers — a new session picks up exactly where the previous one stopped.
-- **Human gates at the decisions.** Phase transitions are bound to **explicit approval**: the agent proposes and justifies, but does not "run away with it" — the choice of scope and direction stays with the developer.
-- **Tool-independent, from a single source.** The same skill/agent definition (single source of truth) runs under Claude Code, Cursor, Antigravity and Codex alike.
-- **Optimised for weak/cheap models.** Deterministic safety nets (narrowed fix-mode entry points, mandatory checklists, one question at a time) reduce the chance of error even when it is not the strongest model driving.
-- **Maximum token saving — task-proportional model and reasoning-level selection.** Every step runs on the **cheapest agent sufficient for it**, tuned on **two independent axes**: the *model* (which model) and the *effort* (how many reasoning/thinking tokens). The most expensive (Opus-class) model is granted to **exactly one** point: the most critical reasoning, the consistency diagnosis of the `analyzer`. The fixers that correct a precise defect list and the mechanical runners work at **low effort** (on the `default` model too), because they do not have to discover the problem. Code search, test execution and the deterministic steps are done by cheap subagents and scripts, sparing the main context. For the full allocation see [section 4.3](docs/en/model-selection.md).
+### 1.1 Multi-agent architecture — whoever diagnoses does not fix
 
-## 1. Two development routes — choose by the size of the task
+It is not a single agent working, but a **specialised team**: *diagnosticians* (read only — code review, consistency analysis, codebase exploration, documentation planning), *runners* (executing tests and static analysis, with a factual summary) and *fixers* (targeted repair of the **concrete, listed** defects, not free exploration).
 
-The user has **two routes**; the weight of the task decides which one fits:
+The point is in the division of roles: **whoever diagnoses does not fix, and whoever fixes does not decide whether it is done.** The PASS/FAIL verdict comes from deterministic scripts, not from the model. That way "I think this will do" cannot slip across a phase boundary.
 
-1. **The full berki spec flow (phases 00–09)** — for larger, more complex developments. Separate `spec.md` → `plan.md` → `tasks.md` documents, with cross-phase `analyze`, `validate`, `doc-sync` and `review` quality gates and self-healing loops. On an empty project it starts with the `00-init-project` skill, for a new cycle with `01-add-cycles`. The rest of this README describes this route.
+### 1.2 Bilingual — two independent axes
 
-2. **The simplified (lightweight) flow** — for small, well-bounded tasks that can be solved in 3-4 steps (e.g. **assembling a configuration**, **writing a simpler script**, a minor fix). A single three-phase recipe: `spec-plan.md` → `tasks.md` → implementation, in the `/bs-quick-flow` skill. Both artifacts carry a **status field**, so the phase boundary is a committed fact (`/bs-cycle-status` reads it from there too). There is no separate plan/bs-analyze/bs-validate/bs-doc-sync phase; it calls the optional agents (`researcher`, `analyzer`, `reviewer`) only when they genuinely help.
+The *language of the prompts* (the language the agent receives its instructions in) and the *language of the project* (the language the deliverable documents are written in) are **freely combinable**; all four pairings are valid. For a Hungarian team the most common is **English prompts + Hungarian documentation**: the English prompt is cheaper in tokens and weaker models follow it more accurately, while the deliverable stays Hungarian.
 
-**How to decide?**
+Both settings are decided at install time and are **wired in** to the installed prompts — no language field of any kind is written into the project. Details: [Installation](docs/en/installation.md).
+
+### 1.3 Optimised for cheap, weaker models
+
+Task-proportional model selection on **two axes**: which model, and how much reasoning budget (effort). The most expensive tier is granted to **exactly one** point — the diagnosis of the consistency analysis — while the fixers correcting a precise defect list and the mechanical runners work at low effort, because they do not have to discover the problem.
+
+Deterministic safety nets keep weak models on the rails: narrowed entry points, mandatory checklists, "one question at a time". Context thrift is the other half of the same thing: exploration and test execution are done by cheap, parallel helper subagents that return only a summary — the raw test log and the `git diff` never enter the model's context. **Whatever can be decided mechanically is decided by a script.** For the full allocation see [Model and effort selection](docs/en/model-selection.md).
+
+### 1.4 Full SDLC — two modes, with a single dividing line
+
+*Isolated SDD*: everything runs on the developer's machine, including the review and the merge back. *Centralized SDD*: submitting the PR starts the CI/CD, and the **code review, the merge and the post-merge testing run on a remote machine, as a machine run**. The dividing line sits at **exactly one point**: the submission of the PR — everything before it is identical.
+
+```mermaid
+flowchart LR
+    classDef loc fill:#e0f2fe,stroke:#16a34a,stroke-width:2px,color:#1e293b;
+    classDef ci fill:#f3e8ff,stroke:#8b5cf6,stroke-width:2px,color:#1e293b;
+    classDef ext fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
+
+    subgraph CICD["⚙️ CI/CD — without a human"]
+        direction TB
+        C1["<b>9b</b> Code review"]:::ci
+        C2["<b>9c</b> Merge + post-merge tests"]:::ci
+        C3["<b>9d</b> Dev test — optional"]:::ci
+        SONC["Central<br/>Sonar"]:::ext
+        TMS["Test management<br/>system"]:::ext
+        C1 --> C2 --> C3
+        C2 -.-> SONC
+        C3 -.-> TMS
+    end
+
+    subgraph LOCAL["💻 On the developer's machine"]
+        direction TB
+        L2["<b>2–5</b> Specification → plan → tasks<br/>→ consistency analysis"]:::loc
+        L3["<b>6–7</b> Implementation · tests · code review"]:::loc
+        L4["<b>8</b> Documentation sync"]:::loc
+        L5["<b>9a</b> Opening the PR"]:::loc
+        SONL["Local<br/>Sonar"]:::ext
+        L2 --> L3 --> L4 --> L5
+        L3 -.-> SONL
+    end
+
+    NOTIF["Slack / Teams<br/>notification"]:::ext
+
+    LOCAL == "PR" ==> CICD
+    CICD -. "failure → fixing round" .-> LOCAL
+    CICD -. "failure" .-> NOTIF
+```
+
+> **The platform limit of the CI branch:** the Antigravity CLI has **no headless mode** (measured with 1.107.0), so on the CI branch of the centralized route the `command` run mode has to be chosen. For local, interactive work Antigravity is fully supported. Details: [Agent-specific integration](docs/en/platform-integration.md).
+
+### 1.5 Test-first — the test plan before the code
+
+The design phase splits into two steps: first the code plan, **then the test half of the same plan** — with concrete expected results and a machine-readable run table, **still before the implementation**.
+
+It has three consequences. The acceptance criterion and the test **live wired together**, through a machine gate, in both directions. **The code adapts to the contract, never the other way round**: the fixing loop may not weaken a test to make it green — a deterministic check defends this, and if something could only be resolved by changing the contract, the process **escalates upwards**, in front of a human. And the **illusory green is ruled out**: "zero tests executed" is a FAIL, a *skipped* test is not evidence, and an empty test body is hunted by a separate check.
+
+### 1.6 Continuous documentation and test maintenance
+
+Not a closing chore, but **a separate phase in every cycle**: living, "as-built" system documentation behind an objective consistency gate, a living test register (how the stack starts, which call, which test user) and a full test inventory that a machine gate compares against the test files actually present in the repository.
+
+The documentation separately records the **deviations of the implemented system from the design intent** (design drift), so it does not go stale silently. **A year later you can still say what the system does, and what proves that it works.** Details: [docs-generated/ — living documentation](docs/en/living-docs.md).
+
+### 1.7 A deterministic machine — the verdict comes from scripts
+
+The framework installs **scripts** alongside the prompts, and at the phase boundaries it is these that pronounce PASS/FAIL: quality gates (cross-phase consistency, acceptance criterion ↔ evidence, report artifacts, documentation consistency, test inventory), running and evaluation (tests from the machine-readable table of the plan, Sonar from the API, round log and failure counters), defences (catching a modification of the tested contract, tests without substance) and helper tooling (cycle status, out-of-cycle runs, PDF export, worktrees).
+
+**21 files are installed** into the target project (20 standalone scripts + one shared module); the remaining scripts of the repository are maintainer tools that do not ship. Together they are what makes the process rest on something other than the model's self-assessment.
+
+### 1.8 Fitting into the team's tooling
+
+An interactive installer for **five platforms**, with project-level customisation: the framework adapts to the conventions of the project, not the other way round. The closing phases can be wired into CI/CD through a uniform, platform-independent entry point, **taking the verdict from the deterministic gates**.
+
+Notification over **Slack, Teams or your own command** — only on failure and on a human decision, never about a successful run; the secret goes in an environment variable, never as a command-line parameter. The **test management system** is optional and off by default, because an external service must never become a precondition of the cycle running — the official evidence remains the report committed into version control. (The `testdino` and `command` branches are proven; the `reportportal` and `qase` adapters are **under development**.)
+
+## 2. The process
+
+```mermaid
+flowchart TD
+    classDef setup fill:#e0f2fe,stroke:#2563eb,stroke-width:2px,color:#1e293b;
+    classDef design fill:#e0f2fe,stroke:#0d9488,stroke-width:2px,color:#1e293b;
+    classDef dev fill:#e0f2fe,stroke:#16a34a,stroke-width:2px,color:#1e293b;
+    classDef review fill:#f3e8ff,stroke:#8b5cf6,stroke-width:2px,color:#1e293b;
+    classDef doc fill:#f3e8ff,stroke:#8b5cf6,stroke-width:2px,color:#1e293b;
+    classDef start fill:#f1f5f9,stroke:#64748b,stroke-width:2px,color:#1e293b;
+
+    Start(["Starting the project / a new cycle"]):::start
+    P0["<b>0. Project setup</b><br/>conventions, tech stack, quality gates"]:::setup
+    P1["<b>1. Cycles</b><br/>roadmap, cycle split, dependencies"]:::setup
+    P2["<b>2. Specification</b><br/>business behaviour, acceptance criteria"]:::design
+    P3["<b>3. Plan — two steps</b><br/>3a code plan &nbsp;+&nbsp; 3b test plan"]:::design
+    P4["<b>4. Task list</b><br/>measurable, broken-down tasks"]:::design
+    P5["<b>5. Consistency analysis</b><br/>spec ↔ plan ↔ tasks"]:::design
+    P6["<b>6. Implementation</b><br/>code + progress tracking"]:::dev
+    P7["<b>7. Validation and code review</b><br/>tests · static analysis · review"]:::dev
+    P8["<b>8. Documentation sync</b><br/>as-built system description, changelog"]:::doc
+
+    P9["<b>9. Review and Merge</b><br/><i>isolated SDD</i> — on the developer's machine"]:::review
+    P9a["<b>9a. Opening the PR</b><br/><i>centralized SDD</i>"]:::review
+    P9b["<b>9b. Code review</b><br/>machine run in the CI/CD"]:::review
+    P9c["<b>9c. Merge</b><br/>+ post-merge tests"]:::review
+    P9d["<b>9d. Dev test</b> — optional<br/>deployment + real E2E"]:::review
+    End(["Cycle closed"]):::start
+
+    Start --> P0 --> P1 --> P2 --> P3 --> P4 --> P5
+    P5 -. "divergence → self-healing loop" .-> P2
+    P5 --> P6 --> P7
+    P7 -. "failure or review finding → self-healing loop" .-> P6
+    P7 --> P8
+    P8 -- "isolated SDD (no PR)" --> P9
+    P8 -- "centralized SDD (PR required)" --> P9a
+    P9 --> End
+    P9a --> P9b --> P9c
+    P9c -- "optional" --> P9d
+    P9c --> End
+    P9d --> End
+
+    P9  -. "review or test failure → fixing round" .-> P6
+    P9b -. "review finding → fixing round" .-> P6
+    P9c -. "post-merge test failure → fixing round" .-> P6
+    P9d -. "dev test failure → fixing round" .-> P6
+```
+
+| phase | what happens | what it leaves behind |
+|---|---|---|
+| **0. Project setup** *(runs once)* | Together with the developer we record the conventions of the project: tech stack, test structure, reporting expectations, git and merge strategy, quality thresholds. | `conventions.md` |
+| **1. Cycles** | The requirement is broken into independently deliverable cycles, with dependencies and acceptance criteria. | `roadmap.md` |
+| **2. Specification** | **Business behaviour only** — what the system should do, and when we call it done. It designs no implementation. | `spec.md` |
+| **3a. Code plan** | The plan of the technical implementation: affected components, planned changes, configuration, data schema. | the code half of `plan.md` |
+| **3b. Test plan** | The test half of the same plan: test scenarios, machine-readable run table, environment preparation, specification coverage. | the test half of `plan.md` |
+| **4. Task list** | Breaking the plan down into measurable tasks. It adds nothing new. | `tasks.md` |
+| **5. Consistency analysis** | Cross-check: do the specification, the plan and the tasks **talk about the same thing**? On a divergence a self-healing loop starts. | analysis report + fix list |
+| **6. Implementation** | Writing the code from the plan and the task list, tracking the progress. | code + a ticked task list |
+| **7. Validation and code review** | Fast tests → static analysis (Sonar + AI code review) → heavy tests and regression → checking the acceptance criteria. On a failure a self-healing loop, with fixed stopping limits. | validation report + code review |
+| **8. Documentation sync** | Keeping the living system documentation current with the code that was actually built: behaviour description, architecture, changelog, component descriptions. | `docs-generated/` |
+| **9. Review and Merge** | The integration back. In isolated mode on the developer's machine, in one step; in centralized mode PR opening (9a) → machine code review (9b) → merge (9c), in the CI/CD. | merged branch / PR + closed roadmap |
+| **9d. Dev test** *(optional)* | Automatic deployment into an integrated test environment, and real end-to-end tests against it. | test evidence in the cycle folder |
+
+The detailed description of the phases: [The full berki spec flow](docs/en/full-flow.md) · [The self-healing loops](docs/en/self-healing-loops.md) · [The detailed process diagram](docs/en/process-diagram.md).
+
+## 3. Where we test
+
+The process checks at **three points**, and each of the three **proves something different** — which is why none of them replaces another.
+
+```mermaid
+flowchart LR
+    classDef dev fill:#e0f2fe,stroke:#16a34a,stroke-width:2px,color:#1e293b;
+    classDef review fill:#f3e8ff,stroke:#8b5cf6,stroke-width:2px,color:#1e293b;
+    classDef fb fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12;
+
+    V1["<b>1. Validation</b><br/>on the developer's machine<br/>unit + local component tests<br/><i>proves: what was built is<br/>what the specification asked for</i>"]:::dev
+    V2["<b>2. Post-merge test</b><br/>locally OR in the CI/CD<br/>unit + static analysis +<br/>containerised component tests<br/><i>proves: it is correct merged<br/>with the master branch too</i>"]:::dev
+    V3["<b>3. Dev test</b> — optional<br/>in a real test system,<br/>after automatic deployment<br/>end-to-end tests<br/><i>proves: it works in an<br/>integrated environment too</i>"]:::review
+    FB(["<b>Feedback</b><br/>report into the cycle folder and branch ·<br/>notification over Slack / Teams ·<br/>optionally into a test management system ·<br/>optionally an automatic fixing round"]):::fb
+
+    IMP["<b>Implementation + validation</b><br/>fixing round"]:::dev
+
+    V1 --> V2 --> V3
+    V1 -. "failure" .-> FB
+    V2 -. "failure" .-> FB
+    V3 -. "failure" .-> FB
+    FB -. "back to fixing" .-> IMP
+    IMP -. "again" .-> V1
+```
+
+**Validation** runs on the developer's machine, on their own branch: unit and local component tests, static analysis and code review. It proves that **what was built is what the specification asked for** — measured against the acceptance criteria, not in general.
+
+**The post-merge test** is the gate **before** the code reaches the main branch, on both routes: we bring the main branch into the cycle branch and run the tests on the *combined* state. It proves that the work is **correct merged with the main branch too** — this is the class of failure that a green test on an isolated branch never sees.
+
+**The dev test** is optional, and only on the centralized route: after an automatic deployment, real end-to-end tests in an integrated environment. It proves that the system **works together with its real dependencies too**. The result of all three rounds goes into the cycle folder as a report, and a failure sends a notification.
+
+## 4. Two development routes
+
+The weight of the task decides which route fits it. The **full flow** (00–09) is for larger, more complex developments, with separate `spec.md` → `plan.md` → `tasks.md` documents and quality gates; the **simplified flow** is for tasks solvable in 3-4 steps, with a single `spec-plan.md` → `tasks.md` → implementation recipe.
 
 | Characteristic | Simplified flow | Full berki spec flow |
 |---|---|---|
@@ -111,168 +219,80 @@ The user has **two routes**; the weight of the task decides which one fits:
 | Quality gates | inline + optional agents | `analyze` / `validate` / `doc-sync` / `review` loops |
 | Entry point | `/bs-quick-flow` | `/bs-init-project` / `/bs-add-cycles` |
 
-**Default flow:** the character of the project is clarified in the `00-init-project` phase (product development vs. configuration/scripting), and based on that a **default flow** is written into the **Default flow** field of the `## Development methodology` section of `conventions.md`. That is the starting point — it can be overridden per task.
+The two routes are **interchangeable mid-flight**: if during the simplified flow it turns out that the task outgrows it, the skill stops the work and redirects to the full process — and the other way round as well. In front of both sits the shared antechamber, `/bs-brainstorm`, for when the question is not yet the size, but **what and how** we want at all. Details: [Two development routes](docs/en/routes.md) · [Simplified flow](docs/en/lightweight-flow.md).
 
-The two routes are **interchangeable**: if during the simplified flow it turns out that the task outgrows it (more code to write, several components, complex design), the skill stops the work and **redirects to the full process** (`01-add-cycles`). And the other way round: `01-add-cycles` and `03a-write-code-plan` will flag it if the task is too simple for a full cycle, and suggest the simplified flow.
-
-### 1.1 Before either route (optional): `/bs-brainstorm`
-
-The **shared antechamber** of the two routes is the `/bs-brainstorm` helper command — for the case when the question is not yet the *size*, but **what and how** we want at all. ("How should we implement central certificate management?", "Is it worth extracting auth?") This gap sits **before** the `00–09` flow: `01-add-cycles` already assumes that you know what you want (it only has to be split into cycles), and `/bs-quick-flow` assumes the task is small and clear.
-
-**What it does:**
-- **Orients itself** in the project: `conventions.md`, `docs-generated/system-overview.md` (the as-built truth), `docs-generated/README.md` (folder index), `specs/roadmap.md` — and, depending on the topic, `architecture.md` and `design-drift.md`. Grinding through the whole `specs/` tree is forbidden (BS6).
-- **It explores the codebase with cheap, parallel `researcher` subagents** (Mode B, read-only, cheapest tier, "never raw file content") — so the context of the conversation carries a list of findings rather than dozens of files (BS7).
-- **It converses, it does not monologue:** **one** question at a time, for every proposal **2–3 alternatives with trade-offs + an explicit recommendation**, mandatory fitting to the existing system and to `conventions.md`, and sycophancy is forbidden — a risk that was not raised is the agent's fault (BS8–BS13).
-- **It persists:** the material of the session goes into the `.bs-brainstorm/brainstorm-NN-<slug>.md` working file with a fixed skeleton (*Goal · Discovered facts with sources · Alternatives · Decisions · Open questions · Proposed cycle split · Log*). After every substantive round it **grows** — it is never rewritten (BS14). So it can be continued after a `/clear`, a crash or a return days later: `/bs-brainstorm let's continue number 04`.
-
-**Hard limits (BS1):** it writes no code, runs no `git`, and modifies **not a single file** outside the `.bs-brainstorm/` folder — with one exception: on the first run it offers to add the `.bs-brainstorm/*` entry to `.gitignore` (after approval, once). At the end it **recommends**, but does not enter the next skill.
-
-**The bridge towards the flow (BS18):** the raw working file is **local and gitignored** (raw thinking, not a deliverable) — whatever is worth keeping is distilled into the cycle's `cycle-design-input.md`, and *that* is what gets committed:
-
-```
-/bs-brainstorm how should central cert management work
-        ↓                      .bs-brainstorm/brainstorm-04-central-cert.md   (gitignored)
-/bs-add-cycles brainstorm: 04
-        ↓                      specs/cycle-NN-<name>/cycle-design-input.md    (committed)
-/bs-write-spec
-```
-
-`01-add-cycles` takes the `## 6. Proposed cycle split` section as the starting point of the roadmap proposal, and asks the unticked items of `## 5. Open questions` **as questions** — whatever the working file already answers, it does not ask again. **One bridge, one direction:** `02-write-spec` does not read the brainstorm, it reads `cycle-design-input.md`.
-
-## 2. Installation
-
-Setting up the BerkiSpec framework in the target project is extremely simple and automated with the help of the bundled installer script.
-
-> **⚠ Updating an existing project — the family of the cycle end is NOT backwards compatible.** `09-merge` split into five skills (`bs-review-and-merge` · `bs-create-pr` · `bs-review` · `bs-merge` · `bs-dev-test`), and the framework has **no notion of versions**: there is no alias, no fallback to the old behaviour, no migration machinery. The update is therefore a **re-installation** (the installer replaces the old `bs-merge/` folder as well), plus adding the new `## Review and merge` section to `conventions.md` — by re-running `00-init-project` or by hand (the template lives in the `00` skill). **The artifact data ALREADY PRESENT in the project is a separate question:** in the `Phase` column of the `plan.md` of a running cycle, an empty cell and the `both` value are **still accepted on read** (with the old meaning and a WARN) — but a new plan can no longer write them. The re-installation does not rewrite these.
-
-### Installation steps:
-1. Open a terminal in the root of the `berkispec` repository.
-2. Run the installer script:
-   * **Linux/macOS:**
-     ```bash
-     ./install.sh
-     ```
-   * **Windows (PowerShell):**
-     ```powershell
-     .\install.ps1
-     ```
-3. The script greets you interactively and asks for the root folder of your target project.
-   * *Tip:* while typing the path you can auto-complete folder names with the **Tab** key, and **pressing Tab twice** lists the contents of the current directory.
-   * **On reinstall the most recent target folder is offered automatically** — on Linux/macOS it appears pre-filled (Enter = accept, editable with the arrow keys), on Windows the script prints it and accepts it on an empty Enter. For this the installer uses the **`history`** file in the repo root (`LAST_PROJECT_PATH`, `LAST_PLATFORM`, `LAST_INSTALL`). The file is machine-specific, so `.gitignore` excludes it; if the folder stored in it has disappeared in the meantime, the script says so and asks for a new one.
-4. Select the AI agent platform you use (1–6).
-5. Select the **two languages** — see the *Language settings* section below. Both have a default, acceptable with Enter:
-   * **Language of the prompts** (what the agent *reads*): `1) English [default]` / `2) Magyar`
-   * **Language of the project** (what the agent *writes*): `1) Magyar [default]` / `2) English`
-
-**Non-interactive (scripted) installation.** If you give **no** flag at all, the interactive route above runs unchanged. With flags, however, it can be automated:
+## 5. Installation — quickstart
 
 ```bash
-./install.sh --platform claude --prompt-lang en --project-lang hu --path ~/project
+git clone <the-url-of-the-berkispec-repo>
+cd berkispec
+./install.sh          # on Windows: .\install.ps1
 ```
 
-| Flag (`install.sh`) | PowerShell | Value | Default |
-|---|---|---|---|
-| `--platform` | `-Platform` | `claude` \| `codex` \| `antigravity` \| `cursor` \| `copilot` | — (asks) |
-| `--prompt-lang` | `-PromptLang` | `hu` \| `en` | `en` |
-| `--project-lang` | `-ProjectLang` | `hu` \| `en` | `hu` |
-| `--path` | `-Path` | the directory of the target project | — (asks) |
-| `--force` | `-Force` | overwrite on conflict | — |
-| `--help` | `-Help` | help | — |
+The installer interactively asks for the folder of the target project, the platform and the **two languages** (prompt language and project language), then links the skills and the agents into the configuration folder of the chosen platform. It can also be automated with flags: `./install.sh --platform claude --prompt-lang en --project-lang hu --path ~/project`.
 
-If flags are given partially, it uses the ones provided and asks for the rest interactively. **On a conflict without `--force` the non-interactive mode STOPS** — it does not overwrite silently.
+**Supported platforms:** Google Antigravity CLI · Claude Code · Cursor (Agent CLI) · GitHub Copilot (CLI & IDE) · Codex CLI.
 
-### Supported platforms and agents:
-The framework can set up the environment for five popular developer platforms:
-1. **Google Antigravity CLI:**
-   * Creates the `.agents/` configuration folder in the project root.
-   * Links the agents into the `.agents/agents/<name>/agent.json` folder structure, and the skills into the `.agents/skills/bs-<name>/SKILL.md` directory.
-   * ⚠️ **Interactive use only.** Measured on 2026-09-22 with CLI 1.107.0: there is **no headless mode** (`antigravity chat "<prompt>"` opens a GUI chat session), so Antigravity **cannot run the cycle on a CI runner**. This matters only for **centralized SDD**, where the CI drives `bs-review`/`bs-merge`: there choose `CI agent: command` (see section 9, `## Review and merge`). For local, interactive work Antigravity is fully supported.
-2. **Claude Code:**
-   * Creates the `.claude/` configuration folder in the project root.
-   * Links the agents in `.claude/agents/<name>.md` (Markdown) format, and the skills under `.claude/skills/bs-<name>/SKILL.md`.
-3. **Cursor (Agent CLI):**
-   * Creates the `.cursor/` configuration folder in the project root.
-   * Links the subagents in `.cursor/agents/<name>.md` (Markdown) format (the read-only agents get `readonly: true`), and the skills under `.cursor/skills/bs-<name>/SKILL.md`.
-4. **GitHub Copilot (CLI & IDE):**
-   * Creates the `.github/` configuration folder in the project root.
-   * Links the agents as `.github/agents/<name>.agent.md` files, and arranges the skills as global instructions in `.github/instructions/bs-<name>.instructions.md`.
-5. **Codex CLI:**
-   * Creates the subagents as `.codex/agents/<name>.toml` **TOML** files (with native `model` + `model_reasoning_effort` fields; the read-only agents get `sandbox_mode = "read-only"`).
-   * Places the skills under `.agents/skills/bs-<name>/SKILL.md` — Codex reads project-level skills from there.
-   * ⚠️ **Caution:** Codex and Antigravity use a **shared** `.agents/skills/` folder, so only one of the two can be installed into a given project. The installer warns and asks if the other one is already present.
-
-### Language settings — two independent axes
-
-The framework knows **two mutually independent** language settings. They are not the same thing, and they **do not have to match**:
+**The two language axes** — independently settable, and they do not have to match:
 
 | Setting | What it determines | Default |
 |---|---|---|
-| **Language of the prompts** | The language of the **instructions the agent reads** (the language of the `skills-*` / `agents-*` / `shared-*` tree). It does not affect your documents. | **English** |
-| **Language of the project** | The language the **agent writes in**: `spec.md`, `plan.md`, `tasks.md`, `conventions.md`, reports, `docs-generated/` — and the language it **answers you** in, in the chat. | **Magyar** |
+| **Language of the prompts** | The language of the instructions the **agent reads**. It does not affect your documents. | **English** |
+| **Language of the project** | The language the **agent writes in**: `spec.md`, `plan.md`, reports, `docs-generated/` — and the language it answers you in. | **Magyar** |
 
-**The four combinations:**
+> The full installation guide — the steps, the folder structure of the five platforms, the flag table of the non-interactive mode, the defence against language bleed and the questions of updating: **[Installation](docs/en/installation.md)**.
 
-| Prompt | Project | When this is the right one |
-|---|---|---|
-| **EN** | **HU** | *The default.* Hungarian team, Hungarian deliverable documentation — but the agent gets English instructions, which are cheaper in tokens and which weaker/cheaper models follow more accurately. |
-| HU | HU | If you want to read/maintain the prompt text in Hungarian too. |
-| EN | EN | International project. |
-| HU | EN | Rare, but valid: Hungarian maintainer, English deliverable. |
+## 6. Basic commands
 
-**Both are decided at install time and are WIRED IN to the installed prompts.** **No language field of any kind is written into the project** — neither into `conventions.md` nor anywhere else — therefore:
+After installation you can reach the skills in the platform's chat interface by pressing the `/` character (in GitHub Copilot with the `@` symbol). To start: `/bs-init-project`.
 
-- afterwards it can be changed **only by reinstalling**;
-- for an existing project there is **no migration to do**: until you reinstall, everything stays as it was;
-- the installer's **closing summary prints both languages** — this is the only place where you are confronted with your choice.
+| command | what it does |
+|---|---|
+| `/bs-init-project` | The very first initialisation of the project — it creates the `conventions.md` file. |
+| `/bs-add-cycles` | Adding a new development cycle to the roadmap (`roadmap.md`). |
+| `/bs-write-spec` | Capturing the requirements, the specification of the cycle (`spec.md`). |
+| `/bs-write-code-plan` | The **code side** of the technical plan: coordinates, planned changes, configuration, schema. |
+| `/bs-write-test-plan` | The **test half** of the same plan: scenarios, machine-readable run table, test-file data sheets. |
+| `/bs-write-tasks` | Breaking the plan down into measurable tasks (`tasks.md`). |
+| `/bs-analyze` | Cross-phase consistency check and automatic correction (spec ↔ plan ↔ tasks). |
+| `/bs-implement` | The actual code development from the task list, tracking the progress. |
+| `/bs-validate` | Tests, lint, build **and code review** in a single automatic fixing loop. |
+| `/bs-doc-sync` | Synchronising the living documentation (`docs-generated/`) and the test conventions with the code. |
+| `/bs-review-and-merge` | Closing the cycle **in one step** when there is no PR submission: post-merge test round → merge. |
+| `/bs-create-pr` → `/bs-review` → `/bs-merge` | The same **in three steps** when there is a PR submission — a machine run in centralized SDD. |
+| `/bs-dev-test` | *(optional)* Deployment into an integrated test environment, and real e2e tests. |
+| `/bs-brainstorm` | Exploratory ideation **before the spec**, with a persistent working file; at the end it hands over to the flow. |
+| `/bs-quick-flow` | Starting the simplified flow for small tasks (spec → task → implementation). |
+| `/bs-cycle-status` | Checking the status of the cycles (interactive TUI or command-line output). |
+| `/bs-manual-test-plan` | Assembling the **manual test plan** of the cycle: startup, test data, call sequences. |
+| `/bs-run-tests` | **Running tests outside a cycle**, per category; its result is never cycle evidence. |
+| `/bs-export-doc` | Versioned PDF export from the markdown docs, together with the mermaid diagrams. |
 
-> **The main risk: language bleed.** With English instructions + a Hungarian project, the model (especially a weaker one) tends to bleed English words into the Hungarian document, or to write the whole artifact in English. The main weapon against this is the **`output-language` block**: at the very beginning of every skill and every agent — right after the H1 — a block is inserted which states, **in the language of the project**, what has to be written in that language (artifacts, sentences addressed to the user), what stays English (identifiers, file names, commands, rule IDs), and that **mixing is a defect to be fixed**. A rule phrased in the target language is at once an instruction and a linguistic anchor — it measurably holds better than a "write in Hungarian" phrased in English.
+## 7. What this means in practice
 
-> **The gate scripts follow the language of the project too.** The deterministic gates (report gate, DoD check, round log, analyze gate, TC8) do not match on hardcoded Hungarian text: the installer writes the dictionary of the chosen project language next to the scripts (`lang-keys.json`), and the scripts take the section titles, field names and status values from it. So what they *search for* and what they *write* into the artifact is in the language of the project. Their input, on the other hand, is **language-independent**: they accept the forms of both languages, so a project that started in Hungarian does not fall out after an English reinstall.
->
-> **⚠️ One remainder with `project = English`:** the **console messages** of the gate scripts are Hungarian (these address the runner and the agent, they never end up in an artifact). The installer flags this separately at the point of choice.
+- **Predictable quality.** Closing every phase is bound to a machine gate; the AI cannot declare itself done.
+- **An auditable trail.** From the requirement to the test evidence every step lives in a committed document — afterwards you can answer why a decision was made, and what proves that it works.
+- **Interruptible work.** The state is on disk, not in the memory of a conversation: after a `/clear`, a crash or a return days later the process continues from where it stopped.
+- **Controlled cost.** The expensive model is used only where it is genuinely needed — the larger part of the work runs on a cheap model, at low effort.
+- **It fits the existing processes.** PR-based review, a protected main branch, CI/CD, Sonar, an integrated test environment, Slack/Teams notification, test management — the framework **fits into these, it does not come instead of them**.
 
-### How can it be used?
-After installation the given platform reads the symlinked definitions automatically:
-* **Google Antigravity CLI / Claude Code / Cursor Agent CLI / Codex CLI:** Start the CLI in the folder of the target project (with the `agent` command in the case of Cursor). In the chat interface you can bring up the list of skills by pressing the `/` (slash) character. Every skill appears uniformly under the name `berkispec - <phase>: <description>`, so you can see the order and purpose of the SDD steps immediately. To start, invoke the `bs-init-project` skill! (In Codex you can list/switch between subagents with the `/agent` command.)
-* **GitHub Copilot:** In the Copilot Chat window or in the Copilot CLI you can activate the instructions of the desired phase directly with the `@` symbol (e.g. `@bs-init-project`).
+## 8. Documentation
 
----
+The detailed description lives one topic per page in the [`docs/en/`](docs/en/README.md) tree (in Hungarian: [`docs/hu/`](docs/hu/README.md), with the same file names).
 
-
-## 3. Quick start
-
-BerkiSpec is a disciplined, spec-driven development (SDD) framework for pair programming with AI agents.
-
-### The operating principle of the framework:
-* **Cycles:** development is divided into well-bounded units (cycles) that can be described with an unambiguous goal and kept easily under control. Every new cycle gets its own Git branch, and all design and logging documents of the cycle go into the `specs/cycle-NN-<cycle-name>/` folder in the project root.
-* **Phases:** every cycle is broken down into strict phases that lead the process from the requirements through to implementation and merge.
-
-### Two development routes:
-Depending on the complexity of the task, two flows are available:
-1. **Full SDD flow:** produces a detailed specification (`spec.md`), a technical plan (`plan.md`) and a task list (`tasks.md`), and runs automatic self-healing quality loops (analyze, validate, review).
-2. **Lightweight flow:** for smaller changes, configurations or simple scripts. It runs in one step, without a separate phase breakdown.
-
-### Basic commands (slash commands):
-After installation you can reach the skills in the platform's chat interface by pressing the `/` character:
-
-* **`/bs-init-project`**: the very first initialisation of the project (creates the `conventions.md` file).
-* **`/bs-add-cycles`**: adding a new development cycle to the roadmap (`roadmap.md`).
-* **`/bs-write-spec`**: capturing the requirements, producing the specification of a new cycle (`spec.md` + `spec-questions.md`).
-* **`/bs-write-code-plan`**: the **code side** of the technical implementation plan (the code sections of `plan.md` + `plan-questions.md`) — coordinates, planned changes, configuration, schema.
-* **`/bs-write-test-plan`**: the **test half** of the same `plan.md` — `TS-NN` scenarios, the machine-readable run table, environment preparation, test-file data sheets.
-* **`/bs-write-tasks`**: breaking the technical plan down into measurable tasks (`tasks.md` + `tasks-questions.md`).
-* **`/bs-analyze`**: cross-phase consistency check and automatic correction (spec/plan/tasks agreement).
-* **`/bs-implement`**: actual code development based on the task list, recording the progress in `tasks.md`.
-* **`/bs-validate`**: checking tests, lint, build **and code review** (reviewer agent) in a single automatic fixing loop (after a successful run, the 'Done' status).
-* **`/bs-doc-sync`**: synchronising the living documentation (`docs-generated/`) and the READMEs with the code changes, and maintaining `specs/test-conventions.md` (recurring test expectations and recipes).
-* **`/bs-review-and-merge`**: closing the cycle **in one step** when there is no PR submission (`PR submission: no`): bringing the main branch into the cycle branch → **post-merge test round** (`VP2`: tests + Sonar) → merge with mandatory user confirmation (RD8). The code review has already run in `/bs-validate`.
-* **`/bs-create-pr` → `/bs-review` → `/bs-merge`**: the same **in three steps** when there is a PR submission (`PR submission: yes`) — opening the PR, the review running on the PR (a **machine run** in centralized SDD), and finally the merge after the `VP2` round. On both paths `VP2` is the gate **before** the code reaches the main branch.
-* **`/bs-dev-test`** *(optional, only on the centralized path)*: after a successful merge it deploys into an integrated test environment and runs **real e2e tests** against it (`VP3`). When it is switched on, the cycle closes with the green result of this round.
-* **`/bs-cycle-status`**: checking the status of the cycles (interactive TUI or command-line status).
-* **`/bs-brainstorm`**: exploratory ideation and joint design **before the spec** — with a persistent working file (`.bs-brainstorm/`) and cheap `researcher` exploration; at the end it hands over to `/bs-add-cycles` or `/bs-quick-flow`.
-* **`/bs-quick-flow`**: starting the simplified (lightweight) flow for small tasks (spec → task → implementation).
-* **`/bs-export-doc`**: versioned PDF export from the markdown docs (together with the mermaid diagrams) into the `export/` folder — with no parameter, from `architecture.md` and `system-overview.md`.
-* **`/bs-manual-test-plan`**: assembling the **manual test plan** for the cycle (`manual-test-plan.md`): component startup, test data, manual call sequences (`curl` + `.http`), expected results and the location of the automated test results. Two modes: `Planned` (before implementation, based on `plan.md`) or `As-built` (after validation, verified against the code). Its prerequisite is the `PASS` status of `analyze-report.md`; it is not a phase, it does not change the cycle status, and it can be re-run at any time (it preserves the manual additions).
-* **`/bs-run-tests`**: **running tests outside a cycle**, per category (`unit`, `rest-e2e`, `ui` — according to the dictionary of the project). It runs from the project-level table of the `## Test execution` section of `conventions.md`, and writes into the gitignored `test-runs/<category>/<UTC-timestamp>/<env>/` tree, with a per-category `latest.json` pointer. It is not a phase, and its result is **never cycle evidence** — see section 11.3.
-
----
+| page | what it answers |
+|---|---|
+| [Two development routes](docs/en/routes.md) | Which route fits the task — the decision table, and the `/bs-brainstorm` antechamber before either one. |
+| [Installation](docs/en/installation.md) | The full install: the steps, the five supported platforms, the two language axes, and what lands in the project. |
+| [Quick start](docs/en/quick-start.md) | The operating principle in brief and the first cycle end to end, with the slash commands. |
+| [The full berki spec flow (00–09)](docs/en/full-flow.md) | The many-phase route: the high-level diagram, the test points, and an example prompt flow through one cycle. |
+| [Automatic selection of models and effort levels](docs/en/model-selection.md) | Which step runs on which model at which effort, and how `models.json` controls it. |
+| [The self-healing loops](docs/en/self-healing-loops.md) | The `05-analyze` and `07-validate` loops in detail, plus the conventions they share. |
+| [Simplified (lightweight) flow](docs/en/lightweight-flow.md) | The three-phase route: flowchart, loop breakers, optional agents, starter prompt. |
+| [Skills, agents and the frontmatter schema](docs/en/skills-and-agents.md) | The skill index, the agent index, and the frontmatter every prompt file carries. |
+| [conventions.md — Project conventions](docs/en/conventions.md) | The project conventions file, the branching strategy, worktrees, and the phase-closing commit. |
+| [The artifact files of a cycle](docs/en/cycle-artifacts.md) | What a cycle leaves behind, the handover between phases, question handling, and the `Done` status lifecycle. |
+| [docs-generated/ — living documentation](docs/en/living-docs.md) | The living system documentation, the test conventions, the PDF export, and out-of-cycle test runs. |
+| [Quality gates, decision log and review](docs/en/quality-gates.md) | The Sonar check, the decision log, the validation report, and the reviewer agent. |
+| [Agent-specific integration](docs/en/platform-integration.md) | The platform limits: running commands in subagents, Antigravity CLI, Codex CLI. |
+| [The detailed process diagram](docs/en/process-diagram.md) | The full process diagram of phases 00–09 in one picture. |
