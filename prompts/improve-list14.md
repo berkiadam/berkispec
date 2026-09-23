@@ -1,9 +1,11 @@
 # „A README ne egy ömlesztett 50 oldalas doksi legyen" — hierarchikus dokumentáció
 
-> **Státusz: TERV (2026-09-22).** Ez a kör **még nincs végrehajtva**. A dokumentum a
-> Felhasználó követelményeit (3–6. szakasz), a repó **mért** mai állapotát (7. szakasz), a
-> **lezárt döntéseket** (8. szakasz) és a **pipálható task-listát** (10.c) tartalmazza.
-> Ütközésnél **a 8. szakasz döntése nyer** a 3–6. szakasz követelmény-tételei felett.
+> **Státusz: VÉGREHAJTVA (2026-09-23).** A kör lefutott: az `A`–`E` csomag minden tétele
+> kipipálva (10.c), a tapasztalatok és a tervtől való négy eltérés a 11. szakaszban. A
+> dokumentum a Felhasználó követelményeit (3–6. szakasz), a repó **mérés kori** állapotát
+> (7. szakasz), a **lezárt döntéseket** (8. szakasz) és a **pipálható task-listát** (10.c)
+> tartalmazza. Ütközésnél **a 8. szakasz döntése nyer** a 3–6. szakasz követelmény-tételei
+> felett.
 >
 > **Amit ez a kör csinál:** a repó gyökerében álló két, egyenként ~1700 soros README-t
 > **háromrétegű dokumentációra** bontja — egy rövid, értékorientált **nyitólap** (`README.md` /
@@ -692,19 +694,19 @@ nem a task-listába.
 
 **E csomag — zárás**
 
-- [ ] `E1` — `docs-tree-check.py` zöld
-- [ ] `E2` — `lang-parity-check.py` zöld (default **és** `--strict`) — a prompt-fák érintetlenek,
+- [x] `E1` — `docs-tree-check.py` zöld
+- [x] `E2` — `lang-parity-check.py` zöld (default **és** `--strict`) — a prompt-fák érintetlenek,
       ez a bizonyíték rá
-- [ ] `E3` — Telepítés-próba: **(a)** a kör ELŐTTI állapotból (`git stash` vagy egy `e9b734d`
+- [x] `E3` — Telepítés-próba: **(a)** a kör ELŐTTI állapotból (`git stash` vagy egy `e9b734d`
       checkout) telepíts egy temp mappába, **(b)** a kör után ugyanoda egy másikba, **(c)**
       `diff -r` a kettőre → **üres**. Ez bizonyítja a 7.6 állítását. Külön ellenőrizd, hogy a
       `docs-tree-check.py` **nem** települt (`L14-D9`)
-- [ ] `E4` — Kézi olvasópróba: a nyitólap tartalomjegyzékének **minden** linkje megnyílik a
+- [x] `E4` — Kézi olvasópróba: a nyitólap tartalomjegyzékének **minden** linkje megnyílik a
       GitHub renderelésében, mindkét nyelven; a mermaid-ábrák renderelődnek az aloldalakon is
-- [ ] `E5` — A `7/*` ellenőrző kérdések átfutása: `7/m` (melyik script olvassa? → egy sem, a
+- [x] `E5` — A `7/*` ellenőrző kérdések átfutása: `7/m` (melyik script olvassa? → egy sem, a
       dokumentáció nem gépi bemenet), `7/o` (a másik út? → nem értelmezett, 9. anti-lista),
       `7/q` (mi esett ki? → nem prompt-változás), megszakadás-tűrés (a csomagok commit-határai)
-- [ ] `E6` — Nem keletkezett új nyitott kérdés; ha mégis, `Q4`-től a 8.b-ben áll, döntéssel
+- [x] `E6` — Nem keletkezett új nyitott kérdés; ha mégis, `Q4`-től a 8.b-ben áll, döntéssel
       lezárva a 8. szakaszban
 
 ---
@@ -714,7 +716,70 @@ nem a task-listába.
 > Ezt a szakaszt a **végrehajtás** írja. Ide kerül minden, ami a tervtől eltért, és az indoka —
 > a `improve-list*.md` sorozat konvenciója szerint (lásd `improve-list12.md` 9. szakasz).
 
-*(Üres — a kör még nem futott.)*
+**A kör lefutott (2026-09-23), a `terv/improve-list13` ágon, öt committal:** `A0` (a `docs/`
+rendrakása) · `A` (a fa felállítása) · `B` (a nyitólapok) · `C` (a kapu) · `D` (a ripple).
+A `10.c` minden tétele kipipálva.
+
+### 11.1 Amit a mérés a terv fölött hozott
+
+| tétel | terv | tény |
+|---|---|---|
+| a nyitólapok mérete | ~353 sor, korlát 400 | **298 sor mindkét nyelven** — a `DG5` korlátjának ~25% tartaléka maradt |
+| a `docs/<lang>` fa | 14+14 témaoldal + oldalindex | 15+15 fájl ágonként, **1646 sor** az angol ágon |
+| a telepített scriptek | 21 fájl (`12.5`) | **21 fájl** — az `E3` próba megerősítette, a `docs-tree-check.py` nem települt |
+| a `docs-tree-check.py` | ~150 sor | 286 sor — a `DG3` horgony-feloldása (GitHub-kompatibilis slug-képzés) és a fence-tudatos szövegkezelés vitte el a többletet |
+
+### 11.2 Négy eltérés a tervtől — és az indokuk
+
+**(1) A `DG2`/`DG6` a két gyökér-nyitólap párjára is fut.** A 6. szakasz táblája a
+fájlpár-fogalmat a `docs/` fán belül értelmezi. A végrehajtás a `README.md` ↔ `README-HU.md`
+párt is felvette: a nyitólapok ugyanúgy tükrözött szerkezetűek (a `B` csomag soronként azonos
+szakaszstruktúrával írta meg őket), és pont ez a pár az, ami a legláthatóbb — ha itt csúszik
+szét a két nyelv, azt minden látogató látja. **Ára nincs:** a kapu így is zöld.
+
+**(2) A `DG3` az oldalközi horgonyt is feloldja.** A terv a horgony-ellenőrzést a *saját fájlon
+belülre* szűkítette. A script a `fájl.md#szakasz` alakot is ellenőrzi, mert a szétvágás után
+pont ez az alak lesz a természetes hivatkozási forma az oldalak között — és a törött oldalközi
+horgony pontosan az a hibaosztály, ami miatt a `DG3` egyáltalán létezik. Ma egyetlen horgony-
+hivatkozás sincs a fában (a 7.2 három tételét az `A6` relatív linkké alakította), tehát az
+ellenőrzés jelenleg inert; a következő kézzel írt oldalközi hivatkozásnál viszont már véd.
+
+**(3) A `D` csomag a scriptek tábláját is bővítette.** A `D4`/`D5` szó szerint a
+`berki-spec-directory-structure.md:3`, `:23` és a `docs/` sor átvezetését írja elő. A
+`docs-tree-check.py` ugyanakkor **új fájl a `prompts/scripts/`-ben**, és ugyanannak a fájlnak a
+113–119. sora tételesen felsorolja a scripteket és azt, hogy melyik nem települ — ha ez kimarad,
+a referencia a kör lezárásának pillanatában hiányos. Ugyanaz a ripple-osztály, csak a terv
+mérése (7.3) nem találta meg, mert az még a script létezése előtt készült.
+
+**(4) A `LP9` parancstábla nem a mai szakasz táblája, mert olyan nem volt.** A 4. szakasz `LP9`
+sora a „mai `3.` szakasz táblájá"-ra hivatkozik, a `3.` szakasz azonban **felsorolást**
+tartalmazott (19 `/bs-*` parancs, egyenként 2–6 soros leírással, ~35 sor). A nyitólapra ez
+táblaként került, parancsonként **egy** soros leírással — így fér bele a `LP9` 25 soros
+keretébe. A teljes, bőbeszédű felsorolás változatlanul megvan a `docs/<lang>/quick-start.md`
+oldalon (`SP2`), tehát tartalom nem veszett el (`L14-D5`).
+
+### 11.3 Az `E5` — a `7/*` ellenőrző kérdések
+
+| kérdés | válasz |
+|---|---|
+| `7/m` — melyik script olvassa? | **Egy sem.** A `docs/` fa és a nyitólapok emberi olvasók bemenete, nem gépi. A fordítottja viszont igaz, és ez az újdonság: a `docs-tree-check.py` **olvassa** a fát — tehát a fa szerkezete mostantól gépi szerződés, a tartalma nem. |
+| `7/o` — igaz-e ez a másik útra is? | **Nem értelmezett.** A kör egyetlen promptot sem írt át (9. anti-lista), a quick-flow szabályai változatlanok. |
+| `7/q` — mi esett ki? | **Semmi prompt-tartalom.** Ami kiesett: a 60 soros generált `<!-- TOC -->` blokk a markereivel együtt (`LP-X`), a `docs/` gyökeréből a `.bak` és a 0 bájtos `mermaid-filter.err` (`A0c`), és a nyitólapról a szakaszok teljes törzse — ez utóbbi nem veszett el, hanem átköltözött (`A9` mérte). |
+| megszakadás-tűrés | A csomagok külön commiton állnak (`A0` · `A` · `B` · `C` · `D`), tehát a kör bármelyik határon megszakadhatott volna anélkül, hogy a repó félkész állapotban maradjon. A `C` csomag után a kapu maga is futtatható bizonyíték. |
+
+### 11.4 Az `E4` gépi része és ami emberi marad
+
+A tartalomjegyzék **mind a 30 linkje** (15 nyelvi ágankent) létező fájlra mutat, és a fában
+lévő **18 mermaid-blokk** fence-e kiegyensúlyozott — ezt a `DG3` és egy külön ellenőrzés is
+megerősítette. Ami gépileg **nem** eldönthető, és ezért a Felhasználóra marad: hogy a GitHub
+tényleg **rendereli** az ábrákat az aloldalakon. A kockázat kicsi (a blokkok változatlanul
+kerültek át a mai README-ből, ahol renderelődtek), de nem nulla.
+
+### 11.5 Az `E6` — nyitott kérdés
+
+**Nem keletkezett új nyitott kérdés.** A 8.b hat kérdése (`Q1`–`Q6`) a végrehajtás előtt le
+volt zárva, és a 11.2 négy eltérése mind a meglévő döntésekből (`L14-D4`, `L14-D5`, `L14-D9`)
+levezethető végrehajtási választás volt, nem új dilemma.
 
 ---
 
