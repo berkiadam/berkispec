@@ -682,12 +682,12 @@ nem a task-listába.
 
 **D csomag — a ripple**
 
-- [ ] `D1` — `meta-improve-prompts.md:114` → `docs/hu/lightweight-flow.md`
-- [ ] `D2` — `meta-improve-prompts.md:303` → `docs/hu/self-healing-loops.md`
-- [ ] `D3` — `meta-improve-prompts.md:328` („két olvasnivaló") átírása a nyitólapra + a
+- [x] `D1` — `meta-improve-prompts.md:114` → `docs/hu/lightweight-flow.md`
+- [x] `D2` — `meta-improve-prompts.md:303` → `docs/hu/self-healing-loops.md`
+- [x] `D3` — `meta-improve-prompts.md:328` („két olvasnivaló") átírása a nyitólapra + a
       `docs/hu/` fa tételes oldalaira
-- [ ] `D4` — `berki-spec-directory-structure.md:3` és `:23` átvezetése
-- [ ] `D5` — `berki-spec-directory-structure.md` 1.1 tábla: a `docs/` sor átírása a **négy**
+- [x] `D4` — `berki-spec-directory-structure.md:3` és `:23` átvezetése
+- [x] `D5` — `berki-spec-directory-structure.md` 1.1 tábla: a `docs/` sor átírása a **négy**
       almappára (`en/`, `hu/`, `talks/`, `assets/`) és a szerepükre
 
 **E csomag — zárás**

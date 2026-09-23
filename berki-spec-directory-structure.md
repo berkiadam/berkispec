@@ -1,6 +1,6 @@
 # Berki-spec — directory structure reference
 
-This document describes **what every folder and file is for** — both in this repository and in a target project after installation. It is the detailed companion of [`README.md`](README.md) (Hungarian: [`README-HU.md`](README-HU.md)).
+This document describes **what every folder and file is for** — both in this repository and in a target project after installation. It is the detailed companion of the framework documentation: the landing page [`README.md`](README.md) (Hungarian: [`README-HU.md`](README-HU.md)) and the topic pages under [`docs/en/`](docs/en/README.md) (Hungarian: [`docs/hu/`](docs/hu/README.md)).
 
 There are **two distinct trees** to keep apart:
 
@@ -19,12 +19,12 @@ The framework consists of a single folder, `prompts/`, plus the installer in the
 
 | Path | What it is for |
 |---|---|
-| `README.md` | The full framework documentation in **English**. The starter prompt block for the user lives in it, and it is the canonical description of the flow. |
-| `README-HU.md` | The same documentation in **Hungarian**. The two files are kept in sync by hand; a structural change belongs in both. |
+| `README.md` | The **landing page** in **English**: what the framework is, what makes it different, the process diagram, the three verification points, the installation quickstart, the command table and the table of contents pointing into `docs/en/`. It states; it does not expand — the details live on the topic pages. Hard limit: **400 lines** (`docs-tree-check.py`, `DG5`). |
+| `README-HU.md` | The same landing page in **Hungarian**, with the same section structure. The two files are kept in sync by hand; a structural change belongs in both, and `docs-tree-check.py` measures the heading and diagram parity of the pair. |
 | `berki-spec-directory-structure.md` | This file — the detailed folder/file reference. |
 | `install.sh` / `install.ps1` | The installer entry points (Linux/macOS and Windows PowerShell). They collect the target folder, the platform and the two languages interactively, or accept them as flags (`--platform`, `--prompt-lang`, `--project-lang`, `--path`, `--force`), then hand the work to `prompts/scripts/install-helper.py`. |
 | `history` | Machine-specific installer memory (`LAST_PROJECT_PATH`, `LAST_PLATFORM`, `LAST_INSTALL`) so that a reinstall can offer the previous target. Excluded by `.gitignore`. |
-| `docs/` | Hand-written illustrations for the documentation (e.g. `docs/assets/worktree-vscode-source-control.png`). Not generated. |
+| `docs/` | The hand-written documentation of the framework, in four folders. `en/` + `hu/` — the **topic pages** the landing page links to: 14 pages per branch with **identical file names** (the content is in the language of the branch), plus a `README.md` page index in each. `assets/` — the illustrations the pages reference (e.g. `worktree-vscode-source-control.png`). `talks/` — presentation material, not part of the documentation tree. Nothing here is generated, and none of it is installed into a target project. The parity of the two language branches and the resolution of every relative link is guarded by `prompts/scripts/docs-tree-check.py` (`DG1`–`DG6`). |
 | `fixtures/` | Development-time test beds that are **not part of the framework** and are never installed. Today: `testdino-smoke/` — the minimal Playwright project the test-manager adapter (`TM1`–`TM10` of `prompts/improve-list13.md`) is measured and developed against. Contains no credentials; `node_modules/` and the generated reports are gitignored. |
 | `prompts/` | Everything the framework consists of — see below. |
 
@@ -110,13 +110,14 @@ This is the **only** place where the two language axes meet. The **prompt langua
 
 ### 1.6 `prompts/scripts/` — automation and the deterministic gates
 
-The installer copies **every `*.py` and `*.sh`** into the target project's platform scripts folder, except the maintainer tools marked below (`install-helper.py`, `sync-gemini-agents.py`, `lang-parity-check.py`, `acceptance-check.sh`, and the deprecated `init-project.sh`). The point of these scripts is that a machine-decidable question is answered by a script and not by an LLM: it is cheaper, it produces no false alarm, and its result is an exit code rather than an opinion.
+The installer copies **every `*.py` and `*.sh`** into the target project's platform scripts folder, except the maintainer tools marked below (`install-helper.py`, `sync-gemini-agents.py`, `lang-parity-check.py`, `docs-tree-check.py`, `acceptance-check.sh`, and the deprecated `init-project.sh`). The point of these scripts is that a machine-decidable question is answered by a script and not by an LLM: it is cheaper, it produces no false alarm, and its result is an exit code rather than an opinion.
 
 | Script | Phase | What it decides / does | Copied into the project |
 |---|---|---|---|
 | `install-helper.py` | — | The engine of the installer: model + effort assignment, file copying, `INCLUDE` inlining (BD14), token resolution, resolving `<platform-scripts-folder>` (BD15). | **no** |
 | `sync-gemini-agents.py` | — | Keeps the `Instructions` section of `gemini-agent/*/agent.json` in sync with the `agents/*.md` prompt (`--check` for a gate run). | **no** |
 | `lang-parity-check.py` | — | The parity gate of the two prompt trees: file list, INCLUDE markers, frontmatter, rule IDs, heading structure, code blocks, imperative count, language tokens. `--strict` for closing a PR. | **no** |
+| `docs-tree-check.py` | — | The gate of the framework's own `docs/` tree: file-set and section parity between `docs/en` and `docs/hu`, resolution of every relative link and heading anchor, set equality of the page indexes with the actual pages, the **400-line hard limit** of the landing pages plus the ban on the generated `<!-- TOC -->` marker, and mermaid-diagram parity (`DG1`–`DG6`). | **no** |
 | `lang_keys.py` | — | The shared language-key loader **imported by every gate script**: it resolves the section names, field names and status values from the `lang-keys.json` written next to the scripts by the installer (or, when run inside this repo, from the `hu` slice of `prompts/lang/status-keys.json`). This is why the gates match on the language of the project rather than on hardcoded text. Not a standalone command. | yes |
 | `analyze-gate-check.py` | 05 (+ 03/04) | The mechanical gate: plan↔task references, markers, `DoD-NN`, mandatory tables, executed artifacts, plan anchors, artifact voice, the coverage chain, `TS1–TS8`, `TA1` (test artifact data sheet), `WY1` (the purpose of a planned change), `PH1` (run phase), `TP4/b` (the run table follows the framework's column schema — `run-tests.py` reads with fixed column positions), `TT1` (test coverage in tasks.md), `TI1`/`TI2`/`TX1` (the shared `TS-NN`/`TC-NN` test namespace, one test per `[CHECK]`), `T6` (colliding `[CHECK]` outputs), `GA1` (gate stamp), `EV1–EV5`, `EV8`/`EV9`/`EV10` (the `[local]`/`[remote]` scope label on the `TS-NN` header, remote coverage in a non-local cycle, and label ↔ machine table consistency). It also **generates** the two report tables, the `## Inventory` for the analyzer-exec, and the `--emit-slices` slices for the semantic rounds. | yes |
 | `run-tests.py` | 07 | Runs the tests from the machine-readable table of `plan.md`, so the raw test log never enters the LLM context. It stops **before** the run on a wrong path base (`exit 3`) or a wrong test target (`exit 4`), and flags as a suggestion (`EV7`) an env variable set in a non-local category's command whose name does not appear in the test code being run. It recognises the table header structurally, so an English-language table is parsed correctly too. | yes |
