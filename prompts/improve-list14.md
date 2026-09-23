@@ -1,7 +1,7 @@
 # „A README ne egy ömlesztett 50 oldalas doksi legyen" — hierarchikus dokumentáció
 
 > **Státusz: VÉGREHAJTVA (2026-09-23).** A kör lefutott: az `A`–`E` csomag minden tétele
-> kipipálva (10.c), a tapasztalatok és a tervtől való négy eltérés a 11. szakaszban. A
+> kipipálva (10.c), a tapasztalatok és a tervtől való öt eltérés a 11. szakaszban. A
 > dokumentum a Felhasználó követelményeit (3–6. szakasz), a repó **mérés kori** állapotát
 > (7. szakasz), a **lezárt döntéseket** (8. szakasz) és a **pipálható task-listát** (10.c)
 > tartalmazza. Ütközésnél **a 8. szakasz döntése nyer** a 3–6. szakasz követelmény-tételei
@@ -729,7 +729,7 @@ A `10.c` minden tétele kipipálva.
 | a telepített scriptek | 21 fájl (`12.5`) | **21 fájl** — az `E3` próba megerősítette, a `docs-tree-check.py` nem települt |
 | a `docs-tree-check.py` | ~150 sor | 286 sor — a `DG3` horgony-feloldása (GitHub-kompatibilis slug-képzés) és a fence-tudatos szövegkezelés vitte el a többletet |
 
-### 11.2 Négy eltérés a tervtől — és az indokuk
+### 11.2 Öt eltérés a tervtől — és az indokuk
 
 **(1) A `DG2`/`DG6` a két gyökér-nyitólap párjára is fut.** A 6. szakasz táblája a
 fájlpár-fogalmat a `docs/` fán belül értelmezi. A végrehajtás a `README.md` ↔ `README-HU.md`
@@ -758,6 +758,31 @@ táblaként került, parancsonként **egy** soros leírással — így fér bele
 keretébe. A teljes, bőbeszédű felsorolás változatlanul megvan a `docs/<lang>/quick-start.md`
 oldalon (`SP2`), tehát tartalom nem veszett el (`L14-D5`).
 
+**(5) A nyitólap szakasz-sorrendje a Felhasználó kérésére megváltozott (2026-09-23).** A 4.
+szakasz `LP1`–`LP11` táblája és az `L14-D3` a sorrendet magát is üzenetnek szánta: *előbb miért
+érdekel, aztán hogyan indulok el*. A Felhasználó a `B` csomag átadása után **kérte**, hogy a
+telepítés-quickstart (`LP8`) és a parancstábla (`LP9`) kerüljön közvetlenül a bevezető (`LP2`/
+`LP3`) mögé. A nyitólap sorrendje ezért:
+
+| # | szakasz | LP |
+|---|---|---|
+| 1 | Telepítés — quickstart | `LP8` |
+| 2 | Alapvető parancsok | `LP9` |
+| 3 | Amiben más (nyolc alszakasz) | `LP4` |
+| 4 | A folyamat | `LP5` |
+| 5 | Hol tesztelünk | `LP6` |
+| 6 | Két fejlesztési út | `LP7` |
+| 7 | Mit jelent ez a gyakorlatban | `LP10` |
+| 8 | Dokumentáció | `LP11` |
+
+**Miért áll ez meg:** a `DH7` („a `git clone` után az első lépés ne legyen egy kattintásra") így
+a lehető legerősebben teljesül — a nyitólapot megnyitó fejlesztő a bevezető három bekezdése után
+azonnal a telepítő parancsot látja. Az `L14-D3` *tartalmi* döntése (a telepítés a nyitólapon
+marad, a teljes leírás aloldalra megy) érintetlen; csak a szakaszok sorrendje cserélődött.
+**A szakaszok tartalma egyetlen szóban sem változott**, és egyik szakasz sem hivatkozik
+irányra („lentebb", „a fenti") — ezt külön ellenőriztük. A méret változatlan: **298 sor**
+mindkét nyelven, a `DG5` zöld.
+
 ### 11.3 Az `E5` — a `7/*` ellenőrző kérdések
 
 | kérdés | válasz |
@@ -778,8 +803,10 @@ kerültek át a mai README-ből, ahol renderelődtek), de nem nulla.
 ### 11.5 Az `E6` — nyitott kérdés
 
 **Nem keletkezett új nyitott kérdés.** A 8.b hat kérdése (`Q1`–`Q6`) a végrehajtás előtt le
-volt zárva, és a 11.2 négy eltérése mind a meglévő döntésekből (`L14-D4`, `L14-D5`, `L14-D9`)
-levezethető végrehajtási választás volt, nem új dilemma.
+volt zárva, és a 11.2 első négy eltérése mind a meglévő döntésekből (`L14-D4`, `L14-D5`,
+`L14-D9`) levezethető végrehajtási választás volt, nem új dilemma. Az ötödik nem kérdés volt,
+hanem a Felhasználó utólagos, explicit kérése — döntésként az `L14-D3` sorrend-részét írja
+felül, a tartalmi részét nem.
 
 ---
 

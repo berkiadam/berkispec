@@ -23,29 +23,76 @@
 
 > **Státusz: alpha — még nincs stabil kiadás.** A prompt-kontraktusokat körönként keményítjük, ezért egy frissítés **töréses változást** hozhat egy már telepített projektben (átnevezett artefaktum vagy ciklusmappa, új kötelező kapu). Ha rögzített állapot kell, tagelt verzióról telepíts, vagy rögzíts egy commitot ahelyett, hogy a `main`-t követnéd.
 
-## 1. Amiben más
+## 1. Telepítés — quickstart
+
+```bash
+git clone <a-berkispec-repó-url-je>
+cd berkispec
+./install.sh          # Windowson: .\install.ps1
+```
+
+A telepítő interaktívan bekéri a célprojekt mappáját, a platformot és a **két nyelvet** (prompt-nyelv és projekt-nyelv), majd a választott platform konfigurációs mappájába linkeli a skilleket és az ágenseket. Flagekkel automatizálható is: `./install.sh --platform claude --prompt-lang en --project-lang hu --path ~/projekt`.
+
+**Támogatott platformok:** Google Antigravity CLI · Claude Code · Cursor (Agent CLI) · GitHub Copilot (CLI & IDE) · Codex CLI.
+
+**A két nyelvi tengely** — egymástól függetlenül állítható, és nem kell egyezniük:
+
+| Beállítás | Mit határoz meg | Alapértelmezés |
+|---|---|---|
+| **Prompt nyelve** | Milyen nyelven vannak az instrukciók, amiket az **ágens olvas**. A te dokumentumaidat nem érinti. | **English** |
+| **Projekt nyelve** | Milyen nyelven **ír az ágens**: `spec.md`, `plan.md`, riportok, `docs-generated/` — és amit neked válaszol. | **Magyar** |
+
+> A teljes telepítési leírás — a lépések, az öt platform mappaszerkezete, a nem interaktív mód flag-táblája, a nyelvi átszivárgás elleni védelem és a frissítés kérdései: **[Installáció](docs/hu/installation.md)**.
+
+## 2. Alapvető parancsok
+
+A telepítés után a platform chat felületén a `/` karakter leütésével érheted el a skilleket (GitHub Copilotban `@` szimbólummal). Kezdéshez: `/bs-init-project`.
+
+| parancs | mit csinál |
+|---|---|
+| `/bs-init-project` | A projekt legelső inicializálása — létrehozza a `conventions.md` fájlt. |
+| `/bs-add-cycles` | Új fejlesztési ciklus felvétele az ütemtervbe (`roadmap.md`). |
+| `/bs-write-spec` | A követelmények rögzítése, a ciklus specifikációja (`spec.md`). |
+| `/bs-write-code-plan` | A technikai terv **kód-oldala**: koordináták, tervezett módosítások, konfiguráció, séma. |
+| `/bs-write-test-plan` | Ugyanannak a tervnek a **teszt-fele**: forgatókönyvek, gépi futtatási tábla, tesztfájl-adatlapok. |
+| `/bs-write-tasks` | A terv lebontása mérhető feladatokra (`tasks.md`). |
+| `/bs-analyze` | Kereszt-fázisos konzisztencia-ellenőrzés és automatikus javítás (spec ↔ terv ↔ feladatok). |
+| `/bs-implement` | A tényleges kódfejlesztés a feladatlista alapján, a haladás vezetésével. |
+| `/bs-validate` | Tesztek, lint, build **és kódreview** egyetlen automatikus javító hurokban. |
+| `/bs-doc-sync` | Az élő dokumentáció (`docs-generated/`) és a teszt-konvenciók szinkronizálása a kóddal. |
+| `/bs-review-and-merge` | A ciklus lezárása **egy lépésben**, ha nincs PR feladás: merge utáni teszt-kör → beolvasztás. |
+| `/bs-create-pr` → `/bs-review` → `/bs-merge` | Ugyanez **három lépésben**, ha van PR feladás — központosított SDD-ben gépi futtatással. |
+| `/bs-dev-test` | *(opcionális)* Telepítés integrált teszt-környezetbe, és valódi e2e tesztek. |
+| `/bs-brainstorm` | Feltáró ötletelés **a spec előtt**, perzisztens munkafájllal; a végén átad a flow-nak. |
+| `/bs-quick-flow` | Az egyszerűsített flow elindítása kis feladatokhoz (spec → task → implementáció). |
+| `/bs-cycle-status` | A ciklusok státuszának ellenőrzése (interaktív TUI vagy parancssori kiírás). |
+| `/bs-manual-test-plan` | A ciklus **kézi teszttervének** összeállítása: indítás, tesztadatok, hívási szekvenciák. |
+| `/bs-run-tests` | **Teszt-futtatás cikluson kívül**, kategóriánként; az eredménye soha nem ciklus-bizonyíték. |
+| `/bs-export-doc` | Verziózott PDF export a markdown doksikból, a mermaid ábrákkal együtt. |
+
+## 3. Amiben más
 
 A legtöbb SDD sablon egyetlen, merev „spec → terv → kód" fonalat ad. A Berki-spec nyolc ponton megy tovább — és a különbség nem a fázisokban van, hanem abban, **mi történik, amikor a valóság eltér a tervtől**.
 
-### 1.1 Multi-ágens architektúra — aki diagnosztizál, az nem javít
+### 3.1 Multi-ágens architektúra — aki diagnosztizál, az nem javít
 
 Nem egyetlen ágens dolgozik, hanem egy **specializált csapat**: *diagnoszták* (csak olvasnak — kódreview, konzisztencia-elemzés, kódbázis-feltárás, doksi-tervezés), *végrehajtók* (tesztek és statikus elemzés futtatása, tényszerű összegzéssel) és *javítók* (a **konkrét, listázott** hibák célzott javítása, nem szabad felfedezés).
 
 A lényeg a szereposztásban van: **aki diagnosztizál, az nem javít, és aki javít, az nem dönti el, hogy kész van-e.** A PASS/FAIL verdikt determinisztikus scriptektől jön, nem a modelltől. Így az „ez szerintem jó lesz" nem tud átcsúszni a fázishatáron.
 
-### 1.2 Kétnyelvű — két független tengely
+### 3.2 Kétnyelvű — két független tengely
 
 A *prompt nyelve* (milyen nyelven kapja az utasítást az ágens) és a *projekt nyelve* (milyen nyelven készülnek a leadandó dokumentumok) **szabadon kombinálható**, mind a négy párosítás érvényes. Magyar csapatnál a leggyakoribb az **angol prompt + magyar dokumentáció**: az angol prompt tokenben olcsóbb, és a gyengébb modellek pontosabban követik, a leadandó anyag viszont magyar marad.
 
 Mindkét beállítás telepítéskor dől el, és **bedrótozódik** a telepített promptokba — a projektbe semmilyen nyelvi mező nem kerül. Részletek: [Installáció](docs/hu/installation.md).
 
-### 1.3 Olcsó, gyengébb modellekre optimalizálva
+### 3.3 Olcsó, gyengébb modellekre optimalizálva
 
 Feladatarányos modellválasztás **két tengelyen**: melyik modell, és mennyi gondolkodási erőforrás (effort). A legdrágább szintet **egyetlen** pont kapja — a konzisztencia-elemzés diagnózisa —, a pontos hibalistát javító fixerek és a mechanikus futtatók alacsony efforton dolgoznak, mert nekik nem kell felfedezniük a problémát.
 
 A gyenge modelleket determinisztikus védőhálók tartják a sínen: szűkített belépők, kötelező ellenőrzőlisták, „egyszerre egy kérdés". A kontextus-takarékosság ugyanennek a másik fele: a feltárást és a teszt-futtatást olcsó, párhuzamos segéd-ágensek végzik, és csak összegzést adnak vissza — a nyers teszt-log és a `git diff` nem kerül a modell kontextusába. **Ami gépiesen eldönthető, azt script dönti el.** A teljes leosztás: [Modell- és effort-választás](docs/hu/model-selection.md).
 
-### 1.4 Teljes SDLC — két üzemmód, egyetlen határvonallal
+### 3.4 Teljes SDLC — két üzemmód, egyetlen határvonallal
 
 *Izolált SDD*: minden a fejlesztő gépén fut, a review-t és a visszaintegrálást is beleértve. *Központosított SDD*: a PR feladása indítja a CI/CD-t, és a **kódreview, a merge és a merge utáni tesztelés távoli gépen, gépi futtatásban** zajlik. A határvonal **egyetlen ponton** van: a PR feladásánál — előtte minden lépés azonos.
 
@@ -87,31 +134,31 @@ flowchart LR
 
 > **A CI-ág platform-korlátja:** az Antigravity CLI-nek **nincs headless módja** (mérve 1.107.0-val), ezért a központosított út CI-ágán a `command` futtatási ágat kell választani. Lokális, interaktív munkára az Antigravity teljes értékű. Részletek: [Ágens-specifikus integráció](docs/hu/platform-integration.md).
 
-### 1.5 Test-first — a tesztterv a kód előtt
+### 3.5 Test-first — a tesztterv a kód előtt
 
 A tervezési fázis két lépésre bomlik: előbb a kód-terv, **majd ugyanannak a tervnek a teszt-fele** — konkrét elvárt eredménnyel és gépi futtatási táblával, **még az implementáció előtt**.
 
 Három következménye van. Az elfogadási kritérium és a teszt **összekötve él**, gépi kapuval, mindkét irányban. **A kód a szerződéshez igazodik, nem fordítva**: a javító hurok nem lazíthatja meg a tesztet, hogy zöld legyen — ezt determinisztikus ellenőrzés védi, és ha valami csak a szerződés módosításával lenne megoldható, a folyamat **felfelé eszkalál**, ember elé. És a **látszat-zöld ki van zárva**: a „nulla lefutott teszt" FAIL, a *skipped* nem bizonyíték, az üres teszt-törzset külön ellenőrzés keresi.
 
-### 1.6 Folyamatos dokumentáció- és teszt-karbantartás
+### 3.6 Folyamatos dokumentáció- és teszt-karbantartás
 
 Nem záró feladat, hanem **külön fázis minden ciklusban**: élő, „as-built" rendszerdokumentáció objektív konzisztencia-kapuval, élő teszt-regiszter (hogyan indul a stack, milyen hívás, milyen teszt-felhasználó) és teljes teszt-leltár, amit gépi kapu vet össze a repóban ténylegesen meglévő tesztfájlokkal.
 
 A dokumentáció külön nyilvántartja a megvalósult rendszer **eltéréseit a tervezési szándéktól** (design-drift), tehát nem avul el csendben. **Egy év múlva is meg lehet mondani, mit csinál a rendszer, és mi bizonyítja, hogy működik.** Részletek: [docs-generated/ — élő dokumentáció](docs/hu/living-docs.md).
 
-### 1.7 Determinisztikus gépezet — a verdikt scriptektől jön
+### 3.7 Determinisztikus gépezet — a verdikt scriptektől jön
 
 A keret a promptok mellé **scripteket** telepít, és a fázishatárokon ezek mondják ki a PASS/FAIL-t: minőségi kapuk (kereszt-fázisos konzisztencia, elfogadási kritérium ↔ bizonyíték, riport-artefaktumok, doksi-konzisztencia, teszt-leltár), futtatás és kiértékelés (tesztek a terv gépi táblájából, Sonar az API-ból, kör-napló és bukás-számlálók), védelmek (a tesztelt szerződés módosításának kiszűrése, tartalom nélküli tesztek) és segédeszközök (ciklus-státusz, cikluson kívüli futtatás, PDF-export, worktree).
 
 A célprojektbe **21 fájl települ** (20 önálló script + egy közös modul); a repó további scriptjei karbantartó eszközök, amelyek nem kerülnek ki. Ezek együtt adják azt, hogy a folyamat nem a modell önértékelésén áll.
 
-### 1.8 Illeszkedés a csapat eszközeihez
+### 3.8 Illeszkedés a csapat eszközeihez
 
 Interaktív telepítő **öt platformra**, projekt-szintű testreszabással: a keret a projekt konvencióihoz igazodik, nem fordítva. A záró fázisok CI/CD-be illeszthetők egységes, platformfüggetlen belépőn, **a verdiktet a determinisztikus kapuktól** véve.
 
 Értesítés **Slacken, Teamsen vagy saját parancson** — csak bukásnál és emberi döntésnél, sosem sikeres futásról; a titok környezeti változóban, soha nem parancssori paraméterként. A **teszt-menedzsment rendszer** opcionális és alapból kikapcsolt, mert a külső szolgáltatás soha nem válhat a ciklus futásának előfeltételévé — a hivatalos bizonyíték továbbra is a verziókezelőbe commitolt riport. (A `testdino` és a `command` ág kipróbált; a `reportportal` és a `qase` adapter **fejlesztés alatt** áll.)
 
-## 2. A folyamat
+## 4. A folyamat
 
 ```mermaid
 flowchart TD
@@ -176,7 +223,7 @@ flowchart TD
 
 A fázisok részletes leírása: [Teljes berki spec flow](docs/hu/full-flow.md) · [Az önjavító hurkok](docs/hu/self-healing-loops.md) · [A részletes folyamatábra](docs/hu/process-diagram.md).
 
-## 3. Hol tesztelünk
+## 5. Hol tesztelünk
 
 A folyamat **három ponton** ellenőriz, és mindhárom **mást bizonyít** — ezért nem helyettesíti egyik a másikat.
 
@@ -207,7 +254,7 @@ flowchart LR
 
 **A dev-teszt** opcionális, és csak a központosított úton: automatikus telepítés után valódi, végponttól végpontig futó tesztek egy integrált környezetben. Azt bizonyítja, hogy a rendszer **a valódi függőségeivel együtt is működik**. Mindhárom kör eredménye riportként a ciklus mappájába kerül, és bukásnál értesítést küld.
 
-## 4. Két fejlesztési út
+## 6. Két fejlesztési út
 
 A feladat súlya dönti el, melyik út illik hozzá. A **teljes flow** (00–09) a nagyobb, összetettebb fejlesztéseké, külön `spec.md` → `plan.md` → `tasks.md` dokumentumokkal és minőségi kapukkal; az **egyszerűsített flow** a 3-4 lépésben megoldható feladatoké, egyetlen `spec-plan.md` → `tasks.md` → implementáció recepttel.
 
@@ -220,53 +267,6 @@ A feladat súlya dönti el, melyik út illik hozzá. A **teljes flow** (00–09)
 | Belépő | `/bs-quick-flow` | `/bs-init-project` / `/bs-add-cycles` |
 
 A két út **menet közben átjárható**: ha az egyszerűsített flow közben kiderül, hogy a feladat túlnő rajta, a skill megállítja a munkát és átirányít a teljes folyamatra — és fordítva is. Mindkettő előtt ott a közös előszoba, a `/bs-brainstorm`, amikor még nem a méret a kérdés, hanem az, hogy **mit és hogyan** akarunk egyáltalán. Részletek: [Két fejlesztési út](docs/hu/routes.md) · [Egyszerűsített flow](docs/hu/lightweight-flow.md).
-
-## 5. Telepítés — quickstart
-
-```bash
-git clone <a-berkispec-repó-url-je>
-cd berkispec
-./install.sh          # Windowson: .\install.ps1
-```
-
-A telepítő interaktívan bekéri a célprojekt mappáját, a platformot és a **két nyelvet** (prompt-nyelv és projekt-nyelv), majd a választott platform konfigurációs mappájába linkeli a skilleket és az ágenseket. Flagekkel automatizálható is: `./install.sh --platform claude --prompt-lang en --project-lang hu --path ~/projekt`.
-
-**Támogatott platformok:** Google Antigravity CLI · Claude Code · Cursor (Agent CLI) · GitHub Copilot (CLI & IDE) · Codex CLI.
-
-**A két nyelvi tengely** — egymástól függetlenül állítható, és nem kell egyezniük:
-
-| Beállítás | Mit határoz meg | Alapértelmezés |
-|---|---|---|
-| **Prompt nyelve** | Milyen nyelven vannak az instrukciók, amiket az **ágens olvas**. A te dokumentumaidat nem érinti. | **English** |
-| **Projekt nyelve** | Milyen nyelven **ír az ágens**: `spec.md`, `plan.md`, riportok, `docs-generated/` — és amit neked válaszol. | **Magyar** |
-
-> A teljes telepítési leírás — a lépések, az öt platform mappaszerkezete, a nem interaktív mód flag-táblája, a nyelvi átszivárgás elleni védelem és a frissítés kérdései: **[Installáció](docs/hu/installation.md)**.
-
-## 6. Alapvető parancsok
-
-A telepítés után a platform chat felületén a `/` karakter leütésével érheted el a skilleket (GitHub Copilotban `@` szimbólummal). Kezdéshez: `/bs-init-project`.
-
-| parancs | mit csinál |
-|---|---|
-| `/bs-init-project` | A projekt legelső inicializálása — létrehozza a `conventions.md` fájlt. |
-| `/bs-add-cycles` | Új fejlesztési ciklus felvétele az ütemtervbe (`roadmap.md`). |
-| `/bs-write-spec` | A követelmények rögzítése, a ciklus specifikációja (`spec.md`). |
-| `/bs-write-code-plan` | A technikai terv **kód-oldala**: koordináták, tervezett módosítások, konfiguráció, séma. |
-| `/bs-write-test-plan` | Ugyanannak a tervnek a **teszt-fele**: forgatókönyvek, gépi futtatási tábla, tesztfájl-adatlapok. |
-| `/bs-write-tasks` | A terv lebontása mérhető feladatokra (`tasks.md`). |
-| `/bs-analyze` | Kereszt-fázisos konzisztencia-ellenőrzés és automatikus javítás (spec ↔ terv ↔ feladatok). |
-| `/bs-implement` | A tényleges kódfejlesztés a feladatlista alapján, a haladás vezetésével. |
-| `/bs-validate` | Tesztek, lint, build **és kódreview** egyetlen automatikus javító hurokban. |
-| `/bs-doc-sync` | Az élő dokumentáció (`docs-generated/`) és a teszt-konvenciók szinkronizálása a kóddal. |
-| `/bs-review-and-merge` | A ciklus lezárása **egy lépésben**, ha nincs PR feladás: merge utáni teszt-kör → beolvasztás. |
-| `/bs-create-pr` → `/bs-review` → `/bs-merge` | Ugyanez **három lépésben**, ha van PR feladás — központosított SDD-ben gépi futtatással. |
-| `/bs-dev-test` | *(opcionális)* Telepítés integrált teszt-környezetbe, és valódi e2e tesztek. |
-| `/bs-brainstorm` | Feltáró ötletelés **a spec előtt**, perzisztens munkafájllal; a végén átad a flow-nak. |
-| `/bs-quick-flow` | Az egyszerűsített flow elindítása kis feladatokhoz (spec → task → implementáció). |
-| `/bs-cycle-status` | A ciklusok státuszának ellenőrzése (interaktív TUI vagy parancssori kiírás). |
-| `/bs-manual-test-plan` | A ciklus **kézi teszttervének** összeállítása: indítás, tesztadatok, hívási szekvenciák. |
-| `/bs-run-tests` | **Teszt-futtatás cikluson kívül**, kategóriánként; az eredménye soha nem ciklus-bizonyíték. |
-| `/bs-export-doc` | Verziózott PDF export a markdown doksikból, a mermaid ábrákkal együtt. |
 
 ## 7. Mit jelent ez a gyakorlatban
 
