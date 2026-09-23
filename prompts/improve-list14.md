@@ -670,15 +670,15 @@ nem a task-listába.
 
 **C csomag — a kapu**
 
-- [ ] `C1` — `prompts/scripts/docs-tree-check.py` megírása: `DG1` fájlhalmaz-paritás
-- [ ] `C2` — `DG2` szakasz-paritás (fejléc-szám és mélység-sorrend)
-- [ ] `C3` — `DG3` link- és horgony-feloldás
-- [ ] `C4` — `DG4` index halmaz-egyezés (`ds22-gate-check.py` mintájára)
-- [ ] `C5` — `DG5` nyitólap-korlát (**400 sor, FAIL** — `L14-D12`) + `<!-- TOC -->` marker tiltása
-- [ ] `C6` — `DG6` mermaid-blokk paritás
-- [ ] `C7` — Kilépő kód szerződés: `0` / `1` / `2`, `--check` kapcsoló
-- [ ] `C8` — `install-helper.py` `copy_helper_scripts()` kizárási lista bővítése (`L14-D9`)
-- [ ] `C9` — A script futtatása: **zöld**
+- [x] `C1` — `prompts/scripts/docs-tree-check.py` megírása: `DG1` fájlhalmaz-paritás
+- [x] `C2` — `DG2` szakasz-paritás (fejléc-szám és mélység-sorrend)
+- [x] `C3` — `DG3` link- és horgony-feloldás
+- [x] `C4` — `DG4` index halmaz-egyezés (`ds22-gate-check.py` mintájára)
+- [x] `C5` — `DG5` nyitólap-korlát (**400 sor, FAIL** — `L14-D12`) + `<!-- TOC -->` marker tiltása
+- [x] `C6` — `DG6` mermaid-blokk paritás
+- [x] `C7` — Kilépő kód szerződés: `0` / `1` / `2`, `--check` kapcsoló
+- [x] `C8` — `install-helper.py` `copy_helper_scripts()` kizárási lista bővítése (`L14-D9`)
+- [x] `C9` — A script futtatása: **zöld**
 
 **D csomag — a ripple**
 

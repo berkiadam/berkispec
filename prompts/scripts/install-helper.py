@@ -195,6 +195,9 @@ def copy_helper_scripts(src_dir, scripts_dest):
         # A repó-karbantartó szkriptek nem a célprojekt eszközei
         if script_src.name in ("install-helper.py", "sync-gemini-agents.py",
                                "lang-parity-check.py",
+                               # a repó saját docs/en + docs/hu fájának kapuja — a
+                               # célprojektben nincs ilyen fa (L14-D9)
+                               "docs-tree-check.py",
                                # repó-karbantartó / elavult (LG19) — nem a célprojekt eszközei
                                "acceptance-check.sh", "init-project.sh"):
             continue
