@@ -1175,7 +1175,7 @@ Ami **nem**: a `09a` PR-nyitása (`az repos pr create`) és a `09c` beolvasztás
 | `prompts/lang/{hu,en}/00-init-project.md:99` | a szolgáltató-lista bővül: `Azure DevOps (under development)` |
 | `prompts/skills-{hu,en}/00-init-project.md` | ha a felhasználó ezt választja: **beszédes figyelmeztetés** — a `09a`/`09c` szolgáltató-ága hiányzik, tehát a PR-t kézzel kell nyitni és beolvasztani |
 | `docs/{hu,en}/conventions.md` | a szolgáltató-lista leírásánál ugyanez |
-| a `7.1` új CI-oldal | külön bekezdés: mi kész és mi nem az Azure-ágon |
+| a `7.2` új CI-oldal | külön bekezdés: mi kész és mi nem az Azure-ágon |
 | e dokumentum `3.3` mintája | fejléc-megjegyzés, hogy a minta kész, a provider-ág nem |
 
 **(b) A két nyitólap CI/CD-üzenete erősödjön** — de **pontosan**.
@@ -1195,7 +1195,7 @@ A kanonikus szöveg (projekt-nyelvenként fordítva, de **azonos szerkezettel**)
 **🔴 Két formai kötelem, amit a nyitólapoknál nem lehet megkerülni:**
 
 1. **`DG5` — a nyitólapok ≤ 400 sorosak**, ma **298+298**. Tehát **kompakt blokk** fér be, nem
-   új fejezet; a részletek az új CI-témaoldalra mennek (`7.1`).
+   új fejezet; a részletek az új CI-témaoldalra mennek (`7.2`).
 2. **`DG2`/`DG6` a nyitólapokra is vonatkozik** (`docs-tree-check.py:29`: *„a nyitólapok is
    tükrözött szerkezetűek"*) — amit a `README-HU.md`-be írsz, **ugyanolyan szerkezettel** kell a
    `README.md`-be is.
@@ -1407,6 +1407,30 @@ legyen rögzítve (új mező). Eldöntendő: legyen-e ilyen mező, és a `00` el
 
 ## 7. Végrehajtási csomagok — **MINDEN KÉRDÉS LEZÁRVA (2026-09-23)**
 
+### 7.0 Végrehajtási sorrend — mi mit blokkol
+
+> **0. lépés, mielőtt bármi kódot írnál:** erősítsd meg az `L15-D14` három javasolt szabályát
+> (riport-only PR felismerése · konkurencia-kulcs · a `09c` `RD8`-ágának elágazása). Az első
+> ezek közül **az `A` csomag feloldó logikáját** módosítja, tehát utólag drágább.
+
+| # | csomag | miért itt | mit blokkol |
+|---|---|---|---|
+| 1 | **D′** | ez nyitja meg a `prompts/ci/` fájlosztályt, és **átköltözteti** ide a `ci-run-skill.sh`-t | mindent, ami `ci/`-ben él |
+| 2 | **A** | a ciklus-feloldás — a `8.6` függelékben ott a **lefuttatott** prototípus | `A′` |
+| 3 | **B** | a pipa kiírása API-n (`CE7`) | `A′` |
+| 4 | **A′** | a `ci-run-review-merge.sh` a `3.1` szerint; az `E` kapuja **ebbe épül** | `C` |
+| 5 | **E** | időkorlát + `CE3-SCOPE` írás-hatókör | — *(az `A′`-vel együtt is mehet)* |
+| 6 | **F** | `G8`/`G9`/`G10` szabályai | — |
+| 7 | **C** | pipeline-minták kihelyezése + a `--selftest` bővítése | — |
+| 8 | **G** · **D** · **H** | `auto-fix-loop` jelölés · Azure `under development` · notify próbapad | — *(függetlenek, bármikor)* |
+| 9 | **C′** · **Z** · **Z′** | dokumentáció: identitás-recept, docs-témaoldal, nyitólapok | a kör zárása |
+
+**A `H` (notify próbapad) ne csússzon a végére.** A központosított úton az értesítés az **egyetlen
+visszacsatolás**, amikor nincs ember a képernyő előtt — ha némán bukik, a bukott ciklusról senki
+nem tud (`G12`). Érdemes azelőtt lemérni, hogy a lánc élesbe menne.
+
+### 7.1 A csomagok
+
 | csomag | mi | érinti |
 |---|---|---|
 | **A** | `L15-D1` — ciklus-feloldás az adapterben (`--resolve-cycle`, opcionális 2. argumentum, `BS_*` env-szerződés) | `prompts/scripts/ci-run-skill.sh` |
@@ -1422,10 +1446,10 @@ legyen rögzítve (új mező). Eldöntendő: legyen-e ilyen mező, és a `00` el
 | **G** | **`L15-D12`** — az `auto-fix-loop` `not yet implemented` jelölése: STOP a `00`-ban, védekező `exit 2` a scriptekben, és a doksiban „jön” | `00`, `09b`, `09c`, `ci-run-review-merge.sh`, docs |
 | **H** | **`G12`** — `fixtures/notify-smoke/` próbapad + valódi próbaküldés a `00`-ban a `--dry-run` mellé; a Teams-payload alakjának éles ellenőrzése | **ÚJ:** `fixtures/notify-smoke/`, `notify.py`, `skills-{hu,en}/00-init-project.md` |
 | **Z′** | **`L15-D11`/b** — a két nyitólap CI/CD-üzenete (kompakt blokk a 3.4-be, `DG5` ≤ 400 sor, `DG2` tükrözés) | `README.md`, `README-HU.md` |
-| **Z** | Átvezetés: **ÚJ, ÖNÁLLÓ témaoldal a docs-fában** (lásd `7.1`), `platform-integration.md`, `berki-spec-directory-structure.md`, `meta-improve-prompts.md`, `README*.md` | a docs-fa + a meta |
+| **Z** | Átvezetés: **ÚJ, ÖNÁLLÓ témaoldal a docs-fában** (lásd `7.2`), `platform-integration.md`, `berki-spec-directory-structure.md`, `meta-improve-prompts.md`, `README*.md` | a docs-fa + a meta |
 
 
-### 7.1 A dokumentációs teendő — ÖNÁLLÓ fejezet, külön fájlban
+### 7.2 A dokumentációs teendő — ÖNÁLLÓ fejezet, külön fájlban
 
 > **Felhasználói döntés (2026-09-23):** a központosított CI/CD működése **nem** a meglévő
 > oldalakba szórva jelenjen meg, hanem **egy új, önálló fejezetként, saját fájlban**, a
@@ -1540,6 +1564,15 @@ python3 prompts/scripts/lang-parity-check.py              # + --strict a kör v�
 python3 prompts/scripts/sync-gemini-agents.py --check
 python3 prompts/scripts/docs-tree-check.py
 ```
+
+### 7.3 Napló — ide kerül, mi készült el
+
+> A `list13` mintájára: minden csomag zárásakor egy sor, dátummal. **Ez mondja meg egy
+> megszakadt munka után, hol tartunk** — a beszélgetés nem éli túl a `/clear`-t, ez igen.
+
+| dátum | mi készült el |
+|---|---|
+| 2026-09-23 | **A terv elkészült** (`2efc856`): `G1`–`G12`, `CE0`–`CE15`, `L15-D1`–`L15-D15`, nyitott kérdés nincs. A kör **még nem indult el** — prompt és script nem módosult. |
 
 ---
 
@@ -1666,7 +1699,7 @@ resolve_cycle() {
 
 `DG1` fájlhalmaz-paritás · `DG2` szakasz-paritás · `DG3` link-feloldás · `DG4` index
 halmaz-egyezés · `DG5` a nyitólapok ≤ 400 sor (**ma 298+298**) · `DG6` ábra-paritás.
-A `docs/{en,hu}/` ma **14+14** témaoldalt tartalmaz; az új CI-oldal a 15. lesz (`7.1`).
+A `docs/{en,hu}/` ma **14+14** témaoldalt tartalmaz; az új CI-oldal a 15. lesz (`7.2`).
 
 ### 8.8 A kör zárásakor futtatandó kapuk
 
